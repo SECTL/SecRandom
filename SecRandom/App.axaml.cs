@@ -273,6 +273,10 @@ public partial class App : Application
                 throw;
             }
 
+            // 安全设置住在自己的加密文件里：先把它读起来（含旧版明文设置的一次性迁移），
+            // 后面的启动流程才有可信的防护开关可用。
+            _ = IAppHost.GetService<SecuritySettingsStore>();
+
             if (IAppHost.GetService<FirstRunOobeService>().IsRequired())
             {
                 ShowFirstRunOobe(desktop, startupProtocolUri);
@@ -284,7 +288,7 @@ public partial class App : Application
             _settingsIntegrity = IAppHost.GetService<SettingsIntegrityService>();
             if (_settingsIntegrity.GetPendingMismatch() is { } settingsMismatch)
             {
-                if (IAppHost.GetService<MainConfigHandler>().Data.SecuritySettings.SettingsIntegrityAction
+                if (IAppHost.GetService<SecuritySettingsStore>().Data.SettingsIntegrityAction
                     == SettingsIntegrityAction.AutoRestore)
                 {
                     WriteDesktopStartupDiagnostic("Settings integrity check is attempting automatic recovery.");
@@ -1234,16 +1238,19 @@ public partial class App : Application
                     // 手机端没有本地集控节点，但 LinkageDrawCoordinator 仍然要求这个闸门可解析。
                     services.AddSingleton<IControlDrawGate, UnlockedControlDrawGate>();
                 }
+                services.AddSingleton<SecuritySettingsStore>();
                 services.AddSingleton<SecurityCredentialStore>();
                 services.AddSingleton<IUsbDeviceCatalog, UsbDeviceCatalog>();
                 services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
                 services.AddSingleton<ISecurityService, SecurityService>();
                 services.AddSingleton(serviceProvider => new SettingsIntegrityService(
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
+                    serviceProvider.GetRequiredService<SecuritySettingsStore>(),
                     serviceProvider.GetRequiredService<SecurityCredentialStore>(),
                     serviceProvider.GetRequiredService<ILogger<SettingsIntegrityService>>()));
                 services.AddSingleton(serviceProvider => new SettingsIntegrityRecoveryService(
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
+                    serviceProvider.GetRequiredService<SecuritySettingsStore>(),
                     serviceProvider.GetRequiredService<IImportExportService>(),
                     serviceProvider.GetRequiredService<ILogger<SettingsIntegrityRecoveryService>>()));
 

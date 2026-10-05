@@ -50,6 +50,31 @@ public sealed class DataArchiveServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ExportAllData_NeverCarriesTheSecurityDirectory()
+    {
+        using var provider = CreateProvider();
+        provider.GetRequiredService<MainConfigHandler>().Save();
+        // 安全设置（加密的 settings.json）与安全凭据同住 config/security：任何备份都必须够不到它们，
+        // 否则一份备份就能改掉这台机器的防护开关
+        File.WriteAllText(Utils.GetFilePath("config", "security", "settings.json"), "{}");
+        File.WriteAllText(Utils.GetFilePath("config", "security", "settings.key"), "{}");
+        File.WriteAllText(Utils.GetFilePath("config", "security", "credentials.json"), "{}");
+        File.WriteAllText(Utils.GetFilePath("config", "security", "totp-standalone.json"), "{}");
+
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var destination = Path.Combine(_exportDirectory, "all-data-security.zip");
+        await archive.ExportAllDataAsync(destination, TestContext.Current.CancellationToken);
+
+        var paths = ReadManifestPaths(destination);
+        Assert.DoesNotContain(paths, path => path.StartsWith("config/security", StringComparison.OrdinalIgnoreCase));
+
+        // 云备份的上限里同样没有这个目录
+        var cloudRoots = DataArchiveService.ResolveCloudBackupRoots(
+            provider.GetRequiredService<MainConfigHandler>().Data.General.Backup);
+        Assert.DoesNotContain(cloudRoots, root => root.StartsWith("config/security", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task ImportAllData_SkipsLegacyThemeEntriesInsteadOfFailing()
     {
         using var provider = CreateProvider();
@@ -659,11 +684,11 @@ public sealed class DataArchiveServiceTests : IDisposable
 
     private sealed class RecordingPreImportGuard(bool allow) : IArchivePreImportGuard
     {
-        public List<SecRandom.Core.Models.SubConfigs.SecuritySettingsConfig> Candidates { get; } = [];
+        public int Authorizations { get; private set; }
 
-        public bool AuthorizeSecuritySettings(SecRandom.Core.Models.SubConfigs.SecuritySettingsConfig candidate)
+        public bool AuthorizeImport()
         {
-            Candidates.Add(candidate);
+            Authorizations++;
             return allow;
         }
     }
@@ -689,24 +714,19 @@ public sealed class DataArchiveServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task ImportSettings_WhenThePreImportGuardDeniesTheLoosenedConfiguration_KeepsCurrentData()
+    public async Task ImportSettings_WhenThePreImportGuardDenies_KeepsCurrentData()
     {
         var guard = new RecordingPreImportGuard(allow: false);
         using var provider = CreateProvider(preImportGuard: guard);
         var config = provider.GetRequiredService<MainConfigHandler>();
-        config.Data.SecuritySettings.SecurityEnabled = true;
-        config.Data.SecuritySettings.ProtectExit = true;
+        config.Data.General.Backup.AutoBackupIntervalDays = 7;
         config.Save();
 
         var archive = provider.GetRequiredService<DataArchiveService>();
-        var source = Path.Combine(_exportDirectory, "denied-downgrade.json");
+        var source = Path.Combine(_exportDirectory, "denied-import.json");
         await archive.ExportSettingsAsync(source, TestContext.Current.CancellationToken);
         StampProducerVersion(source, TestV3ProducerVersion);
-        RewriteSettingsEnvelope(source, config, candidate =>
-        {
-            candidate.SecuritySettings.SecurityEnabled = false;
-            candidate.SecuritySettings.ProtectExit = false;
-        });
+        RewriteSettingsEnvelope(source, config, candidate => candidate.General.Backup.AutoBackupIntervalDays = 1);
 
         var settingsPath = config.Data.ConfigFilePath;
         var settingsBefore = File.ReadAllText(settingsPath);
@@ -718,40 +738,48 @@ public sealed class DataArchiveServiceTests : IDisposable
 
         Assert.Contains("安全验证", exception.Message);
         Assert.Equal(settingsBefore, File.ReadAllText(settingsPath));
-        Assert.True(config.Data.SecuritySettings.SecurityEnabled);
-        Assert.True(config.Data.SecuritySettings.ProtectExit);
+        Assert.Equal(7, config.Data.General.Backup.AutoBackupIntervalDays);
         // 拒绝发生在快照之前：既不写数据也不留恢复包
         Assert.Equal(backupsBefore, Directory.Exists(backup) ? Directory.GetFiles(backup).Length : 0);
-
-        var candidate = Assert.Single(guard.Candidates);
-        Assert.False(candidate.SecurityEnabled);
+        Assert.Equal(1, guard.Authorizations);
     }
 
     [Fact]
-    public async Task ImportSettings_WhenThePreImportGuardAllowsTheConfiguration_CommitsIt()
+    public async Task ImportSettings_WhenThePreImportGuardAllows_CommitsIt()
     {
         var guard = new RecordingPreImportGuard(allow: true);
         using var provider = CreateProvider(preImportGuard: guard);
         var config = provider.GetRequiredService<MainConfigHandler>();
-        config.Data.SecuritySettings.SecurityEnabled = true;
         config.Data.General.Backup.AutoBackupIntervalDays = 7;
         config.Save();
 
         var archive = provider.GetRequiredService<DataArchiveService>();
-        var source = Path.Combine(_exportDirectory, "allowed-downgrade.json");
+        var source = Path.Combine(_exportDirectory, "allowed-import.json");
         await archive.ExportSettingsAsync(source, TestContext.Current.CancellationToken);
         StampProducerVersion(source, TestV3ProducerVersion);
-        RewriteSettingsEnvelope(source, config, candidate =>
-            candidate.SecuritySettings.SecurityEnabled = false);
         config.Data.General.Backup.AutoBackupIntervalDays = 3;
         config.Save();
 
         var result = await archive.ImportSettingsAsync(source, TestContext.Current.CancellationToken);
 
         Assert.Equal(7, config.Data.General.Backup.AutoBackupIntervalDays);
-        Assert.False(config.Data.SecuritySettings.SecurityEnabled);
-        Assert.Single(guard.Candidates);
+        Assert.Equal(1, guard.Authorizations);
         Assert.True(File.Exists(result.SnapshotPath));
+    }
+
+    [Fact]
+    public async Task ImportAllData_AsksThePreImportGuardEvenWhenTheArchiveCarriesNoSettings()
+    {
+        var guard = new RecordingPreImportGuard(allow: true);
+        using var provider = CreateProvider(preImportGuard: guard);
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        // 只带名单的归档同样是一次整体替换：闸门不能因为"里面没有 settings.json"就跳过
+        var source = archive.CreateManualBackup(["list"]);
+        StampProducerVersion(source, TestV3ProducerVersion);
+
+        await archive.ImportAllDataAsync(source, TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, guard.Authorizations);
     }
 
     /// <summary>

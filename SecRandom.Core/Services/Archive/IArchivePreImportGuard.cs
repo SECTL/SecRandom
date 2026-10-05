@@ -1,20 +1,18 @@
-using SecRandom.Core.Models.SubConfigs;
-
 namespace SecRandom.Core.Services.Archive;
 
 /// <summary>
-///     One authorization check before an import or restore is committed. The candidate security
-///     settings are handed to the host, which must require a fresh verification when the incoming
-///     configuration loosens protection; returning false makes
+///     One authorization check before an import or restore is committed. The host must obtain a
+///     fresh verification (the security password) while protection is active; returning false makes
 ///     <see cref="DataArchiveService" /> reject the import before anything is written.
-///     Without this gate a crafted settings export could turn security protection off without a
-///     password, because the protection switches live in the very settings file an archive carries.
-///     The check runs synchronously on the archive worker thread, so an implementation that needs
-///     UI (the verification dialog) marshals to its UI thread and blocks until the user answers.
+///     Importing a backup replaces this machine's whole configuration, so it stays a protected
+///     operation even though the archive can no longer carry the protection switches themselves:
+///     those now live in an encrypted file no archive can reach. The check runs synchronously on the
+///     archive worker thread, so an implementation that needs UI (the verification dialog) marshals
+///     to its UI thread and blocks until the user answers.
 /// </summary>
 public interface IArchivePreImportGuard
 {
-    bool AuthorizeSecuritySettings(SecuritySettingsConfig candidate);
+    bool AuthorizeImport();
 }
 
 /// <summary>
@@ -23,5 +21,5 @@ public interface IArchivePreImportGuard
 /// </summary>
 public sealed class NullArchivePreImportGuard : IArchivePreImportGuard
 {
-    public bool AuthorizeSecuritySettings(SecuritySettingsConfig candidate) => true;
+    public bool AuthorizeImport() => true;
 }

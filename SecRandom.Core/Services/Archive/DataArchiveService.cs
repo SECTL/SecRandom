@@ -12,7 +12,6 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Models;
-using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
@@ -184,8 +183,8 @@ public sealed class DataArchiveService(
                     var warnings = new List<string>(inspection.Warnings);
                     var candidate = ReadSettingsCandidate(sourceCopy);
                     ValidateSettingsCandidate(candidate);
-                    // 放宽防护的候选配置必须在写入前拿到一次新鲜验证
-                    AuthorizeSecuritySettings(candidate.SecuritySettings);
+                    // 导入会把整份配置换掉，保护开着时必须先过一次新鲜验证
+                    AuthorizeImport();
 
                     SaveCurrentState();
                     var snapshot = CreateArchive(CreateBackupPath("pre_import_settings"), ArchiveKind.PreImportSettings,
@@ -630,11 +629,11 @@ public sealed class DataArchiveService(
     {
         var candidate = ReadCandidateSettings(staging);
         if (candidate is not null)
-        {
             ValidateSettingsCandidate(candidate);
-            // 放宽防护的候选配置必须在写入前拿到一次新鲜验证
-            AuthorizeSecuritySettings(candidate.SecuritySettings);
-        }
+
+        // 归档可能带着整份配置，也可能只带名单；无论哪种，导入都是整体替换这台机器上的数据，
+        // 所以保护开着时一律先过一次新鲜验证，而不是只在那份归档里恰好有 settings.json 时才问。
+        AuthorizeImport();
 
         foreach (var path in Directory.Exists(Path.Combine(staging, "list"))
                      ? Directory.EnumerateFiles(Path.Combine(staging, "list"), "*.json", SearchOption.AllDirectories)
@@ -656,12 +655,14 @@ public sealed class DataArchiveService(
     }
 
     /// <summary>
-    ///     保护开关就住在被导入的 settings.json 里，所以这里必须问一次宿主：候选配置一旦放宽
-    ///     防护，就要先通过新鲜验证，否则一份构造出来的备份可以直接把安全保护关掉。
+    ///     导入/恢复提交前问一次宿主。安全设置已经不随归档走（它们住在加密的
+    ///     <c>data/config/security/settings.json</c>，任何归档都够不到），所以这里不再比较候选配置，
+    ///     而是把"导入"本身当作需要新鲜验证的操作：否则一份构造出来的备份就能在管理员不知情时
+    ///     换掉这台机器的整套配置。
     /// </summary>
-    private void AuthorizeSecuritySettings(SecuritySettingsConfig candidate)
+    private void AuthorizeImport()
     {
-        if (preImportGuard.AuthorizeSecuritySettings(candidate))
+        if (preImportGuard.AuthorizeImport())
             return;
 
         throw new InvalidOperationException(SecRandom.Core.Langs.Common.Resources.M_ImportSecurityDenied);

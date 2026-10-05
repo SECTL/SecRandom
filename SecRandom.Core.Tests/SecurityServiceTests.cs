@@ -130,7 +130,7 @@ public sealed class SecurityServiceTests : IDisposable
 
         Assert.False(saved);
         Assert.False(fixture.Service.GetUiState().HasPassword);
-        Assert.False(fixture.ConfigHandler.Data.SecuritySettings.PasswordEnabled);
+        Assert.False(fixture.SecuritySettings.PasswordEnabled);
     }
 
     [Fact]
@@ -138,16 +138,16 @@ public sealed class SecurityServiceTests : IDisposable
     {
         var fixture = CreateFixture(Password("secret1"));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        fixture.ConfigService.ResetSaveCount();
 
         var updated = await fixture.Service.UpdateSecuritySettingsAsync(
             null!,
-            () => fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true,
+            () => fixture.SecuritySettings.SecurityEnabled = true,
             TestContext.Current.CancellationToken);
 
         Assert.True(updated);
-        Assert.True(fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled);
-        Assert.Equal(1, fixture.ConfigService.SaveCount);
+        Assert.True(fixture.SecuritySettings.SecurityEnabled);
+        // 改动要真的落进那个加密文件，而不是只留在内存里
+        Assert.True(fixture.ReadPersistedSettings().SecurityEnabled);
         Assert.Equal([SecurityFactor.Password], Assert.Single(fixture.Prompt.Requests).RequiredFactors);
     }
 
@@ -156,16 +156,15 @@ public sealed class SecurityServiceTests : IDisposable
     {
         var fixture = CreateFixture(Password("wrong"));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        fixture.ConfigService.ResetSaveCount();
 
         var updated = await fixture.Service.UpdateSecuritySettingsAsync(
             null!,
-            () => fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true,
+            () => fixture.SecuritySettings.SecurityEnabled = true,
             TestContext.Current.CancellationToken);
 
         Assert.False(updated);
-        Assert.False(fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled);
-        Assert.Equal(0, fixture.ConfigService.SaveCount);
+        Assert.False(fixture.SecuritySettings.SecurityEnabled);
+        Assert.False(fixture.ReadPersistedSettings().SecurityEnabled);
     }
 
     [Fact]
@@ -173,15 +172,14 @@ public sealed class SecurityServiceTests : IDisposable
     {
         var fixture = CreateFixture(Password("secret1"));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true;
-        fixture.ConfigService.ResetSaveCount();
+        fixture.SecuritySettings.SecurityEnabled = true;
 
         var updated = fixture.Service.TryUpdateSettings(() =>
-            fixture.ConfigHandler.Data.SecuritySettings.ProtectExit = true);
+            fixture.SecuritySettings.ProtectExit = true);
 
         Assert.False(updated);
-        Assert.False(fixture.ConfigHandler.Data.SecuritySettings.ProtectExit);
-        Assert.Equal(0, fixture.ConfigService.SaveCount);
+        Assert.False(fixture.SecuritySettings.ProtectExit);
+        Assert.False(fixture.ReadPersistedSettings().ProtectExit);
         Assert.Empty(fixture.Prompt.Requests);
     }
 
@@ -190,18 +188,18 @@ public sealed class SecurityServiceTests : IDisposable
     {
         var fixture = CreateFixture(Password("secret1"));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        fixture.ConfigService.ResetSaveCount();
 
         var updated = fixture.Service.TryUpdateSettings(() =>
         {
-            fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true;
-            fixture.ConfigHandler.Data.SecuritySettings.ProtectExit = true;
+            fixture.SecuritySettings.SecurityEnabled = true;
+            fixture.SecuritySettings.ProtectExit = true;
         });
 
         Assert.False(updated);
-        Assert.False(fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled);
-        Assert.False(fixture.ConfigHandler.Data.SecuritySettings.ProtectExit);
-        Assert.Equal(0, fixture.ConfigService.SaveCount);
+        Assert.False(fixture.SecuritySettings.SecurityEnabled);
+        Assert.False(fixture.SecuritySettings.ProtectExit);
+        Assert.False(fixture.ReadPersistedSettings().SecurityEnabled);
+        Assert.False(fixture.ReadPersistedSettings().ProtectExit);
         Assert.Empty(fixture.Prompt.Requests);
     }
 
@@ -305,9 +303,9 @@ public sealed class SecurityServiceTests : IDisposable
             new UsbDriveInfo("P:", "Authorization USB", "volume:usb-any", usbRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(await fixture.Service.BindUsbAsync(null!, "volume:usb-any", TestContext.Current.CancellationToken));
-        fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true;
-        fixture.ConfigHandler.Data.SecuritySettings.UsbBindingEnabled = true;
-        fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = false;
+        fixture.SecuritySettings.SecurityEnabled = true;
+        fixture.SecuritySettings.UsbBindingEnabled = true;
+        fixture.SecuritySettings.RequireAllSelectedFactors = false;
 
         var result = await fixture.Service.VerifyAsync(
             new SecurityVerificationResponse(string.Empty, string.Empty, UsbPresent: true),
@@ -325,9 +323,9 @@ public sealed class SecurityServiceTests : IDisposable
             new UsbDriveInfo("Q:", "Authorization USB", "volume:usb-all", usbRoot));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(await fixture.Service.BindUsbAsync(null!, "volume:usb-all", TestContext.Current.CancellationToken));
-        fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true;
-        fixture.ConfigHandler.Data.SecuritySettings.UsbBindingEnabled = true;
-        fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = true;
+        fixture.SecuritySettings.SecurityEnabled = true;
+        fixture.SecuritySettings.UsbBindingEnabled = true;
+        fixture.SecuritySettings.RequireAllSelectedFactors = true;
 
         var result = await fixture.Service.VerifyAsync(
             new SecurityVerificationResponse(string.Empty, string.Empty, UsbPresent: true),
@@ -341,7 +339,7 @@ public sealed class SecurityServiceTests : IDisposable
     public async Task VerifyAsync_WhenAnySelectedFactorModeHasOnlyTotp_AuthorizesWithoutPassword()
     {
         var (fixture, secret) = await CreateTotpFixtureAsync();
-        fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = false;
+        fixture.SecuritySettings.RequireAllSelectedFactors = false;
 
         var result = await fixture.Service.VerifyAsync(
             new SecurityVerificationResponse(string.Empty, CreateTotpCode(secret), UsbPresent: false),
@@ -354,7 +352,7 @@ public sealed class SecurityServiceTests : IDisposable
     public async Task VerifyAsync_WhenAllSelectedFactorModeHasOnlyTotp_RejectsAuthorization()
     {
         var (fixture, secret) = await CreateTotpFixtureAsync();
-        fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = true;
+        fixture.SecuritySettings.RequireAllSelectedFactors = true;
 
         var result = await fixture.Service.VerifyAsync(
             new SecurityVerificationResponse(string.Empty, CreateTotpCode(secret), UsbPresent: false),
@@ -368,7 +366,7 @@ public sealed class SecurityServiceTests : IDisposable
     public async Task VerifyAsync_WhenTotpIsRejected_CountsFailuresAndLocksOut()
     {
         var (fixture, secret) = await CreateTotpFixtureAsync();
-        fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = false;
+        fixture.SecuritySettings.RequireAllSelectedFactors = false;
 
         for (var attempt = 0; attempt < 5; attempt++)
         {
@@ -391,7 +389,7 @@ public sealed class SecurityServiceTests : IDisposable
     public async Task VerifyAsync_WhenStandaloneTotpCopyIsMissing_RejectsUntilThePasswordIsVerifiedOnce()
     {
         var (fixture, secret) = await CreateTotpFixtureAsync();
-        fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = false;
+        fixture.SecuritySettings.RequireAllSelectedFactors = false;
         File.Delete(fixture.StandaloneTotpPath);
 
         var rejected = await fixture.Service.VerifyAsync(
@@ -415,7 +413,7 @@ public sealed class SecurityServiceTests : IDisposable
     public async Task VerifyAsync_WhenTheStandaloneTotpCopyIsCorrupted_RejectsInsteadOfThrowing()
     {
         var (fixture, _) = await CreateTotpFixtureAsync();
-        fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = false;
+        fixture.SecuritySettings.RequireAllSelectedFactors = false;
         File.WriteAllText(fixture.StandaloneTotpPath, "{\"FormatVersion\":1,\"Secret\":\"NOT-BASE32!\"}");
 
         var result = await fixture.Service.VerifyAsync(
@@ -460,20 +458,20 @@ public sealed class SecurityServiceTests : IDisposable
 
         var switchedToAll = await fixture.Service.UpdateSecuritySettingsAsync(
             null!,
-            () => fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = true,
+            () => fixture.SecuritySettings.RequireAllSelectedFactors = true,
             TestContext.Current.CancellationToken);
 
         Assert.True(switchedToAll);
-        Assert.True(fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors);
+        Assert.True(fixture.SecuritySettings.RequireAllSelectedFactors);
         Assert.False(File.Exists(fixture.StandaloneTotpPath));
 
         var switchedToAny = await fixture.Service.UpdateSecuritySettingsAsync(
             null!,
-            () => fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors = false,
+            () => fixture.SecuritySettings.RequireAllSelectedFactors = false,
             TestContext.Current.CancellationToken);
 
         Assert.True(switchedToAny);
-        Assert.False(fixture.ConfigHandler.Data.SecuritySettings.RequireAllSelectedFactors);
+        Assert.False(fixture.SecuritySettings.RequireAllSelectedFactors);
         Assert.Equal(secret, fixture.CredentialStore.LoadStandaloneTotp());
     }
 
@@ -724,7 +722,7 @@ public sealed class SecurityServiceTests : IDisposable
     public async Task SudoMode_DefaultsToEnabledAndStopsApplyingOnceDisabled()
     {
         var fixture = await CreateProtectedFixtureAsync();
-        var settings = fixture.ConfigHandler.Data.SecuritySettings;
+        var settings = fixture.SecuritySettings;
         Assert.True(settings.SudoModeEnabled);
         Assert.Equal(20, settings.SudoModeDurationSeconds);
 
@@ -748,7 +746,7 @@ public sealed class SecurityServiceTests : IDisposable
     {
         var time = new TestTimeProvider(DateTimeOffset.UnixEpoch);
         var fixture = await CreateProtectedFixtureAsync(time);
-        var settings = fixture.ConfigHandler.Data.SecuritySettings;
+        var settings = fixture.SecuritySettings;
         settings.ProtectOpenSettings = true;
 
         var opened = await fixture.Service.AuthorizeSettingsAsync(
@@ -767,7 +765,7 @@ public sealed class SecurityServiceTests : IDisposable
     public async Task SettingsSudoMode_WhenTheSettingsWindowCloses_StopsImmediately()
     {
         var fixture = await CreateProtectedFixtureAsync();
-        fixture.ConfigHandler.Data.SecuritySettings.ProtectOpenSettings = true;
+        fixture.SecuritySettings.ProtectOpenSettings = true;
 
         await fixture.Service.AuthorizeSettingsAsync(
             () => Task.CompletedTask, () => Task.CompletedTask, TestContext.Current.CancellationToken);
@@ -782,7 +780,7 @@ public sealed class SecurityServiceTests : IDisposable
     public async Task SudoMode_KeepsTheGlobalAndSettingsWindowTimersIndependent()
     {
         var fixture = await CreateProtectedFixtureAsync();
-        var settings = fixture.ConfigHandler.Data.SecuritySettings;
+        var settings = fixture.SecuritySettings;
         settings.ProtectOpenSettings = true;
         settings.ProtectRollCallStart = true;
 
@@ -799,7 +797,7 @@ public sealed class SecurityServiceTests : IDisposable
     public async Task RequiresVerification_WhenTheClassTimeExceptionIsRequested_IgnoresSudoMode()
     {
         var fixture = await CreateProtectedFixtureAsync();
-        fixture.ConfigHandler.Data.SecuritySettings.ProtectRollCallStart = true;
+        fixture.SecuritySettings.ProtectRollCallStart = true;
 
         await fixture.Service.AuthorizeAsync(
             SecurityOperation.RollCallStart, () => Task.CompletedTask, TestContext.Current.CancellationToken);
@@ -818,7 +816,7 @@ public sealed class SecurityServiceTests : IDisposable
     public async Task UpdateSecuritySettingsAsync_WhenProtectionIsLoosened_RequiresAFreshPasswordUnderSudo()
     {
         var fixture = await CreateProtectedFixtureAsync();
-        var settings = fixture.ConfigHandler.Data.SecuritySettings;
+        var settings = fixture.SecuritySettings;
         settings.ProtectOpenSettings = true;
         settings.ProtectExit = true;
         settings.ProtectRollCallStart = true;
@@ -847,7 +845,7 @@ public sealed class SecurityServiceTests : IDisposable
     public async Task UpdateSecuritySettingsAsync_WhenProtectionIsTightened_ReusesTheSettingsSudoWindow()
     {
         var fixture = await CreateProtectedFixtureAsync();
-        var settings = fixture.ConfigHandler.Data.SecuritySettings;
+        var settings = fixture.SecuritySettings;
         settings.ProtectOpenSettings = true;
 
         await fixture.Service.AuthorizeSettingsAsync(
@@ -865,7 +863,7 @@ public sealed class SecurityServiceTests : IDisposable
     public async Task UpdateSecuritySettingsAsync_WhenTheSudoDurationIsLengthened_RequiresAFreshPassword()
     {
         var fixture = await CreateProtectedFixtureAsync();
-        var settings = fixture.ConfigHandler.Data.SecuritySettings;
+        var settings = fixture.SecuritySettings;
         settings.ProtectOpenSettings = true;
 
         await fixture.Service.AuthorizeSettingsAsync(
@@ -887,66 +885,44 @@ public sealed class SecurityServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task AuthorizeProtectionDowngradeAsync_WhenNothingIsProtected_AllowsWithoutVerification()
+    public async Task AuthorizeArchiveImportAsync_WhenNothingIsProtected_AllowsWithoutVerification()
     {
         var fixture = CreateFixture(Password("secret1"));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
 
-        var authorized = await fixture.Service.AuthorizeProtectionDowngradeAsync(
-            new SecuritySettingsConfig { SecurityEnabled = false },
-            TestContext.Current.CancellationToken);
+        var authorized = await fixture.Service.AuthorizeArchiveImportAsync(TestContext.Current.CancellationToken);
 
         Assert.True(authorized);
         Assert.Empty(fixture.Prompt.Requests);
     }
 
     [Fact]
-    public async Task AuthorizeProtectionDowngradeAsync_WhenTheCandidateKeepsProtection_AllowsWithoutVerification()
+    public async Task AuthorizeArchiveImportAsync_WhenProtectionIsActive_RequiresAFreshPasswordUnderSudo()
     {
         var fixture = await CreateProtectedFixtureAsync();
-        fixture.ConfigHandler.Data.SecuritySettings.ProtectExit = true;
-
-        var authorized = await fixture.Service.AuthorizeProtectionDowngradeAsync(
-            new SecuritySettingsConfig { SecurityEnabled = true, PasswordEnabled = true, ProtectExit = true },
-            TestContext.Current.CancellationToken);
-
-        Assert.True(authorized);
-        Assert.Empty(fixture.Prompt.Requests);
-    }
-
-    [Fact]
-    public async Task AuthorizeProtectionDowngradeAsync_WhenTheCandidateLoosensProtection_RequiresAFreshPassword()
-    {
-        var fixture = await CreateProtectedFixtureAsync();
-        var settings = fixture.ConfigHandler.Data.SecuritySettings;
-        settings.ProtectOpenSettings = true;
-        settings.ProtectExit = true;
+        fixture.SecuritySettings.ProtectOpenSettings = true;
+        fixture.SecuritySettings.ProtectExit = true;
 
         // 设置窗口的 Sudo 已经生效，但导入前的这次检查不允许被它覆盖
         await fixture.Service.AuthorizeSettingsAsync(
             () => Task.CompletedTask, () => Task.CompletedTask, TestContext.Current.CancellationToken);
         Assert.Single(fixture.Prompt.Requests);
 
-        var authorized = await fixture.Service.AuthorizeProtectionDowngradeAsync(
-            new SecuritySettingsConfig { SecurityEnabled = true, PasswordEnabled = true },
-            TestContext.Current.CancellationToken);
+        var authorized = await fixture.Service.AuthorizeArchiveImportAsync(TestContext.Current.CancellationToken);
 
         Assert.True(authorized);
         Assert.Equal(2, fixture.Prompt.Requests.Count);
     }
 
     [Fact]
-    public async Task AuthorizeProtectionDowngradeAsync_WhenThePasswordIsRejected_RefusesTheDowngrade()
+    public async Task AuthorizeArchiveImportAsync_WhenThePasswordIsRejected_RefusesTheImport()
     {
         var fixture = CreateFixture(Password("wrong"));
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        var settings = fixture.ConfigHandler.Data.SecuritySettings;
-        settings.SecurityEnabled = true;
-        settings.ProtectExit = true;
+        fixture.SecuritySettings.SecurityEnabled = true;
+        fixture.SecuritySettings.ProtectExit = true;
 
-        var authorized = await fixture.Service.AuthorizeProtectionDowngradeAsync(
-            new SecuritySettingsConfig { SecurityEnabled = true, PasswordEnabled = true },
-            TestContext.Current.CancellationToken);
+        var authorized = await fixture.Service.AuthorizeArchiveImportAsync(TestContext.Current.CancellationToken);
 
         Assert.False(authorized);
         Assert.Single(fixture.Prompt.Requests);
@@ -991,9 +967,15 @@ public sealed class SecurityServiceTests : IDisposable
             Path.Combine(credentialDirectory, "credentials.json"),
             CredentialKdfParameters.Test,
             writeFault is null ? null : writeFault.BeforeWrite);
+        // 安全设置与凭据文件同级：加密的独立文件，不再挂在 settings.json 上
+        var securitySettings = new SecuritySettingsStore(
+            Path.Combine(credentialDirectory, "settings.json"),
+            configHandler,
+            credentialStore,
+            NullLogger<SecuritySettingsStore>.Instance);
         var usbCatalog = new TestUsbDeviceCatalog(devices);
         var service = new SecurityService(
-            configHandler,
+            securitySettings,
             credentialStore,
             prompt,
             usbCatalog,
@@ -1002,6 +984,7 @@ public sealed class SecurityServiceTests : IDisposable
             timeProvider: timeProvider);
         return new SecurityFixture(
             service,
+            securitySettings,
             configHandler,
             configService,
             prompt,
@@ -1023,7 +1006,7 @@ public sealed class SecurityServiceTests : IDisposable
             ? CreateFixture(Password("secret1"))
             : CreateFixture(Password("secret1"), timeProvider);
         await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
-        fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true;
+        fixture.SecuritySettings.SecurityEnabled = true;
         return fixture;
     }
 
@@ -1056,13 +1039,14 @@ public sealed class SecurityServiceTests : IDisposable
         var secret = await fixture.Service.BeginTotpSetupAsync(null!, TestContext.Current.CancellationToken);
         Assert.NotNull(secret);
         Assert.True(await fixture.Service.ConfirmTotpAsync(secret, CreateTotpCode(secret), TestContext.Current.CancellationToken));
-        fixture.ConfigHandler.Data.SecuritySettings.SecurityEnabled = true;
-        fixture.ConfigHandler.Data.SecuritySettings.TotpEnabled = true;
+        fixture.SecuritySettings.SecurityEnabled = true;
+        fixture.SecuritySettings.TotpEnabled = true;
         return (fixture, secret);
     }
 
     private sealed record SecurityFixture(
         SecurityService Service,
+        SecuritySettingsStore Store,
         MainConfigHandler ConfigHandler,
         TestConfigService ConfigService,
         ScriptedPrompt Prompt,
@@ -1070,6 +1054,14 @@ public sealed class SecurityServiceTests : IDisposable
         SecurityCredentialStore CredentialStore,
         string CredentialDirectory)
     {
+        public SecuritySettingsConfig SecuritySettings => Store.Data;
+
+        /// <summary>另起一个 store 读同一份文件：用来验证改动真的落盘了，而不是只留在内存里。</summary>
+        public SecuritySettingsConfig ReadPersistedSettings() =>
+            new SecuritySettingsStore(
+                Path.Combine(CredentialDirectory, "settings.json"),
+                NullLogger<SecuritySettingsStore>.Instance).Data;
+
         public string CredentialsPath => Path.Combine(CredentialDirectory, "credentials.json");
 
         public string StandaloneTotpPath => Path.Combine(CredentialDirectory, "totp-standalone.json");

@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using SecRandom.Core.Enums.Configs;
-using SecRandom.Core.Models.SubConfigs;
 
 namespace SecRandom.Services.Security;
 
@@ -103,12 +102,12 @@ public interface ISecurityService
     bool TryUpdateSettings(Action update);
 
     /// <summary>
-    ///     导入/恢复一份会放宽防护的配置前的授权检查：当前有保护且有可验证的凭据时要求重新
-    ///     输入密码，任何 Sudo 状态都不生效；没有可放宽的保护时直接放行。
+    ///     导入或恢复一份备份前的授权检查。安全设置已经不随归档走（它们住在加密的
+    ///     <c>data/config/security/settings.json</c>，任何归档都够不到），所以这里不再比较候选配置，
+    ///     而是把"导入"本身当作受保护操作：当前有保护且有可验证凭据时要求重新输入一次密码，
+    ///     任何 Sudo 状态都不生效；没有保护时直接放行。
     /// </summary>
-    Task<bool> AuthorizeProtectionDowngradeAsync(
-        SecuritySettingsConfig candidate,
-        CancellationToken cancellationToken = default);
+    Task<bool> AuthorizeArchiveImportAsync(CancellationToken cancellationToken = default);
     bool IsSudoModeActive();
     bool IsGlobalSudoModeActive();
     void DeactivateGlobalSudoMode();

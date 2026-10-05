@@ -16,22 +16,28 @@ namespace SecRandom.Services.Security;
 internal sealed class SettingsIntegrityService
 {
     private readonly MainConfigHandler _configHandler;
+    private readonly SecuritySettingsStore _securitySettings;
     private readonly SecurityCredentialStore _credentialStore;
     private readonly ILogger<SettingsIntegrityService> _logger;
     private readonly string? _configFilePath;
 
     public SettingsIntegrityService(
         MainConfigHandler configHandler,
+        SecuritySettingsStore securitySettings,
         SecurityCredentialStore credentialStore,
         ILogger<SettingsIntegrityService> logger,
         string? configFilePath = null)
     {
         _configHandler = configHandler;
+        _securitySettings = securitySettings;
         _credentialStore = credentialStore;
         _logger = logger;
         _configFilePath = configFilePath;
         configHandler.Saved += OnConfigWritten;
         configHandler.Reloaded += OnConfigWritten;
+        // 防篡改开关自己住在加密的安全设置里：开关它的那一次写入不会再碰 settings.json，
+        // 所以这里必须同样订阅安全设置，否则"打开校验"之后永远不会有指纹记录。
+        securitySettings.Saved += OnConfigWritten;
     }
 
     private string ConfigFilePath => _configFilePath ?? _configHandler.Data.ConfigFilePath;
@@ -68,7 +74,7 @@ internal sealed class SettingsIntegrityService
             if (metadata.Password is null)
                 return;
 
-            if (!_configHandler.Data.SecuritySettings.SettingsIntegrityCheckEnabled)
+            if (!_securitySettings.Data.SettingsIntegrityCheckEnabled)
             {
                 ClearRecord(metadata);
                 return;

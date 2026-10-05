@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging.Abstractions;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Models;
+using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.Security;
 
@@ -16,7 +17,7 @@ public sealed class SettingsIntegrityServiceTests : IDisposable
     public void Save_WhenTheCheckIsEnabled_RecordsTheWholeFileFingerprint()
     {
         var fixture = CreateFixture();
-        fixture.Handler.Data.SecuritySettings.SettingsIntegrityCheckEnabled = true;
+        fixture.SecuritySettings.SettingsIntegrityCheckEnabled = true;
 
         fixture.Handler.Save();
 
@@ -31,7 +32,7 @@ public sealed class SettingsIntegrityServiceTests : IDisposable
     public void GetPendingMismatch_WhenTheFileChangesOutsideTheApp_ReportsTheRecordedTime()
     {
         var fixture = CreateFixture();
-        fixture.Handler.Data.SecuritySettings.SettingsIntegrityCheckEnabled = true;
+        fixture.SecuritySettings.SettingsIntegrityCheckEnabled = true;
         fixture.Handler.Save();
         var before = fixture.Store.LoadMetadata().SettingsIntegrity;
 
@@ -47,7 +48,7 @@ public sealed class SettingsIntegrityServiceTests : IDisposable
     public void AcceptCurrentFile_AfterAnExternalChange_AdoptsTheCurrentFile()
     {
         var fixture = CreateFixture();
-        fixture.Handler.Data.SecuritySettings.SettingsIntegrityCheckEnabled = true;
+        fixture.SecuritySettings.SettingsIntegrityCheckEnabled = true;
         fixture.Handler.Save();
         var original = fixture.Store.LoadMetadata().SettingsIntegrity;
         File.AppendAllText(fixture.ConfigPath, Environment.NewLine);
@@ -65,11 +66,11 @@ public sealed class SettingsIntegrityServiceTests : IDisposable
     public void Save_WhenTheCheckIsDisabled_ClearsTheFingerprint()
     {
         var fixture = CreateFixture();
-        fixture.Handler.Data.SecuritySettings.SettingsIntegrityCheckEnabled = true;
+        fixture.SecuritySettings.SettingsIntegrityCheckEnabled = true;
         fixture.Handler.Save();
         Assert.True(fixture.Service.IsEnabled);
 
-        fixture.Handler.Data.SecuritySettings.SettingsIntegrityCheckEnabled = false;
+        fixture.SecuritySettings.SettingsIntegrityCheckEnabled = false;
         fixture.Handler.Save();
 
         Assert.False(fixture.Service.IsEnabled);
@@ -81,7 +82,7 @@ public sealed class SettingsIntegrityServiceTests : IDisposable
     public void GetPendingMismatch_WhenTheFileIsMissing_ReportsAMismatchInsteadOfPassing()
     {
         var fixture = CreateFixture();
-        fixture.Handler.Data.SecuritySettings.SettingsIntegrityCheckEnabled = true;
+        fixture.SecuritySettings.SettingsIntegrityCheckEnabled = true;
         fixture.Handler.Save();
 
         File.Delete(fixture.ConfigPath);
@@ -93,9 +94,41 @@ public sealed class SettingsIntegrityServiceTests : IDisposable
     public void Save_WhenNoSecurityPasswordExists_KeepsTheCheckUnavailable()
     {
         var fixture = CreateFixture(createCredentials: false);
-        fixture.Handler.Data.SecuritySettings.SettingsIntegrityCheckEnabled = true;
+        fixture.SecuritySettings.SettingsIntegrityCheckEnabled = true;
 
         fixture.Handler.Save();
+
+        Assert.False(fixture.Service.IsEnabled);
+        Assert.Null(fixture.Store.LoadMetadata().SettingsIntegrity);
+    }
+
+    [Fact]
+    public void SaveSecuritySettings_WhenTheCheckIsEnabled_RecordsTheWholeFileFingerprint()
+    {
+        var fixture = CreateFixture();
+        fixture.Handler.Save();
+
+        // 开关自己住在加密的安全设置里：单独改它也要刷新指纹，否则开关打开后根本不会有记录，
+        // 启动时 GetPendingMismatch 永远返回 null，校验等于没开。
+        fixture.SecuritySettings.SettingsIntegrityCheckEnabled = true;
+        fixture.SettingsStore.Save();
+
+        var record = Assert.IsType<SettingsIntegrityRecord>(fixture.Store.LoadMetadata().SettingsIntegrity);
+        Assert.Equal(ComputeDigest(fixture.ConfigPath), record.Digest);
+        Assert.True(fixture.Service.IsEnabled);
+    }
+
+    [Fact]
+    public void SaveSecuritySettings_WhenTheCheckIsDisabled_ClearsTheFingerprint()
+    {
+        var fixture = CreateFixture();
+        fixture.Handler.Save();
+        fixture.SecuritySettings.SettingsIntegrityCheckEnabled = true;
+        fixture.SettingsStore.Save();
+        Assert.True(fixture.Service.IsEnabled);
+
+        fixture.SecuritySettings.SettingsIntegrityCheckEnabled = false;
+        fixture.SettingsStore.Save();
 
         Assert.False(fixture.Service.IsEnabled);
         Assert.Null(fixture.Store.LoadMetadata().SettingsIntegrity);
@@ -125,12 +158,18 @@ public sealed class SettingsIntegrityServiceTests : IDisposable
             store.Save(context);
         }
 
+        var securitySettings = new SecuritySettingsStore(
+            Path.Combine(directory, "security-settings", "settings.json"),
+            handler,
+            store,
+            NullLogger<SecuritySettingsStore>.Instance);
         var service = new SettingsIntegrityService(
             handler,
+            securitySettings,
             store,
             NullLogger<SettingsIntegrityService>.Instance,
             configPath);
-        return new SettingsIntegrityFixture(handler, store, service, configPath);
+        return new SettingsIntegrityFixture(handler, store, securitySettings, service, configPath);
     }
 
     private static string ComputeDigest(string path) =>
@@ -139,8 +178,12 @@ public sealed class SettingsIntegrityServiceTests : IDisposable
     private sealed record SettingsIntegrityFixture(
         MainConfigHandler Handler,
         SecurityCredentialStore Store,
+        SecuritySettingsStore SettingsStore,
         SettingsIntegrityService Service,
-        string ConfigPath);
+        string ConfigPath)
+    {
+        public SecuritySettingsConfig SecuritySettings => SettingsStore.Data;
+    }
 
     private sealed class FileBackedConfigService(string path) : ConfigServiceBase
     {

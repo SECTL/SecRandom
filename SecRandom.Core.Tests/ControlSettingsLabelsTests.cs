@@ -103,7 +103,7 @@ public sealed class ControlSettingsLabelsTests
             "roll_call.half_repeat",
             "floating_window.floating_window_opacity",
             "linkage.data_source",
-            "security.security_enabled"
+            "update.update_channel"
         ];
 
         var chinese = UnderCulture("zh-CN", () => samples.Select(path => Field(path).Label).ToArray());
