@@ -825,7 +825,7 @@ public sealed class MobileRemoteDrawTests : IDisposable
         Assert.Contains("1", viewModel.DrawnCountText, StringComparison.Ordinal);
     }
 
-    private static DeviceRow Row(string nodeId, bool isSelf = false) => new(
+    private static DeviceRow Row(string nodeId, bool isSelf = false, bool supportsConditions = false) => new(
         new GroupDto { GroupId = "g1", Name = "高一（1）班", Role = "admin" },
         new NodeDto
         {
@@ -833,7 +833,9 @@ public sealed class MobileRemoteDrawTests : IDisposable
             DisplayName = nodeId,
             Online = true,
             LocalRemoteAllowed = true,
-            Capabilities = [ControlCapabilities.DrawTrigger, ControlCapabilities.RosterRead]
+            Capabilities = supportsConditions
+                ? [ControlCapabilities.DrawTrigger, ControlCapabilities.RosterRead, ControlCapabilities.DrawTriggerConditions]
+                : [ControlCapabilities.DrawTrigger, ControlCapabilities.RosterRead]
         },
         isSelf);
 
@@ -945,6 +947,66 @@ public sealed class MobileRemoteDrawTests : IDisposable
             NullLogger<MobileRemoteDrawViewModel>.Instance);
 
         return (viewModel, client);
+    }
+
+    // ---------------------------------------------------------------- 抽奖条件集（draw.trigger.conditions）
+
+    [Fact]
+    public void 条件集_设备没声明能力时绝不发conditions()
+    {
+        var (viewModel, client) = CreateViewModel();
+        viewModel.SelectedDrawKind = LotteryKind;
+        viewModel.SelectedDevice = Row("n1", supportsConditions: false);
+
+        // 就算界面上残留了条件（换设备、旧状态），也**不许**把它们发出去：
+        // 老设备会把 conditions 当"没写"从而静默按整池抽，那正是红线。
+        viewModel.SelectedRecipientList = "高一（1）班";
+        viewModel.SelectedPrizeTags.Add(new PrizeTagOption("文具"));
+
+        Assert.False(viewModel.SupportsDrawConditions);
+        Assert.False(viewModel.ShowsLotteryConditions);
+        Assert.True(viewModel.ShowsLotteryConditionsUnsupported);
+
+        client.Responder = request => request.Capability switch
+        {
+            ControlCapabilities.RosterRead => RosterCommand(PrizesResponse("元旦抽奖")),
+            _ => DrawnCommand("lottery", "元旦抽奖", 1)
+        };
+        viewModel.LoadRosterCommand.Execute(null);
+        viewModel.DrawCommand.Execute(null);
+
+        var payload = client.LastSubmission.Payload!.Value;
+        Assert.False(payload.TryGetProperty("conditions", out _));
+    }
+
+    [Fact]
+    public void 条件集_声明了能力的抽奖设备会带上标签与发放名单()
+    {
+        var (viewModel, client) = CreateViewModel();
+        viewModel.SelectedDrawKind = LotteryKind;
+
+        client.Responder = request => request.Capability switch
+        {
+            ControlCapabilities.RosterRead => RosterCommand(PrizesResponse("元旦抽奖")),
+            _ => DrawnCommand("lottery", "元旦抽奖", 1)
+        };
+        viewModel.SelectedDevice = Row("n1", supportsConditions: true);
+        Assert.True(viewModel.ShowsLotteryConditions);
+
+        viewModel.LoadRosterCommand.Execute(null);
+        viewModel.SelectedPrizeTags.Add(new PrizeTagOption("一等奖"));
+        viewModel.SelectedRecipientList = "高一（1）班";
+        viewModel.DrawCommand.Execute(null);
+
+        var payload = client.LastSubmission.Payload!.Value;
+        var conditions = payload.GetProperty("conditions");
+        Assert.Equal(1, conditions.GetProperty("version").GetInt32());
+        Assert.Equal("一等奖", conditions.GetProperty("prize_tags")[0].GetString());
+        Assert.Equal("高一（1）班", conditions.GetProperty("student_list").GetString());
+
+        // 顶层 gender/group 对抽奖仍然**根本不发**（设备侧是"存在即拒绝"）。
+        Assert.False(payload.TryGetProperty("gender", out _));
+        Assert.False(payload.TryGetProperty("group", out _));
     }
 
     private static GroupDto Group(string groupId) => new() { GroupId = groupId, Name = groupId, Role = "admin" };

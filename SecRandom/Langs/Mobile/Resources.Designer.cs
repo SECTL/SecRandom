@@ -572,4 +572,10 @@ public class Resources
     public static string RD_Resetting => ResourceManager.GetString("RD_Resetting", resourceCulture)!;
     public static string RD_ResetDone => ResourceManager.GetString("RD_ResetDone", resourceCulture)!;
     public static string RD_ResetConfirm => ResourceManager.GetString("RD_ResetConfirm", resourceCulture)!;
+    public static string RD_Conditions => ResourceManager.GetString("RD_Conditions", resourceCulture)!;
+    public static string RD_PrizeTags => ResourceManager.GetString("RD_PrizeTags", resourceCulture)!;
+    public static string RD_PrizeTagsHint => ResourceManager.GetString("RD_PrizeTagsHint", resourceCulture)!;
+    public static string RD_Recipient => ResourceManager.GetString("RD_Recipient", resourceCulture)!;
+    public static string RD_RecipientNone => ResourceManager.GetString("RD_RecipientNone", resourceCulture)!;
+    public static string RD_ConditionsUnsupported => ResourceManager.GetString("RD_ConditionsUnsupported", resourceCulture)!;
 }

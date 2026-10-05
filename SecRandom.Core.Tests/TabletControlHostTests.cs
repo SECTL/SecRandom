@@ -422,6 +422,42 @@ public sealed class TabletControlHostTests
     }
 
     [Fact]
+    public void 条件UI_两个视图都按能力闸门显示且取值来自设备派生()
+    {
+        var desktop = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/MainPages/RemoteDrawPage.axaml"));
+        var phone = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/Mobile/MobileRemoteDrawPage.axaml"));
+
+        foreach (var xaml in new[] { desktop, phone })
+        {
+            // 条件区只在**设备声明了 draw.trigger.conditions**时显示；老设备显示一句说明，绝不假装能筛。
+            Assert.Contains("IsVisible=\"{Binding ViewModel.ShowsLotteryConditions}\"", xaml, StringComparison.Ordinal);
+            Assert.Contains("ViewModel.ShowsLotteryConditionsUnsupported", xaml, StringComparison.Ordinal);
+            Assert.Contains("Resources.RD_ConditionsUnsupported", xaml, StringComparison.Ordinal);
+
+            // 取值全部来自设备已读回来的数据，没有自由文本入口。
+            Assert.Contains("ItemsSource=\"{Binding ViewModel.PrizeTags}\"", xaml, StringComparison.Ordinal);
+            Assert.Contains("ItemsSource=\"{Binding ViewModel.RecipientListNames}\"", xaml, StringComparison.Ordinal);
+            Assert.Contains("ViewModel.RecipientGenderOptions", xaml, StringComparison.Ordinal);
+            Assert.Contains("ViewModel.RecipientGroupOptions", xaml, StringComparison.Ordinal);
+            Assert.DoesNotContain("Resources.RD_LotteryNoScope", xaml, StringComparison.Ordinal);
+        }
+
+        // 三语齐全（条件区标题、标签、说明、发放对象、不指定、老设备说明）。
+        foreach (var resource in new[] { "Resources.resx", "Resources.en-US.resx", "Resources.ja-JP.resx" })
+        {
+            var text = File.ReadAllText(GetRepositoryPath(Path.Combine("SecRandom/Langs/Mobile", resource)));
+            foreach (var key in new[]
+                     {
+                         "RD_Conditions", "RD_PrizeTags", "RD_PrizeTagsHint",
+                         "RD_Recipient", "RD_RecipientNone", "RD_ConditionsUnsupported"
+                     })
+            {
+                Assert.Contains($"name=\"{key}\"", text, StringComparison.Ordinal);
+            }
+        }
+    }
+
+    [Fact]
     public void 桌面版式_结果区只绑回执派生的成员()
     {
         var xaml = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/MainPages/RemoteDrawPage.axaml"));

@@ -749,4 +749,10 @@
     <data name="RD_NoResult_D" xml:space="preserve"><value>送信すると、端末の応答に含まれる当選者や景品がここに表示されます</value></data>
     <data name="RD_SelfBadge" xml:space="preserve"><value>この端末</value></data>
     <data name="RD_SelfSelectedHint" xml:space="preserve"><value>これはこの端末です。この端末で点呼や抽選を行うには、メイン画面の「点呼」「抽選」ページを使ってください</value></data>
+    <data name="RD_Conditions" xml:space="preserve"><value>抽選の条件</value></data>
+    <data name="RD_PrizeTags" xml:space="preserve"><value>景品タグ</value></data>
+    <data name="RD_PrizeTagsHint" xml:space="preserve"><value>これらのタグが付いた景品だけを抽選します。複数選択でき、未選択ならプール全体から抽選します</value></data>
+    <data name="RD_Recipient" xml:space="preserve"><value>配布先</value></data>
+    <data name="RD_RecipientNone" xml:space="preserve"><value>指定しない</value></data>
+    <data name="RD_ConditionsUnsupported" xml:space="preserve"><value>この端末は条件付き抽選に対応していないため、プール全体から抽選します</value></data>
 </root>

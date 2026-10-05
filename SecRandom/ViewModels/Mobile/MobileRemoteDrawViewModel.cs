@@ -92,6 +92,20 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
 
     public ObservableCollection<RosterOption> Rosters { get; } = [];
 
+    /// <summary>已读奖池里出现过的标签：抽奖条件里 <c>prize_tags</c> 的**唯一合法取值域**。</summary>
+    public ObservableCollection<PrizeTagOption> PrizeTags { get; } = [];
+
+    /// <summary>已选标签（多选控件直接绑这个集合）。</summary>
+    public ObservableCollection<PrizeTagOption> SelectedPrizeTags { get; } = [];
+
+    /// <summary>发放对象名单（教室机上的学生名单名）：奖品要发给这些名单里的学生。</summary>
+    public ObservableCollection<string> RecipientListNames { get; } = [];
+
+    /// <summary>发放对象的性别/分组范围：从所选发放名单的成员派生，不是写死的"男/女"。</summary>
+    public ObservableCollection<string> RecipientGenderOptions { get; } = [];
+
+    public ObservableCollection<string> RecipientGroupOptions { get; } = [];
+
     public ObservableCollection<string> GenderOptions { get; } = [];
 
     public ObservableCollection<string> GroupOptions { get; } = [];
@@ -136,6 +150,36 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     [ObservableProperty] private string? _selectedGroupScope;
 
     [ObservableProperty] private int _selectedCount = 1;
+
+    /// <summary>发放对象名单（空＝不指定：奖品整池抽，不发给谁）。</summary>
+    [ObservableProperty] private string? _selectedRecipientList;
+
+    [ObservableProperty] private string? _selectedRecipientGender;
+
+    [ObservableProperty] private string? _selectedRecipientGroup;
+
+    /// <summary>
+    ///     这台设备声明了 <c>draw.trigger.conditions</c> 吗。
+    /// </summary>
+    /// <remarks>
+    ///     这是**发送条件集的唯一闸门**：本次改动之前的设备不认识 <c>conditions</c>，
+    ///     会把它当"没写"从而静默按整池抽——所以"设备没声明就绝不发"，
+    ///     宁可让界面不显示条件（并说清为什么），也不制造"设了条件其实没生效"。
+    /// </remarks>
+    public bool SupportsDrawConditions =>
+        SelectedDevice?.Node.Supports(ControlCapabilities.DrawTriggerConditions) == true;
+
+    /// <summary>抽奖档下的条件区是否可见：既要是抽奖，设备也要声明支持。</summary>
+    public bool ShowsLotteryConditions => IsLotteryTarget && SupportsDrawConditions;
+
+    /// <summary>能不能选发放对象（只有声明了条件的抽奖设备才有这一档）。</summary>
+    public bool CanUseRecipientScope => ShowsLotteryConditions;
+
+    /// <summary>抽奖设备不支持条件时给一句解释，而不是把控件藏得让人以为功能没了。</summary>
+    public bool ShowsLotteryConditionsUnsupported => IsLotteryTarget && !SupportsDrawConditions;
+
+    /// <summary>已经选定发放对象名单：只有这时性别/分组范围才有可筛的东西。</summary>
+    public bool HasRecipientScope => !string.IsNullOrWhiteSpace(SelectedRecipientList);
 
     /// <summary>"不限"选项的显示文本。性别与分组列表的第一项永远是它。</summary>
     public static string AnyOption => LR.RD_Any;
@@ -394,6 +438,14 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
             }
 
             ApplyRoster(finished);
+
+            // 抽奖且设备声明了条件能力时，再读一次**学生名单**：发放对象是抽奖条件的第二个维度
+            // （奖品没有性别/分组，但"发给哪个范围的学生"有）。读不到只是这一档暂时空着，不阻塞整页。
+            if (IsLotteryTarget && SupportsDrawConditions && device is not null)
+            {
+                ApplyRecipients(await RequestRosterAsync(device, ControlRosterReadRequest.Students)
+                    .ConfigureAwait(true));
+            }
         }
         catch (Exception exception)
         {
@@ -413,7 +465,12 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     ///     <c>roster_kind</c> 跟着当前的抽取类型走：点名读成员名单，抽奖读奖池（奖项与奖品）。
     ///     两条通道的设备侧形状完全一样，区别只在读的是哪一批文件，因此这里共用一次请求。
     /// </remarks>
-    private async Task<NodeCommandDto> RequestRosterAsync(DeviceRow device)
+    /// <param name="device">目标设备。</param>
+    /// <param name="rosterKind">
+    ///     要读哪一批：缺省跟着抽取类型走（点名读成员、抽奖读奖池）；抽奖还会额外用 <c>students</c> 读一次
+    ///     发放对象名单。
+    /// </param>
+    private async Task<NodeCommandDto> RequestRosterAsync(DeviceRow device, string? rosterKind = null)
     {
         var command = await _client.SubmitCommandAsync(
             device.GroupId,
@@ -425,9 +482,9 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
                 Payload = JsonSerializer.SerializeToElement(
                     new RosterReadPayload
                     {
-                        RosterKind = IsLotteryTarget
+                        RosterKind = rosterKind ?? (IsLotteryTarget
                             ? ControlRosterReadRequest.Prizes
-                            : ControlRosterReadRequest.Students
+                            : ControlRosterReadRequest.Students)
                     },
                     ControlProtocolJson.Options)
             }).ConfigureAwait(true);
@@ -468,7 +525,9 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
                     ListName = roster.Name,
                     Count = Math.Clamp(SelectedCount, 1, Math.Max(1, roster.MemberCount)),
                     Gender = IsLotteryTarget ? null : ScopeOf(SelectedGender),
-                    Group = IsLotteryTarget ? null : ScopeOf(SelectedGroupScope)
+                    Group = IsLotteryTarget ? null : ScopeOf(SelectedGroupScope),
+                    // 抽奖条件：设备没声明 draw.trigger.conditions 时这里是 null（绝不发出去被静默忽略）。
+                    Conditions = IsLotteryTarget ? BuildConditions() : null
                 },
                 ControlProtocolJson.Options);
 
@@ -837,6 +896,10 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
 
         SelectedRoster = Rosters.FirstOrDefault(option => option.IsDefault) ?? Rosters.FirstOrDefault();
 
+        // 抽奖档：标签取值域只能从**已读奖池**派生（与设备侧的校验同一批值）。
+        if (IsLotteryTarget)
+            RefreshPrizeTags();
+
         if (SelectedRoster is null)
         {
             StatusText = LR.RD_NoRoster;
@@ -846,6 +909,145 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         StatusText = SelectedRoster.Truncated
             ? string.Format(LR.RD_Truncated, SelectedRoster.MemberCount)
             : string.Format(LR.RD_Total, SelectedRoster.MemberCount);
+    }
+
+    /// <summary>
+    ///     用**已读奖池的成员标签**重建标签选项。
+    /// </summary>
+    /// <remarks>
+    ///     与设备侧 <c>ControlDrawConditions.PrizeTagOptions</c> 同一条归一化
+    ///     （复用 <see cref="ControlRosterMemberPayload.NormalizeTags" /> 的规则）：两边用同一批值，
+    ///     才不会出现"手机里能选、发过去说不存在"。已经在选的标签如果消失了（奖池换了/标签被删了）也要去掉，
+    ///     否则会把一个过期的取值继续发出去。
+    /// </remarks>
+    private void RefreshPrizeTags()
+    {
+        var available = (SelectedRoster?.Members ?? [])
+            .SelectMany(member => member.Tags ?? [])
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .Select(tag => new PrizeTagOption(tag))
+            .ToList();
+
+        PrizeTags.Clear();
+        foreach (var option in available)
+            PrizeTags.Add(option);
+
+        foreach (var stale in SelectedPrizeTags
+                     .Where(selected => available.All(option => !string.Equals(option.Tag, selected.Tag, StringComparison.Ordinal)))
+                     .ToList())
+        {
+            SelectedPrizeTags.Remove(stale);
+        }
+    }
+
+    /// <summary>记住每个发放对象名单的成员：选名单时要据此派生性别/分组范围。</summary>
+    private readonly Dictionary<string, IReadOnlyList<ControlRosterMemberPayload>> _recipientMembers =
+        new(StringComparer.Ordinal);
+
+    /// <summary>把"发放对象名单"的读取结果填进界面；失败不影响整页（只是这一档暂时没有可选名单）。</summary>
+    private void ApplyRecipients(NodeCommandDto command)
+    {
+        RecipientListNames.Clear();
+        _recipientMembers.Clear();
+
+        if (command.ResultPayload is not { } payload)
+            return;
+
+        ControlRosterReadResponse? response;
+        try
+        {
+            response = payload.Deserialize<ControlRosterReadResponse>(ControlProtocolJson.Options);
+        }
+        catch (JsonException exception)
+        {
+            _logger.LogWarning(exception, "教室机返回的学生名单无法解析。");
+            return;
+        }
+
+        foreach (var list in response?.Lists ?? [])
+        {
+            if (string.IsNullOrWhiteSpace(list.Name))
+                continue;
+
+            RecipientListNames.Add(list.Name);
+            _recipientMembers[list.Name] = list.Members;
+        }
+
+        // 之前选的名单如果在这台机器上不存在了，就当没选（而不是发一个必然被拒的名字）。
+        if (SelectedRecipientList is { } selected
+            && !RecipientListNames.Contains(selected, StringComparer.Ordinal))
+        {
+            SelectedRecipientList = null;
+        }
+    }
+
+    partial void OnSelectedRecipientListChanged(string? value)
+    {
+        RecipientGenderOptions.Clear();
+        RecipientGroupOptions.Clear();
+        SelectedRecipientGender = null;
+        SelectedRecipientGroup = null;
+        OnPropertyChanged(nameof(HasRecipientScope));
+
+        if (value is null || !_recipientMembers.TryGetValue(value, out var members))
+            return;
+
+        foreach (var gender in members
+                     .Select(member => member.Gender)
+                     .Where(static gender => !string.IsNullOrWhiteSpace(gender))
+                     .Select(static gender => gender!)
+                     .Distinct(StringComparer.Ordinal)
+                     .Order(StringComparer.Ordinal))
+        {
+            RecipientGenderOptions.Add(gender);
+        }
+
+        foreach (var group in members
+                     .Select(member => member.Group)
+                     .Where(static group => !string.IsNullOrWhiteSpace(group))
+                     .Select(static group => group!)
+                     .Distinct(StringComparer.Ordinal)
+                     .Order(StringComparer.Ordinal))
+        {
+            RecipientGroupOptions.Add(group);
+        }
+    }
+
+    /// <summary>
+    ///     按当前选择拼出 <c>conditions</c>；**设备没声明能力时一律返回 null**。
+    /// </summary>
+    /// <remarks>
+    ///     没有条件时不发这个子对象（不是发一个空对象）：空对象在老服务端看来同样是未知字段，
+    ///     而"没写"永远是最兼容的形态。
+    /// </remarks>
+    private DrawConditionsPayload? BuildConditions()
+    {
+        if (IsLotteryTarget is false || SupportsDrawConditions is false)
+            return null;
+
+        var tags = SelectedPrizeTags
+            .Select(option => option.Tag)
+            .Where(static tag => !string.IsNullOrWhiteSpace(tag))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        var studentList = string.IsNullOrWhiteSpace(SelectedRecipientList) ? null : SelectedRecipientList;
+        var gender = studentList is null ? null : ScopeOf(SelectedRecipientGender);
+        var group = studentList is null ? null : ScopeOf(SelectedRecipientGroup);
+
+        // 范围是在选定了发放名单之后才有意义的；没有名单就没有条件。
+        if (tags.Length == 0 && studentList is null)
+            return null;
+
+        return new DrawConditionsPayload
+        {
+            Version = 1,
+            PrizeTags = tags.Length == 0 ? null : tags,
+            StudentList = studentList,
+            Gender = gender,
+            Group = group
+        };
     }
 
     partial void OnSelectedDeviceChanged(DeviceRow? value)
@@ -861,6 +1063,12 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         {
             Rosters.Clear();
             SelectedRoster = null;
+            // 条件也属于"上一台机器"：标签、发放名单、范围全都不能跟着换设备留下来。
+            PrizeTags.Clear();
+            SelectedPrizeTags.Clear();
+            RecipientListNames.Clear();
+            _recipientMembers.Clear();
+            SelectedRecipientList = null;
             DrawnMembers.Clear();
             StatusText = value.UnavailableReason ?? string.Empty;
         }
@@ -985,6 +1193,10 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         OnPropertyChanged(nameof(CanReset));
         OnPropertyChanged(nameof(EmptyStateText));
         OnPropertyChanged(nameof(IsLotteryTarget));
+        OnPropertyChanged(nameof(SupportsDrawConditions));
+        OnPropertyChanged(nameof(ShowsLotteryConditions));
+        OnPropertyChanged(nameof(CanUseRecipientScope));
+        OnPropertyChanged(nameof(ShowsLotteryConditionsUnsupported));
         OnPropertyChanged(nameof(ListFieldLabel));
         OnPropertyChanged(nameof(IsScopeSelectorVisible));
         OnPropertyChanged(nameof(IsLotteryScopeHintVisible));
@@ -1014,6 +1226,40 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         [JsonPropertyName("list_name")] public required string ListName { get; init; }
 
         [JsonPropertyName("count")] public int Count { get; init; }
+
+        [JsonPropertyName("gender")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Gender { get; init; }
+
+        [JsonPropertyName("group")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Group { get; init; }
+
+        /// <summary>
+        ///     抽奖条件集（<c>draw.trigger.conditions</c> v1）。**只在设备声明了该能力时才写**。
+        /// </summary>
+        /// <remarks>
+        ///     这个字段的存在与否是协议兼容的关键：老设备不认识它，会按"没写"静默整池抽。
+        ///     因此发送侧的能力闸门不是可选项（见 <see cref="SupportsDrawConditions" />）。
+        /// </remarks>
+        [JsonPropertyName("conditions")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public DrawConditionsPayload? Conditions { get; init; }
+    }
+
+    /// <summary><c>conditions</c> 子对象（字段名与设备侧解析的一一对应）。</summary>
+    private sealed record DrawConditionsPayload
+    {
+        [JsonPropertyName("version")] public int Version { get; init; } = 1;
+
+        /// <summary>标签筛选（任一命中）；空＝不筛，因此不写。</summary>
+        [JsonPropertyName("prize_tags")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public IReadOnlyList<string>? PrizeTags { get; init; }
+
+        [JsonPropertyName("student_list")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? StudentList { get; init; }
 
         [JsonPropertyName("gender")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

@@ -749,4 +749,10 @@ Clearing history before fair drawing helps keep the new member’s chance from b
     <data name="RD_NoResult_D" xml:space="preserve"><value>Once a draw is sent, the members or prizes in the device's receipt appear here</value></data>
     <data name="RD_SelfBadge" xml:space="preserve"><value>This device</value></data>
     <data name="RD_SelfSelectedHint" xml:space="preserve"><value>This is the local device; to draw on it, use the Roll call and Lottery pages of the main view</value></data>
+    <data name="RD_Conditions" xml:space="preserve"><value>Draw conditions</value></data>
+    <data name="RD_PrizeTags" xml:space="preserve"><value>Prize tags</value></data>
+    <data name="RD_PrizeTagsHint" xml:space="preserve"><value>Only prizes carrying these tags are drawn; select several, or none for the whole pool</value></data>
+    <data name="RD_Recipient" xml:space="preserve"><value>Recipients</value></data>
+    <data name="RD_RecipientNone" xml:space="preserve"><value>Not specified</value></data>
+    <data name="RD_ConditionsUnsupported" xml:space="preserve"><value>This device does not support conditional draws, so the whole pool is used</value></data>
 </root>
