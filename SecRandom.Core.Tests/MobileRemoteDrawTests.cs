@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using SecRandom.Services.ControlNode;
 using SecRandom.Services.ControlPlane;
 using SecRandom.Shared.Models.ControlNode;
 using SecRandom.Shared.Models.ControlPlane;
@@ -203,7 +204,8 @@ public sealed class MobileRemoteDrawTests : IDisposable
         var message = ControlPlaneMessages.DescribeCommand(FailedCommand(code));
 
         Assert.False(string.IsNullOrWhiteSpace(message));
-        Assert.DoesNotContain(code, message, StringComparison.Ordinal);
+        // 人话 + **原始错误码**：排查时只知道"设备拒绝了"是没法定位的。
+        Assert.Contains(code, message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -214,8 +216,9 @@ public sealed class MobileRemoteDrawTests : IDisposable
         var verification = ControlPlaneMessages.DescribeCommand(
             FailedCommand("draw_denied", new { reason = "local_verification_required" }));
 
-        Assert.Equal(LR.RD_ClassTime, classTime);
-        Assert.Equal(LR.RD_Denied, verification);
+        Assert.StartsWith(LR.RD_ClassTime, classTime, StringComparison.Ordinal);
+        Assert.StartsWith(LR.RD_Denied, verification, StringComparison.Ordinal);
+        Assert.NotEqual(classTime, verification);
     }
 
     [Theory]
@@ -223,7 +226,9 @@ public sealed class MobileRemoteDrawTests : IDisposable
     [InlineData("invalid_value:list_name:not_found", null, null, "RD_ListNotFound", null)]
     [InlineData("invalid_value:gender:not_in_list", null, null, "RD_NotInList", null)]
     [InlineData("invalid_value:count:out_of_range", null, null, "RD_OutOfRange", null)]
-    [InlineData("invalid_value:list_name:no_candidate", null, null, "RD_NoCandidate", null)]
+    // 名单整体没有可抽的人 ≠ 条件筛完没有人：两句文案必须不同。
+    [InlineData("invalid_value:list_name:no_candidate", null, null, "RD_NoRosterCandidate", null)]
+    [InlineData("invalid_value:gender:no_matching_member", null, null, "RD_NoCandidate", null)]
     // 服务端形状：码与字段分开给
     [InlineData("invalid_value", "count", "type_mismatch", "RD_InvalidValueField", "count")]
     [InlineData("invalid_value", "gender", "not_in_list", "RD_NotInList", null)]
@@ -235,9 +240,11 @@ public sealed class MobileRemoteDrawTests : IDisposable
         string? formatField)
     {
         var message = ControlPlaneMessages.DescribeCommand(FailedCommand(code, field, why));
-        var expected = Expected(expectedKey);
+        var expected = formatField is null ? Expected(expectedKey) : string.Format(Expected(expectedKey), formatField);
 
-        Assert.Equal(formatField is null ? expected : string.Format(expected, formatField), message);
+        Assert.StartsWith(expected, message, StringComparison.Ordinal);
+        // 原始错误码一并显示。
+        Assert.Contains(code, message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -383,6 +390,93 @@ public sealed class MobileRemoteDrawTests : IDisposable
         Assert.Equal(LR.RD_Unauthorized, unauthorized);
     }
 
+    // ---------------------------------------------------------------- 抽取结果文案（线上回归）
+
+    [Fact]
+    public void 抽取成功时必须显示抽到谁而不是沿用上一次的失败文案()
+    {
+        var command = new NodeCommandDto
+        {
+            CommandId = "cmd_1",
+            Status = "completed",
+            ResultDetail = JsonDocument.Parse(
+                """{ "target": "roll_call", "list_name": "测试 1", "count": 1, "drawn": [ { "id": "12", "name": "学生12" } ] }""")
+                .RootElement.Clone()
+        };
+
+        var text = ControlPlaneMessages.DescribeDrawResult(command);
+
+        Assert.Equal(string.Format(LR.RD_DrawnCount, 1), text);
+        Assert.DoesNotContain(LR.RD_NoCandidate, text, StringComparison.Ordinal);
+        Assert.DoesNotContain(LR.RD_Failed, text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void 抽取成功但回执没有成员时说的是回执问题而不是没人可抽()
+    {
+        var command = new NodeCommandDto
+        {
+            CommandId = "cmd_1",
+            Status = "completed",
+            ResultDetail = JsonDocument.Parse("""{ "target": "roll_call", "count": 0 }""").RootElement.Clone()
+        };
+
+        var text = ControlPlaneMessages.DescribeDrawResult(command);
+
+        // 只有设备**明确**说没人时才可以显示"没有符合条件的人"。
+        Assert.Equal(LR.RD_ResultUnreadable, text);
+        Assert.DoesNotContain(LR.RD_NoCandidate, text, StringComparison.Ordinal);
+        Assert.DoesNotContain(LR.RD_NoRosterCandidate, text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void 设备说的没人可抽要带上原始错误码并且两种没人分开()
+    {
+        var noMatching = ControlPlaneMessages.DescribeDrawResult(
+            FailedCommand("invalid_value:gender:no_matching_member"));
+        var noCandidate = ControlPlaneMessages.DescribeDrawResult(
+            FailedCommand("invalid_value:list_name:no_candidate"));
+
+        Assert.Contains(LR.RD_NoCandidate, noMatching, StringComparison.Ordinal);
+        Assert.Contains("invalid_value:gender:no_matching_member", noMatching, StringComparison.Ordinal);
+
+        // "名单里没有可抽的人"与"条件筛完没有人"是两件事，不能共用一句文案。
+        Assert.Contains(LR.RD_NoRosterCandidate, noCandidate, StringComparison.Ordinal);
+        Assert.NotEqual(LR.RD_NoCandidate, LR.RD_NoRosterCandidate);
+    }
+
+    // ---------------------------------------------------------------- 置前决策
+
+    [Theory]
+    // 隐藏 → 显示；最小化 → 还原；已可见 → 只激活。
+    [InlineData(false, false, false, true)]
+    [InlineData(true, true, true, false)]
+    [InlineData(true, false, false, false)]
+    public void 远程抽取提示窗口要还原显示并激活(bool isVisible, bool isMinimized, bool restore, bool show)
+    {
+        var plan = RemoteDrawWindowPlan.Resolve(isVisible, isMinimized);
+
+        Assert.Equal(restore, plan.Restore);
+        Assert.Equal(show, plan.Show);
+        Assert.True(plan.Activate);
+    }
+
+    [Fact]
+    public void 接线_抽取页不再重复显示标题()
+    {
+        var page = File.ReadAllText(GetRepositoryPath("SecRandom/Views/Mobile/MobileRemoteDrawPage.axaml"));
+
+        // 页面内那个粗体大标题已被删掉：标题只由导航栏出（MobileRootView.Header）。
+        Assert.DoesNotContain("langs:Resources.P_RemoteDraw", page, StringComparison.Ordinal);
+        // 说明行保留，并且带一点上边距，免得删掉标题后顶着导航栏。
+        Assert.Contains("langs:Resources.RD_Hint", page, StringComparison.Ordinal);
+        Assert.Contains("Margin=\"0 4 0 0\"", page, StringComparison.Ordinal);
+
+        // 导航栏仍然用 P_RemoteDraw，因此这个键不能删（N_RemoteDraw 是底部入口的标签）。
+        var rootView = File.ReadAllText(GetRepositoryPath("SecRandom/Views/Mobile/MobileRootView.cs"));
+        Assert.Contains("LR.P_RemoteDraw", rootView, StringComparison.Ordinal);
+    }
+
     // ---------------------------------------------------------------- 三语覆盖
 
     [Fact]
@@ -429,6 +523,7 @@ public sealed class MobileRemoteDrawTests : IDisposable
         "RD_NotInList" => LR.RD_NotInList,
         "RD_OutOfRange" => LR.RD_OutOfRange,
         "RD_NoCandidate" => LR.RD_NoCandidate,
+        "RD_NoRosterCandidate" => LR.RD_NoRosterCandidate,
         "RD_InvalidValueField" => LR.RD_InvalidValueField,
         _ => throw new ArgumentOutOfRangeException(nameof(key), key, null)
     };

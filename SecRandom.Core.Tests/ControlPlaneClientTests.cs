@@ -145,6 +145,87 @@ public sealed class ControlPlaneClientTests
         Assert.Equal(ControlPlaneErrorKind.Unauthorized, exception.Kind);
     }
 
+    // ---------------------------------------------------------------- 抽取回执（线上真实形状）
+
+    /// <summary>设备侧 <c>command.result.detail</c> 的真实形状（点名 1 人，名单「测试 1」）。</summary>
+    private const string ProductionDrawResultDetail =
+        """{ "target": "roll_call", "list_name": "测试 1", "count": 1, "drawn": [ { "id": "12", "name": "学生12" } ] }""";
+
+    [Fact]
+    public async Task 真实抽取回执能解析出抽到的人()
+    {
+        // 线上"点名明明抽成功了、手机却说没有符合条件的人"，第一个要排除的就是回执解析。
+        var sender = new FakeSender().Respond(HttpStatusCode.OK, $$"""
+            { "command_id": "cmd_1", "capability": "draw.trigger", "status": "completed",
+              "result_detail": {{ProductionDrawResultDetail}} }
+            """);
+        var client = CreateClient(sender, out _);
+
+        var command = await client.GetCommandAsync("g1", "cmd_1");
+
+        Assert.True(command.IsSucceeded);
+        var member = Assert.Single(command.DrawnMembers());
+        Assert.Equal("12", member.Id);
+        Assert.Equal("学生12", member.Name);
+        Assert.Equal("学生12", member.DisplayLabel);
+        Assert.Equal("测试 1", command.ResultListName);
+        Assert.Equal(1, command.ResultCount);
+    }
+
+    [Fact]
+    public async Task 回执里缺id或姓名时该键不写也能解析()
+    {
+        var sender = new FakeSender().Respond(HttpStatusCode.OK, """
+            { "command_id": "cmd_1", "status": "completed",
+              "result_detail": { "target": "roll_call", "count": 2, "drawn": [ { "name": "学生12" }, { "id": "13" } ] } }
+            """);
+        var client = CreateClient(sender, out _);
+
+        var drawn = (await client.GetCommandAsync("g1", "cmd_1")).DrawnMembers();
+
+        Assert.Equal(2, drawn.Count);
+        Assert.Null(drawn[0].Id);
+        Assert.Equal("学生12", drawn[0].DisplayLabel);
+        Assert.Equal("13", drawn[1].DisplayLabel);
+    }
+
+    [Fact]
+    public async Task 回执被当字符串存或在别的字段里时仍然能解析()
+    {
+        // 服务端把 detail 落成 JSON 文本、或落在 result_payload 里，都不该让"抽到了谁"消失。
+        var escaped = ProductionDrawResultDetail.Replace("\"", "\\\"");
+        var asString = new FakeSender().Respond(HttpStatusCode.OK, $$"""
+            { "command_id": "cmd_1", "status": "completed", "result_detail": "{{escaped}}" }
+            """);
+        var payloadInstead = new FakeSender().Respond(HttpStatusCode.OK, $$"""
+            { "command_id": "cmd_1", "status": "completed", "result_payload": {{ProductionDrawResultDetail}} }
+            """);
+
+        var fromString = (await CreateClient(asString, out _).GetCommandAsync("g1", "cmd_1")).DrawnMembers();
+        var fromPayload = (await CreateClient(payloadInstead, out _).GetCommandAsync("g1", "cmd_1")).DrawnMembers();
+
+        Assert.Equal("学生12", Assert.Single(fromString).Name);
+        Assert.Equal("学生12", Assert.Single(fromPayload).Name);
+    }
+
+    [Fact]
+    public async Task 成功但没有成员的回执不会假装成没有符合条件的理由()
+    {
+        var sender = new FakeSender().Respond(HttpStatusCode.OK, """
+            { "command_id": "cmd_1", "status": "completed", "result_detail": { "target": "roll_call", "count": 0 } }
+            """);
+        var client = CreateClient(sender, out _);
+
+        var command = await client.GetCommandAsync("g1", "cmd_1");
+
+        Assert.True(command.IsSucceeded);
+        Assert.Empty(command.DrawnMembers());
+        // 这是"客户端没读懂回执"，不是"没人可抽"——两种文案由 DescribeDrawResult 分开。
+        Assert.Equal(
+            SecRandom.Langs.Mobile.Resources.RD_ResultUnreadable,
+            ControlPlaneMessages.DescribeDrawResult(command));
+    }
+
     // ---------------------------------------------------------------- 解析
 
     [Fact]

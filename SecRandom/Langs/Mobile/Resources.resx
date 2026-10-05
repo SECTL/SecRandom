@@ -730,6 +730,8 @@
     <data name="RD_GroupsUnavailable" xml:space="preserve"><value>有 {0} 个组没读到，请重试</value></data>
     <data name="MA_SignIn" xml:space="preserve"><value>登录思拓创联账号</value></data>
     <data name="MA_SignOut" xml:space="preserve"><value>退出登录</value></data>
-    <data name="MA_SignedOutHint" xml:space="preserve"><value>未登录。登录后可以云备份，并在"抽取"页远程控制教室设备</value></data>
+    <data name="MA_SignedOutHint" xml:space="preserve"><value>未登录</value></data>
     <data name="MA_Reauthorize" xml:space="preserve"><value>登录状态已失效，请重新登录</value></data>
+    <data name="RD_ResultUnreadable" xml:space="preserve"><value>设备已执行，但回执里没有可显示的成员</value></data>
+    <data name="RD_NoRosterCandidate" xml:space="preserve"><value>这个名单里没有可抽取的成员</value></data>
 </root>

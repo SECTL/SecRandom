@@ -86,23 +86,53 @@ public static class ControlPlaneMessages
             why = parts.ElementAtOrDefault(1);
         }
 
-        if (why is not null || field is not null)
-            return DescribeInvalidValue(field, why);
+        var friendly = why is not null || field is not null
+            ? DescribeInvalidValue(field, why)
+            : code switch
+            {
+                "local_remote_disabled" => LR.RD_LocalRemoteDisabled,
+                "draw_locked" => LR.RD_DrawLocked,
+                "busy" => LR.RD_Busy,
+                "capability_unsupported" => LR.RD_NoCapability,
+                "expired" => LR.RD_Expired,
+                "rate_limited" => LR.RD_RateLimited,
+                "execution_failed" => LR.RD_Failed,
+                "draw_denied" => string.Equals(command.DetailReason, "blocked_by_class_time", StringComparison.Ordinal)
+                    ? LR.RD_ClassTime
+                    : LR.RD_Denied,
+                _ => string.Format(LR.RD_Error, code)
+            };
 
-        return code switch
-        {
-            "local_remote_disabled" => LR.RD_LocalRemoteDisabled,
-            "draw_locked" => LR.RD_DrawLocked,
-            "busy" => LR.RD_Busy,
-            "capability_unsupported" => LR.RD_NoCapability,
-            "expired" => LR.RD_Expired,
-            "rate_limited" => LR.RD_RateLimited,
-            "execution_failed" => LR.RD_Failed,
-            "draw_denied" => string.Equals(command.DetailReason, "blocked_by_class_time", StringComparison.Ordinal)
-                ? LR.RD_ClassTime
-                : LR.RD_Denied,
-            _ => string.Format(LR.RD_Error, code)
-        };
+        // 原始原因码一并显示：排查"到底是谁说的没有符合条件的人"只能靠它。
+        return string.Format(LR.RD_FailureWithCode, friendly, code);
+    }
+
+    /// <summary>
+    ///     一次抽取该显示什么。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <b>"设备执行成功但回执里没有成员"绝不能显示成"没有符合条件的人"。</b>
+    ///         线上就是这样：点名在教室机上真的抽成功了（导出证明齐全），手机却显示
+    ///         「该名单里没有符合条件的人」——因为客户端取不到回执成员后回落到了那句文案。
+    ///         两件事必须各有各的说法：一个是设备说的"没人可抽"，一个是客户端没读懂回执。
+    ///     </para>
+    ///     <para>
+    ///         只有设备**明确**返回 <c>no_candidate</c>/<c>no_matching_member</c> 时，
+    ///         才允许说"没有符合条件的人"。
+    ///     </para>
+    /// </remarks>
+    public static string DescribeDrawResult(NodeCommandDto command)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+
+        if (!command.IsSucceeded)
+            return DescribeCommand(command);
+
+        var drawn = command.DrawnMembers();
+        return drawn.Count > 0
+            ? string.Format(LR.RD_DrawnCount, drawn.Count)
+            : LR.RD_ResultUnreadable;
     }
 
     private static string DescribeInvalidValue(string? field, string? why) => why switch
@@ -110,7 +140,9 @@ public static class ControlPlaneMessages
         "not_found" => LR.RD_ListNotFound,
         "not_in_list" => LR.RD_NotInList,
         "out_of_range" => LR.RD_OutOfRange,
-        "no_candidate" or "no_matching_member" => LR.RD_NoCandidate,
+        // 两个"没人"要分开：整份名单没有可抽的人 ≠ 条件筛完没有人。
+        "no_candidate" => LR.RD_NoRosterCandidate,
+        "no_matching_member" => LR.RD_NoCandidate,
         _ => field is { Length: > 0 }
             ? string.Format(LR.RD_InvalidValueField, field)
             : LR.RD_InvalidValue

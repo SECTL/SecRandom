@@ -27,6 +27,16 @@ public static class ControlCapabilities
     /// <summary>立即触发一次抽取（动作命令）。</summary>
     public const string DrawTrigger = "draw.trigger";
 
+    /// <summary>
+    ///     清空"本轮临时记录"（动作命令）。
+    /// </summary>
+    /// <remarks>
+    ///     <b>只清抽取进度，不碰历史记录</b>：历史（<c>data/history/**</c>）是名单的长期账本，
+    ///     远程能清的只有"这一轮抽到谁"的临时状态。名字与文档都必须说到这一点，
+    ///     否则"重置"很容易被理解成"清历史"。
+    /// </remarks>
+    public const string DrawReset = "draw.reset";
+
     /// <summary>显示结果 / 播报。</summary>
     public const string MediaPlay = "media.play";
 

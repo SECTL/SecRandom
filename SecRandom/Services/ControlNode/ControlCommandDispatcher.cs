@@ -45,6 +45,7 @@ namespace SecRandom.Services.ControlNode;
 /// </remarks>
 public sealed class ControlCommandDispatcher(
     ControlDrawTriggerHandler drawTrigger,
+    ControlDrawResetHandler drawReset,
     ControlMediaPlayHandler mediaPlay,
     ControlSettingsPatchHandler settingsPatch,
     ControlRosterPushHandler rosterPush,
@@ -56,6 +57,7 @@ public sealed class ControlCommandDispatcher(
         ControlCapabilities.StatusRead,
         ControlCapabilities.DrawLock,
         ControlCapabilities.DrawTrigger,
+        ControlCapabilities.DrawReset,
         ControlCapabilities.MediaPlay,
         ControlCapabilities.SettingsWrite,
         ControlCapabilities.RosterWrite,
@@ -75,6 +77,7 @@ public sealed class ControlCommandDispatcher(
     {
         ControlCapabilities.StatusRead => true,
         ControlCapabilities.DrawTrigger => true,
+        ControlCapabilities.DrawReset => true,
         ControlCapabilities.MediaPlay => true,
         ControlCapabilities.SettingsWrite => true,
         ControlCapabilities.RosterWrite => true,
@@ -89,9 +92,10 @@ public sealed class ControlCommandDispatcher(
     {
         ArgumentNullException.ThrowIfNull(invocation);
 
-        // 改设置与换名单在抽取进行中一律拒绝：这两件事都会改到"正在抽的那一轮"赖以成立的配置
-        // 与候选人，中途生效会让结果与证明对不上。抽取本身（draw.trigger）自己会拒绝重入。
-        if (invocation.Capability is ControlCapabilities.SettingsWrite or ControlCapabilities.RosterWrite
+        // 改设置、换名单与重置在抽取进行中一律拒绝（策略见 ControlDrawBusyGuard）：
+        // 重置尤其不能边抽边清——那一轮的进度会被抹掉，结果与临时记录就对不上了。
+        // 抽取本身（draw.trigger）自己会拒绝重入。
+        if (ControlDrawBusyGuard.IsRefusedWhileDrawing(invocation.Capability)
             && await IsDrawInProgressAsync().ConfigureAwait(false))
         {
             return ControlCommandOutcome.Failure("busy", new { drawing = true });
@@ -103,6 +107,8 @@ public sealed class ControlCommandDispatcher(
             ControlCapabilities.StatusRead => ControlCommandOutcome.Success,
             ControlCapabilities.DrawTrigger =>
                 await drawTrigger.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
+            ControlCapabilities.DrawReset =>
+                await drawReset.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
             ControlCapabilities.MediaPlay =>
                 await mediaPlay.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
             ControlCapabilities.SettingsWrite =>

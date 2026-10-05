@@ -730,6 +730,8 @@
     <data name="RD_GroupsUnavailable" xml:space="preserve"><value>{0} 件のグループを読み込めませんでした。もう一度お試しください</value></data>
     <data name="MA_SignIn" xml:space="preserve"><value>SECTL アカウントでログイン</value></data>
     <data name="MA_SignOut" xml:space="preserve"><value>ログアウト</value></data>
-    <data name="MA_SignedOutHint" xml:space="preserve"><value>未ログインです。ログインするとクラウドバックアップと「リモート」タブからの教室端末操作が使えます</value></data>
+    <data name="MA_SignedOutHint" xml:space="preserve"><value>未ログイン</value></data>
     <data name="MA_Reauthorize" xml:space="preserve"><value>ログイン状態が無効です。再度ログインしてください</value></data>
+    <data name="RD_ResultUnreadable" xml:space="preserve"><value>端末は実行しましたが、結果にメンバーが含まれていません</value></data>
+    <data name="RD_NoRosterCandidate" xml:space="preserve"><value>この名簿には抽選できるメンバーがいません</value></data>
 </root>

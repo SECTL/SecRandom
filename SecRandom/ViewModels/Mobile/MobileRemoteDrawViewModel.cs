@@ -332,7 +332,10 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
             return;
 
         IsBusy = true;
+        // 上一次的提示（失败态、上一次抽到的人）必须在这里全部清掉：留着就会出现
+        // "这次抽成功了，屏幕上还挂着上一次的失败文案"。
         DrawnMembers.Clear();
+        LoadFailure = string.Empty;
         StatusText = LR.RD_Drawing;
         RefreshDerived();
 
@@ -362,18 +365,20 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
                 }).ConfigureAwait(true);
 
             var finished = await _client.PollCommandAsync(device.GroupId, command.CommandId!).ConfigureAwait(true);
-            if (!finished.IsSucceeded)
-            {
-                StatusText = ControlPlaneMessages.DescribeCommand(finished);
-                return;
-            }
 
             foreach (var member in finished.DrawnMembers())
                 DrawnMembers.Add(member);
 
-            StatusText = HasResult
-                ? string.Format(LR.RD_DrawnCount, DrawnMembers.Count)
-                : LR.RD_NoCandidate;
+            // 回执取不到成员时把原始 detail 记下来：这正是"抽成功却显示没人"的案发现场。
+            if (finished.IsSucceeded && DrawnMembers.Count == 0)
+            {
+                _logger.LogWarning(
+                    "远程抽取回执里没有成员：status={Status}，detail={Detail}",
+                    finished.Status,
+                    finished.ResultDiagnostics ?? "(none)");
+            }
+
+            StatusText = ControlPlaneMessages.DescribeDrawResult(finished);
         }
         catch (Exception exception)
         {

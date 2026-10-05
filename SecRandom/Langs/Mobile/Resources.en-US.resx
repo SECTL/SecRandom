@@ -730,6 +730,8 @@ Clearing history before fair drawing helps keep the new member’s chance from b
     <data name="RD_GroupsUnavailable" xml:space="preserve"><value>{0} group(s) could not be read; try again</value></data>
     <data name="MA_SignIn" xml:space="preserve"><value>Sign in with your SECTL account</value></data>
     <data name="MA_SignOut" xml:space="preserve"><value>Sign out</value></data>
-    <data name="MA_SignedOutHint" xml:space="preserve"><value>Not signed in. Sign in to use cloud backup and to control classroom devices from the Remote tab</value></data>
+    <data name="MA_SignedOutHint" xml:space="preserve"><value>Not signed in</value></data>
     <data name="MA_Reauthorize" xml:space="preserve"><value>Your session expired; sign in again</value></data>
+    <data name="RD_ResultUnreadable" xml:space="preserve"><value>The device ran the draw, but the receipt carries no member</value></data>
+    <data name="RD_NoRosterCandidate" xml:space="preserve"><value>This roster has no member that can be drawn</value></data>
 </root>

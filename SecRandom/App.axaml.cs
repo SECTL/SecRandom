@@ -1210,6 +1210,8 @@ public partial class App : Application
                     // 真正动手的那一步在 ControlPageDrawExecutor 里（要回到 UI 线程）。
                     services.AddSingleton<IControlDrawExecutor, ControlPageDrawExecutor>();
                     services.AddSingleton<ControlDrawTriggerHandler>();
+                    // 远程重置：只清临时记录（抽取进度），不碰历史。
+                    services.AddSingleton<ControlDrawResetHandler>();
                     services.AddSingleton<IControlCommandDispatcher, ControlCommandDispatcher>();
                     services.AddSingleton<ControlNodeClient>();
                     services.AddHostedService<ControlNodeHostedService>();
@@ -2006,6 +2008,50 @@ public partial class App : Application
     public static void ShowMainWindow(string? pageId)
     {
         ObserveTask(ShowMainWindowCoreAsync(pageId), "Failed to show main window.");
+    }
+
+    /// <summary>
+    ///     远程抽取结果的展示路径：显示主窗口、切到指定页，并把它**还原 + 激活到前台**。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         与 <see cref="ShowMainWindow(string?)" /> 的唯一区别就是"置前"：那条路径只保证窗口被显示，
+    ///         已经打开的窗口会留在后台。远程点名是"必须让教室看见"的行为——老师按下按钮，
+    ///         屏幕上就该出现抽到了谁；只在后台刷新一下，课堂里没人知道发生了什么。
+    ///     </para>
+    ///     <para>
+    ///         <b>为什么可以在这里破例抢前台</b>：这是一条用户明确按下"抽取"才触发的展示路径，
+    ///         不是后台弹窗；普通显示、浮窗与通知渠道仍遵守用户的"不抢焦点/置顶模式"设置。
+    ///         这里只做还原/显示/激活，**不**去拨 Topmost（理由见 <see cref="RemoteDrawWindowPlan" />）。
+    ///     </para>
+    /// </remarks>
+    public static Task ShowMainWindowForRemoteDrawAsync(string? pageId = null) =>
+        ShowMainWindowForRemoteDrawCoreAsync(pageId);
+
+    private static async Task ShowMainWindowForRemoteDrawCoreAsync(string? pageId)
+    {
+        await ShowMainWindowCoreAsync(pageId).ConfigureAwait(true);
+
+        if (_mainWindow is not { } window)
+            return;
+
+        void BringToFront()
+        {
+            var plan = RemoteDrawWindowPlan.Resolve(window.IsVisible, window.WindowState == WindowState.Minimized);
+
+            // 顺序不能反：最小化的窗口要先还原，否则激活只会得到一个仍然最小化的窗口。
+            if (plan.Restore)
+                window.WindowState = WindowState.Normal;
+            if (plan.Show)
+                window.Show();
+            if (plan.Activate)
+                window.Activate();
+        }
+
+        if (Dispatcher.UIThread.CheckAccess())
+            BringToFront();
+        else
+            await Dispatcher.UIThread.InvokeAsync(BringToFront).GetTask().ConfigureAwait(false);
     }
 
     private static async Task ShowMainWindowCoreAsync(string? pageId = null)

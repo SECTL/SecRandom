@@ -555,4 +555,6 @@ public class Resources
     public static string MA_SignOut => ResourceManager.GetString("MA_SignOut", resourceCulture)!;
     public static string MA_SignedOutHint => ResourceManager.GetString("MA_SignedOutHint", resourceCulture)!;
     public static string MA_Reauthorize => ResourceManager.GetString("MA_Reauthorize", resourceCulture)!;
+    public static string RD_ResultUnreadable => ResourceManager.GetString("RD_ResultUnreadable", resourceCulture)!;
+    public static string RD_NoRosterCandidate => ResourceManager.GetString("RD_NoRosterCandidate", resourceCulture)!;
 }

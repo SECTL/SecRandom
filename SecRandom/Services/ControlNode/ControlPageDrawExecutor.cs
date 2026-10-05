@@ -7,6 +7,33 @@ using SecRandom.Views;
 namespace SecRandom.Services.ControlNode;
 
 /// <summary>
+///     远程点名把主窗口"送到最前面"时该做哪几件事。
+/// </summary>
+/// <remarks>
+///     <para>
+///         <b>为什么这条路径可以主动抢前台</b>：远程点名的结果必须让教室看见——老师按下按钮，
+///         屏幕上就要出现抽到了谁。普通显示与浮窗仍遵守用户的"不抢焦点/置顶模式"设置，
+///         只有这一条明确的"必须被看到"的路径例外，且例外只限<strong>还原、显示、激活</strong>三件事。
+///     </para>
+///     <para>
+///         <b>为什么不闪一下 Topmost</b>：那是绕过 Windows 前台锁的老办法，但它会与用户的置顶模式
+///         （尤其 UIAccess：那条路走的是提权 token 与重启，置顶由平台层管理）打架，
+///         恢复失败还会把窗口永久钉在最前面。这里选"还原 + 显示 + 激活"：
+///         窗口本就配置成置顶时它已经在最前，未置顶时激活也会把它带到前台。
+///         代价是当别的进程正持有前台时（用户正在别处打字），Windows 可能只闪任务栏——
+///         那种情况下强行抢焦会打断别人正在做的事，不该由一条远程命令单方面决定。
+///     </para>
+/// </remarks>
+/// <param name="Restore">窗口最小化时需要先还原（最小化的窗口无法被有意义地激活）。</param>
+/// <param name="Show">窗口当前不可见时需要显示。</param>
+/// <param name="Activate">是否激活到前台（这条路径上永远为真）。</param>
+public readonly record struct RemoteDrawWindowPlan(bool Restore, bool Show, bool Activate)
+{
+    public static RemoteDrawWindowPlan Resolve(bool isVisible, bool isMinimized) =>
+        new(Restore: isMinimized, Show: !isVisible, Activate: true);
+}
+
+/// <summary>
 ///     用两个抽取页面 ViewModel 真正执行一次远程抽取。
 /// </summary>
 /// <remarks>
@@ -15,9 +42,10 @@ namespace SecRandom.Services.ControlNode;
 ///         从线程池改它们会让绑定层收到别的线程发来的通知（集控命令正是在线程池上执行的）。
 ///     </para>
 ///     <para>
-///         <b>结果要落在教室里看得见的地方</b>：快抽打开快抽窗，点名把主窗口切到点名页。
-///         远程抽取如果静默完成，老师只会看到一个"抽过了"的控制台记录，而全班什么都没看到——
-///         这既不符合课堂用途，也让"抽了谁"无法当场核对。
+///         <b>结果要落在教室里看得见的地方</b>：快抽打开快抽窗，点名把主窗口**还原、显示并激活**。
+///         远程抽取如果只是"窗口在后台刷新了一下"，老师看到的仍是一个没变化的桌面——
+///         既不符合课堂用途，也让"抽了谁"无法当场核对。快抽窗保持既有行为：它本身就是置顶工具窗，
+///         契约是"不抢焦点"，因此不在这条置前逻辑里。
 ///     </para>
 ///     <para>
 ///         页面 ViewModel 在这里才解析（<see cref="IAppHost.GetService{T}" />）：Host 在线程池线程上构造
@@ -46,9 +74,8 @@ public sealed class ControlPageDrawExecutor : IControlDrawExecutor
         {
             var rollCall = IAppHost.GetService<RollCallPageViewModel>();
 
-            // 点名结果长在点名页上：先把主窗口与那一页切出来，再开始抽。
-            App.ShowMainWindow();
-            MainView.Current?.SelectNavigationItemById("main.rollCall");
+            // 先把点名页送到最前面，再开始抽：动画与结果都要发生在老师已经能看到的那个窗口里。
+            await App.ShowMainWindowForRemoteDrawAsync("main.rollCall").ConfigureAwait(true);
 
             var outcome = await rollCall.StartRemoteDrawAsync(request, cancellationToken).ConfigureAwait(true);
             return ControlDrawExecutionFactory.From(

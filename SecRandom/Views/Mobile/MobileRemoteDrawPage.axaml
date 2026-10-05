@@ -19,8 +19,15 @@
     <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="720" Margin="12" Spacing="10" Classes="animated-intro">
 
-            <TextBlock Text="{x:Static langs:Resources.P_RemoteDraw}" FontSize="20" FontWeight="SemiBold" />
-            <TextBlock Text="{x:Static langs:Resources.RD_Hint}" Opacity="0.7" TextWrapping="Wrap" />
+            <!--
+                页面内不再重复标题：导航栏已经显示「远程抽取」（MobileRootView.Header = P_RemoteDraw），
+                正文再写一遍只会占掉首屏并把说明行压低。留下的说明行是这一段的引导语，
+                因此比正文略暗、并与导航栏留出一点间距（页边距 12 + 顶部 4），不让它顶着标题栏。
+            -->
+            <TextBlock Text="{x:Static langs:Resources.RD_Hint}"
+                       Opacity="0.75"
+                       Margin="0 4 0 0"
+                       TextWrapping="Wrap" />
 
             <!-- 未登录、请求失败、没有组、没有设备、角色不足、设备不支持：每一种都要说清楚，不留空白页。 -->
             <Border IsVisible="{Binding ViewModel.HasEmptyState}"
