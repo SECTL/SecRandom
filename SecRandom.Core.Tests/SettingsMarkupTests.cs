@@ -403,6 +403,9 @@ public class SettingsMarkupTests
         Assert.Contains("Click=\"RemovePassword_OnClick\"", markup, StringComparison.Ordinal);
         Assert.Contains("UpdateSecuritySettingsAsync", source, StringComparison.Ordinal);
         Assert.Contains("BeginTotpSetupAsync(xamlRoot", source, StringComparison.Ordinal);
+        Assert.Contains("Click=\"RemoveTotp_OnClick\"", markup, StringComparison.Ordinal);
+        Assert.Contains("IsVisible=\"{Binding HasTotp}\"", markup, StringComparison.Ordinal);
+        Assert.Contains("RemoveTotpAsync(xamlRoot", source, StringComparison.Ordinal);
         Assert.Contains("GetUsbDevicesAsync", source, StringComparison.Ordinal);
     }
 

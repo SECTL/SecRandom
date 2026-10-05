@@ -69,6 +69,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
     public bool CanEnableSecurity { get; private set; }
     public bool IsSecurityEnabled { get; private set; }
     public bool HasPassword { get; private set; }
+    public bool HasTotp { get; private set; }
     public bool CanSetPassword => !HasPassword;
     public bool CanConfigureAdditionalFactors { get; private set; }
     public bool CanEditFactorSelection { get; private set; }
@@ -159,6 +160,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             CanEnableSecurity = state.HasPassword;
             IsSecurityEnabled = state.SecurityEnabled;
             HasPassword = state.HasPassword;
+            HasTotp = state.HasTotp;
             CanConfigureAdditionalFactors = state.CanConfigureAdditionalFactors;
             CanEditFactorSelection = state.CanEditFactorSelection;
             CanEditProtectedOperations = state.CanEditProtectedOperations;
@@ -182,6 +184,7 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             foreach (var name in new[]
                      {
                           nameof(CanEnableSecurity), nameof(IsSecurityEnabled), nameof(HasPassword), nameof(CanSetPassword),
+                          nameof(HasTotp),
                           nameof(CanConfigureAdditionalFactors), nameof(CanEditFactorSelection), nameof(CanEditProtectedOperations),
                           nameof(TotpButtonText), nameof(IsLockedOut), nameof(LockoutText),
                           nameof(SudoModeDurationValue), nameof(CanEditSudoModeDuration),
@@ -330,6 +333,17 @@ public partial class SecuritySettingsPage : UserControl, INotifyPropertyChanged
             this.ShowSuccessToast(SR.M_TotpSaved);
         else if (code is not null) this.ShowErrorToast(SR.M_TotpSaveFailed);
         else await _securityService.CancelTotpSetupAsync(secret);
+        RefreshSecurityState();
+    }
+
+    private async void RemoveTotp_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this) is not { } xamlRoot) return;
+        _refreshing = true;
+        var removed = await _securityService.RemoveTotpAsync(xamlRoot);
+        _refreshing = false;
+        if (removed) this.ShowSuccessToast(SR.M_TotpRemoved);
+        else this.ShowErrorToast(SR.M_TotpRemoveFailed);
         RefreshSecurityState();
     }
 
