@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Helpers;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
@@ -453,7 +454,8 @@ public sealed class DataArchiveService(
         sourceBytes = checked(sourceBytes + fileLength);
         EnsureTransferSize(sourceBytes, "archive export");
         var entry = archive.CreateEntry(entryPath, CompressionLevel.SmallestSize);
-        using var input = File.OpenRead(source);
+        // 日志等应用自己仍在写入的文件必须用宽松共享读取，否则导出的整个归档会因共享冲突失败
+        using var input = SharedFileReader.OpenRead(source);
         using var output = entry.Open();
         var hash = CopyAndHash(input, output, cancellationToken, out var length, MaxTransferBytes);
         files.Add(new ArchiveFileEntry { Path = entryPath, Length = length, Sha256 = hash });

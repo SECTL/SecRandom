@@ -50,6 +50,32 @@ public sealed class DataArchiveServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ExportAllData_KeepsTheLogFileThatIsStillOpenForWriting()
+    {
+        using var provider = CreateProvider();
+        provider.GetRequiredService<MainConfigHandler>().Save();
+        var logPath = Utils.GetFilePath("logs", "log-2024-1-1-0-0-0-1.log");
+        Directory.CreateDirectory(Path.GetDirectoryName(logPath)!);
+
+        // 复现 FileLoggerProvider 的持有方式：整个会话保持 ReadWrite + FileShare.Read，
+        // 普通 File.OpenRead（FileShare.Read）会共享冲突并让整份归档导出失败
+        using (var stream = new FileStream(logPath, FileMode.Create, FileAccess.ReadWrite, FileShare.Read))
+        using (var writer = new StreamWriter(stream) { AutoFlush = true })
+        {
+            writer.WriteLine("2024/1/1 0:00:00|Information|SecRandom|抽取完成");
+
+            var archive = provider.GetRequiredService<DataArchiveService>();
+            var destination = Path.Combine(_exportDirectory, "all-data-live-log.zip");
+            await archive.ExportAllDataAsync(destination, TestContext.Current.CancellationToken);
+
+            using var exported = ZipFile.OpenRead(destination);
+            var entry = exported.GetEntry("logs/log-2024-1-1-0-0-0-1.log");
+            Assert.NotNull(entry);
+            Assert.Contains("抽取完成", ReadEntryText(entry));
+        }
+    }
+
+    [Fact]
     public async Task ExportAllData_NeverCarriesTheSecurityDirectory()
     {
         using var provider = CreateProvider();
