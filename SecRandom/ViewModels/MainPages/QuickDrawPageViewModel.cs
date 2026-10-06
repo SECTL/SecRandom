@@ -96,6 +96,16 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
     public ObservableCollection<string> StudentListNames { get; } = [];
     public ObservableCollection<QuickDrawResultItem> ResultItems { get; } = [];
+
+    /// <summary>Students of the most recent draw, exposed so plugins can present the result themselves.</summary>
+    public IReadOnlyList<Student> LastResultStudents => LastDrawnStudent is { } student ? [student] : [];
+
+    /// <summary>
+    ///     上一次结果的展示文本（按「显示格式」把编号和名称拼好），暴露给插件，
+    ///     让插件牌面上的字和主程序内置结果卡完全一致。
+    /// </summary>
+    public IReadOnlyList<string> LastResultDisplayTitles =>
+        LastResultStudents.Select(FormatStudent).ToArray();
     public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && !_isCoolingDown && GetEligibleCandidates().Any());
     public string DrawButtonText => IsDrawing ? QuickDrawResources.C_Stop : QuickDrawResources.C_Start;
     public double ResultFontSize
@@ -116,6 +126,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     public FontFamily ResultFontFamily => BuildResultFontFamily();
     public bool AnimationEnabled => AnimationSettings.Animation != AnimationMode.NoAnimation;
     public DrawAnimationStyleMode AnimationStyle => AnimationSettings.AnimationStyle;
+    public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     public int AnimationDuration => 250;
     public int PreviewAnimationDuration => AnimationSettings.Animation == AnimationMode.AutoPlay
         ? Math.Clamp(AnimationSettings.AnimationInterval, 1, 10000)

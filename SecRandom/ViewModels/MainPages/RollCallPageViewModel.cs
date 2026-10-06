@@ -137,6 +137,16 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     public ObservableCollection<RollCallResultItem> ResultItems { get; } = [];
     public ObservableCollection<RollCallRemainingItem> RemainingItems { get; } = [];
 
+    /// <summary>Students of the most recent draw, exposed so plugins can present the result themselves.</summary>
+    public IReadOnlyList<Student> LastResultStudents => _lastResultStudents;
+
+    /// <summary>
+    ///     上一次结果的展示文本（按「显示格式」把编号和名称拼好），暴露给插件，
+    ///     让插件牌面上的字和主程序内置结果卡完全一致。
+    /// </summary>
+    public IReadOnlyList<string> LastResultDisplayTitles =>
+        _lastResultStudents.Select(FormatStudent).ToArray();
+
     public MoreSettingsConfig MoreSettings => Config.MoreSettings;
     public bool IsControlPanelOnLeft => MoreSettings.RollCallControlPanelPosition == RollCallControlPanelPosition.Left;
     public bool IsControlPanelOnRight => !IsControlPanelOnLeft;
@@ -156,6 +166,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     public bool IsResultCardStyle => DisplaySettings.DisplayStyle == DisplayStyleMode.Card;
     public bool AnimationEnabled => AnimationSettings.Animation != AnimationMode.NoAnimation;
     public DrawAnimationStyleMode AnimationStyle => AnimationSettings.AnimationStyle;
+    public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     public int AnimationDuration => 250;
     public int PreviewAnimationDuration => AnimationSettings.Animation == AnimationMode.AutoPlay
         ? Math.Clamp(AnimationSettings.AnimationInterval, 1, 10000)

@@ -5,6 +5,7 @@
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              xmlns:lp="clr-namespace:SecRandom.Langs.SettingsPages.Picking"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Picking"
+             xmlns:controls="clr-namespace:SecRandom.Controls"
              xmlns:enums="clr-namespace:SecRandom.Core.Enums.Configs;assembly=SecRandom.Core"
              xmlns:converters="clr-namespace:SecRandom.Core.Converters;assembly=SecRandom.Core"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
@@ -269,11 +270,7 @@
                                            Description="{x:Static lp:Resources.S_AnimationStyle_D}"
                                            IsVisible="{Binding Settings.Animation, Converter={x:Static converters:AnimationModeConverters.IsAnimated}}">
                     <fa:FASettingsExpanderItem.Footer>
-                        <ComboBox SelectedIndex="{Binding Settings.AnimationStyle}" MinWidth="180">
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationDirectRotate}" />
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationFadeFloat}" />
-                            <ComboBoxItem Content="{x:Static lp:Resources.O_AnimationHorizontalShake}" />
-                        </ComboBox>
+                        <controls:DrawAnimationStyleSelector Settings="{Binding Settings}" />
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>

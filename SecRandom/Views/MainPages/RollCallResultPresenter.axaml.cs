@@ -2,6 +2,7 @@ using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Helpers;
 using SecRandom.ViewModels.MainPages;
 
@@ -58,17 +59,41 @@ public sealed partial class RollCallResultPresenter : UserControl
             {
                 await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
                 if (e.PropertyName == nameof(RollCallPageViewModel.PreviewAnimationRevision))
+                {
+                    ResultPresentationBridge.RestoreHostResult(_resultPresenter);
+                    if (await ResultPresentationBridge.TryPresentAsync(
+                            BuildPresentationRequest(viewModel, DrawPresentationPhase.Preview), _resultPresenter))
+                        return;
+
                     await DrawAnimationHelper.PreviewAsync(_resultPresenter, viewModel.AnimationStyle,
                         viewModel.PreviewAnimationDuration);
+                }
                 else if (e.PropertyName == nameof(RollCallPageViewModel.ResultAnimationRevision))
+                {
+                    if (await ResultPresentationBridge.TryPresentAsync(
+                            BuildPresentationRequest(viewModel, DrawPresentationPhase.Reveal), _resultPresenter))
+                        return;
+
                     await DrawAnimationHelper.RevealAsync(_resultPresenter, viewModel.AnimationEnabled,
                         viewModel.AnimationStyle, viewModel.AnimationDuration);
+                }
             }
             catch
             {
                 // A presentation animation must not affect the completed draw.
             }
         }, DispatcherPriority.Render);
+    }
+
+    private static DrawPresentationRequest BuildPresentationRequest(RollCallPageViewModel viewModel,
+        DrawPresentationPhase phase)
+    {
+        var students = viewModel.LastResultStudents;
+        return ResultPresentationBridge.BuildRequest(DrawPresentationChannel.RollCall, phase, students,
+            listName: viewModel.SelectedStudentListName, groupScope: viewModel.SelectedGroup,
+            genderScope: viewModel.SelectedGender, requestedCount: students.Count,
+            pluginAnimationId: viewModel.PluginAnimationId,
+            displayTitles: viewModel.LastResultDisplayTitles);
     }
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);

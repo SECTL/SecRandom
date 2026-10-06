@@ -733,6 +733,10 @@ public sealed class PluginManager : IPluginManager
                 $"Plugin API version {manifest.ApiVersion} is not supported; " +
                 $"{PluginApiVersions.Current.Major}.0 or higher is required.");
         }
+
+        // permissions 是声明式策略：收敛成合法名字（去重、丢未知、大小写不敏感），
+        // 未知名字只丢不拒——插件在旧宿主上声明了新权限不该导致装不上。
+        manifest.Permissions = [.. PluginPermissionNames.Normalize(manifest.Permissions)];
     }
 
     private sealed record DiscoveredPlugin(PluginInfo Info, bool IsEnabled);

@@ -8,6 +8,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Helpers;
 using SecRandom.ViewModels.MainPages;
@@ -143,6 +144,9 @@ public partial class QuickDrawPage : UserControl
                 CancelAutoClose();
                 _autoCloseRevision++;
                 await WaitForResultPresenterLayoutAsync();
+                ResultPresentationBridge.RestoreHostResult(_resultPresenter);
+                if (await TryPresentAsync(DrawPresentationPhase.Preview))
+                    return;
                 await DrawAnimationHelper.PreviewAsync(
                     _resultPresenter,
                     ViewModel.AnimationStyle,
@@ -155,6 +159,12 @@ public partial class QuickDrawPage : UserControl
                 await WaitForResultPresenterLayoutAsync();
                 if (_isUnloaded || autoCloseRevision != _autoCloseRevision)
                     return;
+                if (await TryPresentAsync(DrawPresentationPhase.Reveal))
+                {
+                    await CloseAfterDelayAsync(autoCloseRevision);
+                    return;
+                }
+
                 await DrawAnimationHelper.RevealAsync(
                     _resultPresenter,
                     ViewModel.AnimationEnabled,
@@ -171,6 +181,11 @@ public partial class QuickDrawPage : UserControl
                 await WaitForResultPresenterLayoutAsync();
                 if (_isUnloaded || autoCloseRevision != _autoCloseRevision)
                     return;
+                if (await TryPresentAsync(DrawPresentationPhase.Reveal))
+                {
+                    await CloseAfterDelayAsync(autoCloseRevision);
+                    return;
+                }
                 if (ViewModel.NotificationAnimationEnabled)
                     await DrawAnimationHelper.RevealAsync(
                         _resultPresenter,
@@ -185,6 +200,17 @@ public partial class QuickDrawPage : UserControl
         catch
         {
         }
+    }
+
+    private Task<bool> TryPresentAsync(DrawPresentationPhase phase)
+    {
+        var students = ViewModel.LastResultStudents;
+        return ResultPresentationBridge.TryPresentAsync(
+            ResultPresentationBridge.BuildRequest(DrawPresentationChannel.QuickDraw, phase, students,
+                listName: ViewModel.SelectedStudentListName, requestedCount: students.Count,
+                pluginAnimationId: ViewModel.PluginAnimationId,
+                displayTitles: ViewModel.LastResultDisplayTitles),
+            _resultPresenter);
     }
 
     private static async Task WaitForResultPresenterLayoutAsync()

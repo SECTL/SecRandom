@@ -25,6 +25,7 @@ using SecRandom.Controls.AttachedSettings;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Core.Abstraction.Services.Views;
 using SecRandom.Core.Behaviors;
 using SecRandom.Core.Controls;
@@ -38,10 +39,29 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services;
+using SecRandom.Core.Services.Presentation;
+using SecRandom.Core.Services.Views;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Services.SingleInstance;
+using SecRandom.Core.Abstraction.Services.Capabilities;
+using SecRandom.Core.Abstraction.Services.Data;
+using SecRandom.Core.Abstraction.Services.Diagnostics;
+using SecRandom.Core.Abstraction.Services.Localization;
+using SecRandom.Core.Abstraction.Services.Messaging;
+using SecRandom.Core.Abstraction.Services.Notifications;
+using SecRandom.Core.Abstraction.Services.Pipeline;
+using SecRandom.Core.Abstraction.Services.Storage;
+using SecRandom.Core.Abstraction.Services.Theming;
+using SecRandom.Core.Abstraction.Services.Threading;
+using SecRandom.Core.Services.Data;
+using SecRandom.Core.Services.Messaging;
+using SecRandom.Core.Services.Notifications;
+using SecRandom.Core.Services.Pipeline;
+using SecRandom.Core.Services.Storage;
+using SecRandom.Core.Services.Theming;
+using SecRandom.Core.Services.Threading;
 using SecRandom.Core.Views;
 using SecRandom.Shared.Models.Ipc;
 using SecRandom.Shared;
@@ -1517,6 +1537,30 @@ public partial class App : Application
                     services.AddSingleton<IAppLifecycleService, AppLifecycleService>();
                     services.AddSingleton<IPluginDrawService, PluginDrawService>();
                     services.AddSingleton<IFloatingWindowButtonRegistry, FloatingWindowButtonRegistry>();
+
+                    // 插件扩展点：结果呈现 / 叠加层 / 界面插槽 / 界面样式
+                    services.AddSingleton<IResultPresentationService, ResultPresentationService>();
+                    services.AddSingleton<IOverlayHostService, OverlayHostAdapter>();
+                    services.AddSingleton<IUiContributionService, UiContributionService>();
+                    services.AddSingleton<IUiStyleService, UiStyleService>();
+
+                    // 插件扩展点（第二批）：事件总线 / UI 线程 / 私有存储 / 名单查询 / 忙碌指示 /
+                    // 抽签流水线 / 主题色板 / 通知与对话框 / 窗口 / 弹层 / 本地化 / 能力与权限 / 诊断
+                    services.AddSingleton<IPluginEventBus, PluginEventBus>();
+                    services.AddSingleton<IUiScheduler, UiScheduler>();
+                    services.AddSingleton<IPluginStorageFactory>(_ =>
+                        new PluginStorageFactory(PluginManager.PluginConfigsDirectory));
+                    services.AddSingleton<IThemeTokenService, ThemeTokenService>();
+                    services.AddSingleton<IListQueryService, ListQueryService>();
+                    services.AddSingleton<IBusyIndicator, BusyIndicator>();
+                    services.AddSingleton<IDrawPipelineService, DrawPipelineService>();
+                    services.AddSingleton<INotificationService, PluginNotificationService>();
+                    services.AddSingleton<IWindowService, PluginWindowService>();
+                    services.AddSingleton<IPopupService, PopupService>();
+                    services.AddSingleton<ILocalizationService, PluginLocalizationService>();
+                    services.AddSingleton<ICapabilityService, PluginCapabilityService>();
+                    services.AddSingleton<IPluginDiagnosticsService, PluginDiagnosticsService>();
+
                     services.AddHostedService<PluginLifecycleBridge>();
                     services.AddHttpClient("plugin-market", client => client.Timeout = TimeSpan.FromSeconds(30));
                     services.AddSingleton<PluginMarketService>(provider => new PluginMarketService(
@@ -1537,6 +1581,10 @@ public partial class App : Application
 
         // 刷新个性化设置
         RefreshPersonalizedSettings();
+
+        // 插件被卸载/禁用后，"动画样式"里指向它的那个选择就成了死值：既没有插件接管，
+        // 宿主也不会播自己的动画。这里按"贡献项是否还在"把死值退回内置动画。
+        ResetMissingPluginAnimationSelections();
 
         IAppHost.GetService<IProfileService>();
 
@@ -1560,6 +1608,35 @@ public partial class App : Application
         catch
         {
             return fallback;
+        }
+    }
+
+    /// <summary>
+    ///     插件被卸载/禁用后，配置里指向它的设置项就没了，这时应当恢复成默认设置：
+    ///     把四份抽取设置里失效的 <see cref="DrawSettingsConfigBase.PluginAnimationId" /> 退回宿主内置动画。
+    ///     不清理的话，用户会看到一个空白的"动画样式"，而且抽签时既没有插件演出、宿主的动画也不会播。
+    /// </summary>
+    private static void ResetMissingPluginAnimationSelections()
+    {
+        try
+        {
+            var configHandler = IAppHost.TryGetService<MainConfigHandler>();
+            if (configHandler is null)
+                return;
+
+            var logger = IAppHost.TryGetService<ILogger<App>>();
+            var contributions = IAppHost.TryGetService<IEnumerable<IDrawAnimationContribution>>();
+
+            var reset = AnimationSelectionFallback.Apply(configHandler.Data, contributions, logger);
+            if (reset <= 0)
+                return;
+
+            // 嵌套属性不冒泡到 ConfigHandlerBase 的自动保存，必须显式落盘。
+            configHandler.Save();
+        }
+        catch (Exception ex)
+        {
+            IAppHost.TryGetService<ILogger<App>>()?.LogWarning(ex, "清理失效的插件动画选择时出错，已忽略。");
         }
     }
 
@@ -1641,6 +1718,33 @@ public partial class App : Application
             {
                 IAppHost.TryGetService<ILogger<App>>()?
                     .LogError(exception, "Application stopping notification failed.");
+            }
+
+            try
+            {
+                // 插件注册的退出收尾（落盘、断连）：按 Priority 升序，整体限时，单个失败不影响其它人。
+                var participants = IAppHost.TryGetService<IEnumerable<IAppShutdownParticipant>>();
+                if (participants is not null)
+                {
+                    using var shutdownBudget = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    foreach (var participant in participants.OrderBy(static item => item.Priority))
+                    {
+                        try
+                        {
+                            await participant.OnShuttingDownAsync(shutdownBudget.Token).ConfigureAwait(false);
+                        }
+                        catch (Exception exception)
+                        {
+                            IAppHost.TryGetService<ILogger<App>>()?
+                                .LogError(exception, "Shutdown participant {ParticipantId} failed.", participant.Id);
+                        }
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                IAppHost.TryGetService<ILogger<App>>()?
+                    .LogError(exception, "Application shutdown participants failed.");
             }
 
             try
@@ -1967,6 +2071,11 @@ public partial class App : Application
         CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
         Langs.FirstRunOobe.Resources.Culture = cultureInfo;
         Langs.MainPages.QuickDraw.Resources.Culture = cultureInfo;
+
+        // 插件本地化服务会缓存当前语言与词条，切换语言后通知它刷新。
+        // 宿主起来之前（首次启动流程）调用时 TryGetService 返回 null，这里的判空即为降级。
+        if (IAppHost.TryGetService<ILocalizationService>() is PluginLocalizationService pluginLocalization)
+            pluginLocalization.NotifyCultureChanged();
     }
 
     /// <summary>

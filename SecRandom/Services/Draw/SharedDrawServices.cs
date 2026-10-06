@@ -1,5 +1,8 @@
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Abstraction.Services.Messaging;
+using SecRandom.Core.Abstraction.Services.Pipeline;
+using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Draw;
@@ -28,7 +31,9 @@ public sealed record RollCallDrawResult(
     IReadOnlyList<Student> Students,
     Guid ProofId,
     string DrawRoundId,
-    IReadOnlyDictionary<Guid, double> FrozenWeights);
+    IReadOnlyDictionary<Guid, double> FrozenWeights,
+    string? Note = null,
+    bool SuppressPresentation = false);
 
 /// <summary>
 /// Shared point-call use case for every UI. Presentation layers own authorization, preview and media.
@@ -41,13 +46,18 @@ public sealed class RollCallDrawService(
     IDrawCommitService drawCommits,
     VerificationDrawCoordinator verification,
     PlatformUsageReportService usageReport,
-    ILogger<RollCallDrawService> logger)
+    ILogger<RollCallDrawService> logger,
+    IDrawPipelineService? pipeline = null,
+    IPluginEventBus? eventBus = null)
 {
     public RollCallDrawSnapshot GetSnapshot(string group, string gender)
     {
         var students = profileService.CurrentStudentList?.Students ?? [];
         var candidates = students.Where(student => DrawCandidateFilter.MatchesScope(student, group, gender))
             .OrderForList().ToArray();
+        // 插件候选集过滤器在"谁可能被抽到"这一层生效：预览与真正抽签共用同一份候选集，
+        // 抽取证明与历史因此也只覆盖过滤后的范围。
+        candidates = [.. ApplyCandidateFilters(candidates, group, gender)];
         var threshold = DrawRepeatPolicy.ResolveThreshold(configHandler.Data.RollCallSettings.DrawMode,
             configHandler.Data.RollCallSettings.HalfRepeat);
         var remaining = DrawCandidateFilter.FilterEligibleStudents(candidates, group, gender,
@@ -90,21 +100,36 @@ public sealed class RollCallDrawService(
         // Every remaining member can be temporarily excluded (post-draw shield), so nothing is drawable yet.
         if (outcome is null)
             return null;
+
+        // 插件结果后处理器：可以批注这次抽签、决定要不要写历史、要不要让宿主跳过自己的呈现动画。
+        // 抽中的名单本身不允许改——抽取证明已经生成，改写会破坏凭证与审计链。
+        var edit = pipeline?.ApplyPostProcessors(
+            BuildRollCallContext(request.Group, request.Gender, request.CourseName, count),
+            new DrawResultEdit(outcome.Winners, []));
+        if (edit is not null && !edit.Students.SequenceEqual(outcome.Winners))
+        {
+            logger.LogWarning("插件结果后处理器试图改写已抽中的名单，为保护抽取证明与审计链，本次改写被忽略。");
+            edit = edit with { Students = outcome.Winners, Prizes = [] };
+        }
+
         var weights = outcome.Winners.ToDictionary(student => student, student =>
         {
             ProfileRecordIdentity.EnsureRecordId(student);
             return outcome.FrozenWeights.GetValueOrDefault(student.RecordId, 1d);
         });
-        var drawRoundId = drawCommits.CommitStudentDraw(new StudentDrawCommit(
-            outcome.Winners,
-            DateTime.Now,
-            count,
-            GetListName(),
-            request.Group,
-            request.Gender,
-            (int)configHandler.Data.RollCallSettings.DrawType,
-            weights,
-            request.CourseName));
+        var drawRoundId = edit?.SuppressHistory == true
+            ? edit.OverrideRoundId ?? string.Empty
+            : drawCommits.CommitStudentDraw(new StudentDrawCommit(
+                outcome.Winners,
+                DateTime.Now,
+                count,
+                GetListName(),
+                request.Group,
+                request.Gender,
+                (int)configHandler.Data.RollCallSettings.DrawType,
+                weights,
+                request.CourseName,
+                edit?.OverrideRoundId));
         try
         {
             verification.Publish(outcome);
@@ -116,10 +141,36 @@ public sealed class RollCallDrawService(
 
         // Counted only after the commit succeeded, so a rolled-back draw is never reported as a draw.
         usageReport.RecordRollCall();
-        return new RollCallDrawResult(outcome.Winners, outcome.Proof.ProofId, drawRoundId, outcome.FrozenWeights);
+        // 抽签完成事件：插件可以据此记账、写自己的日志，而不必轮询历史。
+        eventBus?.Publish(new HostEvents.DrawCompleted(
+            DrawPresentationChannel.RollCall,
+            outcome.Winners,
+            [],
+            GetListName(),
+            string.Empty,
+            drawRoundId,
+            DateTime.Now,
+            count));
+        return new RollCallDrawResult(outcome.Winners, outcome.Proof.ProofId, drawRoundId, outcome.FrozenWeights,
+            edit?.Note, edit?.SuppressPresentation ?? false);
     }
 
     public void Reset(string group, string gender) => temporaryRecords.ClearStudentScope(GetListName(), gender, group);
+
+    private DrawPipelineContext BuildRollCallContext(string group, string gender, string courseName, int requestedCount) =>
+        new(DrawPresentationChannel.RollCall,
+            GetListName(),
+            string.Empty,
+            group ?? string.Empty,
+            gender ?? string.Empty,
+            courseName ?? string.Empty,
+            requestedCount,
+            (int)configHandler.Data.RollCallSettings.DrawType);
+
+    private IReadOnlyList<Student> ApplyCandidateFilters(IReadOnlyList<Student> candidates, string group, string gender) =>
+        pipeline is null
+            ? candidates
+            : pipeline.ApplyFilters(BuildRollCallContext(group, gender, string.Empty, 0), candidates, []).Students;
 
     private IReadOnlyList<string> GetScopedValues(Func<Student, string> selector) =>
         (profileService.CurrentStudentList?.Students ?? []).Where(student => student.IsCandidate)
@@ -154,7 +205,9 @@ public sealed record LotteryDrawResult(
     IReadOnlyList<Prize> Prizes,
     IReadOnlyList<Student> AssignedStudents,
     Guid PrizeProofId,
-    string DrawRoundId);
+    string DrawRoundId,
+    string? Note = null,
+    bool SuppressPresentation = false);
 
 /// <summary>
 /// Shared lottery use case. It preserves one transactional draw round for prizes and assignments.
@@ -167,7 +220,9 @@ public sealed class LotteryDrawService(
     IDrawCommitService drawCommits,
     VerificationDrawCoordinator verification,
     PlatformUsageReportService usageReport,
-    ILogger<LotteryDrawService> logger)
+    ILogger<LotteryDrawService> logger,
+    IDrawPipelineService? pipeline = null,
+    IPluginEventBus? eventBus = null)
 {
     public LotteryDrawSnapshot GetSnapshot(string studentListName, string group, string gender)
     {
@@ -177,6 +232,16 @@ public sealed class LotteryDrawService(
         var remaining = DrawCandidateFilter.FilterEligiblePrizes(prizes, counts, settings.DrawType,
             DrawRepeatPolicy.ResolveThreshold(settings.DrawMode, settings.HalfRepeat)).OrderForList().ToArray();
         var students = GetEligibleStudents(studentListName, group, gender);
+        // 插件候选集过滤器同时作用于奖池与参与学生（与点名通道共用同一套过滤点）。
+        var filtered = pipeline?.ApplyFilters(
+            BuildLotteryContext(group, gender, string.Empty, 0), students, prizes);
+        if (filtered is not null)
+        {
+            prizes = [.. filtered.Prizes];
+            students = [.. filtered.Students];
+            remaining = DrawCandidateFilter.FilterEligiblePrizes(prizes, counts, settings.DrawType,
+                DrawRepeatPolicy.ResolveThreshold(settings.DrawMode, settings.HalfRepeat)).OrderForList().ToArray();
+        }
         return new LotteryDrawSnapshot(
             profileCatalogManager.GetPrizeListNames(),
             profileCatalogManager.GetStudentListNames(),
@@ -245,24 +310,50 @@ public sealed class LotteryDrawService(
                 return null;
         }
 
-        var roundId = drawCommits.CommitLotteryDraw(new LotteryDrawCommit(
-            prizes.Winners,
-            DateTime.Now,
-            count,
-            GetPrizePoolName(),
-            assigned,
-            hasStudentAssignment ? GetStudentListName() : null,
-            request.Group,
-            request.Gender,
-            (int)configHandler.Data.LotterySettings.DrawType,
-            (int)configHandler.Data.RollCallSettings.DrawType,
-            request.CourseName));
+        // 插件结果后处理器：同点名通道，只能批注 / 决定是否写历史 / 是否让宿主跳过自己的呈现动画，
+        // 抽出的奖与分配名单本身不允许改——抽取证明已经生成，改写会破坏凭证与审计链。
+        var edit = pipeline?.ApplyPostProcessors(
+            BuildLotteryContext(request.Group, request.Gender, request.CourseName, count),
+            new DrawResultEdit(assigned, prizes.Winners));
+        if (edit is not null &&
+            (!edit.Students.SequenceEqual(assigned) || !edit.Prizes.SequenceEqual(prizes.Winners)))
+        {
+            logger.LogWarning("插件结果后处理器试图改写已抽出的奖或学生，为保护抽取证明与审计链，本次改写被忽略。");
+            edit = edit with { Students = assigned, Prizes = prizes.Winners };
+        }
+
+        var roundId = edit?.SuppressHistory == true
+            ? edit.OverrideRoundId ?? string.Empty
+            : drawCommits.CommitLotteryDraw(new LotteryDrawCommit(
+                prizes.Winners,
+                DateTime.Now,
+                count,
+                GetPrizePoolName(),
+                assigned,
+                hasStudentAssignment ? GetStudentListName() : null,
+                request.Group,
+                request.Gender,
+                (int)configHandler.Data.LotterySettings.DrawType,
+                (int)configHandler.Data.RollCallSettings.DrawType,
+                request.CourseName,
+                edit?.OverrideRoundId));
         PublishProof(prizes);
         if (assignedOutcome is not null)
             PublishProof(assignedOutcome);
 
         usageReport.RecordLottery();
-        return new LotteryDrawResult(prizes.Winners, assigned, prizes.Proof.ProofId, roundId);
+        // 抽签完成事件：奖品与分配到的学生一起广播，插件不必自己拼历史。
+        eventBus?.Publish(new HostEvents.DrawCompleted(
+            DrawPresentationChannel.Lottery,
+            assigned,
+            prizes.Winners,
+            hasStudentAssignment ? GetStudentListName() : string.Empty,
+            GetPrizePoolName(),
+            roundId,
+            DateTime.Now,
+            count));
+        return new LotteryDrawResult(prizes.Winners, assigned, prizes.Proof.ProofId, roundId,
+            edit?.Note, edit?.SuppressPresentation ?? false);
     }
 
     public void Reset(string studentListName, string group, string gender)
@@ -271,6 +362,16 @@ public sealed class LotteryDrawService(
         if (!string.IsNullOrWhiteSpace(studentListName))
             temporaryRecords.ClearStudentScope(GetStudentListName(), gender, group);
     }
+
+    private DrawPipelineContext BuildLotteryContext(string group, string gender, string courseName, int requestedCount) =>
+        new(DrawPresentationChannel.Lottery,
+            GetStudentListName(),
+            GetPrizePoolName(),
+            group ?? string.Empty,
+            gender ?? string.Empty,
+            courseName ?? string.Empty,
+            requestedCount,
+            (int)configHandler.Data.LotterySettings.DrawType);
 
     private void PublishProof<TCandidate>(VerificationDrawOutcome<TCandidate> outcome)
         where TCandidate : class

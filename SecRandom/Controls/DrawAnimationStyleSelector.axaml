@@ -1,0 +1,20 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:presentation="clr-namespace:SecRandom.Core.Abstraction.Services.Presentation;assembly=SecRandom.Core"
+             xmlns:local="clr-namespace:SecRandom.Controls"
+             mc:Ignorable="d" d:DesignWidth="180" d:DesignHeight="32"
+             x:Class="SecRandom.Controls.DrawAnimationStyleSelector"
+             x:DataType="local:DrawAnimationSelectorModel">
+    <ComboBox x:Name="PART_Combo"
+              MinWidth="180"
+              ItemsSource="{Binding Options}"
+              SelectedItem="{Binding SelectedOption}">
+        <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="presentation:DrawAnimationOption">
+                <TextBlock Text="{Binding DisplayName}" />
+            </DataTemplate>
+        </ComboBox.ItemTemplate>
+    </ComboBox>
+</UserControl>

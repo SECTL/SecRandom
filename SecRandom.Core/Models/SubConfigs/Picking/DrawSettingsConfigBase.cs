@@ -1,5 +1,6 @@
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Core.Enums.Configs;
 using System;
 using System.Text.Json.Serialization;
@@ -24,6 +25,13 @@ public partial class DrawSettingsConfigBase : ObservableObject
     [ObservableProperty] private int _animationInterval = 80;
     [ObservableProperty] private int _autoplayCount = 5;
     [ObservableProperty] private DrawAnimationStyleMode _animationStyle = DrawAnimationStyleMode.DirectRotate;
+
+    /// <summary>
+    ///     "动画样式"下拉里选中的项：<see cref="DrawAnimationSelection.Host" /> 表示宿主内置动画，
+    ///     其他值是插件贡献的动画 id（等于对应 <c>IDrawResultPresenter.Id</c>）。
+    ///     旧配置文件没有这个字段时按内置动画处理。
+    /// </summary>
+    [ObservableProperty] private string _pluginAnimationId = DrawAnimationSelection.Host;
 
     [JsonPropertyName("result_flow_animation_mode")]
     public DrawAnimationStyleMode LegacyResultFlowAnimationMode
