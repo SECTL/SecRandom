@@ -96,6 +96,9 @@
     <data name="M_Status_Blocked" xml:space="preserve">
         <value>已停止重试</value>
     </data>
+    <data name="M_Status_ReenrollRequired" xml:space="preserve">
+        <value>需要重新接入</value>
+    </data>
     <data name="M_Detail_NotConfigured" xml:space="preserve">
         <value>还没有填写所属组 ID</value>
     </data>
@@ -158,5 +161,45 @@
     </data>
     <data name="S_RemoteDrawPage_D" xml:space="preserve">
         <value>打开后主界面侧栏出现『远程抽取』页，可向本组其他设备下发抽取；使用前需要登录账号，服务端仍按组成员角色判定权限；关闭后立刻隐藏</value>
+    </data>
+    <data name="S_NodeEnrollment" xml:space="preserve">
+        <value>接入自建集控</value>
+    </data>
+    <data name="S_NodeEnrollment_D" xml:space="preserve">
+        <value>用控制台签发的接入码接入自建集控，免登录 SECTL</value>
+    </data>
+    <data name="S_NodeEnrollment_Code" xml:space="preserve">
+        <value>接入码</value>
+    </data>
+    <data name="S_NodeEnrollment_Code_Ph" xml:space="preserve">
+        <value>接入码</value>
+    </data>
+    <data name="C_Enroll" xml:space="preserve">
+        <value>接入</value>
+    </data>
+    <data name="C_ClearEnrollment" xml:space="preserve">
+        <value>清除接入</value>
+    </data>
+    <data name="M_Enroll_None" xml:space="preserve">
+        <value>未接入</value>
+    </data>
+    <data name="M_Enroll_Active" xml:space="preserve">
+        <value>已接入：{0}</value>
+    </data>
+    <data name="M_Enroll_Expired" xml:space="preserve">
+        <value>接入已过期</value>
+    </data>
+    <data name="M_Enroll_Unreadable" xml:space="preserve">
+        <value>需要重新接入</value>
+    </data>
+    <data name="M_Enroll_TokenHint" xml:space="preserve">
+        <value>节点令牌加密保存在本机，不会进入设置导出、云备份或诊断包</value>
+    </data>
+    <data name="M_Enroll_Detail" xml:space="preserve">
+        <value>接入失败：{0}</value>
+    </data>
+<data name="M_Detail_NotEnrolled" xml:space="preserve"><value>尚未接入自建集控，请在上面的「接入自建集控」卡片里填写控制台签发的接入码</value></data>
+    <data name="M_Detail_EnrollmentRejected" xml:space="preserve">
+        <value>服务端已拒绝本机接入令牌，请在上面的「接入自建集控」卡片里重新接入</value>
     </data>
 </root>

@@ -86,10 +86,4 @@
   <data name="C_CrashDirectory" xml:space="preserve"><value>崩溃报告目录</value></data>
   <data name="C_Exists" xml:space="preserve"><value>存在</value></data>
   <data name="C_Missing" xml:space="preserve"><value>缺失</value></data>
-  <data name="S_ControlPlaneEndpoint" xml:space="preserve"><value>集控控制面</value></data>
-  <data name="C_RevealControlPlaneEndpoint" xml:space="preserve"><value>显示控制面地址设置</value></data>
-  <data name="C_RevealControlPlaneEndpoint_D" xml:space="preserve"><value>临时在集控设置页显示控制面地址设置卡</value></data>
-  <data name="M_ControlPlaneEndpoint_ConfirmTitle" xml:space="preserve"><value>显示控制面地址设置</value></data>
-  <data name="M_ControlPlaneEndpoint" xml:space="preserve"><value>已在“设置 → 通用 → 集控”页面显示“控制面地址”设置卡；此显示仅对本次运行有效，重新启动软件后会自动隐藏；&#xA;&#xA;控制面地址决定控制台（手机/平板）访问哪一个集控平台，默认为线上服务；改成自建地址后，控制台会把本账号的访问令牌发送到那个地址</value></data>
-  <data name="M_ControlPlaneEndpoint_Risk" xml:space="preserve"><value>只有当你自己部署并信任该集控平台时才改它；地址必须使用 https（仅回环地址允许明文 http），填错会让控制台拿不到组与设备；想回到默认，在集控设置页清空输入框或点“恢复默认”</value></data>
 </root>

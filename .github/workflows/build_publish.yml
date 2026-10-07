@@ -23,6 +23,11 @@ jobs:
     name: Validate_Release_Metadata
     if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' }}
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      # Required to start the iOS workflow below: dispatching another workflow through the
+      # GITHUB_TOKEN needs actions: write.
+      actions: write
     steps:
       - name: Checkout release tag
         uses: actions/checkout@v6
@@ -35,6 +40,34 @@ jobs:
         env:
           RELEASE_TAG: ${{ github.event.inputs.release_tag }}
         run: ./scripts/validate-release-metadata.ps1
+
+      # The iOS build is the slowest target and cannot hold the release back, so it runs in the
+      # separate "Build iOS" workflow. Starting it here - before the platform builds - lets both run
+      # in parallel; that workflow waits for the release this run creates and then attaches the IPA
+      # together with a refreshed update manifest and release note.
+      - name: Trigger the iOS build
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+        run: |
+          set -uo pipefail
+          # Prefer the ref this run was dispatched from, since it carries build_ios.yml; fall back to
+          # the default branch so a tag that predates the workflow file still gets an iOS build.
+          for ref in "${{ github.ref_name }}" "${{ github.event.repository.default_branch }}"; do
+            if [ -z "$ref" ]; then
+              continue
+            fi
+            if gh workflow run build_ios.yml --repo "$GH_REPO" --ref "$ref" -f "release_tag=$RELEASE_TAG"; then
+              echo "Dispatched the iOS build from ref '$ref' for $RELEASE_TAG."
+              exit 0
+            fi
+            echo "Could not dispatch the iOS build from ref '$ref'."
+          done
+          # The release does not depend on iOS: dispatch the workflow by hand and the IPA is still
+          # attached automatically once it finishes.
+          echo "::warning::Could not trigger the iOS build automatically. Run 'gh workflow run build_ios.yml -f release_tag=$RELEASE_TAG' to attach the IPA to the release."
 
   build_desktop:
     name: Build_${{ matrix.os }}_${{ matrix.arch }}
@@ -754,102 +787,13 @@ jobs:
           retention-days: 14
           if-no-files-found: error
 
-  build_ios:
-    name: Build_iOS
-    needs: validate_release
-    if: ${{ always() && !cancelled() && (needs.validate_release.result == 'success' || needs.validate_release.result == 'skipped') }}
-    runs-on: macos-26
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-          submodules: recursive
-          persist-credentials: false
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || github.ref }}
-
-      - name: Set up Xcode
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: '26.6'
-
-      # Keep the SDK and workload set paired with the selected Xcode version.
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 10.0.401
-
-      - name: Get Latest Tag
-        id: get_tag
-        if: ${{ github.event_name != 'workflow_dispatch' }}
-        shell: bash
-        run: echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
-
-      - name: Verify iOS toolchain
-        shell: bash
-        run: |
-          test "$(uname -m)" = arm64
-          xcode-select -p
-          xcodebuild -version
-          xcrun --find strip
-          dotnet --version
-
-      - name: Install iOS workload
-        shell: bash
-        run: |
-          dotnet workload install ios --version 10.0.401
-          dotnet workload --info
-
-      - name: Publish unsigned iOS arm64 IPA
-        shell: bash
-        env:
-          VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
-        run: |
-          set -euo pipefail
-          version="${VERSION#v}"
-          version="${version#V}"
-          output="artifacts/mobile/SecRandom-v${version}-ios-arm64-unsigned.ipa"
-          mkdir -p artifacts/mobile
-          # The AOT step dominates this job. The iOS SDK parallelizes it to
-          # Environment.ProcessorCount / 2, which is integer 1 on the 3 vCPU macOS runner and
-          # therefore compiles the assemblies strictly serially; two workers use the machine
-          # without exhausting the runner's 7 GB when LLVM AOT is in flight.
-          dotnet publish SecRandom.iOS/SecRandom.iOS.csproj \
-            -c Release \
-            -f net10.0-ios \
-            -r ios-arm64 \
-            -p:Version="$version" \
-            -p:ApplicationVersion=${{ github.run_number }} \
-            -p:EnableCodeSigning=false \
-            -p:CodesignRequireProvisioningProfile=false \
-            -p:BuildIpa=true \
-            -p:ArchiveOnBuild=false \
-            -p:BuildInParallel=false \
-            -p:UseSharedCompilation=false \
-            -p:AotCompileMaxDegreeOfParallelism=2 \
-            -p:IpaPackagePath="$GITHUB_WORKSPACE/$output"
-          test -s "$output"
-          unzip -l "$output" | grep -q 'Payload/.*\.app/Info.plist'
-          unzip -p "$output" 'Payload/*.app/Info.plist' > "$RUNNER_TEMP/SecRandom-iOS-Info.plist"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'SecRandom'
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'AppIcon'
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = "$version"
-          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = "${{ github.run_number }}"
-
-      - name: Upload unsigned iOS IPA
-        uses: actions/upload-artifact@v7
-        with:
-          name: ios-arm64_unsigned_ipa
-          path: artifacts/mobile/*.ipa
-          retention-days: 14
-          if-no-files-found: error
-
   publish:
     name: Publish_Release
     runs-on: windows-2022
-    needs: [build_desktop, build_android, build_ios, build_pluginsdk]
-    if: ${{ always() && success('build_desktop') && success('build_android') && success('build_ios') && success('build_pluginsdk') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
+    # iOS is deliberately not a dependency here: build_ios.yml builds the IPA in parallel and attaches
+    # it (plus a refreshed update manifest and release note) to the release this job creates.
+    needs: [build_desktop, build_android, build_pluginsdk]
+    if: ${{ always() && success('build_desktop') && success('build_android') && success('build_pluginsdk') && github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag && github.event_name != 'pull_request' }}
     permissions:
       contents: write
       id-token: write

@@ -1,9 +1,10 @@
-﻿using System.Runtime.CompilerServices;
+using System.Runtime.CompilerServices;
 using Avalonia.Metadata;
 
 [assembly: InternalsVisibleTo("SecRandom.Desktop")]
 [assembly: InternalsVisibleTo("SecRandom.Platforms.Windows")]
 [assembly: InternalsVisibleTo("SecRandom.Core.Tests")]
+[assembly: InternalsVisibleTo("SecRandom.Mobile.Tests")]
 [assembly: InternalsVisibleTo("SecRandom.FairnessAudit")]
 [assembly: InternalsVisibleTo("SecRandom")]
 

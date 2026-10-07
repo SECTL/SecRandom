@@ -522,6 +522,55 @@ public sealed class TabletControlHostTests
     }
 
     [Fact]
+    public void 接线_接入卡不做展开器且两个按钮互斥显隐()
+    {
+        var xaml = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/SettingsPages/General/ControlSettingsPage.axaml"));
+        var card = SectionOf(xaml, "x:Name=\"S_NodeEnrollment\"", "</fa:FASettingsExpander>", includeStart: true);
+
+        // 接入卡是普通设置卡，不是"展开式下拉框"：整张卡一个 item 都没有，所以 FluentAvalonia 连展开箭头都不渲染
+        // （FASettingsExpander 只要有一个 item 就会画出 展开/收起 箭头并把正文区留出来）。
+        Assert.DoesNotContain("IsExpanded", card, StringComparison.Ordinal);
+
+        // 内容全在 Footer 里：Footer 之后到卡片结尾不允许再有任何元素——那正是"item"（= 展开箭头）的来源。
+        const string footerOpen = "<fa:FASettingsExpander.Footer>";
+        const string footerClose = "</fa:FASettingsExpander.Footer>";
+        var footerStart = card.IndexOf(footerOpen, StringComparison.Ordinal);
+        var footerEnd = card.IndexOf(footerClose, StringComparison.Ordinal);
+        Assert.True(footerStart >= 0 && footerEnd > footerStart, "接入卡必须把内容写在 FASettingsExpander.Footer 里");
+        var footer = card[footerStart..(footerEnd + footerClose.Length)];
+        Assert.DoesNotContain("<", card[(footerEnd + footerClose.Length)..], StringComparison.Ordinal);
+
+        // 失败提示跟着 Footer 一起走（卡片没有正文区，放正文区就等于把提示塞进展开器里）。
+        Assert.Contains("IsVisible=\"{Binding ShowEnrollmentMessage}\"", footer, StringComparison.Ordinal);
+
+        // 状态右对齐，接入码带上限——上限值由 VM 提供，界面不写死业务数字。
+        Assert.Contains("TextAlignment=\"Right\"", card, StringComparison.Ordinal);
+        Assert.Contains("MaxLength=\"{Binding EnrollmentCodeMaxLength}\"", card, StringComparison.Ordinal);
+
+        // 一个动作格：显隐绑互补的两个属性，IsEnabled 仍分别是各自的 Can*。
+        Assert.Contains("IsVisible=\"{Binding ShowEnroll}\"", card, StringComparison.Ordinal);
+        Assert.Contains("IsVisible=\"{Binding ShowClearEnrollment}\"", card, StringComparison.Ordinal);
+        Assert.Contains("IsEnabled=\"{Binding CanEnroll}\"", card, StringComparison.Ordinal);
+        Assert.Contains("IsEnabled=\"{Binding CanClearEnrollment}\"", card, StringComparison.Ordinal);
+
+        var viewModelSource = File.ReadAllText(GetRepositoryPath(@"SecRandom/ViewModels/SettingsPages/ControlSettingsPageViewModel.cs"));
+
+        // 互补是"这一格永远恰好有一个按钮"的唯一保证；上限是一个具名常量，不是散在 XAML 里的魔法数字。
+        Assert.Contains("public bool ShowEnroll => !ShowClearEnrollment;", viewModelSource, StringComparison.Ordinal);
+        Assert.Contains(
+            "public bool ShowClearEnrollment => CanClearEnrollment && string.IsNullOrWhiteSpace(EnrollmentCode);",
+            viewModelSource,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "public int EnrollmentCodeMaxLength => NodeEnrollmentClient.MaxCodeLength;",
+            viewModelSource,
+            StringComparison.Ordinal);
+
+        var clientSource = File.ReadAllText(GetRepositoryPath(@"SecRandom/Services/ControlNode/NodeEnrollmentClient.cs"));
+        Assert.Contains("public const int MaxCodeLength", clientSource, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void 接线_集控设置页跟着节点一起出现()
     {
         var source = ReadAppSource();

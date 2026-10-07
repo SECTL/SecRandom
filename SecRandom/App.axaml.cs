@@ -1275,7 +1275,9 @@ public partial class App : Application
                     });
                     services.AddSingleton<IControlNodeStateStore, FileControlNodeStateStore>();
                     services.AddSingleton<IControlDrawGate, ControlDrawGateService>();
-                    services.AddSingleton<IControlNodeCredentialProvider, ControlNodeCredentialProvider>();
+                    services.AddSingleton<IControlNodeCredentialProvider>(provider => new ControlNodeCredentialProvider(
+                        provider.GetRequiredService<SectlAuthService>(),
+                        provider.GetRequiredService<INodeEnrollmentStore>()));
                     services.AddSingleton<IControlNodeTransportFactory, WebSocketControlNodeTransportFactory>();
                     // 三个能力执行器各自独立：它们依赖的界面/配置/名单服务互不相同，
                     // 拆开才能在测试里单独替换，也避免分发器变成一个巨大的文件。
@@ -1292,7 +1294,17 @@ public partial class App : Application
                     services.AddSingleton<IControlDrawResetPresenter, ControlPageDrawResetPresenter>();
                     services.AddSingleton<ControlDrawResetHandler>();
                     services.AddSingleton<IControlCommandDispatcher, ControlCommandDispatcher>();
-                    services.AddSingleton<ControlNodeClient>();
+                    services.AddSingleton(provider => new ControlNodeClient(
+                        provider.GetRequiredService<IControlNodeTransportFactory>(),
+                        provider.GetRequiredService<IControlNodeCredentialProvider>(),
+                        provider.GetRequiredService<IControlNodeStateStore>(),
+                        provider.GetRequiredService<IControlCommandDispatcher>(),
+                        provider.GetRequiredService<ControlNodeClientOptions>(),
+                        provider.GetRequiredService<ILogger<ControlNodeClient>>(),
+                        provider.GetRequiredService<ILogger<ControlNodeSession>>(),
+                        provider.GetRequiredService<INodeEnrollmentStore>()));
+                    // 显式泛型注册：构造函数里的 SectlAuthService / INodeEnrollmentStore 是可选参数，
+                    // 容器两者都能解析，所以这里不需要（也不该）写工厂——守卫测试会盯住这一行。
                     services.AddHostedService<ControlNodeHostedService>();
                     // 单例：这个 ViewModel 订阅了节点状态与连接状态，每次打开设置页都新建一个会累积订阅。
                     services.AddSingleton<ControlSettingsPageViewModel>();
@@ -1318,16 +1330,28 @@ public partial class App : Application
                     serviceProvider.GetRequiredService<IImportExportService>(),
                     serviceProvider.GetRequiredService<ILogger<SettingsIntegrityRecoveryService>>()));
 
-                // 控制面（集控 REST）客户端：桌面与手机共用同一份实现与同一条 Bearer 边界
-                // （SectlAuthService.SendAuthorizedAsync），因此注册在共享分支里。
-                services.AddSingleton<IAuthorizedApiSender, SectlAuthorizedApiSender>();
+                // 接入令牌：自建集控的节点凭据，独立加密存放（data/config/security/control-node.json）。
+                // 注册在**共享分支**里：手机端虽然不跑节点，但远程抽取页同样要在"未登录 SECTL"时可用，
+                // 靠的就是这份接入记录；放在 RunsControlNode 分支里会让手机端永远接入不了。
+                services.AddSingleton<INodeEnrollmentStore>(provider => new FileNodeEnrollmentStore(
+                    provider.GetRequiredService<ILogger<FileNodeEnrollmentStore>>()));
+                services.AddSingleton(provider => new NodeEnrollmentClient(
+                    provider.GetRequiredService<IHttpClientFactory>(),
+                    provider.GetRequiredService<IControlPlaneEndpointStore>()));
+
+                // 控制面（集控 REST）客户端：桌面与手机共用同一份实现与同一条 Bearer 边界。
+                // 装饰顺序：未接入时 EnrolledAuthorizedApiSender 原样转交 SectlAuthorizedApiSender（今天的
+                // 行为一字不变），已接入时改出示节点令牌——**绝不再经过账号刷新逻辑**。
+                services.AddSingleton<SectlAuthorizedApiSender>();
+                services.AddSingleton<IAuthorizedApiSender>(provider => new EnrolledAuthorizedApiSender(
+                    provider.GetRequiredService<SectlAuthorizedApiSender>(),
+                    provider.GetRequiredService<INodeEnrollmentStore>(),
+                    provider.GetRequiredService<IHttpClientFactory>()));
                 services.AddSingleton<IControlPlaneDevicePreferenceStore, FileControlPlaneDevicePreferenceStore>();
                 // 控制面基址是可配置的（自建/私有部署），但它**不进 settings.json**：这个地址每次请求都会
                 // 收到本账号的令牌，一次设置导入不该能把令牌指到别的服务器上。见 IControlPlaneEndpointStore。
                 services.AddSingleton<IControlPlaneEndpointStore>(provider => new FileControlPlaneEndpointStore(
                     provider.GetRequiredService<ILogger<FileControlPlaneEndpointStore>>()));
-                // 这张设置卡默认藏着，由调试页的总开关放出来（与"内幕设置"同一条运行时逻辑）。
-                services.AddSingleton<IControlPlaneEndpointSettingsGate, ControlPlaneEndpointSettingsGate>();
                 services.AddSingleton<IControlPlaneClient>(provider => new ControlPlaneClient(
                     provider.GetRequiredService<IAuthorizedApiSender>(),
                     provider.GetRequiredService<ILogger<ControlPlaneClient>>(),
@@ -1359,13 +1383,23 @@ public partial class App : Application
                 // 它自己会记住上次选中的设备，不需要做成单例。
                 // 用显式工厂而不是纯约定注册：本机节点身份只有桌面/平板有（手机没有本地节点），
                 // 传 null = 设备列表里一台都不标"本机"，而不是让容器去猜一个可选参数。
+                // 后四个参数是给手机端的**内联接入卡片**用的：手机上没有「设置 → 集控」那一页，
+                // 未接入/令牌失效时就地填接入码（复用设置页那套 NodeEnrollmentClient + 接入记录存储）。
+                // 平台名必须报真实系统（手机是 android/ios，平板与桌面也是被控端），
+                // 设备名取平台根给的显示名，取不到时 VM 回落到主机名。
                 services.AddTransient(provider => new MobileRemoteDrawViewModel(
                     provider.GetRequiredService<MainConfigHandler>(),
                     provider.GetRequiredService<IControlPlaneClient>(),
                     provider.GetRequiredService<IControlPlaneDevicePreferenceStore>(),
                     provider.GetRequiredService<SectlAuthService>(),
                     provider.GetRequiredService<ILogger<MobileRemoteDrawViewModel>>(),
-                    provider.GetService<IControlNodeStateStore>()));
+                    provider.GetService<IControlNodeStateStore>(),
+                    // 同上：手机很可能"没登录 SECTL、但接入了自建集控"，这份记录决定本页能不能直接用。
+                    provider.GetService<INodeEnrollmentStore>(),
+                    provider.GetService<NodeEnrollmentClient>(),
+                    provider.GetService<IControlPlaneEndpointStore>(),
+                    ResolveControlPlatformName(),
+                    mobilePlatform?.DeviceName));
                 services.AddTransient<LotteryHistoryViewModel>();
 
                 // 杂项 Views

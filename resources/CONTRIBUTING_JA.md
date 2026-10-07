@@ -82,6 +82,7 @@ dotnet test SecRandom.Core.Tests/SecRandom.Core.Tests.csproj -c Release --no-res
 リポジトリは GitHub Actions を使用しています。
 
 - `.github/workflows/build_publish.yml` はマルチプラットフォームビルド、パッケージ、署名付きマニフェスト生成、手動リリースフローを担当します。
+- `.github/workflows/build_ios.yml` は iOS を個別にビルドします。他プラットフォームの公開後、IPA・再署名した更新マニフェスト・更新したリリースノートを対応する Release に追加します。
 - `.github/workflows/codeQL.yml` は CodeQL セキュリティ分析を実行します。
 
 通常の貢献では、コミットメッセージのキーワードによってリリースを起動しません。メンテナーが明示的なリリースタグを指定して、手動起動の GitHub Actions ワークフローから公開します。

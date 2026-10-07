@@ -1,3 +1,16 @@
+# Renders the release body from the tag changelog plus a download table and a SHA256 table.
+#
+# Default mode (build_publish.yml) hashes the freshly built files in ./artifacts/release/output.
+# -InventoryPath describes release assets by name + SHA256 instead, which is what build_ios.yml needs
+# when it refreshes the notes of a release that is already published. -BodyPath keeps the body that is
+# already live and replaces only the generated tables in it, so hand written prose survives.
+[CmdletBinding()]
+param(
+    [string]$InventoryPath = '',
+    [string]$BodyPath = '',
+    [string]$OutFile = './release-note.md'
+)
+
 $repo = $env:repoName
 $tag = $env:tagName
 if ([string]::IsNullOrWhiteSpace($repo)) {
@@ -8,16 +21,42 @@ if ([string]::IsNullOrWhiteSpace($tag)) {
 }
 
 $changelogPath = "./CHANGELOG/v3/${tag}/CHANGELOG.md"
-$releaseNotePath = "./release-note.md"
+$releaseNotePath = $OutFile
 $outDir = "./artifacts/release/output"
 
-if (-not (Test-Path $outDir)) {
-    throw "Output directory not found: $outDir"
-}
+if (-not [string]::IsNullOrWhiteSpace($InventoryPath)) {
+    if (-not (Test-Path -LiteralPath $InventoryPath -PathType Leaf)) {
+        throw "Inventory file not found: $InventoryPath"
+    }
 
-$files = Get-ChildItem -Path $outDir -File | Sort-Object Name
-if (-not $files) {
-    throw "No files found in $outDir"
+    $inventory = Get-Content -LiteralPath $InventoryPath -Raw | ConvertFrom-Json
+    $inventoryEntries = foreach ($entry in @($inventory)) {
+        if ([string]::IsNullOrWhiteSpace($entry.name)) {
+            throw "Every inventory entry needs a file name."
+        }
+        if ([string]::IsNullOrWhiteSpace($entry.sha256)) {
+            throw "Inventory entry '$($entry.name)' has no SHA256 digest."
+        }
+        [pscustomobject]@{ Name = $entry.name; Sha256 = $entry.sha256.ToUpperInvariant() }
+    }
+    $files = @($inventoryEntries | Sort-Object Name)
+
+    if (-not $files) {
+        throw "No assets found in $InventoryPath"
+    }
+} else {
+    if (-not (Test-Path $outDir)) {
+        throw "Output directory not found: $outDir"
+    }
+
+    $localFiles = Get-ChildItem -Path $outDir -File | Sort-Object Name
+    if (-not $localFiles) {
+        throw "No files found in $outDir"
+    }
+
+    $files = foreach ($file in $localFiles) {
+        [pscustomobject]@{ Name = $file.Name; Sha256 = (Get-FileHash $file.FullName -Algorithm SHA256).Hash }
+    }
 }
 
 $downloadSummary = @"
@@ -45,12 +84,23 @@ $md5Summary = @"
 "@
 
 foreach ($file in $files) {
-    $hash = (Get-FileHash $file.FullName -Algorithm SHA256).Hash
-    $md5Summary += "`n| $($file.Name) | ``$hash`` |"
+    $md5Summary += "`n| $($file.Name) | ``$($file.Sha256)`` |"
 }
 $md5Summary += "`n`n</details>"
 
-$changelog = if (Test-Path $changelogPath) {
+$changelog = if (-not [string]::IsNullOrWhiteSpace($BodyPath)) {
+    if (-not (Test-Path -LiteralPath $BodyPath -PathType Leaf)) {
+        throw "Release body file not found: $BodyPath"
+    }
+
+    $body = Get-Content -LiteralPath $BodyPath -Raw
+    $tableMarker = $body.LastIndexOf('**下载链接**')
+    if ($tableMarker -ge 0) {
+        $body.Substring(0, $tableMarker).TrimEnd()
+    } else {
+        $body.TrimEnd()
+    }
+} elseif (Test-Path $changelogPath) {
     Get-Content $changelogPath -Raw
 } else {
     "- 发布说明待补充。`n---`n"
@@ -59,4 +109,4 @@ $changelog = if (Test-Path $changelogPath) {
 $fullContent = "$changelog`n`n$downloadSummary`n`n$md5Summary"
 Set-Content -Path $releaseNotePath -Value $fullContent -Encoding utf8
 
-Write-Host "Release Note generated"
+Write-Host "Release Note generated with $($files.Count) asset(s)"

@@ -54,19 +54,6 @@
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
-            <!-- 控制面地址设置卡的总开关：与"内幕设置"同一条逻辑（只对本次运行有效、不落盘），
-                 打开后集控设置页才显示那张控制面地址设置卡。 -->
-            <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi ServerFilled}}"
-                                   Header="{Binding Strings.S_ControlPlaneEndpoint}" IsExpanded="False">
-                <fa:FASettingsExpanderItem Content="{Binding Strings.C_RevealControlPlaneEndpoint}"
-                                           Description="{Binding Strings.C_RevealControlPlaneEndpoint_D}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ToggleSwitch x:Name="ControlPlaneEndpointToggle"
-                                      IsChecked="{Binding IsControlPlaneEndpointRevealed}" />
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-            </fa:FASettingsExpander>
-
             <fa:FASettingsExpander IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}"
                                    Header="{Binding Strings.S_UpdateDiagnostics}" IsExpanded="False">
                 <fa:FASettingsExpanderItem Content="{Binding Strings.C_RefreshUpdate}"

@@ -82,6 +82,7 @@ dotnet test SecRandom.Core.Tests/SecRandom.Core.Tests.csproj -c Release --no-res
 仓库使用 GitHub Actions：
 
 - `.github/workflows/build_publish.yml` 负责多平台构建、打包、签名清单生成和手动发布流程。
+- `.github/workflows/build_ios.yml` 负责 iOS 构建：其余平台发布后，它把 IPA、重新签名的更新清单和刷新后的发布说明补交到对应的 Release。
 - `.github/workflows/codeQL.yml` 负责 CodeQL 安全扫描。
 
 常规贡献无需通过提交信息触发发布。发布由维护者在 GitHub Actions 的手动工作流中指定发布标签后执行。

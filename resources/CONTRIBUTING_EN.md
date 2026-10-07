@@ -82,6 +82,7 @@ Read the root [AGENTS.md](../AGENTS.md) and [project rules](../docs/project_rule
 The repository uses GitHub Actions:
 
 - `.github/workflows/build_publish.yml` handles multi-platform builds, packaging, signed-manifest generation, and manual release flow.
+- `.github/workflows/build_ios.yml` builds iOS separately: after the other platforms are published, it attaches the IPA, a re-signed update manifest, and a refreshed release note to the matching release.
 - `.github/workflows/codeQL.yml` runs CodeQL security analysis.
 
 Normal contributions do not trigger releases through commit-message keywords. Maintainers publish from the manually dispatched GitHub Actions workflow with an explicit release tag.

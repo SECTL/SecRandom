@@ -1,4 +1,6 @@
+using System.Net;
 using Microsoft.Extensions.Logging;
+using SecRandom.Shared.Models.ControlNode;
 
 namespace SecRandom.Core.Services.ControlNode;
 
@@ -24,6 +26,7 @@ public sealed class ControlNodeClient
 {
     private readonly IControlNodeTransportFactory _transportFactory;
     private readonly IControlNodeCredentialProvider _credentialProvider;
+    private readonly INodeEnrollmentStore? _enrollmentStore;
     private readonly IControlNodeStateStore _stateStore;
     private readonly IControlCommandDispatcher _dispatcher;
     private readonly ControlNodeClientOptions _options;
@@ -69,10 +72,12 @@ public sealed class ControlNodeClient
         IControlCommandDispatcher dispatcher,
         ControlNodeClientOptions options,
         ILogger<ControlNodeClient> logger,
-        ILogger<ControlNodeSession> sessionLogger)
+        ILogger<ControlNodeSession> sessionLogger,
+        INodeEnrollmentStore? enrollmentStore = null)
     {
         _transportFactory = transportFactory;
         _credentialProvider = credentialProvider;
+        _enrollmentStore = enrollmentStore;
         _stateStore = stateStore;
         _dispatcher = dispatcher;
         _options = options;
@@ -129,7 +134,13 @@ public sealed class ControlNodeClient
                 var token = await TryGetTokenAsync(consecutiveUnauthorized > 0, cancellationToken).ConfigureAwait(false);
                 if (string.IsNullOrWhiteSpace(token))
                 {
-                    SetLinkState(new ControlNodeLinkState(ControlNodeLinkStatus.Idle, "not_signed_in"));
+                    // 取不到凭据的原因有两种，界面文案必须分开：一条是"SECTL 账号没登录"（官方云端，本来的样子），
+                    // 另一条是"这台机器还没接入自建集控"——后者登录 SECTL 也解决不了，提示去填接入码才对。
+                    SetLinkState(new ControlNodeLinkState(
+                        ControlNodeLinkStatus.Idle,
+                        _enrollmentStore?.Status.HasToken == true
+                            ? ControlNodeCredentialDetailCodes.EnrollmentUnavailable
+                            : ControlNodeCredentialDetailCodes.NotSignedIn));
                     await WaitAsync(TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
                     continue;
                 }
@@ -181,7 +192,12 @@ public sealed class ControlNodeClient
                 var delay = NextDelay(backoff);
                 SetLinkState(new ControlNodeLinkState(ControlNodeLinkStatus.WaitingToRetry, result.Detail, delay));
 
-                await Task.Delay(delay, cancellationToken).ConfigureAwait(false);
+                // 退避等待必须可唤醒：用户翻开关、改地址、点"重新连接"都不该干等最长 60 秒。
+                // 所以走 _wakeSignal 而不是不可取消的 Task.Delay；但**先把残留信号清掉**——
+                // 连接过程中到达的那次唤醒与本轮退避无关，留着它会让退避立刻返回，
+                // 把 1s→2s→4s 的节奏打乱成"看着很勤快"的重连风暴。
+                DrainWakeSignal();
+                await WaitAsync(delay, cancellationToken).ConfigureAwait(false);
                 backoff = TimeSpan.FromTicks(Math.Min(backoff.Ticks * 2, _options.MaxBackoff.Ticks));
             }
         }
@@ -209,6 +225,14 @@ public sealed class ControlNodeClient
                 .ConnectAsync(new ControlNodeConnectRequest(endpoint.ToString(), token, state.NodeId, state.GroupId), cancellationToken)
                 .ConfigureAwait(false);
 
+            // 停止时主动掐断这条连接：只把取消令牌置位的话，卡在握手或接收上的会话要等到底层
+            // 超时才结束（WebSocket 最长几十秒），而重启路径等不起——同一 node 同时存在两条循环
+            // 会被服务端互相 replaced。取消回调与下面的 finally 会各 Dispose 一次，因此
+            // DisposeAsync 必须可重复调用（WebSocket 实现本来就是幂等的），这是有意为之。
+            using var abortOnCancel = cancellationToken.Register(
+                static state => _ = ((IControlNodeTransport)state!).DisposeAsync(),
+                transport);
+
             var session = new ControlNodeSession(
                 transport, _stateStore, _dispatcher, _options, _sessionLogger);
 
@@ -232,6 +256,23 @@ public sealed class ControlNodeClient
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
             return new ControlSessionResult(ControlSessionEndReason.Stopped);
+        }
+        catch (ControlNodeConnectRejectedException exception)
+        {
+            // 连接**建立阶段**就被拒（HTTP 401/403）：与握手后收到 unauthorized 错误帧归入同一条路，
+            // 才能让"令牌被撤销/过期"最终变成 Blocked/"unauthorized"（界面提示需要重新接入），
+            // 而不是被当成断网无限重连——那会让界面一直显示"正在重连"，用户永远等不到该做的动作。
+            // Detail 用统一的原因码而不是 "401"/"403"：这一列是给界面看的，HTTP 状态码只留在日志里。
+            _logger.LogWarning("集控节点连接被服务端拒绝（HTTP {StatusCode}），凭据可能已失效。", (int)exception.StatusCode);
+            return new ControlSessionResult(ControlSessionEndReason.Unauthorized, ControlErrorCodes.Unauthorized);
+        }
+        catch (HttpRequestException exception)
+            when (exception.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        {
+            // 不走 WebSocket 升级的传输实现可能直接抛 HttpRequestException，同样归类。
+            var statusCode = exception.StatusCode!.Value;
+            _logger.LogWarning(exception, "集控节点连接被服务端拒绝（HTTP {StatusCode}）。", (int)statusCode);
+            return new ControlSessionResult(ControlSessionEndReason.Unauthorized, ControlErrorCodes.Unauthorized);
         }
         catch (Exception exception)
         {
@@ -258,8 +299,19 @@ public sealed class ControlNodeClient
         }
         catch (Exception exception)
         {
-            _logger.LogWarning(exception, "读取 SECTL 凭据失败。");
+            _logger.LogWarning(exception, "读取节点通道凭据失败。");
             return null;
+        }
+    }
+
+    /// <summary>
+    ///     清掉已经积压的唤醒信号（信号量上限是 1，循环只为把语义写清楚）。
+    /// </summary>
+    private void DrainWakeSignal()
+    {
+        while (_wakeSignal.Wait(0))
+        {
+            // 丢弃与本轮退避无关的旧唤醒。
         }
     }
 

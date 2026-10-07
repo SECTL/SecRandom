@@ -755,4 +755,15 @@
     <data name="RD_Recipient" xml:space="preserve"><value>配布先</value></data>
     <data name="RD_RecipientNone" xml:space="preserve"><value>指定しない</value></data>
     <data name="RD_ConditionsUnsupported" xml:space="preserve"><value>この端末は条件付き抽選に対応していないため、プール全体から抽選します</value></data>
+    <data name="RD_EnrollmentRequired" xml:space="preserve"><value>自建集控にまだ接続していません。コンソールが発行した接続コードを入力してください</value></data>
+    <data name="RD_EnrollmentExpired" xml:space="preserve"><value>接続の有効期限が切れました。新しい接続コードを入力して再接続してください</value></data>
+    <data name="RD_Reenroll" xml:space="preserve"><value>再接続</value></data>
+    <data name="RD_SignInInstead" xml:space="preserve"><value>ログインする</value></data>
+    <data name="RD_EnrollTitle" xml:space="preserve"><value>自建集控に接続</value></data>
+    <data name="RD_EnrollHint" xml:space="preserve"><value>コンソールが発行した接続コードを入力します。トークンは本機の暗号化ストアに保存されます</value></data>
+    <data name="RD_EnrollCode" xml:space="preserve"><value>接続コード</value></data>
+    <data name="RD_EnrollAction" xml:space="preserve"><value>接続</value></data>
+    <data name="RD_EnrollClear" xml:space="preserve"><value>接続を解除</value></data>
+    <data name="RD_EnrollFailed" xml:space="preserve"><value>接続に失敗しました：{0}</value></data>
+    <data name="RD_EndpointInvalid" xml:space="preserve"><value>集控のアドレスが正しくありません</value></data>
 </root>

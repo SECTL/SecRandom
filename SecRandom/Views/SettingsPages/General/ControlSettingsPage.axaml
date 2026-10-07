@@ -12,7 +12,7 @@
              x:DataType="vm:ControlSettingsPageViewModel">
     <ScrollViewer>
         <!-- 分类顺序固定为：远程控制 → 集控平台 → 节点信息 → 连接与状态 → 高级连接设置。
-             身份三项（显示名称 / 节点 ID / 所属组 ID）**永远可见**，只有最后那组地址卡受调试页的总开关控制。 -->
+             身份三项（显示名称 / 节点 ID / 所属组 ID）与最后那组地址卡都**永远可见**。 -->
         <StackPanel Classes="page-container animated-intro settings">
             <sr:IconText x:Name="S_RemoteControl"
                          Text="{x:Static lc:Resources.S_RemoteControl}"
@@ -92,6 +92,62 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <!-- 接入自建集控：用控制台签发的接入码换一份节点令牌。接入后**不登录 SECTL 也能被远程管理**，
+                 远程抽取页同样可用；未接入时这一页与连接行为跟以前一字不差。
+                 **这张卡不是展开器**：不塞任何 item，全部内容（这一行 + 失败提示）都写在 Footer 里，
+                 所以它没有展开箭头、也没有可折叠的正文区，看起来就是一张普通设置卡。
+                 （FluentAvalonia 的 FASettingsExpander 只要有一个 item 就会渲染展开箭头，
+                 卡片立刻变回"展开式下拉框"——提示绝不能放正文区。）
+                 布局与同页 `S_RemoteControl_ServerUrl` 同构：状态 + 定宽输入框 + 一个动作按钮全在 Footer 的一行里。
+                 "接入"与"清除接入"共用同一格、按条件互斥显隐（见 ShowEnroll/ShowClearEnrollment），
+                 这一格永远恰好有一个按钮，行宽不随状态跳。
+                 令牌真值只进加密存储，界面上从头到尾只有一句状态和一句保证语提示，**没有任何回显路径**。 -->
+            <fa:FASettingsExpander x:Name="S_NodeEnrollment"
+                                   Header="{x:Static lc:Resources.S_NodeEnrollment}"
+                                   Description="{x:Static lc:Resources.S_NodeEnrollment_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ShieldCheckmarkFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Spacing="8">
+                        <!-- 状态定宽 140 且**右对齐**：四句状态（未接入 / 已接入：{组名} / 接入已过期 / 需要重新接入）
+                             都在这里，右对齐让状态紧贴输入框；组名过长按字符省略号截断——
+                             这一行**永远不换行**，宽度也不会随状态跳；
+                             "令牌加密保存在本机"那句保证语搬进悬停提示，不占一行。 -->
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{Binding EnrollmentStatusText}"
+                                       Width="140"
+                                       TextAlignment="Right"
+                                       TextWrapping="NoWrap"
+                                       TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center"
+                                       ToolTip.Tip="{x:Static lc:Resources.M_Enroll_TokenHint}" />
+                            <!-- 加长度上限挡住"整段文本误粘"（用户也可能贴一份 srn_… 令牌，所以上限取得宽），
+                                 数字来自 VM，界面不写死业务常量。 -->
+                            <TextBox Text="{Binding EnrollmentCode}"
+                                     Width="260"
+                                     MaxLength="{Binding EnrollmentCodeMaxLength}"
+                                     PlaceholderText="{x:Static lc:Resources.S_NodeEnrollment_Code_Ph}" />
+                            <!-- 一个动作格：有接入码就是"接入"，否则有可清记录就是"清除接入"（记录损坏要重接时也能清）。
+                                 IsEnabled 仍分别绑 Can*：显隐只说明"这一格现在是哪个动作"，
+                                 能不能点还取决于"正在接入""接入码是不是空的"。 -->
+                            <Button Content="{x:Static lc:Resources.C_Enroll}"
+                                    Command="{Binding EnrollCommand}"
+                                    IsVisible="{Binding ShowEnroll}"
+                                    IsEnabled="{Binding CanEnroll}" />
+                            <Button Content="{x:Static lc:Resources.C_ClearEnrollment}"
+                                    Command="{Binding ClearEnrollmentCommand}"
+                                    IsVisible="{Binding ShowClearEnrollment}"
+                                    IsEnabled="{Binding CanClearEnrollment}" />
+                        </StackPanel>
+                        <!-- 失败才出现的提示：卡片没有正文区（见上），提示就放在 Footer 的第二行；
+                             成功路径上它 IsVisible=false、高度为 0，卡片看起来和其他设置卡完全一样。 -->
+                        <TextBlock Text="{Binding EnrollmentMessage}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                   IsVisible="{Binding ShowEnrollmentMessage}" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <sr:IconText x:Name="S_ConnectionStatus"
                          Text="{x:Static lc:Resources.S_ConnectionStatus}"
                          Glyph="{sr:Fi DesktopPulseFilled}"
@@ -118,59 +174,57 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <!-- 高级连接设置：默认藏着，只有调试页的总开关打开后才出现（默认只对本次运行有效）。
+            <!-- 高级连接设置：常显。
                  两条地址都在这里：节点通道地址是**本机连服务端**，控制面地址是**控制台连服务端**。 -->
-            <StackPanel IsVisible="{Binding IsControlPlaneEndpointVisible}">
-                <sr:IconText x:Name="S_AdvancedConnections"
-                             Text="{x:Static lc:Resources.S_AdvancedConnections}"
-                             Glyph="{sr:Fi ServerFilled}"
-                             Margin="0 12 0 4" />
+            <sr:IconText x:Name="S_AdvancedConnections"
+                         Text="{x:Static lc:Resources.S_AdvancedConnections}"
+                         Glyph="{sr:Fi ServerFilled}"
+                         Margin="0 12 0 4" />
 
-                <fa:FASettingsExpander x:Name="S_RemoteControl_ServerUrl"
-                                       Header="{x:Static lc:Resources.S_RemoteControl_ServerUrl}"
-                                       Description="{x:Static lc:Resources.S_RemoteControl_ServerUrl_D}"
-                                       IconSource="{sr:FluentIconSource {sr:Fi GlobeFilled}}">
-                    <fa:FASettingsExpander.Footer>
-                        <!-- 与下面那条控制面地址用同一套结构（定宽输入框 + 同一个"恢复默认"文案），
-                             两行的总宽度才会一致，不会一条长一条短。 -->
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBox Text="{Binding ServerUrl}" Width="260" />
-                            <Button Content="{x:Static lc:Resources.C_RestoreDefaultEndpoint}"
-                                    Command="{Binding ResetServerUrlCommand}"
-                                    IsEnabled="{Binding IsServerUrlCustom}" />
-                        </StackPanel>
-                    </fa:FASettingsExpander.Footer>
-                </fa:FASettingsExpander>
+            <fa:FASettingsExpander x:Name="S_RemoteControl_ServerUrl"
+                                   Header="{x:Static lc:Resources.S_RemoteControl_ServerUrl}"
+                                   Description="{x:Static lc:Resources.S_RemoteControl_ServerUrl_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi GlobeFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <!-- 与下面那条控制面地址用同一套结构（定宽输入框 + 同一个"恢复默认"文案），
+                         两行的总宽度才会一致，不会一条长一条短。 -->
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBox Text="{Binding ServerUrl}" Width="260" />
+                        <Button Content="{x:Static lc:Resources.C_RestoreDefaultEndpoint}"
+                                Command="{Binding ResetServerUrlCommand}"
+                                IsEnabled="{Binding IsServerUrlCustom}" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
 
-                <TextBlock Text="{x:Static lc:Resources.M_EndpointRejected}"
-                           IsVisible="{Binding HasEndpointError}"
-                           Foreground="{DynamicResource SystemFillColorCautionBrush}"
-                           TextWrapping="Wrap"
-                           Margin="0 8 0 0" />
+            <TextBlock Text="{x:Static lc:Resources.M_EndpointRejected}"
+                       IsVisible="{Binding HasEndpointError}"
+                       Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                       TextWrapping="Wrap"
+                       Margin="0 8 0 0" />
 
-                <fa:FASettingsExpander x:Name="S_ControlPlaneEndpoint"
-                                       Header="{x:Static lc:Resources.S_ControlPlaneEndpoint}"
-                                       Description="{x:Static lc:Resources.S_ControlPlaneEndpoint_D}"
-                                       IconSource="{sr:FluentIconSource {sr:Fi ServerFilled}}">
-                    <fa:FASettingsExpander.Footer>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <!-- 留空即回到默认：水印就是默认地址，用户一眼能看到"不填会连哪"。 -->
-                            <TextBox Text="{Binding ControlPlaneEndpoint}"
-                                     Width="260"
-                                     PlaceholderText="{Binding ControlPlaneEndpointDefault}" />
-                            <Button Content="{x:Static lc:Resources.C_RestoreDefaultEndpoint}"
-                                    Command="{Binding ResetControlPlaneEndpointCommand}"
-                                    IsEnabled="{Binding IsControlPlaneEndpointCustom}" />
-                        </StackPanel>
-                    </fa:FASettingsExpander.Footer>
-                </fa:FASettingsExpander>
+            <fa:FASettingsExpander x:Name="S_ControlPlaneEndpoint"
+                                   Header="{x:Static lc:Resources.S_ControlPlaneEndpoint}"
+                                   Description="{x:Static lc:Resources.S_ControlPlaneEndpoint_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ServerFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <!-- 留空即回到默认：水印就是默认地址，用户一眼能看到"不填会连哪"。 -->
+                        <TextBox Text="{Binding ControlPlaneEndpoint}"
+                                 Width="260"
+                                 PlaceholderText="{Binding ControlPlaneEndpointDefault}" />
+                        <Button Content="{x:Static lc:Resources.C_RestoreDefaultEndpoint}"
+                                Command="{Binding ResetControlPlaneEndpointCommand}"
+                                IsEnabled="{Binding IsControlPlaneEndpointCustom}" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
 
-                <TextBlock Text="{x:Static lc:Resources.M_ControlPlaneEndpointRejected}"
-                           IsVisible="{Binding HasControlPlaneEndpointError}"
-                           Foreground="{DynamicResource SystemFillColorCautionBrush}"
-                           TextWrapping="Wrap"
-                           Margin="0 8 0 0" />
-            </StackPanel>
+            <TextBlock Text="{x:Static lc:Resources.M_ControlPlaneEndpointRejected}"
+                       IsVisible="{Binding HasControlPlaneEndpointError}"
+                       Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                       TextWrapping="Wrap"
+                       Margin="0 8 0 0" />
         </StackPanel>
     </ScrollViewer>
 </UserControl>

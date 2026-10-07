@@ -95,7 +95,9 @@
                     Padding="12">
                 <StackPanel Spacing="8">
                     <TextBlock Text="{Binding ViewModel.EmptyStateText}" TextWrapping="Wrap" />
-                    <!-- 每一个非"正常空数据"的状态都给下一步：重试；未登录/凭据失效时直接去登录。 -->
+                    <!-- 每一个非"正常空数据"的状态都给下一步：重试；未登录/凭据失效时直接去登录。
+                         接入这一项**不在这里导航**（手机上根本没有「设置 → 集控」那一页，导航过去就是点了没反应），
+                         改为在下面直接给接入卡片；这个「重新接入」按钮留给有集控页的平板/桌面当兜底。 -->
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button Content="{x:Static langs:Resources.RD_Refresh}"
                                 Command="{Binding ViewModel.RefreshCommand}" />
@@ -103,6 +105,54 @@
                                 Content="{x:Static langs:Resources.RD_SignIn}"
                                 Command="{Binding ViewModel.SignInCommand}"
                                 IsVisible="{Binding ViewModel.NeedsSignIn}" />
+                        <Button Classes="accent"
+                                Content="{x:Static langs:Resources.RD_Reenroll}"
+                                Command="{Binding ViewModel.ReenrollCommand}"
+                                IsVisible="{Binding ViewModel.ShowReenrollNavigation}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 接入自建集控：手机端没有「设置 → 集控」那一页，未接入 / 令牌失效时就地给入口——
+                 否则用户拿到的是一条走不通的"去设置"。语义与设置页那张卡完全一致：接入码换节点令牌，
+                 令牌只进本机加密存储（不进设置导出、云备份、诊断包），界面上只有一句状态和一个错误码。
+                 基址留空＝用内置默认地址，所以水印就是当前生效的地址；直接粘贴 `srn_…` 令牌也认。 -->
+            <Border IsVisible="{Binding ViewModel.ShowEnrollmentEntry}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8"
+                    Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{x:Static langs:Resources.RD_EnrollTitle}" FontWeight="SemiBold" />
+                    <TextBlock Text="{x:Static langs:Resources.RD_EnrollHint}"
+                               FontSize="12"
+                               Opacity="0.6"
+                               TextWrapping="Wrap" />
+                    <TextBox Text="{Binding ViewModel.ControlPlaneEndpoint}"
+                             IsVisible="{Binding ViewModel.ShowEndpointField}"
+                             PlaceholderText="{Binding ViewModel.ControlPlaneEndpointPlaceholder}" />
+                    <TextBox x:Name="EnrollmentCodeBox"
+                             Text="{Binding ViewModel.EnrollmentCode}"
+                             PlaceholderText="{x:Static langs:Resources.RD_EnrollCode}" />
+                    <!-- 地址不合法：只提示、不落盘，也不拿它去发请求。 -->
+                    <TextBlock Text="{x:Static langs:Resources.RD_EndpointInvalid}"
+                               IsVisible="{Binding ViewModel.HasEndpointError}"
+                               Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+                    <!-- 失败提示只在失败时出现，内容与设置页一致：只有错误码，没有接入码/令牌真值。 -->
+                    <TextBlock Text="{Binding ViewModel.EnrollmentMessage}"
+                               IsVisible="{Binding ViewModel.HasEnrollmentMessage}"
+                               Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                               FontSize="12"
+                               TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Classes="accent"
+                                Content="{x:Static langs:Resources.RD_EnrollAction}"
+                                Command="{Binding ViewModel.EnrollCommand}"
+                                IsEnabled="{Binding ViewModel.CanEnroll}" />
+                        <Button Content="{x:Static langs:Resources.RD_EnrollClear}"
+                                Command="{Binding ViewModel.ClearEnrollmentCommand}"
+                                IsEnabled="{Binding ViewModel.CanClearEnrollment}" />
                     </StackPanel>
                 </StackPanel>
             </Border>
