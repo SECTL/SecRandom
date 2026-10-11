@@ -1706,6 +1706,11 @@ public partial class App : Application
         if (IAppHost.GetService<MainConfigHandler>().Data.General.Basic.ShowStartupWindow)
             Dispatcher.UIThread.Post(ShowMainWindow, DispatcherPriority.Render);
 
+        if (OperatingSystem.IsWindows())
+        {
+            TaskbarFixer.Start();
+        }
+        
         AppStarted?.Invoke(this, EventArgs.Empty);
     }
 

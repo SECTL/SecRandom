@@ -97,6 +97,8 @@ SecRandom 是面向课堂、团队、活动、决策等场景的公平抽取应�
 
 感谢每一位为 SecRandom 提交代码、报告问题、完善文档和提供反馈的贡献者。头像由 GitHub 贡献者数据动态生成，点击可前往 [GitHub 贡献者页面](https://github.com/SECTL/SecRandom/graphs/contributors) 查看完整统计
 
+感谢 Dubi906w 提供的 UIAccess 任务栏图标修复方法。代码来自 [LegacyIsland / UIAccessX](https://github.com/segf4ultk1nger/dubiisland)。
+
 ## 支持与社区
 
 - [爱发电支持](https://afdian.com/a/lzy0983)
