@@ -298,6 +298,9 @@ public sealed class PluginDrawServiceTests : IDisposable
         public Task<bool> ConfirmTotpAsync(string secret, string code, CancellationToken cancellationToken = default)
             => Task.FromResult(allow);
 
+        public Task<bool> RemoveTotpAsync(TopLevel xamlRoot, CancellationToken cancellationToken = default)
+            => Task.FromResult(allow);
+
         public Task<IReadOnlyList<UsbBindingInfo>> GetUsbBindingsAsync(CancellationToken cancellationToken = default)
             => Task.FromResult<IReadOnlyList<UsbBindingInfo>>([]);
 

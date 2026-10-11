@@ -1,0 +1,280 @@
+name: Build iOS
+
+# iOS is the slowest and most fragile release target (macOS runner, Xcode, LLVM AOT), so it is built
+# out of band instead of gating the other platforms: build_publish.yml dispatches this workflow in
+# parallel with the desktop/Android/plugin builds and can publish the release without waiting for it.
+#
+#   push                      -> build the IPA and keep it as a workflow artifact (no release work)
+#   workflow_dispatch tag     -> build the IPA, then attach it to that tag's release
+#
+# The backfill job waits for the tag's release to exist, uploads the IPA, folds the `ios-ipa` entry
+# into the signed update manifest, and refreshes the generated tables in the release note, so a late
+# iOS build still leaves a release that is consistent with the desktop and Android artifacts.
+# See AGENTS.md ("Release publication is gated on metadata.yaml").
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "发布标签（例如 v2.3.100）；留空则只构建 IPA 产物，不补交到 Release"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build_ios:
+    name: Build_iOS
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          persist-credentials: false
+          ref: ${{ github.event.inputs.release_tag || github.ref }}
+
+      - name: Set up Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.6'
+
+      # Keep the SDK and workload set paired with the selected Xcode version.
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.401
+
+      # Refuse a tag that metadata.yaml does not point at before spending the AOT build on it.
+      - name: Validate release metadata
+        if: ${{ github.event.inputs.release_tag != '' }}
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+        run: ./scripts/validate-release-metadata.ps1
+
+      - name: Get Latest Tag
+        id: get_tag
+        if: ${{ github.event.inputs.release_tag == '' }}
+        shell: bash
+        run: echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> "$GITHUB_OUTPUT"
+
+      - name: Verify iOS toolchain
+        shell: bash
+        run: |
+          test "$(uname -m)" = arm64
+          xcode-select -p
+          xcodebuild -version
+          xcrun --find strip
+          dotnet --version
+
+      - name: Install iOS workload
+        shell: bash
+        run: |
+          dotnet workload install ios --version 10.0.401
+          dotnet workload --info
+
+      - name: Publish unsigned iOS arm64 IPA
+        shell: bash
+        env:
+          VERSION: ${{ github.event.inputs.release_tag || steps.get_tag.outputs.LATEST_TAG }}
+        run: |
+          set -euo pipefail
+          version="${VERSION#v}"
+          version="${version#V}"
+          if [ -z "$version" ]; then
+            echo "::error::No release tag was supplied and the checkout has no tag to derive the iOS version from."
+            exit 1
+          fi
+          output="artifacts/mobile/SecRandom-v${version}-ios-arm64-unsigned.ipa"
+          mkdir -p artifacts/mobile
+          # The AOT step dominates this job. The iOS SDK parallelizes it to
+          # Environment.ProcessorCount / 2, which is integer 1 on the 3 vCPU macOS runner and
+          # therefore compiles the assemblies strictly serially; two workers use the machine
+          # without exhausting the runner's 7 GB when LLVM AOT is in flight.
+          dotnet publish SecRandom.iOS/SecRandom.iOS.csproj \
+            -c Release \
+            -f net10.0-ios \
+            -r ios-arm64 \
+            -p:Version="$version" \
+            -p:ApplicationVersion=${{ github.run_number }} \
+            -p:EnableCodeSigning=false \
+            -p:CodesignRequireProvisioningProfile=false \
+            -p:BuildIpa=true \
+            -p:ArchiveOnBuild=false \
+            -p:BuildInParallel=false \
+            -p:UseSharedCompilation=false \
+            -p:AotCompileMaxDegreeOfParallelism=2 \
+            -p:IpaPackagePath="$GITHUB_WORKSPACE/$output"
+          test -s "$output"
+          unzip -l "$output" | grep -q 'Payload/.*\.app/Info.plist'
+          unzip -p "$output" 'Payload/*.app/Info.plist' > "$RUNNER_TEMP/SecRandom-iOS-Info.plist"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'SecRandom'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = 'AppIcon'
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = "$version"
+          test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$RUNNER_TEMP/SecRandom-iOS-Info.plist")" = "${{ github.run_number }}"
+
+      - name: Upload unsigned iOS IPA
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-arm64_unsigned_ipa
+          path: artifacts/mobile/*.ipa
+          retention-days: 14
+          if-no-files-found: error
+
+  backfill_release:
+    name: Backfill_Release
+    needs: build_ios
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release_tag != '' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    permissions:
+      contents: write
+      actions: read
+
+    steps:
+      # Release tooling is read from the tag, exactly like build_publish.yml does: a release must be
+      # reproducible from its own commit.
+      - name: Checkout release tag
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          ref: ${{ github.event.inputs.release_tag }}
+
+      - name: Download unsigned iOS IPA
+        uses: actions/download-artifact@v8
+        with:
+          name: ios-arm64_unsigned_ipa
+          path: ./artifacts/mobile
+
+      - name: Wait for the release
+        shell: bash
+        timeout-minutes: 130
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+          MAX_WAIT_SECONDS: '7200'
+        run: |
+          set -euo pipefail
+          # build_publish.yml creates the release right after the desktop/Android builds and does not
+          # wait for this workflow, so the release usually appears while the IPA is still compiling.
+          # Waiting here keeps the backfill a single run instead of a scheduled retry.
+          deadline=$(( $(date +%s) + MAX_WAIT_SECONDS ))
+          while [ "$(date +%s)" -lt "$deadline" ]; do
+            if gh api "repos/${GH_REPO}/releases/tags/${RELEASE_TAG}" >/dev/null 2>&1; then
+              echo "Release ${RELEASE_TAG} is available."
+              exit 0
+            fi
+            echo "Release ${RELEASE_TAG} is not available yet, retrying in 60s."
+            sleep 60
+          done
+          echo "::error::Release ${RELEASE_TAG} did not appear within ${MAX_WAIT_SECONDS}s; the IPA was not attached. Re-run this workflow once the release exists."
+          exit 1
+
+      - name: Upload IPA to the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          ipas=(artifacts/mobile/*.ipa)
+          if [ "${#ipas[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one iOS IPA artifact, found ${#ipas[@]}."
+            exit 1
+          fi
+          # The IPA is attached before the manifest points at it, and --clobber keeps a re-run of this
+          # workflow idempotent.
+          gh release upload "$RELEASE_TAG" "${ipas[0]}" --repo "$GH_REPO" --clobber
+          echo "Attached ${ipas[0]} to ${RELEASE_TAG}."
+
+      - name: Refresh the signed update manifest
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+          UPDATE_MANIFEST_PRIVATE_KEY_PEM_BASE64: ${{ secrets.UPDATE_MANIFEST_PRIVATE_KEY_PEM_BASE64 }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $manifestDir = Join-Path $env:RUNNER_TEMP 'secrandom-release-manifest'
+          New-Item -ItemType Directory -Path $manifestDir -Force | Out-Null
+          gh release download $env:RELEASE_TAG --repo $env:GH_REPO --pattern 'SecRandom-update-manifest.*' --dir $manifestDir --clobber
+          if ($LASTEXITCODE -ne 0) { throw "Failed to download the signed manifest of $env:RELEASE_TAG." }
+
+          $ipa = Get-ChildItem -Path ./artifacts/mobile -Filter *.ipa -File | Select-Object -First 1
+          if (-not $ipa) { throw 'The iOS IPA artifact is missing from ./artifacts/mobile.' }
+
+          # Update-ReleaseManifest.ps1 authenticates the manifest before re-signing it, so a release
+          # is never re-signed with anything but the key that is compiled into the shipped apps.
+          & ./scripts/ReleaseManifest/Update-ReleaseManifest.ps1 `
+            -ManifestPath (Join-Path $manifestDir 'SecRandom-update-manifest.json') `
+            -SignaturePath (Join-Path $manifestDir 'SecRandom-update-manifest.sig') `
+            -ArtifactPath $ipa.FullName `
+            -Os ios `
+            -Arch arm64 `
+            -Kind ios-ipa `
+            -RuntimeKind self-contained `
+            -ExpectedTag $env:RELEASE_TAG
+
+          gh release upload $env:RELEASE_TAG --repo $env:GH_REPO --clobber `
+            (Join-Path $manifestDir 'SecRandom-update-manifest.json') `
+            (Join-Path $manifestDir 'SecRandom-update-manifest.sig')
+          if ($LASTEXITCODE -ne 0) { throw "Failed to upload the refreshed update manifest of $env:RELEASE_TAG." }
+          Write-Host "Refreshed the signed update manifest of $env:RELEASE_TAG."
+
+      - name: Refresh the release note
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          tagName: ${{ github.event.inputs.release_tag }}
+          repoName: ${{ github.repository }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $workDir = Join-Path $env:RUNNER_TEMP 'secrandom-release-note'
+          New-Item -ItemType Directory -Path $workDir -Force | Out-Null
+          $bodyPath = Join-Path $workDir 'release-body.md'
+          $inventoryPath = Join-Path $workDir 'release-assets.json'
+
+          # Rebuild every asset row, including the ones the publish job listed before this run: the
+          # live body is reused as the prefix so hand written text above the tables survives.
+          $body = gh api "repos/$env:GH_REPO/releases/tags/$env:tagName" --jq '.body'
+          if ($LASTEXITCODE -ne 0) { throw "Failed to read the release body of $env:tagName." }
+          [IO.File]::WriteAllText($bodyPath, ($body -join "`n"), [Text.UTF8Encoding]::new($false))
+
+          $releaseId = gh api "repos/$env:GH_REPO/releases/tags/$env:tagName" --jq '.id'
+          if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($releaseId)) { throw "Failed to resolve the release id of $env:tagName." }
+
+          $rows = gh api --paginate "repos/$env:GH_REPO/releases/$releaseId/assets" --jq '.[] | [.name, (.digest // "")] | @tsv'
+          if ($LASTEXITCODE -ne 0) { throw "Failed to list the assets of release $env:tagName." }
+          $entries = foreach ($row in @($rows)) {
+            if ([string]::IsNullOrWhiteSpace($row)) { continue }
+            $name, $digest = $row -split "`t", 2
+            $sha256 = if ($digest -match '^sha256:(?<hash>[0-9a-fA-F]{64})$') { $Matches.hash.ToUpperInvariant() } else { '' }
+            if (-not $sha256) {
+              # Assets uploaded before GitHub exposed digests have to be hashed locally.
+              $hashDir = Join-Path $workDir 'asset-hash'
+              gh release download $env:tagName --repo $env:GH_REPO --pattern $name --dir $hashDir --clobber
+              if ($LASTEXITCODE -ne 0) { throw "Failed to download $name to compute its SHA256 digest." }
+              $sha256 = (Get-FileHash -LiteralPath (Join-Path $hashDir $name) -Algorithm SHA256).Hash
+            }
+            [pscustomobject]@{ name = $name; sha256 = $sha256 }
+          }
+          if (-not $entries) { throw "Release $env:tagName has no assets to list." }
+          # -InputObject keeps a single asset serialized as an array instead of a bare object.
+          [IO.File]::WriteAllText($inventoryPath, (ConvertTo-Json -InputObject @($entries) -Depth 3), [Text.UTF8Encoding]::new($false))
+
+          & ./scripts/gen-release-note.ps1 -InventoryPath $inventoryPath -BodyPath $bodyPath -OutFile ./release-note.md
+          gh release edit $env:tagName --repo $env:GH_REPO --notes-file ./release-note.md
+          if ($LASTEXITCODE -ne 0) { throw "Failed to refresh the release note of $env:tagName." }
+          Write-Host "Refreshed the release note of $env:tagName."

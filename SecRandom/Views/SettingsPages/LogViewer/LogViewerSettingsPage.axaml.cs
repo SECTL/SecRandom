@@ -17,6 +17,7 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
+using SecRandom.Core.Helpers;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Logging;
@@ -292,7 +293,7 @@ public partial class LogViewerSettingsPage : UserControl, INotifyPropertyChanged
 
     private static List<string> ReadTailLines(string path, int maxLines)
     {
-        using var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+        using var stream = SharedFileReader.OpenRead(path);
         using Stream content = path.EndsWith(".gz", StringComparison.OrdinalIgnoreCase)
             ? new GZipStream(stream, CompressionMode.Decompress)
             : stream;

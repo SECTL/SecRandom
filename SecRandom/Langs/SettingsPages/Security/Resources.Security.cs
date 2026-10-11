@@ -39,6 +39,7 @@ public partial class Resources
     public static string C_ChangePassword => Text(nameof(C_ChangePassword));
     public static string C_SetTotp => Text(nameof(C_SetTotp));
     public static string C_ResetTotp => Text(nameof(C_ResetTotp));
+    public static string C_RemoveTotp => Text(nameof(C_RemoveTotp));
     public static string C_OpenSettings => Text(nameof(C_OpenSettings));
     public static string C_AllowSettingsPreview => Text(nameof(C_AllowSettingsPreview));
     public static string C_ToggleMainWindow => Text(nameof(C_ToggleMainWindow));
@@ -125,6 +126,8 @@ public partial class Resources
     public static string M_SetPasswordFirst => Text(nameof(M_SetPasswordFirst));
     public static string M_TotpSaved => Text(nameof(M_TotpSaved));
     public static string M_TotpSaveFailed => Text(nameof(M_TotpSaveFailed));
+    public static string M_TotpRemoved => Text(nameof(M_TotpRemoved));
+    public static string M_TotpRemoveFailed => Text(nameof(M_TotpRemoveFailed));
     public static string M_UsbUpdated => Text(nameof(M_UsbUpdated));
     public static string M_UsbUpdateFailed => Text(nameof(M_UsbUpdateFailed));
     public static string M_Copied => Text(nameof(M_Copied));

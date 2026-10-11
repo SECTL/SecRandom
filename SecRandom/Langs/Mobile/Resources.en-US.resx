@@ -755,4 +755,15 @@ Clearing history before fair drawing helps keep the new member’s chance from b
     <data name="RD_Recipient" xml:space="preserve"><value>Recipients</value></data>
     <data name="RD_RecipientNone" xml:space="preserve"><value>Not specified</value></data>
     <data name="RD_ConditionsUnsupported" xml:space="preserve"><value>This device does not support conditional draws, so the whole pool is used</value></data>
+    <data name="RD_EnrollmentRequired" xml:space="preserve"><value>Not enrolled in a self-hosted control platform yet. Enter the console-issued enrollment code to start</value></data>
+    <data name="RD_EnrollmentExpired" xml:space="preserve"><value>The enrollment token has expired. Enter a new enrollment code to reconnect</value></data>
+    <data name="RD_Reenroll" xml:space="preserve"><value>Re-enroll</value></data>
+    <data name="RD_SignInInstead" xml:space="preserve"><value>Sign in instead</value></data>
+    <data name="RD_EnrollTitle" xml:space="preserve"><value>Enroll in a self-hosted control platform</value></data>
+    <data name="RD_EnrollHint" xml:space="preserve"><value>Enter the console-issued enrollment code. The token is kept in this device's encrypted store</value></data>
+    <data name="RD_EnrollCode" xml:space="preserve"><value>Enrollment code</value></data>
+    <data name="RD_EnrollAction" xml:space="preserve"><value>Enroll</value></data>
+    <data name="RD_EnrollClear" xml:space="preserve"><value>Clear enrollment</value></data>
+    <data name="RD_EnrollFailed" xml:space="preserve"><value>Enrollment failed: {0}</value></data>
+    <data name="RD_EndpointInvalid" xml:space="preserve"><value>The control platform address is not valid</value></data>
 </root>

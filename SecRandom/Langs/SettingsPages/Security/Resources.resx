@@ -98,6 +98,7 @@
   <data name="C_ChangePassword" xml:space="preserve"><value>修改密码</value></data>
   <data name="C_SetTotp" xml:space="preserve"><value>设置 TOTP</value></data>
   <data name="C_ResetTotp" xml:space="preserve"><value>重置 TOTP</value></data>
+  <data name="C_RemoveTotp" xml:space="preserve"><value>移除 TOTP</value></data>
   <data name="C_OpenSettings" xml:space="preserve"><value>打开设置</value></data>
   <data name="C_AllowSettingsPreview" xml:space="preserve"><value>允许只读预览设置</value></data>
   <data name="C_ToggleMainWindow" xml:space="preserve"><value>显隐主窗口</value></data>
@@ -157,6 +158,8 @@
   <data name="M_SetPasswordFirst" xml:space="preserve"><value>请先设置密码</value></data>
   <data name="M_TotpSaved" xml:space="preserve"><value>TOTP 设置已保存</value></data>
   <data name="M_TotpSaveFailed" xml:space="preserve"><value>验证码无效，未保存 TOTP 设置</value></data>
+  <data name="M_TotpRemoved" xml:space="preserve"><value>已移除 TOTP 动态口令</value></data>
+  <data name="M_TotpRemoveFailed" xml:space="preserve"><value>无法移除 TOTP；请确认当前密码后重试</value></data>
   <data name="M_UsbUpdated" xml:space="preserve"><value>U 盘绑定已更新</value></data>
   <data name="M_UsbUpdateFailed" xml:space="preserve"><value>无法更新 U 盘绑定；请确认设备已连接且可写入</value></data>
   <data name="C_SelectUsb" xml:space="preserve"><value>选择 U 盘</value></data>
@@ -179,7 +182,7 @@
   <data name="C_SudoModeDurationUnit" xml:space="preserve"><value>秒</value></data>
   <data name="C_SudoMode_OperationScope" xml:space="preserve"><value>操作范围：抽取、重置、开关窗口、退出程序、快捷键与 IPC 指令</value></data>
   <data name="C_SudoMode_SettingsScope" xml:space="preserve"><value>设置窗口范围：打开设置验证后，本窗口内的设置改动同样免验证，但关闭窗口会立即失效；关闭安全保护、取消验证方式、关闭防篡改校验或延长本时长等放宽防护的改动，始终需要重新输入安全密码</value></data>
-  <data name="C_SudoMode_CredentialScope" xml:space="preserve"><value>不受影响的操作：配置 TOTP、修改或移除密码、绑定 USB 设备始终需要重新验证</value></data>
+  <data name="C_SudoMode_CredentialScope" xml:space="preserve"><value>不受影响的操作：配置或移除 TOTP、修改或移除密码、绑定 USB 设备始终需要重新验证</value></data>
   <data name="Menu_ExitSudoMode" xml:space="preserve"><value>退出 Sudo 模式</value></data>
   <data name="M_SudoModeExited" xml:space="preserve"><value>已退出 Sudo 模式</value></data>
 </root>

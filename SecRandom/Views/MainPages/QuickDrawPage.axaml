@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SecRandom.ViewModels.MainPages"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="320"
              x:Name="QuickDraw"
              x:Class="SecRandom.Views.MainPages.QuickDrawPage"
@@ -26,6 +27,7 @@
                                FontSize="{Binding InitialFontSize}"
                                FontWeight="SemiBold"
                                Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                    <!-- 插件界面插槽：快捷抽签结果区（跨两行，插件内容叠加在结果之上） -->
                 </Grid>
             </Border>
         </DataTemplate>
@@ -109,6 +111,8 @@
                        Opacity="0.68"
                        FontSize="12"
                        Margin="0 8 0 0" />
+            <!-- 插件界面插槽：快捷抽签结果区（跨两行，插件内容叠加在结果之上） -->
+            <sr:UiSlotHost SlotId="main.quickdraw.result.extra" Grid.RowSpan="2" />
         </Grid>
     </Border>
 </UserControl>

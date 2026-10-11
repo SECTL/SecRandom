@@ -140,6 +140,17 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     public ObservableCollection<string> GenderOptions { get; } = [AllGendersOption];
     public ObservableCollection<LotteryResultItem> ResultItems { get; } = [];
     public ObservableCollection<LotteryRemainingItem> RemainingItems { get; } = [];
+
+    /// <summary>Prizes of the most recent draw, exposed so plugins can present the result themselves.</summary>
+    public IReadOnlyList<Prize> LastResultPrizes =>
+        _lastResultPrizes.Select(static prize => prize.Prize).ToArray();
+
+    /// <summary>
+    ///     上一次结果的展示文本（按抽奖显示模板拼好，含分配到的成员），暴露给插件，
+    ///     让插件牌面上的字和主程序内置结果卡完全一致。
+    /// </summary>
+    public IReadOnlyList<string> LastResultDisplayTitles =>
+        _lastResultPrizes.Select(static prize => prize.DisplayText).ToArray();
     public MoreSettingsConfig MoreSettings => Config.MoreSettings;
     public bool IsControlPanelOnLeft => MoreSettings.LotteryControlPanelPosition == RollCallControlPanelPosition.Left;
     public bool IsControlPanelOnRight => !IsControlPanelOnLeft;
@@ -161,6 +172,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     public FontFamily ResultFontFamily => BuildResultFontFamily();
     public bool AnimationEnabled => AnimationSettings.Animation != AnimationMode.NoAnimation;
     public DrawAnimationStyleMode AnimationStyle => AnimationSettings.AnimationStyle;
+    public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     public int AnimationDuration => 250;
     public int PreviewAnimationDuration => AnimationSettings.Animation == AnimationMode.AutoPlay
         ? Math.Clamp(AnimationSettings.AnimationInterval, 1, 10000)

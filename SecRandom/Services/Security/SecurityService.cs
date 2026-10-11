@@ -625,6 +625,57 @@ internal sealed class SecurityService(
         }
     }
 
+    public async Task<bool> RemoveTotpAsync(TopLevel xamlRoot, CancellationToken cancellationToken = default)
+    {
+        lock (_gate)
+        {
+            // 没有配置 TOTP 就不用弹密码，也不该白扣一次锁定计数
+            if (!credentialStore.LoadMetadata().HasTotp)
+                return false;
+        }
+
+        var removed = false;
+        await AuthorizePasswordCoreAsync(xamlRoot, context =>
+        {
+            lock (_gate)
+                removed = RemoveTotpCore(context);
+            return Task.FromResult(false);
+        }, cancellationToken);
+        return removed;
+    }
+
+    private bool RemoveTotpCore(SecurityCredentialContext context)
+    {
+        lock (_gate)
+        {
+            var credentials = context.Credentials;
+            if (string.IsNullOrWhiteSpace(credentials.TotpSecret))
+                return false;
+
+            var previousSecret = credentials.TotpSecret;
+            credentials.TotpSecret = null;
+            // TrySaveCredentials 在种子为空时同步删除免密 TOTP 副本，失败时连副本一起清掉
+            if (!TrySaveCredentials(context))
+            {
+                credentials.TotpSecret = previousSecret;
+                return false;
+            }
+
+            // 移除后任何尚未确认的待定设置都不该再被确认，否则会立刻把 TOTP 重新装回去
+            _pendingTotpSecret = null;
+            if (!ReferenceEquals(_pendingTotpContext, context))
+            {
+                _pendingTotpContext?.Dispose();
+                _pendingTotpContext = null;
+            }
+
+            Settings.TotpEnabled = false;
+            NormalizeSettings(credentials);
+            settingsStore.Save();
+            return true;
+        }
+    }
+
     public Task<IReadOnlyList<UsbBindingInfo>> GetUsbBindingsAsync(CancellationToken cancellationToken = default)
     {
         lock (_gate)

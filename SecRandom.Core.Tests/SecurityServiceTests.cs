@@ -487,6 +487,74 @@ public sealed class SecurityServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task RemoveTotpAsync_WhenPasswordIsConfirmed_RemovesTheSeedAndDisablesTheFactor()
+    {
+        var (fixture, secret) = await CreateTotpFixtureAsync();
+        Assert.True(fixture.SecuritySettings.TotpEnabled);
+        Assert.True(fixture.Service.GetUiState().HasTotp);
+        Assert.True(File.Exists(fixture.StandaloneTotpPath));
+
+        var removed = await fixture.Service.RemoveTotpAsync(null!, TestContext.Current.CancellationToken);
+
+        Assert.True(removed);
+        Assert.False(fixture.SecuritySettings.TotpEnabled);
+        Assert.False(fixture.Service.GetUiState().HasTotp);
+        Assert.Null(fixture.CredentialStore.LoadStandaloneTotp());
+        Assert.False(File.Exists(fixture.StandaloneTotpPath));
+        Assert.DoesNotContain(secret, File.ReadAllText(fixture.CredentialsPath), StringComparison.Ordinal);
+        Assert.Equal(CredentialUnlockResult.Succeeded, fixture.CredentialStore.TryUnlock("secret1", out var unlocked));
+        using (unlocked)
+            Assert.Null(unlocked!.Credentials.TotpSecret);
+        // 落盘而不是只留在内存里
+        Assert.False(fixture.ReadPersistedSettings().TotpEnabled);
+        // 密码仍然存在，所以安全保护本身不受影响
+        Assert.True(fixture.Service.GetUiState().HasPassword);
+    }
+
+    [Fact]
+    public async Task RemoveTotpAsync_WhenPasswordIsRejected_KeepsTheConfiguredSeed()
+    {
+        var (fixture, secret) = await CreateTotpFixtureAsync();
+        fixture.Prompt.Response = Password("wrong");
+
+        var removed = await fixture.Service.RemoveTotpAsync(null!, TestContext.Current.CancellationToken);
+
+        Assert.False(removed);
+        Assert.True(fixture.SecuritySettings.TotpEnabled);
+        Assert.True(fixture.Service.GetUiState().HasTotp);
+        Assert.Equal(secret, fixture.CredentialStore.LoadStandaloneTotp());
+        Assert.Equal(CredentialUnlockResult.Succeeded, fixture.CredentialStore.TryUnlock("secret1", out var unlocked));
+        using (unlocked)
+            Assert.Equal(secret, unlocked!.Credentials.TotpSecret);
+    }
+
+    [Fact]
+    public async Task RemoveTotpAsync_DiscardsAPendingTotpSetup()
+    {
+        var (fixture, _) = await CreateTotpFixtureAsync();
+        var pending = await fixture.Service.BeginTotpSetupAsync(null!, TestContext.Current.CancellationToken);
+        Assert.NotNull(pending);
+
+        Assert.True(await fixture.Service.RemoveTotpAsync(null!, TestContext.Current.CancellationToken));
+
+        // 待定种子不能再被确认，否则移除后会被立刻装回去
+        Assert.False(await fixture.Service.ConfirmTotpAsync(pending, CreateTotpCode(pending), TestContext.Current.CancellationToken));
+        Assert.False(fixture.Service.GetUiState().HasTotp);
+    }
+
+    [Fact]
+    public async Task RemoveTotpAsync_WhenTotpIsNotConfigured_ReportsFailure()
+    {
+        var fixture = CreateFixture(Password("secret1"));
+        await fixture.Service.SetPasswordAsync("secret1", cancellationToken: TestContext.Current.CancellationToken);
+
+        var removed = await fixture.Service.RemoveTotpAsync(null!, TestContext.Current.CancellationToken);
+
+        Assert.False(removed);
+        Assert.Empty(fixture.Prompt.Requests);
+    }
+
+    [Fact]
     public void SecurityVerificationEligibility_RequiresAnyOrAllSelectedFactorInput()
     {
         var anyFactorRequest = new SecurityVerificationRequest(
@@ -1071,6 +1139,9 @@ public sealed class SecurityServiceTests : IDisposable
     {
         public List<SecurityVerificationRequest> Requests { get; } = [];
 
+        /// <summary>测试可以在同一个 fixture 上替换下一次提示会提交的输入。</summary>
+        public SecurityVerificationResponse Response { get; set; } = response;
+
         public Task<SecurityVerificationResult> RequestAsync(
             TopLevel xamlRoot,
             SecurityVerificationRequest request,
@@ -1078,7 +1149,7 @@ public sealed class SecurityServiceTests : IDisposable
             CancellationToken cancellationToken = default)
         {
             Requests.Add(request);
-            return verify(response, cancellationToken);
+            return verify(Response, cancellationToken);
         }
     }
 

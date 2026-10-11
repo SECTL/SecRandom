@@ -103,6 +103,24 @@ namespace SecRandom.Langs.SettingsPages.General.Control {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 尚未接入自建集控，请在上面的「接入自建集控」卡片里填写控制台签发的接入码.
+        /// </summary>
+        /// <summary>
+        ///   Looks up a localized string similar to 服务端已拒绝本机接入令牌，请在上面的「接入自建集控」卡片里重新接入.
+        /// </summary>
+        public static string M_Detail_EnrollmentRejected {
+            get {
+                return ResourceManager.GetString("M_Detail_EnrollmentRejected", resourceCulture);
+            }
+        }
+
+        public static string M_Detail_NotEnrolled {
+            get {
+                return ResourceManager.GetString("M_Detail_NotEnrolled", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 尚未登录 SECTL 账号.
         /// </summary>
         public static string M_Detail_NotSignedIn {
@@ -171,6 +189,15 @@ namespace SecRandom.Langs.SettingsPages.General.Control {
         public static string M_Status_Idle {
             get {
                 return ResourceManager.GetString("M_Status_Idle", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 需要重新接入.
+        /// </summary>
+        public static string M_Status_ReenrollRequired {
+            get {
+                return ResourceManager.GetString("M_Status_ReenrollRequired", resourceCulture);
             }
         }
 
@@ -450,6 +477,114 @@ namespace SecRandom.Langs.SettingsPages.General.Control {
         public static string C_OpenControlPlane_ThirdParty {
             get {
                 return ResourceManager.GetString("C_OpenControlPlane_ThirdParty", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 接入自建集控.
+        /// </summary>
+        public static string S_NodeEnrollment {
+            get {
+                return ResourceManager.GetString("S_NodeEnrollment", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 用控制台签发的接入码把本机接入自建集控.
+        /// </summary>
+        public static string S_NodeEnrollment_D {
+            get {
+                return ResourceManager.GetString("S_NodeEnrollment_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 接入码.
+        /// </summary>
+        public static string S_NodeEnrollment_Code {
+            get {
+                return ResourceManager.GetString("S_NodeEnrollment_Code", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 粘贴控制台签发的接入码.
+        /// </summary>
+        public static string S_NodeEnrollment_Code_Ph {
+            get {
+                return ResourceManager.GetString("S_NodeEnrollment_Code_Ph", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 接入.
+        /// </summary>
+        public static string C_Enroll {
+            get {
+                return ResourceManager.GetString("C_Enroll", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 清除接入.
+        /// </summary>
+        public static string C_ClearEnrollment {
+            get {
+                return ResourceManager.GetString("C_ClearEnrollment", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 未接入.
+        /// </summary>
+        public static string M_Enroll_None {
+            get {
+                return ResourceManager.GetString("M_Enroll_None", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 已接入：{0}.
+        /// </summary>
+        public static string M_Enroll_Active {
+            get {
+                return ResourceManager.GetString("M_Enroll_Active", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 接入已过期.
+        /// </summary>
+        public static string M_Enroll_Expired {
+            get {
+                return ResourceManager.GetString("M_Enroll_Expired", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 需要重新接入.
+        /// </summary>
+        public static string M_Enroll_Unreadable {
+            get {
+                return ResourceManager.GetString("M_Enroll_Unreadable", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 节点令牌加密保存在本机.
+        /// </summary>
+        public static string M_Enroll_TokenHint {
+            get {
+                return ResourceManager.GetString("M_Enroll_TokenHint", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 接入失败：{0}.
+        /// </summary>
+        public static string M_Enroll_Detail {
+            get {
+                return ResourceManager.GetString("M_Enroll_Detail", resourceCulture);
             }
         }
     }

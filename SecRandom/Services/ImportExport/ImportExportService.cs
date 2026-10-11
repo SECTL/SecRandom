@@ -6,8 +6,10 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Helpers;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
@@ -21,7 +23,8 @@ namespace SecRandom.Services.ImportExport;
 /// </summary>
 public sealed class ImportExportService(
     MainConfigHandler configHandler,
-    DataArchiveService dataArchiveService) : IImportExportService
+    DataArchiveService dataArchiveService,
+    ILogger<ImportExportService> logger) : IImportExportService
 {
     private readonly string _dataDirectory = Utils.DataRoot;
 
@@ -121,15 +124,32 @@ public sealed class ImportExportService(
         if (!Directory.Exists(logsDirectory))
             return;
 
+        var unreadable = new List<string>();
         foreach (var path in Directory.EnumerateFiles(logsDirectory, "*", SearchOption.AllDirectories))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var text = ReadLogText(path);
-            if (text is null)
-                continue;
             var relativePath = Path.GetRelativePath(logsDirectory, path).Replace(Path.DirectorySeparatorChar, '/');
+            // 日志压缩中的临时文件不是日志，跳过以免把半成品写进诊断包
+            if (relativePath.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            var text = ReadLogText(path, out var error);
+            if (text is null)
+            {
+                unreadable.Add(error is null ? relativePath : $"{relativePath}（{error}）");
+                continue;
+            }
+
             ArchiveZipWriter.WriteTextEntry(archive, $"logs/{relativePath}", RedactDiagnosticText(text), entries);
         }
+
+        if (unreadable.Count == 0)
+            return;
+
+        logger.LogWarning("导出诊断数据时跳过 {Count} 个无法读取的日志文件：{Files}", unreadable.Count, string.Join("；", unreadable));
+        ArchiveZipWriter.WriteTextEntry(archive, "diagnostic/unreadable-logs.txt",
+            "以下日志文件在导出时无法读取，已跳过：" + Environment.NewLine +
+            string.Join(Environment.NewLine, unreadable.Select(file => $"- logs/{file}")) + Environment.NewLine, entries);
     }
 
     private void AddExtendedDiagnosticData(ZipArchive archive, List<ArchiveFileEntry> entries, CancellationToken cancellationToken)
@@ -151,7 +171,7 @@ public sealed class ImportExportService(
         foreach (var path in Directory.EnumerateFiles(crashesDirectory, "*", SearchOption.TopDirectoryOnly))
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var text = ReadLogText(path);
+            var text = ReadLogText(path, out _);
             if (text is not null)
                 ArchiveZipWriter.WriteTextEntry(archive, $"crashes/{Path.GetFileName(path)}", RedactDiagnosticText(text), entries);
         }
@@ -163,21 +183,27 @@ public sealed class ImportExportService(
         return Directory.Exists(directory) ? Directory.EnumerateFiles(directory, "*.json", SearchOption.TopDirectoryOnly).Count() : 0;
     }
 
-    private static string? ReadLogText(string path)
+    private static string? ReadLogText(string path, out string? error)
     {
         try
         {
             if (path.EndsWith(".gz", StringComparison.OrdinalIgnoreCase))
             {
-                using var file = File.OpenRead(path);
+                // 日志文件由宿主整个会话持有写入句柄，必须宽松共享读取
+                using var file = SharedFileReader.OpenRead(path);
                 using var gzip = new GZipStream(file, CompressionMode.Decompress);
                 using var reader = new StreamReader(gzip, System.Text.Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+                error = null;
                 return reader.ReadToEnd();
             }
-            return File.ReadAllText(path);
+
+            error = null;
+            return SharedFileReader.ReadAllText(path);
         }
-        catch
+        catch (Exception exception)
         {
+            // 系统异常消息里通常带完整本地路径，先按诊断包的脱敏规则处理再记录/上报
+            error = RedactDiagnosticText(exception.Message);
             return null;
         }
     }

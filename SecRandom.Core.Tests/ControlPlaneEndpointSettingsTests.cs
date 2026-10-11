@@ -6,7 +6,7 @@ using SecRandom.Services.ControlPlane;
 namespace SecRandom.Core.Tests;
 
 /// <summary>
-///     控制面（集控 REST）基址：校验/规范化、落盘与回落、客户端实际打出去的地址，以及调试页那个总开关。
+///     控制面（集控 REST）基址：校验/规范化、落盘与回落，以及客户端实际打出去的地址。
 /// </summary>
 /// <remarks>
 ///     <para>
@@ -226,30 +226,6 @@ public sealed class ControlPlaneEndpointSettingsTests : IDisposable
         await client.GetGroupsAsync();
 
         Assert.Equal("https://cp.example.com/v1/groups", Assert.Single(sender.Requests).AbsoluteUri);
-    }
-
-    // ---------------------------------------------------------------- 调试页那个总开关
-
-    [Fact]
-    public void 总开关默认关闭且只在真正变化时通知()
-    {
-        var gate = new ControlPlaneEndpointSettingsGate();
-        Assert.False(gate.IsRevealed);
-
-        var raised = 0;
-        gate.Changed += (_, _) => raised++;
-
-        gate.SetRevealed(true);
-        Assert.True(gate.IsRevealed);
-        Assert.Equal(1, raised);
-
-        // 重复设置同一个值不该再通知（订阅方每次都会刷新界面）。
-        gate.SetRevealed(true);
-        Assert.Equal(1, raised);
-
-        gate.SetRevealed(false);
-        Assert.False(gate.IsRevealed);
-        Assert.Equal(2, raised);
     }
 
     private sealed class RecordingSender : IAuthorizedApiSender

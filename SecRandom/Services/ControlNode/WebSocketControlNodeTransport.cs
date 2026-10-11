@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.WebSockets;
 using System.Text;
 using Microsoft.Extensions.Logging;
@@ -118,17 +119,43 @@ public sealed class WebSocketControlNodeTransportFactory(ILogger<WebSocketContro
         var socket = new ClientWebSocket();
         // 查询参数会进访问日志，所以凭据只走请求头。
         socket.Options.SetRequestHeader("Authorization", $"Bearer {request.BearerToken}");
+        // 升级失败时才能读回 HTTP 状态码：401/403（凭据被拒）与断网/DNS/超时
+        // 必须走完全不同的处理，见 ControlNodeConnectRejectedException。
+        socket.Options.CollectHttpResponseDetails = true;
 
         try
         {
             await socket.ConnectAsync(endpoint!, cancellationToken).ConfigureAwait(false);
         }
-        catch
+        catch (Exception exception)
         {
+            // 状态码必须在 Dispose 之前读。
+            var statusCode = ReadUpgradeStatusCode(socket);
             socket.Dispose();
+
+            if (statusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+                throw new ControlNodeConnectRejectedException(statusCode.Value, exception);
+
             throw;
         }
 
         return new WebSocketControlNodeTransport(socket, logger);
+    }
+
+    /// <summary>
+    ///     读回升级响应的状态码；没有 HTTP 响应（DNS 失败、连接被拒、超时）时为 <c>null</c>。
+    /// </summary>
+    private static HttpStatusCode? ReadUpgradeStatusCode(ClientWebSocket socket)
+    {
+        try
+        {
+            return socket.HttpStatusCode;
+        }
+        catch (InvalidOperationException)
+        {
+            // 没有打开 CollectHttpResponseDetails 时这个属性会抛异常。这里绝不能让
+            // "读不到状态码"把原本的连接失败替换成另一种异常：读不到就按网络故障处理。
+            return null;
+        }
     }
 }

@@ -4,10 +4,12 @@ using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core;
 using SecRandom.Core.Models;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Services.Auth;
+using SecRandom.Services.ControlNode;
 using SecRandom.Services.ControlPlane;
 using SecRandom.Shared.Models.ControlNode;
 using SecRandom.Shared.Models.ControlPlane;
@@ -49,6 +51,33 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     private readonly SectlAuthService _auth;
     private readonly ILogger<MobileRemoteDrawViewModel> _logger;
     private readonly IControlNodeStateStore? _nodeStateStore;
+
+    /// <summary>
+    ///     本机的接入记录（自建集控的节点令牌）。手机端也允许为 null：网页版/桌面端没有这条通道。
+    /// </summary>
+    /// <remarks>
+    ///     它只用来回答"这台机器接入了没有"，**令牌真值从头到尾不进这个类**——
+    ///     请求侧的 Bearer 由 <c>IAuthorizedApiSender</c> 那一层挂上去。
+    /// </remarks>
+    private readonly INodeEnrollmentStore? _enrollmentStore;
+
+    /// <summary>
+    ///     接入码换取通道（与设置页那一处**同一个实现**）。为 null 时只剩"直接粘贴 <c>srn_…</c> 令牌"可用。
+    /// </summary>
+    /// <remarks>
+    ///     它按每次请求现读集控基址，因此本页改完基址再点接入就是用新地址，不需要重启。
+    /// </remarks>
+    private readonly NodeEnrollmentClient? _enrollmentClient;
+
+    /// <summary>集控基址（自建/私有部署）。手机端在本页就地改，写的是 <c>endpoint.json</c>，**不进 settings.json**。</summary>
+    private readonly IControlPlaneEndpointStore? _endpointStore;
+
+    /// <summary>本机上报给控制台的平台名（手机上是 android/ios，由宿主按真实系统给出）。</summary>
+    private readonly string? _hostPlatform;
+
+    /// <summary>本机上报给控制台的设备名；取不到时回落到主机名。</summary>
+    private readonly string? _hostDeviceName;
+
     private bool _subscribed;
     private bool _selectingDevice;
 
@@ -58,13 +87,24 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     /// <summary>凭据失效（刷新后仍 401）：页面要给出"重新登录"，而不是空态。</summary>
     private bool _requiresSignIn;
 
+    /// <summary>接入记录存在但不可用（读出失败或已过期）：页面要给出"重新接入"。</summary>
+    private bool _requiresEnrollment;
+
+    /// <summary>接入令牌在本地看来已过期：文案要从"去填接入码"换成"重新接入"。</summary>
+    private bool _enrollmentExpired;
+
     public MobileRemoteDrawViewModel(
         MainConfigHandler configHandler,
         IControlPlaneClient client,
         IControlPlaneDevicePreferenceStore preferences,
         SectlAuthService auth,
         ILogger<MobileRemoteDrawViewModel> logger,
-        IControlNodeStateStore? nodeStateStore = null)
+        IControlNodeStateStore? nodeStateStore = null,
+        INodeEnrollmentStore? enrollmentStore = null,
+        NodeEnrollmentClient? enrollmentClient = null,
+        IControlPlaneEndpointStore? endpointStore = null,
+        string? platform = null,
+        string? deviceName = null)
         : base(configHandler)
     {
         _client = client;
@@ -73,7 +113,16 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         _logger = logger;
         // 手机没有本地集控节点，因此这里允许为 null —— 那种情况下设备列表里一台都不标"本机"。
         _nodeStateStore = nodeStateStore;
+        // 同理：手机可能"没登录 SECTL 但接入了自建集控"，这条记录决定页面能不能直接用。
+        _enrollmentStore = enrollmentStore;
+        // 接入这条通道的参数一起传进来：手机上没有节点通道，平台名/设备名只能由宿主按真实系统给。
+        _enrollmentClient = enrollmentClient;
+        _endpointStore = endpointStore;
+        _hostPlatform = platform;
+        _hostDeviceName = deviceName;
         IsSignedIn = auth.IsSignedIn;
+        RefreshEnrollment();
+        RefreshEndpoint();
 
         // 选项在这里现建：界面语言可以在运行中切换，缓存在静态字段里就会冻结在首次访问时的那一国语言。
         DrawKindOptions.Add(RemoteDrawKindOption.CreateRollCall());
@@ -157,6 +206,22 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     [ObservableProperty] private string? _selectedRecipientGender;
 
     [ObservableProperty] private string? _selectedRecipientGroup;
+
+    // ------------------------------------------------------------ 内联接入（未接入 / 令牌失效时就地填接入码）
+
+    /// <summary>接入码输入框的内容；只在点"接入"时读一次，**绝不回显进日志或诊断**。</summary>
+    [ObservableProperty] private string _enrollmentCode = string.Empty;
+
+    /// <summary>集控基址输入框（留空＝用内置默认地址，水印就是默认地址）。</summary>
+    [ObservableProperty] private string _controlPlaneEndpoint = string.Empty;
+
+    [ObservableProperty] private bool _isEnrolling;
+
+    /// <summary>接入失败的**错误码**说明；成功或还没接入过时为空。</summary>
+    [ObservableProperty] private string _enrollmentMessage = string.Empty;
+
+    /// <summary>基址不合法（不落盘、只提示）。</summary>
+    [ObservableProperty] private bool _hasEndpointError;
 
     /// <summary>
     ///     这台设备声明了 <c>draw.trigger.conditions</c> 吗。
@@ -270,8 +335,80 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     /// <summary>上次加载失败了（页面必须显示失败原因，而不是"没有设备"）。</summary>
     public bool HasLoadFailure => LoadFailure.Length > 0;
 
-    /// <summary>需要重新登录：未登录，或凭据已失效。</summary>
-    public bool NeedsSignIn => !IsSignedIn || _requiresSignIn;
+    /// <summary>需要重新登录：未登录，或登录凭据已失效。</summary>
+    /// <remarks>
+    ///     已接入自建集控时它**不再单独拦住页面**：登录态只影响官方账号那条通道。
+    /// </remarks>
+    public bool NeedsSignIn => _requiresSignIn || (!IsSignedIn && !IsEnrolled);
+
+    /// <summary>本机已经接入自建集控（有节点令牌）。</summary>
+    public bool IsEnrolled { get; private set; }
+
+    /// <summary>接入令牌在本地看来已经过期：服务端仍是唯一权威，但界面该提示重新接入。</summary>
+    public bool EnrollmentExpired => IsEnrolled && (_enrollmentExpired || _requiresEnrollment);
+
+    /// <summary>
+    ///     服务端明确拒了节点令牌（401）：本地时钟不作数，只有服务端说了才算"失效"。
+    /// </summary>
+    /// <remarks>
+    ///     空态文案用它而不是用 <see cref="EnrollmentExpired" />：本地时间快了几分钟就宣称"令牌失效"
+    ///     是误报，而服务端拒绝是有据可查的。
+    /// </remarks>
+    public bool EnrollmentRejected => IsEnrolled && _requiresEnrollment;
+
+    /// <summary>需要重新接入：记录读不出来、或令牌被服务端拒了、或本地已过期。</summary>
+    public bool NeedsEnrollment => _requiresEnrollment || EnrollmentExpired;
+
+    /// <summary>
+    ///     能不能访问控制面：登录了官方账号，**或者**接入了自建集控。
+    /// </summary>
+    /// <remarks>
+    ///     这就是本页要解掉的死结：自建集控的控制面只认节点令牌，强求"先登录 SECTL"会让功能永远用不上。
+    /// </remarks>
+    public bool HasControlPlaneAccess => IsSignedIn || IsEnrolled;
+
+    /// <summary>
+    ///     要不要在页面里**就地**给出接入入口（接入码 + 接入按钮）。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         手机上必须自己给：桌面/平板的集控页 <c>settings.general.control</c> 在手机端根本不存在，
+    ///         把用户导航过去就是"点了没反应"。
+    ///     </para>
+    ///     <para>
+    ///         三种情况给入口：①这条通道整个用不了（未登录也未接入，页面是个死胡同）；
+    ///         ②接入记录坏了或令牌被拒（要重新接入）；③基址被改成过自建的（说明用户在用自建集控，
+    ///         哪怕现在登录着 SECTL 也可能要把节点令牌补回来）。
+    ///         登录着 SECTL 又没碰过基址的用户不该看到这张卡——那对他们只是噪音。
+    ///     </para>
+    /// </remarks>
+    public bool ShowEnrollmentEntry =>
+        _enrollmentStore is not null
+        && (!HasControlPlaneAccess || NeedsEnrollment || _endpointStore is { IsCustom: true });
+
+    /// <summary>集控基址那一行是否可见（没有地址存储时就只留接入码）。</summary>
+    public bool ShowEndpointField => _endpointStore is not null;
+
+    /// <summary>
+    ///     「重新接入」按钮的可见性：只在**没有**内联卡片时才露脸（平板/桌面跳到集控页去）。
+    /// </summary>
+    /// <remarks>
+    ///     手机上没有那个页面，按钮点了等于没反应，所以那种情况下把入口整个交给下面的卡片；
+    ///     桌面/平板宿主的 <see cref="ShowEnrollmentEntry" /> 为 false，按钮照旧导航。
+    /// </remarks>
+    public bool ShowReenrollNavigation => NeedsEnrollment && !ShowEnrollmentEntry;
+
+    /// <summary>能不能点"接入"：填了东西、且没有正在接入。</summary>
+    public bool CanEnroll => !IsEnrolling && !string.IsNullOrWhiteSpace(EnrollmentCode);
+
+    /// <summary>能不能"清除接入"：有记录可清（已接入，或记录坏了要重新接入）。</summary>
+    public bool CanClearEnrollment => _enrollmentStore is not null && (IsEnrolled || _requiresEnrollment);
+
+    /// <summary>有接入失败要显示时为真。</summary>
+    public bool HasEnrollmentMessage => EnrollmentMessage.Length > 0;
+
+    /// <summary>集控基址的水印：没自定义过时就是内置默认地址。</summary>
+    public string ControlPlaneEndpointPlaceholder => _endpointStore?.Current ?? ControlPlaneClient.DefaultBaseUrl;
 
     public string DeviceSummary => SelectedDevice?.Summary ?? string.Empty;
 
@@ -280,7 +417,7 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     /// <summary>能不能"读取名单"：选中设备可用、本机没关远控、设备声明了名单读取、组角色够。</summary>
     public bool CanLoadRoster =>
         !IsBusy
-        && IsSignedIn
+        && HasControlPlaneAccess
         && SelectedDevice is { IsUsable: true }
         && SelectedDevice.SupportsRosterRead
         && SelectedDevice.Group.CanReadRoster;
@@ -294,7 +431,7 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
 
     /// <summary>该显示的失败/空态/降级说明；不需要时为空白。</summary>
     /// <remarks>
-    ///     判定顺序就是这个页面的"用户体验优先级"：**失败先说失败**，然后才是未登录、
+    ///     判定顺序就是这个页面的"用户体验优先级"：**失败先说失败**，然后才是未登录/未接入、
     ///     正在加载、没有设备。把失败排到后面，就会出现"网络断了却告诉用户没有组"这种把人带偏的提示。
     /// </remarks>
     public string EmptyStateText => ResolveEmptyState(
@@ -307,7 +444,10 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         SelectedDevice?.Group.IsKnownInsufficientRole == true
             ? SelectedDevice.Group.CanReadRoster ? LR.RD_NotOperator : LR.RD_NotAdmin
             : null,
-        HasRoster);
+        HasRoster,
+        isEnrolled: IsEnrolled,
+        needsEnrollment: NeedsEnrollment,
+        enrollmentExpired: EnrollmentRejected);
 
     /// <summary>
     ///     失败/空态文案的判定（纯函数，便于单测）。
@@ -319,11 +459,16 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     ///     </para>
     ///     <list type="number">
     ///         <item>请求失败（未登录/凭据失效/网络/服务端错误码）→ 直接说失败原因；</item>
-    ///         <item>未登录 → 未登录文案；</item>
+    ///         <item>未接入自建集控 → "去设置填接入码"（令牌被服务端拒了时换成"重新接入"）；</item>
+    ///         <item>未登录且也没接入 → 未登录文案；</item>
     ///         <item>正在加载 → 加载中文案；</item>
     ///         <item><b>有组读取失败且一台设备都没读到</b> → "有 N 个组没读到"，<b>不是</b>"没有设备"；</item>
     ///         <item>真的读到 0 台设备 → 才是"还没有设备"。</item>
     ///     </list>
+    ///     <para>
+    ///         <paramref name="isEnrolled" /> 为真而 <paramref name="isSignedIn" /> 为假时**不再提示登录**：
+    ///         自建集控的控制面只认节点令牌，这正是本页可用性的关键一条。
+    ///     </para>
     /// </remarks>
     public static string ResolveEmptyState(
         bool isSignedIn,
@@ -333,12 +478,20 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         int failedGroupCount,
         string? unavailableReason,
         string? roleHint,
-        bool hasRoster)
+        bool hasRoster,
+        bool isEnrolled = false,
+        bool needsEnrollment = false,
+        bool enrollmentExpired = false)
     {
         if (!string.IsNullOrWhiteSpace(loadFailure))
             return loadFailure!;
 
-        if (!isSignedIn)
+        // 接入这条通道没打通时，指向"设置里填接入码"才是有效的下一步；登录 SECTL 对自建集控是死路。
+        // 已接入但被服务端拒了（enrollmentExpired）同样要说"重新接入"：这时令牌已经不能用了。
+        if (needsEnrollment && (!isEnrolled || enrollmentExpired))
+            return enrollmentExpired ? LR.RD_EnrollmentExpired : LR.RD_EnrollmentRequired;
+
+        if (!isSignedIn && !isEnrolled)
             return LR.RD_SignedOut;
 
         if (isLoading)
@@ -361,9 +514,11 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         Subscribe();
         IsSignedIn = _auth.IsSignedIn;
         _requiresSignIn = _auth.RequiresReauthorization;
+        RefreshEnrollment();
         RefreshDerived();
 
-        if (!IsSignedIn)
+        // **已接入自建集控时未登录也照样拉设备**：控制面的 Bearer 是节点令牌，不是 SECTL 登录态。
+        if (!HasControlPlaneAccess)
         {
             LoadFailure = string.Empty;
             RefreshDerived();
@@ -392,12 +547,127 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         IsSignedIn = _auth.IsSignedIn;
         _requiresSignIn = _auth.RequiresReauthorization;
         LoadFailure = string.Empty;
+        RefreshEnrollment();
         RefreshDerived();
 
-        if (!IsSignedIn)
+        if (!HasControlPlaneAccess)
             return;
 
         await LoadDevicesAsync().ConfigureAwait(true);
+    }
+
+    /// <summary>
+    ///     令牌失效/记录损坏后给用户的下一步：**先看本页有没有内联接入卡片**，有就落到卡片上；
+    ///     没有（或这是平板/桌面宿主）才跳到设置里的集控页。
+    /// </summary>
+    /// <remarks>
+    ///     页面只负责"跳到哪一页"或"把焦点给谁"，令牌的保存始终只有 <see cref="INodeEnrollmentStore" /> 一处。
+    /// </remarks>
+    [RelayCommand]
+    private void Reenroll() => ReenrollRequested?.Invoke(this, EventArgs.Empty);
+
+    /// <summary>请求打开设置里的集控页（由视图接线，VM 不认识任何界面导航）。</summary>
+    public event EventHandler? ReenrollRequested;
+
+    /// <summary>
+    ///     手机端**就地**接入：用控制台签发的接入码换一份节点令牌（与设置页那一处同一个实现）。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         成功后只写接入记录：<c>INodeEnrollmentStore.Changed</c> 会顺势把设备列表拉起来，
+    ///         因此这里不自己再刷新一遍（否则刚清空的失败提示会被第二次加载改写）。
+    ///     </para>
+    ///     <para>
+    ///         失败只显示**错误码**：接入码与令牌真值既不回显也不进日志。
+    ///     </para>
+    /// </remarks>
+    [RelayCommand]
+    private async Task EnrollAsync()
+    {
+        if (_enrollmentStore is null || IsEnrolling)
+            return;
+
+        var code = EnrollmentCode.Trim();
+        if (code.Length == 0)
+            return;
+
+        // 基址先落地（点"接入"才写盘，免得边打字边写）；地址不合法就只提示，不拿它去发请求。
+        if (!TryApplyEndpoint())
+            return;
+
+        IsEnrolling = true;
+        EnrollmentMessage = string.Empty;
+        try
+        {
+            var record = NodeEnrollmentClient.LooksLikeNodeToken(code)
+                // 用户直接粘贴了令牌：它自带节点身份，不经过接入码那条一次性通道。
+                ? new NodeEnrollmentRecord
+                {
+                    NodeId = _nodeStateStore?.Current.NodeId ?? string.Empty,
+                    GroupId = _nodeStateStore?.Current.GroupId ?? string.Empty,
+                    NodeToken = code
+                }
+                : await EnrollWithCodeAsync(code).ConfigureAwait(true);
+
+            if (record is null)
+                return;
+
+            if (_enrollmentStore.Save(record))
+                EnrollmentCode = string.Empty;
+            else
+                EnrollmentMessage = string.Format(LR.RD_EnrollFailed, "save_failed");
+        }
+        catch (NodeEnrollmentException exception)
+        {
+            // 界面只显示服务端错误码：它足以区分"码错了/过期了/被用过了/被限流了"。
+            EnrollmentMessage = string.Format(LR.RD_EnrollFailed, exception.ServerCode ?? exception.Failure.ToString());
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "手机端接入自建集控失败。");
+            EnrollmentMessage = string.Format(LR.RD_EnrollFailed, exception.GetType().Name);
+        }
+        finally
+        {
+            IsEnrolling = false;
+        }
+    }
+
+    /// <summary>
+    ///     走接入码那条通道：带上本机的真实平台名与设备名，让控制台里能认出"这是哪台手机"。
+    /// </summary>
+    /// <remarks>
+    ///     没有接入客户端时给出明确失败而不是假装成功（真实宿主一定会注入，这里只为测试与降级）。
+    /// </remarks>
+    private async Task<NodeEnrollmentRecord?> EnrollWithCodeAsync(string code)
+    {
+        if (_enrollmentClient is null)
+        {
+            EnrollmentMessage = string.Format(LR.RD_EnrollFailed, "client_unavailable");
+            return null;
+        }
+
+        return await _enrollmentClient.EnrollAsync(
+                code,
+                nodeId: _nodeStateStore?.Current.NodeId,
+                platform: _hostPlatform,
+                version: GlobalConstants.Version,
+                displayName: ControlNodeDisplayName.Resolve(null, _hostDeviceName ?? Environment.MachineName))
+            .ConfigureAwait(true);
+    }
+
+    /// <summary>清除本机的接入记录（令牌立即失效）。</summary>
+    /// <remarks>
+    ///     手机上没有节点连接要唤醒（那一步是桌面/平板的事），清完靠存储的 <c>Changed</c> 清设备列表。
+    /// </remarks>
+    [RelayCommand]
+    private void ClearEnrollment()
+    {
+        if (_enrollmentStore is null)
+            return;
+
+        EnrollmentMessage = string.Empty;
+        _enrollmentStore.Clear();
     }
 
     [RelayCommand]
@@ -405,7 +675,8 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     {
         IsSignedIn = _auth.IsSignedIn;
         _requiresSignIn = _auth.RequiresReauthorization;
-        if (!IsSignedIn)
+        RefreshEnrollment();
+        if (!HasControlPlaneAccess)
         {
             LoadFailure = string.Empty;
             RefreshDerived();
@@ -788,6 +1059,20 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         }
     }
 
+    /// <summary>接入被清除或失效时把页面退回空态：<b>不留旧设备列表</b>，否则点下去就是 401。</summary>
+    private void ClearDeviceResults()
+    {
+        var token = BeginDeviceLoad();
+        LoadFailure = string.Empty;
+        StatusText = string.Empty;
+        EndDeviceLoad(token);
+
+        Rosters.Clear();
+        SelectedRoster = null;
+        DrawnMembers.Clear();
+        RefreshDerived();
+    }
+
     /// <summary>开始一次设备加载：只在这一处置加载态与进度文案。</summary>
     private int BeginDeviceLoad()
     {
@@ -835,8 +1120,14 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         StatusText = message;
         LoadFailure = message;
 
+        // 401 的含义取决于走的哪条通道：登录态下是"重新登录"，已接入时是"令牌不再被接受，重新接入"。
         if (exception is ControlPlaneException { Kind: ControlPlaneErrorKind.Unauthorized })
-            _requiresSignIn = true;
+        {
+            if (IsEnrolled)
+                _requiresEnrollment = true;
+            else
+                _requiresSignIn = true;
+        }
     }
 
     /// <summary>记住的设备优先，其次第一台能用的、再其次第一台在线的、最后第一台。</summary>
@@ -1143,12 +1434,23 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
 
     partial void OnIsBusyChanged(bool value) => RefreshDerived();
 
+    // 按钮可用性、以及"基址非法"提示的消失，都跟着这几项走。
+    partial void OnEnrollmentCodeChanged(string value) => RefreshDerived();
+
+    partial void OnIsEnrollingChanged(bool value) => RefreshDerived();
+
+    partial void OnEnrollmentMessageChanged(string value) => RefreshDerived();
+
     private void Subscribe()
     {
         if (_subscribed)
             return;
 
         _auth.StateChanged += OnAuthStateChanged;
+
+        if (_enrollmentStore is not null)
+            _enrollmentStore.Changed += OnEnrollmentStoreChanged;
+
         _subscribed = true;
     }
 
@@ -1158,7 +1460,91 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
             return;
 
         _auth.StateChanged -= OnAuthStateChanged;
+
+        if (_enrollmentStore is not null)
+            _enrollmentStore.Changed -= OnEnrollmentStoreChanged;
+
         _subscribed = false;
+    }
+
+    private void OnEnrollmentStoreChanged(object? sender, NodeEnrollmentStatus status)
+    {
+        var hadAccess = HasControlPlaneAccess;
+
+        RefreshEnrollment();
+        RefreshDerived();
+
+        // 刚接入（或刚清除）时列表必须跟着变：接入后没设备就该去拉一次，清除后旧列表不能再留着。
+        if (!hadAccess && HasControlPlaneAccess && !HasDevices && !IsLoadingDevices)
+            _ = RefreshAsync();
+        else if (hadAccess && !HasControlPlaneAccess)
+            ClearDeviceResults();
+    }
+
+    /// <summary>把接入记录翻译成页面状态；**只读状态，不碰令牌真值**。</summary>
+    private void RefreshEnrollment()
+    {
+        var status = _enrollmentStore?.Status ?? NodeEnrollmentStatus.NotEnrolled;
+
+        IsEnrolled = status.HasToken;
+        _enrollmentExpired = status.HasToken && status.IsExpired;
+
+        // 记录读不出来 = 等于没接入（存储层已经把它丢掉了），但文案要让人知道"需要重新接入"。
+        if (status.IsUnreadable)
+            _requiresEnrollment = true;
+        else if (status.HasToken && !status.IsExpired)
+            _requiresEnrollment = false;
+    }
+
+    /// <summary>把存储里的当前基址回显到输入框（没自定义过就留空，水印显示默认地址）。</summary>
+    private void RefreshEndpoint()
+    {
+        ControlPlaneEndpoint = _endpointStore is { IsCustom: true } ? _endpointStore.Current : string.Empty;
+        HasEndpointError = false;
+    }
+
+    /// <summary>
+    ///     把输入框里的基址落到存储里（留空＝恢复内置默认地址）。
+    /// </summary>
+    /// <remarks>
+    ///     只在点"接入"时调用：绑定的默认触发器是逐字符更新，边打字边写盘既费电又会在还没输完时先报一次"地址非法"。
+    /// </remarks>
+    /// <returns>地址非法（**不写盘**，仍用原地址）时为 <c>false</c>。</returns>
+    private bool TryApplyEndpoint()
+    {
+        if (_endpointStore is null)
+            return true;
+
+        var endpoint = ControlPlaneEndpoint.Trim();
+        if (endpoint.Length == 0)
+        {
+            if (_endpointStore.IsCustom)
+            {
+                _endpointStore.ResetToDefault();
+                RefreshDerived();
+            }
+
+            HasEndpointError = false;
+            return true;
+        }
+
+        if (_endpointStore.IsCustom && string.Equals(_endpointStore.Current, endpoint, StringComparison.Ordinal))
+        {
+            HasEndpointError = false;
+            return true;
+        }
+
+        if (!_endpointStore.TryUpdate(endpoint, out _))
+        {
+            HasEndpointError = true;
+            return false;
+        }
+
+        HasEndpointError = false;
+        // 存储层会把地址规范化（补 http://、去尾斜杠），回显规范形式，免得用户以为没生效。
+        ControlPlaneEndpoint = _endpointStore.Current;
+        RefreshDerived();
+        return true;
     }
 
     private void OnAuthStateChanged(object? sender, EventArgs e)
@@ -1171,8 +1557,7 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         // 登录态是启动后异步装回来的（也可能刚在设置页登录完）：页面已经打开时，这次变化必须自己
         // 把设备列表拉起来，否则用户看到的是一个不会再刷新的"未登录"空态。
         if (!wasSignedIn && IsSignedIn && !HasDevices && !IsLoadingDevices && LoadFailure.Length == 0)
-            _ = RefreshAsync();
-    }
+            _ = RefreshAsync();    }
 
     private void RefreshDerived()
     {
@@ -1186,6 +1571,17 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         OnPropertyChanged(nameof(HasEmptyState));
         OnPropertyChanged(nameof(HasLoadFailure));
         OnPropertyChanged(nameof(NeedsSignIn));
+        OnPropertyChanged(nameof(EnrollmentExpired));
+        OnPropertyChanged(nameof(EnrollmentRejected));
+        OnPropertyChanged(nameof(NeedsEnrollment));
+        OnPropertyChanged(nameof(HasControlPlaneAccess));
+        OnPropertyChanged(nameof(ShowEnrollmentEntry));
+        OnPropertyChanged(nameof(ShowEndpointField));
+        OnPropertyChanged(nameof(ShowReenrollNavigation));
+        OnPropertyChanged(nameof(CanEnroll));
+        OnPropertyChanged(nameof(CanClearEnrollment));
+        OnPropertyChanged(nameof(HasEnrollmentMessage));
+        OnPropertyChanged(nameof(ControlPlaneEndpointPlaceholder));
         OnPropertyChanged(nameof(DeviceSummary));
         OnPropertyChanged(nameof(DevicesCountText));
         OnPropertyChanged(nameof(CanLoadRoster));

@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:SecRandom.ViewModels.MainPages"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              x:Class="SecRandom.Views.MainPages.LotteryResultPresenter"
              x:Name="RootControl"
              x:DataType="vm:LotteryPageViewModel">
@@ -113,5 +114,7 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </ScrollViewer>
+        <!-- 插件界面插槽：抽奖结果区 -->
+        <sr:UiSlotHost SlotId="main.lottery.result.extra" />
     </Grid>
 </UserControl>

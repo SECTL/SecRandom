@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using SecRandom.Shared.Models.ControlNode;
@@ -60,6 +61,28 @@ public interface IControlNodeTransportFactory
 public sealed record ControlNodeConnectRequest(string Endpoint, string BearerToken, string NodeId, string GroupId);
 
 /// <summary>
+///     连接**在建立阶段**就被服务端拒绝（HTTP 401/403）：这是凭据问题，不是网络问题。
+/// </summary>
+/// <remarks>
+///     <para>
+///         单独一个异常类型的原因与 <see cref="ControlFrameTooLargeException" /> 一样：靠比字符串
+///         或解析异常消息来判断"被拒"迟早会失效（异常消息还是本地化的）。
+///     </para>
+///     <para>
+///         <b>为什么必须与"连不上"分开</b>：断网、DNS 失败、服务端没起，退避重试是有意义的；
+///         而 401/403 是"服务端不认你手里的凭据"——重试一万次也不会变，只会让界面一直停在
+///         "正在重连"，而用户真正需要的提示是"需要重新接入"。归类到未授权路径后，
+///         连续被拒会进入 <see cref="ControlNodeLinkStatus.Blocked" />。
+///     </para>
+/// </remarks>
+public sealed class ControlNodeConnectRejectedException(HttpStatusCode statusCode, Exception? innerException = null)
+    : Exception($"集控节点连接被服务端拒绝（HTTP {(int)statusCode}）。", innerException)
+{
+    /// <summary>服务端在升级响应里给出的状态码，调用方据此区分"被拒"与"连不上"。</summary>
+    public HttpStatusCode StatusCode { get; } = statusCode;
+}
+
+/// <summary>
 ///     <c>node.deregister</c> 的载荷：只要说清楚"注销我在哪个组里的登记"。
 /// </summary>
 /// <remarks>
@@ -114,16 +137,38 @@ public sealed record ControlDeregisterRequest(
 }
 
 /// <summary>
-///     取当前可用的 SECTL 凭据。
+///     取当前可用的节点通道凭据。
 /// </summary>
 /// <remarks>
-///     节点通道使用 <c>SectlBearer</c> 方案（直接出示 SECTL access token），
-///     与控制台浏览器的会话 cookie 无关。未登录时必须返回 <c>null</c>，
-///     让客户端等待登录而不是拿一个空 token 去撞 <c>unauthorized</c>。
+///     <para>
+///         节点通道使用 <c>SectlBearer</c> 方案（直接出示 Bearer 凭据），与控制台浏览器的会话 cookie 无关。
+///         凭据有两个来源：自建集控的**接入令牌**（接入码换来的 <c>srn_…</c>），或 SECTL 账号的 access token。
+///         取不到时必须返回 <c>null</c>，让客户端等待而不是拿一个空 token 去撞 <c>unauthorized</c>。
+///     </para>
+///     <para>
+///         实现方保证：只要本机已经接入自建集控，返回的就是接入令牌，**不再依赖账号登录状态**。
+///     </para>
 /// </remarks>
 public interface IControlNodeCredentialProvider
 {
     Task<string?> TryGetAccessTokenAsync(bool forceRefresh, CancellationToken cancellationToken);
+}
+
+/// <summary>
+///     "取不到凭据"时上报给界面的细节码。
+/// </summary>
+/// <remarks>
+///     这两个码会被 <c>ControlSettingsPageViewModel.DescribeDetail</c> 翻译成界面文案：
+///     前者是官方云端的老样子（去登录账号），后者必须引导用户去填接入码——
+///     对自建集控来说"登录 SECTL"是条死路，给错的提示比不给提示更糟。
+/// </remarks>
+public static class ControlNodeCredentialDetailCodes
+{
+    /// <summary>没有接入自建集控、也没有 SECTL 账号凭据：保持原有文案。</summary>
+    public const string NotSignedIn = "not_signed_in";
+
+    /// <summary>这台机器还没接入自建集控（或接入记录不可读）：提示去设置页填接入码。</summary>
+    public const string EnrollmentUnavailable = "not_enrolled";
 }
 
 /// <summary>

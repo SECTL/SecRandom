@@ -755,4 +755,15 @@
     <data name="RD_Recipient" xml:space="preserve"><value>发放对象</value></data>
     <data name="RD_RecipientNone" xml:space="preserve"><value>不指定</value></data>
     <data name="RD_ConditionsUnsupported" xml:space="preserve"><value>这台设备不支持条件抽取，只能整池抽</value></data>
+    <data name="RD_EnrollmentRequired" xml:space="preserve"><value>尚未接入自建集控，填入控制台签发的接入码即可使用</value></data>
+    <data name="RD_EnrollmentExpired" xml:space="preserve"><value>接入令牌已失效，请重新填入接入码接入</value></data>
+    <data name="RD_Reenroll" xml:space="preserve"><value>重新接入</value></data>
+    <data name="RD_SignInInstead" xml:space="preserve"><value>现在登录</value></data>
+    <data name="RD_EnrollTitle" xml:space="preserve"><value>接入自建集控</value></data>
+    <data name="RD_EnrollHint" xml:space="preserve"><value>填入控制台签发的接入码，令牌加密保存在本机</value></data>
+    <data name="RD_EnrollCode" xml:space="preserve"><value>接入码</value></data>
+    <data name="RD_EnrollAction" xml:space="preserve"><value>接入</value></data>
+    <data name="RD_EnrollClear" xml:space="preserve"><value>清除接入</value></data>
+    <data name="RD_EnrollFailed" xml:space="preserve"><value>接入失败：{0}</value></data>
+    <data name="RD_EndpointInvalid" xml:space="preserve"><value>集控地址不合法，请检查后重试</value></data>
 </root>

@@ -471,3 +471,5 @@ $RECYCLE.BIN/
 /plans
 /midscene_run
 /.playwright-cli
+/.verify-desktop
+/.verify-desktop-2

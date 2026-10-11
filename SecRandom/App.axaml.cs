@@ -25,6 +25,7 @@ using SecRandom.Controls.AttachedSettings;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Core.Abstraction.Services.Views;
 using SecRandom.Core.Behaviors;
 using SecRandom.Core.Controls;
@@ -38,10 +39,29 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services;
+using SecRandom.Core.Services.Presentation;
+using SecRandom.Core.Services.Views;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Services.SingleInstance;
+using SecRandom.Core.Abstraction.Services.Capabilities;
+using SecRandom.Core.Abstraction.Services.Data;
+using SecRandom.Core.Abstraction.Services.Diagnostics;
+using SecRandom.Core.Abstraction.Services.Localization;
+using SecRandom.Core.Abstraction.Services.Messaging;
+using SecRandom.Core.Abstraction.Services.Notifications;
+using SecRandom.Core.Abstraction.Services.Pipeline;
+using SecRandom.Core.Abstraction.Services.Storage;
+using SecRandom.Core.Abstraction.Services.Theming;
+using SecRandom.Core.Abstraction.Services.Threading;
+using SecRandom.Core.Services.Data;
+using SecRandom.Core.Services.Messaging;
+using SecRandom.Core.Services.Notifications;
+using SecRandom.Core.Services.Pipeline;
+using SecRandom.Core.Services.Storage;
+using SecRandom.Core.Services.Theming;
+using SecRandom.Core.Services.Threading;
 using SecRandom.Core.Views;
 using SecRandom.Shared.Models.Ipc;
 using SecRandom.Shared;
@@ -1255,7 +1275,9 @@ public partial class App : Application
                     });
                     services.AddSingleton<IControlNodeStateStore, FileControlNodeStateStore>();
                     services.AddSingleton<IControlDrawGate, ControlDrawGateService>();
-                    services.AddSingleton<IControlNodeCredentialProvider, ControlNodeCredentialProvider>();
+                    services.AddSingleton<IControlNodeCredentialProvider>(provider => new ControlNodeCredentialProvider(
+                        provider.GetRequiredService<SectlAuthService>(),
+                        provider.GetRequiredService<INodeEnrollmentStore>()));
                     services.AddSingleton<IControlNodeTransportFactory, WebSocketControlNodeTransportFactory>();
                     // 三个能力执行器各自独立：它们依赖的界面/配置/名单服务互不相同，
                     // 拆开才能在测试里单独替换，也避免分发器变成一个巨大的文件。
@@ -1272,7 +1294,17 @@ public partial class App : Application
                     services.AddSingleton<IControlDrawResetPresenter, ControlPageDrawResetPresenter>();
                     services.AddSingleton<ControlDrawResetHandler>();
                     services.AddSingleton<IControlCommandDispatcher, ControlCommandDispatcher>();
-                    services.AddSingleton<ControlNodeClient>();
+                    services.AddSingleton(provider => new ControlNodeClient(
+                        provider.GetRequiredService<IControlNodeTransportFactory>(),
+                        provider.GetRequiredService<IControlNodeCredentialProvider>(),
+                        provider.GetRequiredService<IControlNodeStateStore>(),
+                        provider.GetRequiredService<IControlCommandDispatcher>(),
+                        provider.GetRequiredService<ControlNodeClientOptions>(),
+                        provider.GetRequiredService<ILogger<ControlNodeClient>>(),
+                        provider.GetRequiredService<ILogger<ControlNodeSession>>(),
+                        provider.GetRequiredService<INodeEnrollmentStore>()));
+                    // 显式泛型注册：构造函数里的 SectlAuthService / INodeEnrollmentStore 是可选参数，
+                    // 容器两者都能解析，所以这里不需要（也不该）写工厂——守卫测试会盯住这一行。
                     services.AddHostedService<ControlNodeHostedService>();
                     // 单例：这个 ViewModel 订阅了节点状态与连接状态，每次打开设置页都新建一个会累积订阅。
                     services.AddSingleton<ControlSettingsPageViewModel>();
@@ -1298,16 +1330,28 @@ public partial class App : Application
                     serviceProvider.GetRequiredService<IImportExportService>(),
                     serviceProvider.GetRequiredService<ILogger<SettingsIntegrityRecoveryService>>()));
 
-                // 控制面（集控 REST）客户端：桌面与手机共用同一份实现与同一条 Bearer 边界
-                // （SectlAuthService.SendAuthorizedAsync），因此注册在共享分支里。
-                services.AddSingleton<IAuthorizedApiSender, SectlAuthorizedApiSender>();
+                // 接入令牌：自建集控的节点凭据，独立加密存放（data/config/security/control-node.json）。
+                // 注册在**共享分支**里：手机端虽然不跑节点，但远程抽取页同样要在"未登录 SECTL"时可用，
+                // 靠的就是这份接入记录；放在 RunsControlNode 分支里会让手机端永远接入不了。
+                services.AddSingleton<INodeEnrollmentStore>(provider => new FileNodeEnrollmentStore(
+                    provider.GetRequiredService<ILogger<FileNodeEnrollmentStore>>()));
+                services.AddSingleton(provider => new NodeEnrollmentClient(
+                    provider.GetRequiredService<IHttpClientFactory>(),
+                    provider.GetRequiredService<IControlPlaneEndpointStore>()));
+
+                // 控制面（集控 REST）客户端：桌面与手机共用同一份实现与同一条 Bearer 边界。
+                // 装饰顺序：未接入时 EnrolledAuthorizedApiSender 原样转交 SectlAuthorizedApiSender（今天的
+                // 行为一字不变），已接入时改出示节点令牌——**绝不再经过账号刷新逻辑**。
+                services.AddSingleton<SectlAuthorizedApiSender>();
+                services.AddSingleton<IAuthorizedApiSender>(provider => new EnrolledAuthorizedApiSender(
+                    provider.GetRequiredService<SectlAuthorizedApiSender>(),
+                    provider.GetRequiredService<INodeEnrollmentStore>(),
+                    provider.GetRequiredService<IHttpClientFactory>()));
                 services.AddSingleton<IControlPlaneDevicePreferenceStore, FileControlPlaneDevicePreferenceStore>();
                 // 控制面基址是可配置的（自建/私有部署），但它**不进 settings.json**：这个地址每次请求都会
                 // 收到本账号的令牌，一次设置导入不该能把令牌指到别的服务器上。见 IControlPlaneEndpointStore。
                 services.AddSingleton<IControlPlaneEndpointStore>(provider => new FileControlPlaneEndpointStore(
                     provider.GetRequiredService<ILogger<FileControlPlaneEndpointStore>>()));
-                // 这张设置卡默认藏着，由调试页的总开关放出来（与"内幕设置"同一条运行时逻辑）。
-                services.AddSingleton<IControlPlaneEndpointSettingsGate, ControlPlaneEndpointSettingsGate>();
                 services.AddSingleton<IControlPlaneClient>(provider => new ControlPlaneClient(
                     provider.GetRequiredService<IAuthorizedApiSender>(),
                     provider.GetRequiredService<ILogger<ControlPlaneClient>>(),
@@ -1339,13 +1383,23 @@ public partial class App : Application
                 // 它自己会记住上次选中的设备，不需要做成单例。
                 // 用显式工厂而不是纯约定注册：本机节点身份只有桌面/平板有（手机没有本地节点），
                 // 传 null = 设备列表里一台都不标"本机"，而不是让容器去猜一个可选参数。
+                // 后四个参数是给手机端的**内联接入卡片**用的：手机上没有「设置 → 集控」那一页，
+                // 未接入/令牌失效时就地填接入码（复用设置页那套 NodeEnrollmentClient + 接入记录存储）。
+                // 平台名必须报真实系统（手机是 android/ios，平板与桌面也是被控端），
+                // 设备名取平台根给的显示名，取不到时 VM 回落到主机名。
                 services.AddTransient(provider => new MobileRemoteDrawViewModel(
                     provider.GetRequiredService<MainConfigHandler>(),
                     provider.GetRequiredService<IControlPlaneClient>(),
                     provider.GetRequiredService<IControlPlaneDevicePreferenceStore>(),
                     provider.GetRequiredService<SectlAuthService>(),
                     provider.GetRequiredService<ILogger<MobileRemoteDrawViewModel>>(),
-                    provider.GetService<IControlNodeStateStore>()));
+                    provider.GetService<IControlNodeStateStore>(),
+                    // 同上：手机很可能"没登录 SECTL、但接入了自建集控"，这份记录决定本页能不能直接用。
+                    provider.GetService<INodeEnrollmentStore>(),
+                    provider.GetService<NodeEnrollmentClient>(),
+                    provider.GetService<IControlPlaneEndpointStore>(),
+                    ResolveControlPlatformName(),
+                    mobilePlatform?.DeviceName));
                 services.AddTransient<LotteryHistoryViewModel>();
 
                 // 杂项 Views
@@ -1517,6 +1571,30 @@ public partial class App : Application
                     services.AddSingleton<IAppLifecycleService, AppLifecycleService>();
                     services.AddSingleton<IPluginDrawService, PluginDrawService>();
                     services.AddSingleton<IFloatingWindowButtonRegistry, FloatingWindowButtonRegistry>();
+
+                    // 插件扩展点：结果呈现 / 叠加层 / 界面插槽 / 界面样式
+                    services.AddSingleton<IResultPresentationService, ResultPresentationService>();
+                    services.AddSingleton<IOverlayHostService, OverlayHostAdapter>();
+                    services.AddSingleton<IUiContributionService, UiContributionService>();
+                    services.AddSingleton<IUiStyleService, UiStyleService>();
+
+                    // 插件扩展点（第二批）：事件总线 / UI 线程 / 私有存储 / 名单查询 / 忙碌指示 /
+                    // 抽签流水线 / 主题色板 / 通知与对话框 / 窗口 / 弹层 / 本地化 / 能力与权限 / 诊断
+                    services.AddSingleton<IPluginEventBus, PluginEventBus>();
+                    services.AddSingleton<IUiScheduler, UiScheduler>();
+                    services.AddSingleton<IPluginStorageFactory>(_ =>
+                        new PluginStorageFactory(PluginManager.PluginConfigsDirectory));
+                    services.AddSingleton<IThemeTokenService, ThemeTokenService>();
+                    services.AddSingleton<IListQueryService, ListQueryService>();
+                    services.AddSingleton<IBusyIndicator, BusyIndicator>();
+                    services.AddSingleton<IDrawPipelineService, DrawPipelineService>();
+                    services.AddSingleton<INotificationService, PluginNotificationService>();
+                    services.AddSingleton<IWindowService, PluginWindowService>();
+                    services.AddSingleton<IPopupService, PopupService>();
+                    services.AddSingleton<ILocalizationService, PluginLocalizationService>();
+                    services.AddSingleton<ICapabilityService, PluginCapabilityService>();
+                    services.AddSingleton<IPluginDiagnosticsService, PluginDiagnosticsService>();
+
                     services.AddHostedService<PluginLifecycleBridge>();
                     services.AddHttpClient("plugin-market", client => client.Timeout = TimeSpan.FromSeconds(30));
                     services.AddSingleton<PluginMarketService>(provider => new PluginMarketService(
@@ -1537,6 +1615,10 @@ public partial class App : Application
 
         // 刷新个性化设置
         RefreshPersonalizedSettings();
+
+        // 插件被卸载/禁用后，"动画样式"里指向它的那个选择就成了死值：既没有插件接管，
+        // 宿主也不会播自己的动画。这里按"贡献项是否还在"把死值退回内置动画。
+        ResetMissingPluginAnimationSelections();
 
         IAppHost.GetService<IProfileService>();
 
@@ -1560,6 +1642,35 @@ public partial class App : Application
         catch
         {
             return fallback;
+        }
+    }
+
+    /// <summary>
+    ///     插件被卸载/禁用后，配置里指向它的设置项就没了，这时应当恢复成默认设置：
+    ///     把四份抽取设置里失效的 <see cref="DrawSettingsConfigBase.PluginAnimationId" /> 退回宿主内置动画。
+    ///     不清理的话，用户会看到一个空白的"动画样式"，而且抽签时既没有插件演出、宿主的动画也不会播。
+    /// </summary>
+    private static void ResetMissingPluginAnimationSelections()
+    {
+        try
+        {
+            var configHandler = IAppHost.TryGetService<MainConfigHandler>();
+            if (configHandler is null)
+                return;
+
+            var logger = IAppHost.TryGetService<ILogger<App>>();
+            var contributions = IAppHost.TryGetService<IEnumerable<IDrawAnimationContribution>>();
+
+            var reset = AnimationSelectionFallback.Apply(configHandler.Data, contributions, logger);
+            if (reset <= 0)
+                return;
+
+            // 嵌套属性不冒泡到 ConfigHandlerBase 的自动保存，必须显式落盘。
+            configHandler.Save();
+        }
+        catch (Exception ex)
+        {
+            IAppHost.TryGetService<ILogger<App>>()?.LogWarning(ex, "清理失效的插件动画选择时出错，已忽略。");
         }
     }
 
@@ -1641,6 +1752,33 @@ public partial class App : Application
             {
                 IAppHost.TryGetService<ILogger<App>>()?
                     .LogError(exception, "Application stopping notification failed.");
+            }
+
+            try
+            {
+                // 插件注册的退出收尾（落盘、断连）：按 Priority 升序，整体限时，单个失败不影响其它人。
+                var participants = IAppHost.TryGetService<IEnumerable<IAppShutdownParticipant>>();
+                if (participants is not null)
+                {
+                    using var shutdownBudget = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+                    foreach (var participant in participants.OrderBy(static item => item.Priority))
+                    {
+                        try
+                        {
+                            await participant.OnShuttingDownAsync(shutdownBudget.Token).ConfigureAwait(false);
+                        }
+                        catch (Exception exception)
+                        {
+                            IAppHost.TryGetService<ILogger<App>>()?
+                                .LogError(exception, "Shutdown participant {ParticipantId} failed.", participant.Id);
+                        }
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                IAppHost.TryGetService<ILogger<App>>()?
+                    .LogError(exception, "Application shutdown participants failed.");
             }
 
             try
@@ -1967,6 +2105,11 @@ public partial class App : Application
         CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
         Langs.FirstRunOobe.Resources.Culture = cultureInfo;
         Langs.MainPages.QuickDraw.Resources.Culture = cultureInfo;
+
+        // 插件本地化服务会缓存当前语言与词条，切换语言后通知它刷新。
+        // 宿主起来之前（首次启动流程）调用时 TryGetService 返回 null，这里的判空即为降级。
+        if (IAppHost.TryGetService<ILocalizationService>() is PluginLocalizationService pluginLocalization)
+            pluginLocalization.NotifyCultureChanged();
     }
 
     /// <summary>

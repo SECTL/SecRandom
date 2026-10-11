@@ -11,5 +11,5 @@ public static class PluginApiVersions
     /// version they target in <c>manifest.yml</c>; the host rejects plugins whose
     /// declared API major is below <see cref="Current"/>.Major.
     /// </summary>
-    public static readonly Version Current = new(3, 0, 0);
+    public static readonly Version Current = new(3, 1, 5);
 }

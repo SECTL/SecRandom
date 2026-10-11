@@ -1,7 +1,10 @@
 using System.Globalization;
+using System.Net;
+using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging.Abstractions;
+using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Models;
 using SecRandom.Core.Services.Config;
@@ -949,6 +952,108 @@ public sealed class MobileRemoteDrawTests : IDisposable
         return (viewModel, client);
     }
 
+    /// <summary>
+    ///     建一个"接入了自建集控"的 VM，默认**未登录 SECTL**——正是"手机不登录也能用"的那个场景。
+    /// </summary>
+    private (MobileRemoteDrawViewModel ViewModel, RecordingControlPlaneClient Client, FakeEnrollmentStore Store)
+        CreateEnrolledViewModel(bool enrolled = true, bool expired = false, bool unreadable = false)
+    {
+        var configHandler = new MainConfigHandler(
+            NullLogger<MainConfigHandler>.Instance,
+            new TestConfigService(new MainConfigModel()));
+        var auth = new SectlAuthService(
+            TestTokenStore.Create(),
+            new StubHttpClientFactory(new HttpClient()),
+            new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance),
+            NullLogger<SectlAuthService>.Instance,
+            new LoopbackAuthRedirectBrokerFactory());
+
+        var store = new FakeEnrollmentStore();
+        if (enrolled || expired)
+        {
+            store.Save(new NodeEnrollmentRecord
+            {
+                NodeId = "node-1",
+                GroupId = "g1",
+                NodeToken = "srn_test_token",
+                ExpiresAt = expired ? DateTimeOffset.UtcNow.AddMinutes(-1) : DateTimeOffset.UtcNow.AddDays(30)
+            });
+        }
+
+        if (unreadable)
+            store.MarkUnreadable();
+
+        var client = new RecordingControlPlaneClient();
+        var viewModel = new MobileRemoteDrawViewModel(
+            configHandler,
+            client,
+            new FileControlPlaneDevicePreferenceStore(_preferencePath),
+            auth,
+            NullLogger<MobileRemoteDrawViewModel>.Instance,
+            nodeStateStore: null,
+            enrollmentStore: store);
+
+        return (viewModel, client, store);
+    }
+
+    /// <summary>
+    ///     建一个"手机端就地接入"的 VM：接入客户端、基址存储、真实平台名与设备名都接上，默认**未接入**。
+    /// </summary>
+    /// <remarks>
+    ///     手机没有本地节点（<c>nodeStateStore: null</c>），接入时 node_id 整帧缺席、平台名报 android。
+    /// </remarks>
+    private (
+        MobileRemoteDrawViewModel ViewModel,
+        RecordingControlPlaneClient Client,
+        FakeEnrollmentStore Store,
+        FakeEndpointStore Endpoint) CreateEnrollingViewModel(
+        RecordingEnrollHandler? handler = null,
+        bool enrolled = false,
+        bool customEndpoint = false)
+    {
+        var configHandler = new MainConfigHandler(
+            NullLogger<MainConfigHandler>.Instance,
+            new TestConfigService(new MainConfigModel()));
+        var auth = new SectlAuthService(
+            TestTokenStore.Create(),
+            new StubHttpClientFactory(new HttpClient()),
+            new DeviceUuidStore(configHandler, NullLogger<DeviceUuidStore>.Instance),
+            NullLogger<SectlAuthService>.Instance,
+            new LoopbackAuthRedirectBrokerFactory());
+
+        var endpoint = new FakeEndpointStore("https://control.example", customEndpoint);
+        var store = new FakeEnrollmentStore();
+        if (enrolled)
+        {
+            store.Save(new NodeEnrollmentRecord
+            {
+                NodeId = "node-1",
+                GroupId = "g1",
+                NodeToken = "srn_test_token",
+                ExpiresAt = DateTimeOffset.UtcNow.AddDays(30)
+            });
+        }
+
+        var client = new RecordingControlPlaneClient();
+        var viewModel = new MobileRemoteDrawViewModel(
+            configHandler,
+            client,
+            new FileControlPlaneDevicePreferenceStore(_preferencePath),
+            auth,
+            NullLogger<MobileRemoteDrawViewModel>.Instance,
+            nodeStateStore: null,
+            enrollmentStore: store,
+            enrollmentClient: new NodeEnrollmentClient(
+                new FakeHttpClientFactory(
+                    handler ?? new RecordingEnrollHandler(_ => Json(HttpStatusCode.OK, EnrollOk()))),
+                endpoint),
+            endpointStore: endpoint,
+            platform: "android",
+            deviceName: "Pixel 7");
+
+        return (viewModel, client, store, endpoint);
+    }
+
     // ---------------------------------------------------------------- 抽奖条件集（draw.trigger.conditions）
 
     [Fact]
@@ -1010,6 +1115,319 @@ public sealed class MobileRemoteDrawTests : IDisposable
     }
 
     private static GroupDto Group(string groupId) => new() { GroupId = groupId, Name = groupId, Role = "admin" };
+
+    // ---------------------------------------------------------------- 未登录 SECTL 也能用（已接入自建集控）
+
+    /// <summary>
+    ///     这一条就是整个功能的用户价值：**没登录 SECTL，只要接入了自建集控，设备照样读得到**。
+    /// </summary>
+    [Fact]
+    public async Task 接入_未登录但已接入时设备照样读得到且不再提示登录()
+    {
+        var (viewModel, client, _) = CreateEnrolledViewModel();
+        client.GroupsAsync = () => Task.FromResult<IReadOnlyList<GroupDto>>([Group("g1")]);
+        client.NodesAsync = _ => Task.FromResult<IReadOnlyList<NodeDto>>([Node("n1")]);
+
+        await viewModel.InitializeAsync();
+
+        Assert.False(viewModel.IsSignedIn);
+        Assert.True(viewModel.IsEnrolled);
+        Assert.True(viewModel.HasControlPlaneAccess);
+        Assert.False(viewModel.NeedsSignIn);
+        Assert.Single(viewModel.Devices);
+        Assert.DoesNotContain(LR.RD_SignedOut, viewModel.EmptyStateText, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task 接入_未接入且未登录时还是原来那句提示并且不发注定失败的请求()
+    {
+        var groupsCalls = 0;
+        var (viewModel, client, _) = CreateEnrolledViewModel(enrolled: false);
+        client.GroupsAsync = () =>
+        {
+            Interlocked.Increment(ref groupsCalls);
+            return Task.FromResult<IReadOnlyList<GroupDto>>([Group("g1")]);
+        };
+
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.IsEnrolled);
+        Assert.False(viewModel.HasControlPlaneAccess);
+        Assert.True(viewModel.NeedsSignIn);
+        Assert.False(viewModel.NeedsEnrollment);
+        Assert.Equal(LR.RD_SignedOut, viewModel.EmptyStateText);
+
+        // 没凭据就不该去请求：那只会拿一个 401 回来，还会把"请先登录"挤掉。
+        Assert.Equal(0, groupsCalls);
+    }
+
+    [Fact]
+    public async Task 接入_记录读不出来时要求去设置填接入码而不是反复重试()
+    {
+        var (viewModel, client, _) = CreateEnrolledViewModel(unreadable: true);
+        client.GroupsAsync = () => Task.FromResult<IReadOnlyList<GroupDto>>([Group("g1")]);
+
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.IsEnrolled);
+        Assert.True(viewModel.NeedsEnrollment);
+        Assert.True(viewModel.NeedsSignIn);
+        Assert.Equal(LR.RD_EnrollmentRequired, viewModel.EmptyStateText);
+    }
+
+    [Fact]
+    public async Task 接入_服务端拒了令牌时说要重新接入而不是去登录()
+    {
+        var (viewModel, client, _) = CreateEnrolledViewModel();
+        client.GroupsAsync = () => Task.FromException<IReadOnlyList<GroupDto>>(
+            new ControlPlaneException("unauthorized", ControlPlaneErrorKind.Unauthorized));
+
+        await viewModel.RefreshCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.IsEnrolled); // 令牌还在，只是服务端不认了
+        Assert.True(viewModel.EnrollmentRejected);
+        Assert.True(viewModel.NeedsEnrollment);
+        Assert.False(viewModel.NeedsSignIn); // 这时让用户去登录 SECTL 是死路
+        Assert.NotEmpty(viewModel.LoadFailure); // 失败原因优先展示
+        Assert.DoesNotContain(LR.RD_SignedOut, viewModel.EmptyStateText, StringComparison.Ordinal);
+    }
+
+    /// <param name="expected">0=未登录文案，1=去设置填接入码，2=重新接入，3=还没有设备。</param>
+    [Theory]
+    [InlineData(false, false, false, 0)] // 未登录未接入：未登录文案
+    [InlineData(false, true, false, 1)] // 未接入、需要接入：去设置填接入码
+    [InlineData(true, true, true, 2)] // 已接入、被服务端拒了：重新接入
+    [InlineData(true, true, false, 3)] // 已接入、本地过期但服务端没说：不误报"失效"
+    public void 接入_空态文案按接入优先于登录的顺序判定(
+        bool isEnrolled,
+        bool needsEnrollment,
+        bool enrollmentExpired,
+        int expected)
+    {
+        var text = MobileRemoteDrawViewModel.ResolveEmptyState(
+            isSignedIn: false,
+            isLoading: false,
+            hasDevices: false,
+            loadFailure: null,
+            failedGroupCount: 0,
+            unavailableReason: null,
+            roleHint: null,
+            hasRoster: false,
+            isEnrolled: isEnrolled,
+            needsEnrollment: needsEnrollment,
+            enrollmentExpired: enrollmentExpired);
+
+        var expectedText = expected switch
+        {
+            0 => LR.RD_SignedOut,
+            1 => LR.RD_EnrollmentRequired,
+            2 => LR.RD_EnrollmentExpired,
+            _ => LR.RD_NoDevicesHint
+        };
+
+        Assert.Equal(expectedText, text);
+
+        if (expected != 0)
+            Assert.DoesNotContain(LR.RD_SignedOut, text, StringComparison.Ordinal);
+    }
+
+    // ---------------------------------------------------------------- 手机端内联接入卡片
+
+    /// <summary>
+    ///     未接入（也没登录）时，手机页必须**就地**给出接入入口，而不是只留一句"去设置"。
+    /// </summary>
+    /// <remarks>
+    ///     手机上根本没有「设置 → 集控」那一页（<see cref="MobileSettingsNavigator" /> 找不到页面时既不报错也不返回失败），
+    ///     只给导航按钮就等于给了一条走不通的路；这条用例同时钉住页面绑的是"卡片"而不是"导航"。
+    /// </remarks>
+    [Fact]
+    public void 接入_未接入时手机页就地给出接入入口而不是死路()
+    {
+        var (viewModel, _, _, _) = CreateEnrollingViewModel();
+
+        Assert.False(viewModel.IsEnrolled);
+        Assert.False(viewModel.HasControlPlaneAccess);
+        Assert.True(viewModel.ShowEnrollmentEntry); // 就地给卡片
+        Assert.True(viewModel.ShowEndpointField);
+        Assert.False(viewModel.ShowReenrollNavigation); // 那个导航按钮收起来，不留"点了没反应"
+        Assert.False(viewModel.CanEnroll); // 没填接入码时按钮禁用
+        Assert.False(viewModel.CanClearEnrollment);
+        Assert.False(viewModel.HasEnrollmentMessage);
+
+        // 卡片本身要真的在页面里：删掉这段 XAML 等于又把入口收了回去。
+        var page = File.ReadAllText(GetRepositoryPath("SecRandom/Views/Mobile/MobileRemoteDrawPage.axaml"));
+        Assert.Contains("ViewModel.ShowEnrollmentEntry", page, StringComparison.Ordinal);
+        Assert.Contains("ViewModel.ControlPlaneEndpoint", page, StringComparison.Ordinal);
+        Assert.Contains("ViewModel.EnrollmentCode", page, StringComparison.Ordinal);
+        Assert.Contains("ViewModel.EnrollCommand", page, StringComparison.Ordinal);
+        Assert.Contains("ViewModel.ClearEnrollmentCommand", page, StringComparison.Ordinal);
+        Assert.Contains("ViewModel.ShowReenrollNavigation", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("IsVisible=\"{Binding ViewModel.NeedsEnrollment}\"", page, StringComparison.Ordinal);
+    }
+
+    /// <summary>没有接入存储的宿主（降级接线）不该看到一张填了也没用的卡。</summary>
+    [Fact]
+    public void 接入_没有接入存储的宿主不显示这张卡片()
+    {
+        var (viewModel, _) = CreateViewModel();
+
+        Assert.False(viewModel.ShowEnrollmentEntry);
+        Assert.False(viewModel.ShowEndpointField);
+    }
+
+    /// <summary>填了接入码点"接入"：就地换到节点令牌、清空输入框、并把设备列表拉起来。</summary>
+    [Fact]
+    public async Task 接入_填入接入码后换到节点令牌并自己刷新设备列表()
+    {
+        var handler = new RecordingEnrollHandler(_ => Json(HttpStatusCode.OK, EnrollOk()));
+        var (viewModel, client, store, _) = CreateEnrollingViewModel(handler);
+        // 页面加载（Loaded）之后卡片才可能被点到；订阅也是在这一步接上的。
+        await viewModel.InitializeAsync();
+
+        // 接入成功后列表要跟着起来：存储的 Changed 会触发一次刷新，这里等它真的发生。
+        var refreshed = new TaskCompletionSource();
+        client.GroupsAsync = () =>
+        {
+            refreshed.TrySetResult();
+            return Task.FromResult<IReadOnlyList<GroupDto>>([Group("g1")]);
+        };
+
+        viewModel.EnrollmentCode = " 7K3M-9QZX ";
+        Assert.True(viewModel.CanEnroll);
+
+        await viewModel.EnrollCommand.ExecuteAsync(null);
+        await refreshed.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+
+        Assert.True(viewModel.IsEnrolled);
+        Assert.Equal("高三（2）班", store.Status.GroupName);
+        Assert.True(store.TryGetAccessToken(out var token));
+        Assert.Equal("srn_node_9_secret", token);
+
+        // 接入码用完即清，失败提示为空，卡片自己收起来。
+        Assert.Equal(string.Empty, viewModel.EnrollmentCode);
+        Assert.Equal(string.Empty, viewModel.EnrollmentMessage);
+        Assert.False(viewModel.ShowEnrollmentEntry);
+
+        // 请求形状：匿名、POST 到契约里的那条路径，带上本机真实平台与设备名（手机没有本地节点）。
+        var request = Assert.Single(handler.Requests);
+        Assert.Equal(HttpMethod.Post, request.Method);
+        Assert.Equal("/v1/node/enroll", request.Uri.AbsolutePath);
+        Assert.Null(request.Authorization);
+
+        using var body = JsonDocument.Parse(request.Body);
+        Assert.Equal("7K3M-9QZX", body.RootElement.GetProperty("code").GetString());
+        Assert.Equal("android", body.RootElement.GetProperty("platform").GetString());
+        Assert.Equal("Pixel 7", body.RootElement.GetProperty("display_name").GetString());
+        Assert.Equal(GlobalConstants.Version, body.RootElement.GetProperty("version").GetString());
+        Assert.False(body.RootElement.TryGetProperty("node_id", out _));
+    }
+
+    /// <summary>直接粘贴 <c>srn_…</c> 令牌：不走接入码那条一次性通道，一个请求都不该发。</summary>
+    [Fact]
+    public async Task 接入_直接粘贴令牌时不发接入请求()
+    {
+        var handler = new RecordingEnrollHandler(_ => Json(HttpStatusCode.OK, EnrollOk()));
+        var (viewModel, _, store, _) = CreateEnrollingViewModel(handler);
+
+        viewModel.EnrollmentCode = "srn_pasted_token";
+
+        await viewModel.EnrollCommand.ExecuteAsync(null);
+
+        Assert.Equal(0, handler.Calls);
+        Assert.True(store.TryGetAccessToken(out var token));
+        Assert.Equal("srn_pasted_token", token);
+        Assert.Equal(string.Empty, viewModel.EnrollmentCode);
+    }
+
+    /// <summary>服务端拒绝时只显示错误码，接入码留着让用户改一个字符重试，且**绝不回显**接入码真值。</summary>
+    [Fact]
+    public async Task 接入_服务端拒绝时只显示错误码并且接入码留着让人改()
+    {
+        var handler = new RecordingEnrollHandler(_ =>
+            Json(HttpStatusCode.Unauthorized, """{"code":"enrollment_code_invalid"}"""));
+        var (viewModel, _, store, _) = CreateEnrollingViewModel(handler);
+
+        viewModel.EnrollmentCode = "ABC-123";
+
+        await viewModel.EnrollCommand.ExecuteAsync(null);
+
+        Assert.False(viewModel.IsEnrolled);
+        Assert.False(store.Status.HasToken);
+        Assert.Equal(string.Format(LR.RD_EnrollFailed, "enrollment_code_invalid"), viewModel.EnrollmentMessage);
+        Assert.True(viewModel.HasEnrollmentMessage);
+        Assert.True(viewModel.ShowEnrollmentEntry); // 卡片留着，用户能直接重填
+        Assert.Equal("ABC-123", viewModel.EnrollmentCode);
+        Assert.DoesNotContain("ABC-123", viewModel.EnrollmentMessage, StringComparison.Ordinal);
+    }
+
+    /// <summary>基址只在点"接入"那一刻落盘（绑定的默认触发器是逐字符更新，边打边写盘是另一回事）。</summary>
+    [Fact]
+    public async Task 接入_地址只在点接入时才落盘()
+    {
+        var handler = new RecordingEnrollHandler(_ => Json(HttpStatusCode.OK, EnrollOk()));
+        var (viewModel, _, _, endpoint) = CreateEnrollingViewModel(handler);
+
+        viewModel.ControlPlaneEndpoint = "https://console.example";
+        Assert.Equal(0, endpoint.UpdateCalls);
+
+        viewModel.EnrollmentCode = "7K3M-9QZX";
+        await viewModel.EnrollCommand.ExecuteAsync(null);
+
+        Assert.Equal(1, endpoint.UpdateCalls);
+        Assert.Equal("https://console.example", endpoint.Current);
+        // 请求确实打到了刚填的那个地址上（改完地址就能用，不必重启）。
+        Assert.Equal("https://console.example", Assert.Single(handler.Requests).Uri.GetLeftPart(UriPartial.Authority));
+    }
+
+    /// <summary>地址不合法时只提示、不写盘、也不拿它去发请求。</summary>
+    [Fact]
+    public async Task 接入_地址不合法时只提示不拿它去发请求()
+    {
+        var handler = new RecordingEnrollHandler(_ => Json(HttpStatusCode.OK, EnrollOk()));
+        var (viewModel, _, _, endpoint) = CreateEnrollingViewModel(handler);
+        endpoint.AcceptUpdate = false;
+
+        viewModel.ControlPlaneEndpoint = "这不是一个地址";
+        viewModel.EnrollmentCode = "7K3M-9QZX";
+
+        await viewModel.EnrollCommand.ExecuteAsync(null);
+
+        Assert.True(viewModel.HasEndpointError);
+        Assert.False(viewModel.IsEnrolled);
+        Assert.Equal(0, handler.Calls);
+        Assert.Equal(string.Empty, viewModel.EnrollmentMessage);
+    }
+
+    /// <summary>清除接入后回到"未接入"的入口状态：卡片重新出现，令牌立刻读不出来。</summary>
+    [Fact]
+    public async Task 接入_清除接入后回到未接入的入口状态()
+    {
+        var (viewModel, _, store, _) = CreateEnrollingViewModel(enrolled: true);
+        await viewModel.InitializeAsync(); // 页面加载之后才会有"清除接入"这个动作
+
+        Assert.True(viewModel.IsEnrolled);
+        Assert.False(viewModel.ShowEnrollmentEntry); // 已经能用，不再拿接入卡片占地方
+        Assert.True(viewModel.CanClearEnrollment);
+
+        viewModel.ClearEnrollmentCommand.Execute(null);
+
+        Assert.False(viewModel.IsEnrolled);
+        Assert.False(store.TryGetAccessToken(out _));
+        Assert.True(viewModel.ShowEnrollmentEntry);
+        Assert.False(viewModel.ShowReenrollNavigation);
+        Assert.Equal(string.Empty, viewModel.EnrollmentMessage);
+    }
+
+    /// <summary>基址被改成过自建的（说明在用自建集控）时，接入卡片也要给：节点令牌可能得补回来。</summary>
+    [Fact]
+    public void 接入_自建基址下即使已接入也给入口()
+    {
+        var (viewModel, _, _, _) = CreateEnrollingViewModel(enrolled: true, customEndpoint: true);
+
+        Assert.True(viewModel.IsEnrolled);
+        Assert.True(viewModel.ShowEnrollmentEntry);
+        Assert.False(viewModel.ShowReenrollNavigation);
+    }
 
     private static NodeDto Node(string nodeId) => new()
     {
@@ -1196,7 +1614,210 @@ public sealed class MobileRemoteDrawTests : IDisposable
         }
     }
 
+    /// <summary>内存版接入存储：手机侧只关心"有没有接入"，所以这里只要状态对得上就行。</summary>
+    private sealed class FakeEnrollmentStore : INodeEnrollmentStore
+    {
+        private readonly object _gate = new();
+        private NodeEnrollmentRecord? _record;
+        private bool _unreadable;
+
+        public NodeEnrollmentStatus Status
+        {
+            get
+            {
+                lock (_gate)
+                {
+                    if (_unreadable)
+                        return new NodeEnrollmentStatus { IsUnreadable = true };
+
+                    if (_record is null)
+                        return NodeEnrollmentStatus.NotEnrolled;
+
+                    return new NodeEnrollmentStatus
+                    {
+                        HasToken = true,
+                        IsExpired = _record.ExpiresAt is { } expires && expires <= DateTimeOffset.UtcNow,
+                        NodeId = _record.NodeId,
+                        GroupId = _record.GroupId,
+                        GroupName = _record.GroupName,
+                        ExpiresAt = _record.ExpiresAt
+                    };
+                }
+            }
+        }
+
+        public int Generation { get; private set; }
+
+        public event EventHandler<NodeEnrollmentStatus>? Changed;
+
+        /// <summary>模拟"记录读不出来"：文件还在，但已经按未接入处理。</summary>
+        public void MarkUnreadable()
+        {
+            lock (_gate)
+            {
+                _record = null;
+                _unreadable = true;
+                Generation++;
+            }
+
+            Changed?.Invoke(this, Status);
+        }
+
+        public bool TryGetAccessToken(out string? accessToken)
+        {
+            lock (_gate)
+            {
+                accessToken = _record?.NodeToken;
+                return _record is not null;
+            }
+        }
+
+        public bool Save(NodeEnrollmentRecord record)
+        {
+            lock (_gate)
+            {
+                _record = record;
+                _unreadable = false;
+                Generation++;
+            }
+
+            Changed?.Invoke(this, Status);
+            return true;
+        }
+
+        public bool Clear()
+        {
+            bool had;
+            lock (_gate)
+            {
+                had = _record is not null || _unreadable;
+                _record = null;
+                _unreadable = false;
+                Generation++;
+            }
+
+            Changed?.Invoke(this, Status);
+            return had;
+        }
+    }
+
     private static string GetRepositoryPath(string relativePath) => Path.Combine(
         Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../..")),
         relativePath);
+
+    // ---------------------------------------------------------------- 接入请求的假件
+
+    private static HttpResponseMessage Json(HttpStatusCode status, string body) => new(status)
+    {
+        Content = new StringContent(body, Encoding.UTF8, "application/json")
+    };
+
+    /// <summary>契约里的成功回应；接入码换来的节点令牌放在 <c>node_token</c> 里。</summary>
+    private static string EnrollOk(string nodeToken = "srn_node_9_secret") =>
+        $$"""
+          { "node_id": "node-9", "group_id": "grp_9", "group_name": "高三（2）班",
+            "node_token": "{{nodeToken}}", "expires_at": "2030-01-02T03:04:05Z" }
+          """;
+
+    private sealed record SentEnrollRequest(HttpMethod Method, Uri Uri, string Body, string? Authorization);
+
+    /// <summary>接住手机端发出去的那个接入请求：方法、地址、请求体、以及"到底有没有带凭据"。</summary>
+    private sealed class RecordingEnrollHandler(Func<HttpRequestMessage, HttpResponseMessage> responder)
+        : HttpMessageHandler
+    {
+        private readonly object _gate = new();
+        private readonly List<SentEnrollRequest> _requests = [];
+
+        public IReadOnlyList<SentEnrollRequest> Requests
+        {
+            get
+            {
+                lock (_gate)
+                    return [.. _requests];
+            }
+        }
+
+        public int Calls
+        {
+            get
+            {
+                lock (_gate)
+                    return _requests.Count;
+            }
+        }
+
+        protected override async Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            var body = request.Content is null
+                ? string.Empty
+                : await request.Content.ReadAsStringAsync(cancellationToken);
+
+            lock (_gate)
+            {
+                _requests.Add(new SentEnrollRequest(
+                    request.Method,
+                    request.RequestUri!,
+                    body,
+                    request.Headers.Authorization?.ToString()));
+            }
+
+            return responder(request);
+        }
+    }
+
+    private sealed class FakeHttpClientFactory(HttpMessageHandler handler) : IHttpClientFactory
+    {
+        public HttpClient CreateClient(string name) => new(handler, disposeHandler: false);
+    }
+
+    /// <summary>
+    ///     内存版基址存储：手机端"改地址再接入"这条路径要能单测。
+    /// </summary>
+    private sealed class FakeEndpointStore : IControlPlaneEndpointStore
+    {
+        private readonly string _defaultBaseUrl;
+
+        public FakeEndpointStore(string defaultBaseUrl, bool custom = false)
+        {
+            _defaultBaseUrl = defaultBaseUrl;
+            Current = defaultBaseUrl;
+            IsCustom = custom;
+        }
+
+        public string Current { get; private set; }
+
+        public bool IsCustom { get; private set; }
+
+        /// <summary>false = 模拟"这个地址不合法"，此时什么都不写、只回错误。</summary>
+        public bool AcceptUpdate { get; set; } = true;
+
+        public int UpdateCalls { get; private set; }
+
+        public event EventHandler<string>? Changed;
+
+        public bool TryUpdate(string? endpoint, out string? error)
+        {
+            UpdateCalls++;
+            if (!AcceptUpdate || string.IsNullOrWhiteSpace(endpoint))
+            {
+                error = "invalid_endpoint";
+                return false;
+            }
+
+            Current = endpoint.Trim();
+            IsCustom = true;
+            error = null;
+            Changed?.Invoke(this, Current);
+            return true;
+        }
+
+        public void ResetToDefault()
+        {
+            Current = _defaultBaseUrl;
+            IsCustom = false;
+            Changed?.Invoke(this, Current);
+        }
+    }
 }

@@ -510,6 +510,17 @@ public class Resources
     public static string RD_Drawn => ResourceManager.GetString("RD_Drawn", resourceCulture)!;
     public static string RD_DrawnCount => ResourceManager.GetString("RD_DrawnCount", resourceCulture)!;
     public static string RD_SignedOut => ResourceManager.GetString("RD_SignedOut", resourceCulture)!;
+    public static string RD_EnrollmentRequired => ResourceManager.GetString("RD_EnrollmentRequired", resourceCulture)!;
+    public static string RD_EnrollmentExpired => ResourceManager.GetString("RD_EnrollmentExpired", resourceCulture)!;
+    public static string RD_Reenroll => ResourceManager.GetString("RD_Reenroll", resourceCulture)!;
+    public static string RD_SignInInstead => ResourceManager.GetString("RD_SignInInstead", resourceCulture)!;
+    public static string RD_EnrollTitle => ResourceManager.GetString("RD_EnrollTitle", resourceCulture)!;
+    public static string RD_EnrollHint => ResourceManager.GetString("RD_EnrollHint", resourceCulture)!;
+    public static string RD_EnrollCode => ResourceManager.GetString("RD_EnrollCode", resourceCulture)!;
+    public static string RD_EnrollAction => ResourceManager.GetString("RD_EnrollAction", resourceCulture)!;
+    public static string RD_EnrollClear => ResourceManager.GetString("RD_EnrollClear", resourceCulture)!;
+    public static string RD_EnrollFailed => ResourceManager.GetString("RD_EnrollFailed", resourceCulture)!;
+    public static string RD_EndpointInvalid => ResourceManager.GetString("RD_EndpointInvalid", resourceCulture)!;
     public static string RD_NoGroups => ResourceManager.GetString("RD_NoGroups", resourceCulture)!;
     public static string RD_NoNodes => ResourceManager.GetString("RD_NoNodes", resourceCulture)!;
     public static string RD_NoRoster => ResourceManager.GetString("RD_NoRoster", resourceCulture)!;

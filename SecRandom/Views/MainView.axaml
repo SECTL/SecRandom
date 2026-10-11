@@ -12,7 +12,8 @@
              NavigationPage.HasNavigationBar="False"
              Loaded="OnLoaded"
              Unloaded="OnUnloaded">
-    <Grid RowDefinitions="Auto *">
+    <Panel>
+        <Grid RowDefinitions="Auto *">
         <Border Grid.Row="0" Height="48"
                 Background="Transparent"
                 WindowDecorationProperties.ElementRole="TitleBar">
@@ -35,6 +36,8 @@
                 <TextBlock Text="SecRandom"
                            FontSize="12"
                            VerticalAlignment="Center" />
+                <!-- 插件界面插槽：标题栏（插件可在这里追加自己的按钮/状态） -->
+                <sr:UiSlotHost SlotId="main.titlebar" VerticalAlignment="Center" />
             </StackPanel>
         </Border>
 
@@ -74,5 +77,9 @@
                 </Grid>
             </sr:DrawerHost>
         </fa:FANavigationView>
-    </Grid>
+        </Grid>
+
+        <!-- 插件叠加层：插件通过 IOverlayHostService 在这里显示自己的界面 -->
+        <sr:OverlayHost x:Name="OverlayLayer" />
+    </Panel>
 </ContentPage>
