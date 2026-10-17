@@ -1,0 +1,31 @@
+﻿* @lzy98276
+
+# 关键文件
+/.github/ @lzy98276 @lrs2187
+/scripts/ @lzy98276
+/resources/ @lzy98276
+*.md @lzy98276
+*.ps1 @lzy98276
+
+# 构建关键文件
+global.json @lzy98276 @lrs2187
+*.config @lzy98276 @lrs2187
+*.sln @lzy98276 @lrs2187
+*.slnf @lzy98276 @lrs2187
+*.csproj @lzy98276 @lrs2187
+*.props @lzy98276 @lrs2187
+*.targets @lzy98276 @lrs2187
+
+# 类别：核心
+/SecRandom.Core/ @lzy98276 @lrs2187
+/SecRandom.Shared/ @lzy98276 @lrs2187
+
+# 类别：平台
+/SecRandom.Platforms* @lzy98276
+/SecRandom.Desktop/ @lzy98276
+/SecRandom.Android/ @lzy98276
+/SecRandom.iOS/ @lzy98276
+
+# 类别：插件
+/SecRandom.PluginSdk/ @lzy98276 @lrs2187
+/SecRandom.ExamplePlugin/ @lzy98276
