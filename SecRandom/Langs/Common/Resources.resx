@@ -271,4 +271,7 @@
     <data name="Menu_ExitSudoMode" xml:space="preserve">
         <value>退出 Sudo 模式</value>
     </data>
+    <data name="Feat_Starting" xml:space="preserve">
+        <value>启动中</value>
+    </data>
 </root>

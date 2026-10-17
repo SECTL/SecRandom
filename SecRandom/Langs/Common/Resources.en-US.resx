@@ -271,4 +271,7 @@ Move the entire portable package to a writable location, or adjust the directory
     <data name="Menu_ExitSudoMode" xml:space="preserve">
         <value>Exit Sudo Mode</value>
     </data>
+    <data name="Feat_Starting" xml:space="preserve">
+        <value>Starting</value>
+    </data>
 </root>

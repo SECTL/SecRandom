@@ -123,4 +123,7 @@
         <value>抽</value>
     </data>
     <data name="Menu_ExitSudoMode" xml:space="preserve"><value>Sudo モードを終了</value></data>
+    <data name="Feat_Starting" xml:space="preserve">
+        <value>起動中</value>
+    </data>
 </root>

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using SecRandom.Core.Abstraction.Services;
 
 namespace SecRandom.Services.Plugins;
@@ -13,7 +10,7 @@ namespace SecRandom.Services.Plugins;
 public sealed class FloatingWindowButtonRegistry : IFloatingWindowButtonRegistry
 {
     private readonly List<FloatingWindowButtonDescriptor> _buttons = [];
-    private readonly object _gate = new();
+    private readonly Lock _gate = new();
 
     public IReadOnlyList<FloatingWindowButtonDescriptor> Buttons
     {
@@ -26,6 +23,10 @@ public sealed class FloatingWindowButtonRegistry : IFloatingWindowButtonRegistry
 
     public event EventHandler? Changed;
 
+    /// <summary>
+    /// 注册新的按钮。
+    /// </summary>
+    /// <param name="button">按钮描述</param>
     public void Register(FloatingWindowButtonDescriptor button)
     {
         ArgumentNullException.ThrowIfNull(button);
@@ -47,6 +48,14 @@ public sealed class FloatingWindowButtonRegistry : IFloatingWindowButtonRegistry
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>
+    /// 取消注册按钮。此方法用于动态管理按钮注册。
+    /// <remarks>
+    /// 应用停止时无需取消注册。
+    /// </remarks>
+    /// </summary>
+    /// <param name="id">按钮 id</param>
+    /// <returns>是否移除</returns>
     public bool Unregister(string id)
     {
         bool removed;
