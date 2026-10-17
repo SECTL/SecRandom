@@ -303,7 +303,6 @@ public partial class FloatingWindow : Window
             VerticalContentAlignment = VerticalAlignment.Center
         };
 
-        ToolTip.SetTip(button, label);
         button.Content = displayStyle switch
         {
             1 => new FluentIcon(icon, size * 0.64),
