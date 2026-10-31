@@ -10,22 +10,31 @@ namespace SecRandom.Services.Auth;
 /// <summary>Creates the desktop loopback broker; it has no dependencies of its own.</summary>
 public sealed class LoopbackAuthRedirectBrokerFactory : IAuthRedirectBrokerFactory
 {
-    public IAuthRedirectBroker Create() => new LoopbackAuthRedirectBroker();
+    public IAuthRedirectBroker Create(bool preferOidcRedirectPort = false) =>
+        new LoopbackAuthRedirectBroker(preferOidcRedirectPort);
 }
 
 /// <summary>
-///     Desktop redirect broker: a loopback HTTP listener on a free port receives the redirect in the
-///     system browser and answers it with a short confirmation page. The port is picked per attempt
-///     because the authorization service registers loopback redirects for the shared client id.
+///     Desktop redirect broker: a loopback HTTP listener receives the redirect in the system browser and
+///     answers it with a short confirmation page. The port is normally picked per attempt because the
+///     authorization service registers loopback redirects for the shared client id — but an OIDC
+///     authorization additionally demands a redirect URI that matches the registered one character by
+///     character, so an OIDC-capable attempt comes back on <see cref="SectlAuthService.OidcRedirectPort" />
+///     instead. If that port cannot be bound the sign-in still works, only the id_token is lost.
 /// </summary>
 public sealed class LoopbackAuthRedirectBroker : IAuthRedirectBroker
 {
+    private readonly bool _preferOidcRedirectPort;
     private HttpListener? _listener;
+
+    public LoopbackAuthRedirectBroker(bool preferOidcRedirectPort = false) =>
+        _preferOidcRedirectPort = preferOidcRedirectPort;
 
     /// <summary>The browser round trip, unchanged from the original desktop sign-in flow.</summary>
     public TimeSpan WaitTimeout { get; } = TimeSpan.FromMinutes(5);
 
-    public string CreateRedirectUri() => $"http://localhost:{GetFreePort()}/callback";
+    public string CreateRedirectUri() =>
+        $"http://localhost:{(_preferOidcRedirectPort ? SectlAuthService.OidcRedirectPort : GetFreePort())}/callback";
 
     public Task PrepareAsync(AuthRedirectAttempt attempt, CancellationToken cancellationToken = default)
     {
@@ -60,7 +69,7 @@ public sealed class LoopbackAuthRedirectBroker : IAuthRedirectBroker
         response.Close();
 
         return new AuthRedirectResult(attempt.RedirectUri, returnedState ?? string.Empty, attempt.CodeVerifier,
-            code, error);
+            code, error, attempt.Nonce);
     }
 
     /// <summary>The loopback flow always completes inside the attempt, so nothing can be resumed.</summary>

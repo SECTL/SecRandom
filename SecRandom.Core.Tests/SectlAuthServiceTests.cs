@@ -270,30 +270,100 @@ public sealed class SectlAuthServiceTests
     }
 
     [Fact]
-    public async Task Refresh_WhenThe180DayWindowIsOver_RequiresReauthorization()
+    public async Task Refresh_WhenThePairWasFirstAuthorizedLongAgo_StillRotatesBecauseTokensNeverExpire()
     {
+        // ACCESS_TOKEN_TTL_SECONDS = REFRESH_TOKEN_TTL_SECONDS = -1: nothing ends a session by age, so a
+        // pair authorized well over a year ago is still usable and must rotate instead of being dropped.
         var handler = new RecordingHandler((request, _) =>
         {
             string path = request.RequestUri!.AbsolutePath;
+            if (path == "/api/oauth/refresh")
+                return Json(RefreshedTokenJson);
             if (path == "/api/oauth/heartbeat")
                 return new HttpResponseMessage(HttpStatusCode.NoContent);
 
-            throw new Xunit.Sdk.XunitException($"An expired refresh window must not send {path}.");
+            throw new Xunit.Sdk.XunitException($"Unexpected request: {path}");
         });
         var (service, store) = CreateService(handler);
-        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 3600)
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 315360000)
         {
             AccessTokenExpiresAt = DateTimeOffset.UtcNow.AddMinutes(1),
-            RefreshTokenIssuedAt = DateTimeOffset.UtcNow.AddDays(-181)
+            RefreshTokenIssuedAt = DateTimeOffset.UtcNow.AddDays(-400)
         });
 
         bool sent = await service.SendHeartbeatAsync(TestContext.Current.CancellationToken);
 
-        Assert.False(sent);
-        Assert.Equal(0, handler.Count("/api/oauth/refresh"));
+        Assert.True(sent);
+        Assert.Equal(1, handler.Count("/api/oauth/refresh"));
+        Assert.False(service.RequiresReauthorization);
+        Assert.Equal("refreshed-refresh-token", ReadStoredToken(store)?.RefreshToken);
+    }
+
+    [Fact]
+    public async Task IntrospectAsync_PostsThePinnedPayloadAndKeepsTheNeverExpiringMarker()
+    {
+        var handler = new RecordingHandler((request, _) =>
+            request.RequestUri!.AbsolutePath == "/api/oauth/introspect"
+                ? Json("""{"active":true,"user_id":"user-1","client_id":"69c8cd6a0012dd3ea10a","scope":"user:read cloud:read","expires_at":"-1","exp":null,"iat":1756084800}""")
+                : throw new Xunit.Sdk.XunitException($"Unexpected request: {request.RequestUri}"));
+        var (service, _) = CreateService(handler);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 315360000));
+
+        var introspection = await service.IntrospectAsync(TestContext.Current.CancellationToken);
+
+        Assert.NotNull(introspection);
+        Assert.True(introspection!.Active);
+        // "-1" is the "never expires" marker, never a date to parse.
+        Assert.True(introspection.NeverExpires);
+        var recorded = Assert.Single(handler.Requests, item => item.Path == "/api/oauth/introspect");
+        Assert.Equal("access-token", JsonField(recorded.Body, "token"));
+        Assert.Equal(SectlAuthService.ClientId, JsonField(recorded.Body, "client_id"));
+    }
+
+    [Fact]
+    public async Task IntrospectAsync_WhenTheEndpointAnswersWithAServerError_ReportsNothing()
+    {
+        var handler = new RecordingHandler((_, _) => new HttpResponseMessage(HttpStatusCode.BadGateway));
+        var (service, _) = CreateService(handler);
+        SetToken(service, new SectlToken("access-token", "refresh-token", "user-1", 315360000));
+
+        Assert.Null(await service.IntrospectAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task StartupIntrospection_WhenTheTokenWasRevoked_ClearsTheSessionInTheBackground()
+    {
+        var handler = new RecordingHandler((request, _) =>
+            request.RequestUri!.AbsolutePath == "/api/oauth/introspect"
+                ? Json("""{"active":false}""")
+                : throw new Xunit.Sdk.XunitException($"A revoked session must not call {request.RequestUri}"));
+        var (service, store) = CreateService(handler);
+        // The startup path reloads the pair from disk, so the stored file is what it verifies.
+        await store.SaveAsync(new SectlToken("access-token", "refresh-token", "user-1", 315360000),
+            TestContext.Current.CancellationToken);
+        var cleared = new TaskCompletionSource();
+        service.StateChanged += (_, _) =>
+        {
+            if (service.RequiresReauthorization)
+                cleared.TrySetResult();
+        };
+
+        await service.InitializeAsync(TestContext.Current.CancellationToken);
+        await cleared.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+
         Assert.True(service.RequiresReauthorization);
+        Assert.False(service.IsSignedIn);
         Assert.False(File.Exists(store.Path));
     }
+
+    [Theory]
+    [InlineData("http://localhost:52831/callback", true)]
+    [InlineData("http://127.0.0.1:52831/callback", true)]
+    [InlineData("http://localhost:41337/callback", false)]
+    [InlineData("cn.sectl.secrandom.mobile://oauth/callback", false)]
+    [InlineData("https://localhost:52831/callback", false)]
+    public void IsOidcEligibleRedirect_OnlyAcceptsTheRegisteredLoopbackAddress(string redirectUri, bool expected) =>
+        Assert.Equal(expected, SectlAuthService.IsOidcEligibleRedirect(redirectUri));
 
     [Fact]
     public async Task Refresh_WhenAnotherProcessAlreadyRotated_AdoptsTheStoredPair()
@@ -569,7 +639,7 @@ public sealed class SectlAuthServiceTests
     /// <summary>Hands the service one scripted broker, as the platform registration would.</summary>
     private sealed class SingleBrokerFactory(IAuthRedirectBroker broker) : IAuthRedirectBrokerFactory
     {
-        public IAuthRedirectBroker Create() => broker;
+        public IAuthRedirectBroker Create(bool preferOidcRedirectPort = false) => broker;
     }
 
     /// <summary>

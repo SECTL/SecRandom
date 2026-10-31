@@ -38,18 +38,33 @@ public sealed class SectlAuthService(
     private const string AvatarBucketId = "69cce3720009a343f892";
     private const string BrowserBaseUrl = "https://sectl.cn";
     private const string OAuthScope = "user:read cloud:read cloud:write";
+    private const string OpenIdScope = "openid";
     private static readonly Uri HeartbeatUri = new($"{ApiBaseUrl}/api/oauth/heartbeat");
+    private static readonly Uri IntrospectionUri = new($"{ApiBaseUrl}/api/oauth/introspect");
+    private static readonly Uri DiscoveryUri = new($"{ApiBaseUrl}/.well-known/openid-configuration");
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    /// <summary>Fallback access-token lifetime when the service omits or invalidates <c>expires_in</c>.</summary>
+    /// <summary>
+    ///     Port the desktop loopback redirect is pinned to. The OIDC branch compares the redirect URI
+    ///     character by character and refuses both a custom scheme and a wildcard port, so an
+    ///     OIDC-capable attempt has to come back to one fixed address — the platform registers
+    ///     <c>http://localhost:52831/callback</c> exactly. Binding can still fail (Windows reserves
+    ///     port ranges for Hyper-V/WinNAT), and the loopback broker then falls back to a free port,
+    ///     which only costs the OIDC id_token, never the sign-in itself.
+    /// </summary>
+    public const int OidcRedirectPort = 52831;
+
+    /// <summary>Fallback access-token lifetime when the service omits <c>expires_in</c> entirely.</summary>
     private const int DefaultAccessTokenLifetimeSeconds = 3600;
 
     /// <summary>
-    ///     Refresh token lifetime. It runs from the first authorization and rotation never extends
-    ///     it, so the client stops refreshing — instead of looping against a dead token — once the
-    ///     window is over.
+    ///     Lifetime placeholder for a token that never expires by time. The service keeps
+    ///     <c>ACCESS_TOKEN_TTL_SECONDS = REFRESH_TOKEN_TTL_SECONDS = -1</c> and reports
+    ///     <c>expires_in = 315360000</c> (ten years) purely so a generic OAuth client can still compute
+    ///     a far-away absolute expiry; a token is only ever invalidated by a logout, a revoked refresh
+    ///     family, or a deleted account.
     /// </summary>
-    private static readonly TimeSpan RefreshTokenLifetime = TimeSpan.FromDays(180);
+    private const int UnlimitedExpiresInSeconds = 315_360_000;
 
     /// <summary>Refresh this long before the access token expires so a request never carries a dying token.</summary>
     private static readonly TimeSpan AccessTokenRefreshLead = TimeSpan.FromMinutes(5);
@@ -65,8 +80,11 @@ public sealed class SectlAuthService(
     ];
 
     private readonly object _refreshGate = new();
+    private readonly object _oidcDiscoveryGate = new();
     private readonly string _tokenPath = tokenStore.Path;
     private Task<SectlRefreshOutcome>? _inflightRefresh;
+    private Task<SectlOidcConfiguration?>? _inflightOidcDiscovery;
+    private SectlOidcConfiguration? _oidcConfiguration;
     private SectlToken? _token;
     private int _sessionVersion;
     private bool _initialized;
@@ -147,6 +165,11 @@ public sealed class SectlAuthService(
     {
         try
         {
+            // 令牌不按时间过期，会话被服务端结束的唯一方式是撤销；这一层校验只在后台进行，
+            // 启动链路永远不等待它，校验本身失败也不会清掉本地会话。
+            if (!await VerifyStoredSessionAsync(cancellationToken).ConfigureAwait(false))
+                return;
+
             await InitializeAccountDataWithRetryAsync(cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
@@ -155,6 +178,63 @@ public sealed class SectlAuthService(
         finally
         {
             StateChanged?.Invoke(this, EventArgs.Empty);
+        }
+    }
+
+    /// <summary>
+    ///     Confirms the stored session is still accepted. Tokens never expire by time, so revocation is
+    ///     the only thing that can end one, and introspection is the endpoint that reports it as
+    ///     <c>active: false</c>. A request that cannot produce an answer keeps the session.
+    /// </summary>
+    private async Task<bool> VerifyStoredSessionAsync(CancellationToken cancellationToken)
+    {
+        var introspection = await IntrospectAsync(cancellationToken).ConfigureAwait(false);
+        if (introspection is null || introspection.Active)
+            return true;
+
+        logger.LogInformation("SECTL 令牌已被撤销，清除本地会话并要求重新授权。");
+        ClearSession("session_revoked", requiresReauthorization: true);
+        StateChanged?.Invoke(this, EventArgs.Empty);
+        return false;
+    }
+
+    /// <summary>
+    ///     Asks the service whether the stored access token is still usable. It is best-effort by
+    ///     design: an unreachable endpoint returns <see langword="null" />, so a flaky network can never
+    ///     be mistaken for a revoked session. The response reports a token that has no time-based end
+    ///     as <c>expires_at: "-1"</c>, which must never be parsed as a date (it would read as 2000-12-31
+    ///     and make a freshly issued token look expired), so the raw value is handed back untouched.
+    /// </summary>
+    public async Task<SectlTokenIntrospection?> IntrospectAsync(CancellationToken cancellationToken = default)
+    {
+        var accessToken = _token?.AccessToken;
+        if (string.IsNullOrWhiteSpace(accessToken))
+            return null;
+
+        try
+        {
+            var payload = new { token = accessToken, client_id = ClientId };
+            using var request = new HttpRequestMessage(HttpMethod.Post, IntrospectionUri)
+            {
+                Content = JsonContent.Create(payload, options: JsonOptions)
+            };
+            request.Headers.UserAgent.ParseAdd(BuildUserAgent());
+            using var response = await httpClientFactory.CreateClient().SendAsync(request, cancellationToken)
+                .ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            return await response.Content
+                .ReadFromJsonAsync<SectlTokenIntrospection>(JsonOptions, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            logger.LogDebug(exception, "SECTL 令牌校验请求失败，保留本地会话。");
+            return null;
         }
     }
 
@@ -195,43 +275,164 @@ public sealed class SectlAuthService(
         var verifier = Base64Url(RandomNumberGenerator.GetBytes(32));
         var challenge = Base64Url(SHA256.HashData(Encoding.UTF8.GetBytes(verifier)));
         var state = Base64Url(RandomNumberGenerator.GetBytes(16));
+        var nonce = Base64Url(RandomNumberGenerator.GetBytes(32));
 
-        using var broker = redirectBrokerFactory.Create();
-        var attempt = new AuthRedirectAttempt(broker.CreateRedirectUri(), state, verifier);
+        var broker = redirectBrokerFactory.Create(preferOidcRedirectPort: true);
+        AuthRedirectAttempt attempt;
+        bool requestsOpenId;
+        try
+        {
+            (attempt, requestsOpenId) =
+                await PrepareAttemptAsync(broker, state, verifier, nonce, cancellationToken).ConfigureAwait(false);
+        }
+        catch (HttpListenerException)
+        {
+            // The pinned port is taken, or it lies inside a range Windows reserves for Hyper-V. Signing
+            // in matters more than the id_token, so this attempt falls back to a free loopback port and
+            // to the OAuth 2.0 flow, which does accept a dynamic port.
+            logger.LogInformation("OIDC 回调端口 {Port} 不可用，改用随机环回端口并走 OAuth 2.0 流程。", OidcRedirectPort);
+            broker.Dispose();
+            broker = redirectBrokerFactory.Create(preferOidcRedirectPort: false);
+            (attempt, requestsOpenId) =
+                await PrepareAttemptAsync(broker, state, verifier, nonce, cancellationToken).ConfigureAwait(false);
+        }
+
+        using (broker)
+        {
+            var authorizeUrl = BuildAuthorizeUrl(attempt, challenge, requestsOpenId);
+            // 桌面与 Android 交给系统浏览器，回调通过 loopback 或自定义 scheme 深链回来；
+            // iOS 用 ASWebAuthenticationSession，回调由该浏览器直接交回。
+            if (!IAppHost.GetService<IAuthBrowser>().TryOpenAuthorization(authorizeUrl))
+                throw new InvalidOperationException("无法打开浏览器。");
+
+            AuthRedirectResult redirect;
+            try
+            {
+                redirect = await broker.WaitForRedirectAsync(attempt, cancellationToken).ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                // 授权页被关掉或服务端拒绝了 redirect_uri 时，回调永远不会到达：给用户一个明确的结论，
+                // 而不是让界面一直停在“登录中”。
+                throw new InvalidOperationException("登录超时，请重试。");
+            }
+
+            await CompleteAuthorizationAsync(redirect, state, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private async Task<(AuthRedirectAttempt Attempt, bool RequestsOpenId)> PrepareAttemptAsync(
+        IAuthRedirectBroker broker,
+        string state,
+        string codeVerifier,
+        string nonce,
+        CancellationToken cancellationToken)
+    {
+        var attempt = new AuthRedirectAttempt(broker.CreateRedirectUri(), state, codeVerifier, nonce);
         // The desktop broker starts its loopback listener here; a mobile broker records the attempt,
         // because the redirect may come back to a process that was reclaimed in the meantime.
         await broker.PrepareAsync(attempt, cancellationToken).ConfigureAwait(false);
+        var requestsOpenId =
+            await ShouldRequestOpenIdAsync(attempt.RedirectUri, cancellationToken).ConfigureAwait(false);
+        return (attempt, requestsOpenId);
+    }
 
-        var query = string.Join("&", new Dictionary<string, string>
+    /// <summary>
+    ///     Builds the authorization URL. The browser keeps using the site origin instead of the
+    ///     discovery document's <c>authorization_endpoint</c>: the authorization endpoint authenticates
+    ///     with the site login session, which only exists on the origin the user signed in on.
+    /// </summary>
+    private static string BuildAuthorizeUrl(AuthRedirectAttempt attempt, string codeChallenge,
+        bool requestsOpenId)
+    {
+        var parameters = new Dictionary<string, string>
         {
             ["client_id"] = ClientId,
             ["redirect_uri"] = attempt.RedirectUri,
             ["response_type"] = "code",
-            ["code_challenge"] = challenge,
+            ["code_challenge"] = codeChallenge,
             ["code_challenge_method"] = "S256",
-            ["scope"] = OAuthScope,
-            ["state"] = state
-        }.Select(pair => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
+            ["scope"] = requestsOpenId ? $"{OAuthScope} {OpenIdScope}" : OAuthScope,
+            ["state"] = attempt.State
+        };
+        if (requestsOpenId)
+            parameters["nonce"] = attempt.Nonce ?? string.Empty;
 
-        var authorizeUrl = $"{BrowserBaseUrl}/oauth/authorize?{query}";
-        // 桌面与 Android 交给系统浏览器，回调通过 loopback 或自定义 scheme 深链回来；
-        // iOS 用 ASWebAuthenticationSession，回调由该浏览器直接交回。
-        if (!IAppHost.GetService<IAuthBrowser>().TryOpenAuthorization(authorizeUrl))
-            throw new InvalidOperationException("无法打开浏览器。");
+        var query = string.Join("&",
+            parameters.Select(pair => $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
+        return $"{BrowserBaseUrl}/oauth/authorize?{query}";
+    }
 
-        AuthRedirectResult redirect;
+    /// <summary>
+    ///     Decides whether this attempt may ask for the OIDC branch. Two conditions must hold: the
+    ///     redirect URI has to be one OIDC accepts — a registered <c>http</c> loopback URI on the pinned
+    ///     port, because a custom scheme or a wildcard/dynamic port is refused by the authorization
+    ///     endpoint — and the discovery document has to advertise <c>openid</c>. A discovery failure
+    ///     therefore falls back to plain OAuth 2.0 instead of blocking the sign-in.
+    /// </summary>
+    private async Task<bool> ShouldRequestOpenIdAsync(string redirectUri, CancellationToken cancellationToken)
+    {
+        if (!IsOidcEligibleRedirect(redirectUri))
+            return false;
+
+        var configuration = await TryGetOidcConfigurationAsync(cancellationToken).ConfigureAwait(false);
+        return configuration?.SupportsOpenId == true;
+    }
+
+    internal static bool IsOidcEligibleRedirect(string redirectUri) =>
+        Uri.TryCreate(redirectUri, UriKind.Absolute, out var uri)
+        && uri.Scheme == Uri.UriSchemeHttp
+        && IsLoopbackHost(uri.Host)
+        && uri.Port == OidcRedirectPort;
+
+    private static bool IsLoopbackHost(string host) =>
+        string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase)
+        || string.Equals(host, "127.0.0.1", StringComparison.Ordinal)
+        || string.Equals(host, "[::1]", StringComparison.Ordinal)
+        || string.Equals(host, "::1", StringComparison.Ordinal);
+
+    private Task<SectlOidcConfiguration?> TryGetOidcConfigurationAsync(CancellationToken cancellationToken)
+    {
+        lock (_oidcDiscoveryGate)
+        {
+            if (_oidcConfiguration is not null)
+                return Task.FromResult<SectlOidcConfiguration?>(_oidcConfiguration);
+
+            return _inflightOidcDiscovery ??= FetchOidcConfigurationAsync();
+        }
+    }
+
+    private async Task<SectlOidcConfiguration?> FetchOidcConfigurationAsync()
+    {
         try
         {
-            redirect = await broker.WaitForRedirectAsync(attempt, cancellationToken).ConfigureAwait(false);
-        }
-        catch (TimeoutException)
-        {
-            // 授权页被关掉或服务端拒绝了 redirect_uri 时，回调永远不会到达：给用户一个明确的结论，
-            // 而不是让界面一直停在“登录中”。
-            throw new InvalidOperationException("登录超时，请重试。");
-        }
+            using var request = new HttpRequestMessage(HttpMethod.Get, DiscoveryUri);
+            request.Headers.UserAgent.ParseAdd(BuildUserAgent());
+            using var response = await httpClientFactory.CreateClient().SendAsync(request).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+                return null;
 
-        await CompleteAuthorizationAsync(redirect, state, cancellationToken).ConfigureAwait(false);
+            var configuration = await response.Content
+                .ReadFromJsonAsync<SectlOidcConfiguration>(JsonOptions).ConfigureAwait(false);
+            lock (_oidcDiscoveryGate)
+            {
+                _oidcConfiguration = configuration;
+            }
+
+            return configuration;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogDebug(exception, "读取 SECTL OIDC 发现文档失败，本次授权走 OAuth 2.0 流程。");
+            return null;
+        }
+        finally
+        {
+            lock (_oidcDiscoveryGate)
+            {
+                _inflightOidcDiscovery = null;
+            }
+        }
     }
 
     /// <summary>
@@ -263,8 +464,10 @@ public sealed class SectlAuthService(
         var authorized = issued with
         {
             AccessTokenExpiresAt = authorizedAt.AddSeconds(ResolveAccessTokenLifetime(issued)),
-            // The 180-day refresh window starts here and rotation never moves it.
-            RefreshTokenIssuedAt = authorizedAt
+            RefreshTokenIssuedAt = authorizedAt,
+            // Only an OIDC authorization carries a nonce, and only a signed id_token is worth keeping
+            // the binding for: the pending signature check compares this against its `nonce` claim.
+            IdTokenNonce = string.IsNullOrWhiteSpace(issued.IdToken) ? null : redirect.Nonce
         };
         await tokenStore.SaveAsync(authorized, cancellationToken);
         SetSession(authorized);
@@ -543,14 +746,9 @@ public sealed class SectlAuthService(
             return SectlRefreshOutcome.Ended("refresh_token_missing");
         }
 
-        if (current.RefreshTokenIssuedAt is { } issuedAt && DateTimeOffset.UtcNow - issuedAt >= RefreshTokenLifetime)
-        {
-            logger.LogWarning("SECTL refresh token 已满 180 天，无法再轮换，需要重新授权。");
-            ClearSession("refresh_token_expired", requiresReauthorization: true);
-            StateChanged?.Invoke(this, EventArgs.Empty);
-            return SectlRefreshOutcome.Ended("refresh_token_expired");
-        }
-
+        // Tokens never expire by time (`ACCESS_TOKEN_TTL_SECONDS = REFRESH_TOKEN_TTL_SECONDS = -1`), so
+        // no local age check may end the session: a stored pair stays usable until the service revokes
+        // it, which introspection reports and the refresh endpoint answers with `invalid_grant`.
         var sessionVersion = Volatile.Read(ref _sessionVersion);
 
         // Refreshing rotates a single-use token, so the whole read/rotate/write sequence holds a
@@ -812,8 +1010,14 @@ public sealed class SectlAuthService(
     private static bool IsAccessTokenRevoked(string? description) =>
         description is not null && description.Contains("revoked", StringComparison.OrdinalIgnoreCase);
 
-    private static int ResolveAccessTokenLifetime(SectlToken token) =>
-        token.ExpiresIn > 0 ? token.ExpiresIn : DefaultAccessTokenLifetimeSeconds;
+    private static int ResolveAccessTokenLifetime(SectlToken token) => token.ExpiresIn switch
+    {
+        // A negative lifetime is the service's own "never expires" constant; its documented response
+        // already reports ten years instead, so this only guards a client that receives `-1` directly.
+        < 0 => UnlimitedExpiresInSeconds,
+        > 0 => token.ExpiresIn,
+        _ => DefaultAccessTokenLifetimeSeconds
+    };
 
     private static bool IsExpiringWithin(SectlToken token, TimeSpan lead) =>
         token.AccessTokenExpiresAt is { } expiresAt && expiresAt - DateTimeOffset.UtcNow <= lead;
@@ -934,11 +1138,29 @@ public sealed record SectlToken(
     public DateTimeOffset? AccessTokenExpiresAt { get; init; }
 
     /// <summary>
-    ///     When the fixed 180-day refresh window started (the first authorization). Rotation keeps
-    ///     this value, because a rotation never extends the window.
+    ///     When the pair was first authorized. Rotation keeps this value, because a rotation never
+    ///     restarts the session; it is recorded for diagnostics only — the service expires nothing by
+    ///     time, so it no longer bounds how long the client keeps refreshing.
     /// </summary>
     [JsonPropertyName("refresh_token_issued_at")]
     public DateTimeOffset? RefreshTokenIssuedAt { get; init; }
+
+    /// <summary>
+    ///     The OIDC <c>id_token</c> the authorization returned, or <see langword="null" /> for a plain
+    ///     OAuth 2.0 authorization and whenever the service could not sign one (it never fails the
+    ///     token exchange over that). It is stored as issued and is deliberately <b>not</b> verified
+    ///     yet: the RS256 signature check against the published key set is still to come, so nothing
+    ///     may treat these claims as trusted.
+    /// </summary>
+    [JsonPropertyName("id_token")]
+    public string? IdToken { get; init; }
+
+    /// <summary>
+    ///     The <c>nonce</c> sent with the authorization request that produced <see cref="IdToken" />.
+    ///     Validating it against the token's <c>nonce</c> claim is part of the pending verification.
+    /// </summary>
+    [JsonPropertyName("id_token_nonce")]
+    public string? IdTokenNonce { get; init; }
 }
 
 public sealed record SectlUser(
