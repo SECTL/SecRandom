@@ -157,7 +157,12 @@ public sealed class SectlAuthService(
             if (redirect is null)
                 return;
 
-            await CompleteAuthorizationAsync(redirect, expectedState: null, cancellationToken).ConfigureAwait(false);
+            // A resumed authorization is always a mobile one: the desktop loopback redirect cannot outlive
+            // the process that registered the listener, while the custom scheme is what a reclaimed app is
+            // handed. A custom scheme is never OIDC eligible, so the attempt asked for plain OAuth 2.0 and
+            // no id_token is expected.
+            await CompleteAuthorizationAsync(redirect, expectedState: null, requiresIdToken: false,
+                cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -328,7 +333,8 @@ public sealed class SectlAuthService(
                 throw new InvalidOperationException("登录超时，请重试。");
             }
 
-            await CompleteAuthorizationAsync(redirect, state, cancellationToken).ConfigureAwait(false);
+            await CompleteAuthorizationAsync(redirect, state, requestsOpenId, cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 
@@ -511,9 +517,10 @@ public sealed class SectlAuthService(
 
     /// <summary>
     ///     Verifies the <c>id_token</c> the token exchange returned and drops it when it does not verify.
-    ///     Verification is deliberately not a sign-in gate: an OIDC identity is an addition to a session
-    ///     the access token already establishes, so a broken or rotated key set must never lock the user out.
-    ///     What it must not do is leave an unverified claim set behind, so the token is stored without it and
+    ///     Dropping is what this method does by itself, because an unverified claim set must never be stored
+    ///     for a later caller to read; whether that also fails the sign-in is the caller's decision and
+    ///     depends on whether the attempt asked for <c>openid</c> — see
+    ///     <see cref="CompleteAuthorizationAsync" />, which turns a drop into an error when it did.
     ///     <see cref="LastIdTokenRejection" /> carries the reason.
     /// </summary>
     public async Task<SectlToken> VerifyIdTokenAsync(SectlToken token, CancellationToken cancellationToken = default)
@@ -546,10 +553,19 @@ public sealed class SectlAuthService(
             : DropIdToken(token, validation.Rejection ?? SectlIdTokenRejection.InvalidSignature);
     }
 
+    /// <summary>
+    ///     The message a failed OIDC sign-in shows. It names the concrete reason instead of "登录失败",
+    ///     because the usual cause is a service-side OIDC setting and only the reason tells an operator
+    ///     which one to look at.
+    /// </summary>
+    private static string BuildIdTokenFailureMessage(SectlIdTokenRejection rejection) => rejection == SectlIdTokenRejection.Missing
+        ? "SECTL 未返回 OIDC id_token，登录已中止；请检查服务端的 OIDC 配置。"
+        : $"SECTL 返回的 OIDC id_token 未通过校验（{rejection}），登录已中止。";
+
     private SectlToken DropIdToken(SectlToken token, SectlIdTokenRejection rejection)
     {
         LastIdTokenRejection = rejection;
-        logger.LogWarning("SECTL 返回的 id_token 未通过校验（{Reason}），已丢弃；本次登录不受影响。", rejection);
+        logger.LogWarning("SECTL 返回的 id_token 未通过校验（{Reason}），已丢弃；是否因此中止登录由调用方决定。", rejection);
         return token with { IdToken = null, IdTokenNonce = null, IdTokenVerifiedAt = null };
     }
 
@@ -573,9 +589,16 @@ public sealed class SectlAuthService(
     /// <summary>
     ///     Exchanges an authorization code for the token pair. <paramref name="expectedState" /> is the
     ///     state this sign-in attempt generated; pass <see langword="null" /> only when the broker has
-    ///     already matched the redirect against the attempt it recorded.
+    ///     already matched the redirect against the attempt it recorded. <paramref name="requiresIdToken" />
+    ///     mirrors whether that attempt asked for <c>openid</c>: once the scope is there, OIDC makes the
+    ///     <c>id_token</c> part of the result, so an absent or unverifiable one fails the sign-in instead of
+    ///     being dropped — a claim set the client asked for and then did not check would be worse than never
+    ///     asking, because it invites callers to trust whatever the service happened to return. When the
+    ///     attempt asked for plain OAuth 2.0 (the service does not advertise OIDC, or the redirect URI is one
+    ///     OIDC refuses), no <c>id_token</c> is expected and this stays non-blocking.
     /// </summary>
-    private async Task CompleteAuthorizationAsync(AuthRedirectResult redirect, string? expectedState,
+    internal async Task CompleteAuthorizationAsync(AuthRedirectResult redirect, string? expectedState,
+        bool requiresIdToken,
         CancellationToken cancellationToken)
     {
         if (!string.IsNullOrWhiteSpace(redirect.Error))
@@ -607,6 +630,19 @@ public sealed class SectlAuthService(
         // Verifying here rather than at read time keeps one rule: whatever is stored was verified, and a
         // token that does not verify is dropped instead of being saved for a later caller to trust.
         var verified = await VerifyIdTokenAsync(authorized, cancellationToken).ConfigureAwait(false);
+        if (requiresIdToken && string.IsNullOrWhiteSpace(verified.IdToken))
+        {
+            // Nothing is stored and no session is set: this attempt asked for an OIDC identity and the
+            // service did not produce a usable one, so the authorization did not succeed. The reason stays
+            // on the instance so the caller can log it or show it.
+            var rejection = LastIdTokenRejection
+                            ?? (string.IsNullOrWhiteSpace(authorized.IdToken)
+                                ? SectlIdTokenRejection.Missing
+                                : SectlIdTokenRejection.InvalidSignature);
+            LastIdTokenRejection = rejection;
+            throw new InvalidOperationException(BuildIdTokenFailureMessage(rejection));
+        }
+
         await tokenStore.SaveAsync(verified, cancellationToken);
         SetSession(verified);
         await InitializeAccountDataWithRetryAsync(cancellationToken);

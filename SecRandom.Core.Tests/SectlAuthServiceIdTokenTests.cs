@@ -241,6 +241,112 @@ public sealed class SectlAuthServiceIdTokenTests
         Assert.Equal(verifiedAt, service.Token.IdTokenVerifiedAt);
     }
 
+    /// <summary>
+    ///     The OIDC branch of <see cref="SectlAuthService.CompleteAuthorizationAsync" />: once the attempt
+    ///     asked for <c>openid</c>, an unusable <c>id_token</c> is a failed sign-in rather than a dropped
+    ///     extra, and nothing is persisted.
+    /// </summary>
+    [Fact]
+    public async Task CompleteAuthorizationAsync_WhenOpenIdWasRequestedAndNoIdTokenArrived_FailsTheSignIn()
+    {
+        var (service, store) = CreateService(TokenExchangeHandler(idToken: null));
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CompleteAuthorizationAsync(Redirect(), "state-1", requiresIdToken: true,
+                TestContext.Current.CancellationToken));
+
+        Assert.Contains("未返回 OIDC id_token", exception.Message, StringComparison.Ordinal);
+        Assert.Equal(SectlIdTokenRejection.Missing, service.LastIdTokenRejection);
+        await AssertNothingWasPersistedAsync(service, store);
+    }
+
+    [Fact]
+    public async Task CompleteAuthorizationAsync_WhenOpenIdWasRequestedAndTheIdTokenIsUnverifiable_FailsTheSignIn()
+    {
+        // Signed by a key the published set does not hold, which is the concrete symptom of a service whose
+        // OIDC signing key does not match what it publishes.
+        var (service, store) = CreateService(
+            TokenExchangeHandler(CreateIdToken(Nonce, signingKey: RSA.Create(2048)), Nonce));
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            service.CompleteAuthorizationAsync(Redirect(), "state-1", requiresIdToken: true,
+                TestContext.Current.CancellationToken));
+
+        Assert.Contains(nameof(SectlIdTokenRejection.InvalidSignature), exception.Message,
+            StringComparison.Ordinal);
+        Assert.Equal(SectlIdTokenRejection.InvalidSignature, service.LastIdTokenRejection);
+        await AssertNothingWasPersistedAsync(service, store);
+    }
+
+    [Fact]
+    public async Task CompleteAuthorizationAsync_WhenOpenIdWasNotRequested_DropsAnUnverifiableIdTokenAndSignsIn()
+    {
+        // The OAuth 2.0 branch has to stay usable: a service that emits a stray id_token must not be able to
+        // lock out a client that never asked for one.
+        var (service, store) = CreateService(
+            TokenExchangeHandler(CreateIdToken(Nonce, signingKey: RSA.Create(2048)), Nonce));
+
+        await service.CompleteAuthorizationAsync(Redirect(), "state-1", requiresIdToken: false,
+            TestContext.Current.CancellationToken);
+
+        Assert.True(service.IsSignedIn);
+        Assert.Equal("access-token", service.Token!.AccessToken);
+        Assert.Null(service.Token.IdToken);
+        Assert.Null((await store.LoadAsync(TestContext.Current.CancellationToken))!.IdToken);
+    }
+
+    [Fact]
+    public async Task CompleteAuthorizationAsync_WhenOpenIdWasRequestedAndTheIdTokenVerifies_StoresItStamped()
+    {
+        var (service, store) = CreateService(TokenExchangeHandler(CreateIdToken(Nonce), Nonce));
+
+        await service.CompleteAuthorizationAsync(Redirect(), "state-1", requiresIdToken: true,
+            TestContext.Current.CancellationToken);
+
+        Assert.True(service.IsSignedIn);
+        Assert.NotNull(service.Token!.IdTokenVerifiedAt);
+        var stored = await store.LoadAsync(TestContext.Current.CancellationToken);
+        Assert.NotNull(stored?.IdTokenVerifiedAt);
+    }
+
+    private static async Task AssertNothingWasPersistedAsync(SectlAuthService service, SectlTokenStore store)
+    {
+        Assert.False(service.IsSignedIn);
+        Assert.Null(service.Token);
+        Assert.Null(await store.LoadAsync(TestContext.Current.CancellationToken));
+    }
+
+    private static AuthRedirectResult Redirect() => new(
+        "http://127.0.0.1:51789/callback/", "state-1", "code-verifier", "authorization-code", null, Nonce);
+
+    /// <summary>
+    ///     Serves discovery, the key set, and one token exchange response, so the authorization code path can
+    ///     run end to end without a browser.
+    /// </summary>
+    private static RecordingHandler TokenExchangeHandler(string? idToken, string? nonce = null)
+    {
+        var discovery = DiscoveryJson();
+        var jwks = JwksJson();
+        var token = JsonSerializer.Serialize(new Dictionary<string, object?>
+        {
+            ["access_token"] = "access-token",
+            ["refresh_token"] = "refresh-token",
+            ["user_id"] = "user-1",
+            ["expires_in"] = 31_536_000,
+            ["id_token"] = idToken,
+            ["id_token_nonce"] = nonce
+        });
+        return new RecordingHandler((request, _) => request.RequestUri!.AbsolutePath switch
+        {
+            "/.well-known/openid-configuration" => Json(discovery),
+            "/.well-known/jwks.json" => Json(jwks),
+            "/api/oauth/token" => Json(token),
+            "/api/oauth/userinfo" => Json("{\"user_id\":\"user-1\"}"),
+            "/api/oauth/heartbeat" => new HttpResponseMessage(HttpStatusCode.NoContent),
+            _ => new HttpResponseMessage(HttpStatusCode.NotFound)
+        });
+    }
+
     private static RecordingHandler SignedInHandler() => new((request, _) =>
         request.RequestUri!.AbsolutePath switch
         {

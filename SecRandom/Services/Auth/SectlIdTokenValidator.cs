@@ -45,7 +45,13 @@ public enum SectlIdTokenRejection
     MissingSubject,
 
     /// <summary>The discovery document or its key set could not be read, so nothing can be proven.</summary>
-    KeysUnavailable
+    KeysUnavailable,
+
+    /// <summary>
+    ///     The token endpoint returned no <c>id_token</c> at all although the authorization requested
+    ///     <c>openid</c>. Nothing was rejected — nothing arrived.
+    /// </summary>
+    Missing
 }
 
 /// <summary>
