@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using System.Text.Json.Serialization;
 
 namespace SecRandom.Services.Auth;
@@ -26,6 +27,69 @@ public sealed record SectlOidcConfiguration(
     /// </summary>
     public bool SupportsOpenId =>
         ScopesSupported is not null && ScopesSupported.Contains("openid", StringComparer.Ordinal);
+}
+
+/// <summary>
+///     The published key set (<c>jwks_uri</c>), i.e. the RSA keys an <c>id_token</c> signature must verify
+///     against. Only what the client acts on is mapped: the verifier never trusts a key because it exists,
+///     it trusts the one key whose <c>kid</c> the token names.
+/// </summary>
+public sealed record SectlJwkSet(
+    [property: JsonPropertyName("keys")] SectlJwk[]? Keys)
+{
+    /// <summary>
+    ///     Finds the signing key a token's header names. A key that is plainly for another purpose
+    ///     (<c>use</c> other than <c>sig</c>, <c>alg</c> other than RS256) is skipped rather than trusted,
+    ///     so a key set that also publishes encryption keys cannot widen what is accepted.
+    /// </summary>
+    public SectlJwk? FindSigningKey(string? keyId)
+    {
+        if (Keys is null)
+            return null;
+
+        return Keys.FirstOrDefault(key =>
+            key.Kid is not null
+            && string.Equals(key.Kid, keyId, StringComparison.Ordinal)
+            && (key.Use is null || string.Equals(key.Use, "sig", StringComparison.Ordinal))
+            && (key.Algorithm is null || string.Equals(key.Algorithm, "RS256", StringComparison.Ordinal)));
+    }
+}
+
+/// <summary>One published key: an RSA public key in JWK form (modulus + exponent).</summary>
+public sealed record SectlJwk(
+    [property: JsonPropertyName("kty")] string? KeyType,
+    [property: JsonPropertyName("kid")] string? Kid,
+    [property: JsonPropertyName("use")] string? Use,
+    [property: JsonPropertyName("alg")] string? Algorithm,
+    [property: JsonPropertyName("n")] string? Modulus,
+    [property: JsonPropertyName("e")] string? Exponent)
+{
+    /// <summary>
+    ///     Imports the published modulus/exponent. Returns <see langword="null" /> for anything that is not
+    ///     a usable RSA public key, so a malformed entry only makes that one key unusable instead of
+    ///     faulting the whole verification path.
+    /// </summary>
+    public RSA? TryImportRsa()
+    {
+        if (!string.Equals(KeyType, "RSA", StringComparison.Ordinal))
+            return null;
+
+        var modulus = SectlIdTokenValidator.TryDecodeBase64Url(Modulus);
+        var exponent = SectlIdTokenValidator.TryDecodeBase64Url(Exponent);
+        if (modulus is null || exponent is null || modulus.Length == 0 || exponent.Length == 0)
+            return null;
+
+        try
+        {
+            var rsa = RSA.Create();
+            rsa.ImportParameters(new RSAParameters { Modulus = modulus, Exponent = exponent });
+            return rsa;
+        }
+        catch (CryptographicException)
+        {
+            return null;
+        }
+    }
 }
 
 /// <summary>

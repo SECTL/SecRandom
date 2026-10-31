@@ -85,6 +85,9 @@ public sealed class SectlAuthService(
     private Task<SectlRefreshOutcome>? _inflightRefresh;
     private Task<SectlOidcConfiguration?>? _inflightOidcDiscovery;
     private SectlOidcConfiguration? _oidcConfiguration;
+    private Task<SectlJwkSet?>? _inflightJwks;
+    private SectlJwkSet? _jwks;
+    private Uri? _jwksUri;
     private SectlToken? _token;
     private int _sessionVersion;
     private bool _initialized;
@@ -101,6 +104,14 @@ public sealed class SectlAuthService(
     /// </summary>
     public bool RequiresReauthorization { get; private set; }
 
+    /// <summary>
+    ///     Why the last <c>id_token</c> was discarded, or <see langword="null" /> when it verified (or when
+    ///     the authorization was plain OAuth 2.0 and returned none). A sign-in never fails over this, so this
+    ///     is the only trace of a key set the client could not use — it is surfaced in the log and left for a
+    ///     caller that wants to explain the missing OIDC identity.
+    /// </summary>
+    public SectlIdTokenRejection? LastIdTokenRejection { get; private set; }
+
     public event EventHandler? StateChanged;
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
@@ -110,7 +121,7 @@ public sealed class SectlAuthService(
 
         try
         {
-            _token = await tokenStore.LoadAsync(cancellationToken).ConfigureAwait(false);
+            _token = DropUnverifiedStoredIdToken(await tokenStore.LoadAsync(cancellationToken).ConfigureAwait(false));
         }
         catch
         {
@@ -436,6 +447,130 @@ public sealed class SectlAuthService(
     }
 
     /// <summary>
+    ///     Whether this client may follow a metadata address the discovery document names. The document is
+    ///     fetched over HTTPS from the fixed API host, but <c>jwks_uri</c> comes <em>from</em> it, so a plain
+    ///     HTTP key set on a public host would let anyone on the path substitute signing keys.
+    /// </summary>
+    private static bool IsAllowedMetadataUri(Uri uri) =>
+        uri.Scheme == Uri.UriSchemeHttps || (uri.Scheme == Uri.UriSchemeHttp && uri.IsLoopback);
+
+    /// <summary>
+    ///     Reads the published key set, cached for the process and fetched once at a time. A cached set is
+    ///     reused while the document keeps naming the same <c>jwks_uri</c>; keys are never written to disk,
+    ///     so a rotated key set cannot outlive the process.
+    /// </summary>
+    private Task<SectlJwkSet?> TryGetJwksAsync(Uri jwksUri, bool forceRefresh)
+    {
+        lock (_oidcDiscoveryGate)
+        {
+            if (!forceRefresh && _jwks is not null && Equals(_jwksUri, jwksUri))
+                return Task.FromResult<SectlJwkSet?>(_jwks);
+            if (!forceRefresh && _inflightJwks is not null)
+                return _inflightJwks;
+
+            return _inflightJwks = FetchJwksAsync(jwksUri);
+        }
+    }
+
+    private async Task<SectlJwkSet?> FetchJwksAsync(Uri jwksUri)
+    {
+        try
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, jwksUri);
+            request.Headers.UserAgent.ParseAdd(BuildUserAgent());
+            using var response = await httpClientFactory.CreateClient().SendAsync(request).ConfigureAwait(false);
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            var keySet = await response.Content
+                .ReadFromJsonAsync<SectlJwkSet>(JsonOptions).ConfigureAwait(false);
+            if (keySet?.Keys is null || keySet.Keys.Length == 0)
+                return null;
+
+            lock (_oidcDiscoveryGate)
+            {
+                _jwks = keySet;
+                _jwksUri = jwksUri;
+            }
+
+            return keySet;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogDebug(exception, "读取 SECTL OIDC 公钥集失败，本次不校验 id_token。");
+            return null;
+        }
+        finally
+        {
+            lock (_oidcDiscoveryGate)
+            {
+                _inflightJwks = null;
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Verifies the <c>id_token</c> the token exchange returned and drops it when it does not verify.
+    ///     Verification is deliberately not a sign-in gate: an OIDC identity is an addition to a session
+    ///     the access token already establishes, so a broken or rotated key set must never lock the user out.
+    ///     What it must not do is leave an unverified claim set behind, so the token is stored without it and
+    ///     <see cref="LastIdTokenRejection" /> carries the reason.
+    /// </summary>
+    public async Task<SectlToken> VerifyIdTokenAsync(SectlToken token, CancellationToken cancellationToken = default)
+    {
+        LastIdTokenRejection = null;
+        if (string.IsNullOrWhiteSpace(token.IdToken))
+            return token;
+
+        var configuration = await TryGetOidcConfigurationAsync(cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(configuration?.Issuer)
+            || string.IsNullOrWhiteSpace(configuration.JwksUri)
+            || !Uri.TryCreate(configuration.JwksUri, UriKind.Absolute, out var jwksUri)
+            || !IsAllowedMetadataUri(jwksUri))
+            return DropIdToken(token, SectlIdTokenRejection.KeysUnavailable);
+
+        var parameters = new SectlIdTokenValidationParameters(configuration.Issuer, ClientId, token.IdTokenNonce);
+        var keySet = await TryGetJwksAsync(jwksUri, forceRefresh: false).ConfigureAwait(false);
+        var validation = SectlIdTokenValidator.Validate(token.IdToken, keySet, parameters);
+
+        // A key rotation between publishing and signing is the one failure a second look can fix, so an
+        // unknown kid re-reads the key set exactly once instead of rejecting a token the service just issued.
+        if (validation.Rejection == SectlIdTokenRejection.UnknownKeyId)
+        {
+            keySet = await TryGetJwksAsync(jwksUri, forceRefresh: true).ConfigureAwait(false);
+            validation = SectlIdTokenValidator.Validate(token.IdToken, keySet, parameters);
+        }
+
+        return validation.IsValid
+            ? token with { IdTokenVerifiedAt = DateTimeOffset.UtcNow }
+            : DropIdToken(token, validation.Rejection ?? SectlIdTokenRejection.InvalidSignature);
+    }
+
+    private SectlToken DropIdToken(SectlToken token, SectlIdTokenRejection rejection)
+    {
+        LastIdTokenRejection = rejection;
+        logger.LogWarning("SECTL 返回的 id_token 未通过校验（{Reason}），已丢弃；本次登录不受影响。", rejection);
+        return token with { IdToken = null, IdTokenNonce = null, IdTokenVerifiedAt = null };
+    }
+
+    /// <summary>
+    ///     Drops an <c>id_token</c> read from disk that carries no verification stamp, which is what a token
+    ///     file written by a build before verification existed looks like. The claims are not re-verified here
+    ///     on purpose: an <c>id_token</c> lives about an hour, so re-checking at startup would mostly fail, and
+    ///     fetching the key set on every launch would make a session depend on the network. Dropping is the
+    ///     honest answer — that claim set was never proven — and it costs nothing, because the access token
+    ///     keeps the session and a fresh authorization carries a fresh <c>id_token</c>.
+    /// </summary>
+    private SectlToken? DropUnverifiedStoredIdToken(SectlToken? token)
+    {
+        if (token is null || string.IsNullOrWhiteSpace(token.IdToken) || token.IdTokenVerifiedAt is not null)
+            return token;
+
+        logger.LogInformation("已丢弃上次登录留下的未校验 id_token；登录状态不受影响。");
+        return token with { IdToken = null, IdTokenNonce = null };
+    }
+
+    /// <summary>
     ///     Exchanges an authorization code for the token pair. <paramref name="expectedState" /> is the
     ///     state this sign-in attempt generated; pass <see langword="null" /> only when the broker has
     ///     already matched the redirect against the attempt it recorded.
@@ -465,12 +600,15 @@ public sealed class SectlAuthService(
         {
             AccessTokenExpiresAt = authorizedAt.AddSeconds(ResolveAccessTokenLifetime(issued)),
             RefreshTokenIssuedAt = authorizedAt,
-            // Only an OIDC authorization carries a nonce, and only a signed id_token is worth keeping
-            // the binding for: the pending signature check compares this against its `nonce` claim.
+            // Only an OIDC authorization carries a nonce; keep it beside the id_token so verification can
+            // replay the binding the token claims. The pending check compares it against the `nonce` claim.
             IdTokenNonce = string.IsNullOrWhiteSpace(issued.IdToken) ? null : redirect.Nonce
         };
-        await tokenStore.SaveAsync(authorized, cancellationToken);
-        SetSession(authorized);
+        // Verifying here rather than at read time keeps one rule: whatever is stored was verified, and a
+        // token that does not verify is dropped instead of being saved for a later caller to trust.
+        var verified = await VerifyIdTokenAsync(authorized, cancellationToken).ConfigureAwait(false);
+        await tokenStore.SaveAsync(verified, cancellationToken);
+        SetSession(verified);
         await InitializeAccountDataWithRetryAsync(cancellationToken);
         StateChanged?.Invoke(this, EventArgs.Empty);
     }
@@ -1147,20 +1285,32 @@ public sealed record SectlToken(
 
     /// <summary>
     ///     The OIDC <c>id_token</c> the authorization returned, or <see langword="null" /> for a plain
-    ///     OAuth 2.0 authorization and whenever the service could not sign one (it never fails the
-    ///     token exchange over that). It is stored as issued and is deliberately <b>not</b> verified
-    ///     yet: the RS256 signature check against the published key set is still to come, so nothing
-    ///     may treat these claims as trusted.
+    ///     OAuth 2.0 authorization, whenever the service could not sign one, and whenever the token did not
+    ///     verify. It is only ever stored after <see cref="SectlIdTokenValidator" /> accepted its RS256
+    ///     signature, issuer, audience, lifetime, and nonce against the published key set
+    ///     (<see cref="SectlAuthService.VerifyIdTokenAsync" />), so its claims may be read; a token that
+    ///     failed verification is dropped instead of being kept unverified.
     /// </summary>
     [JsonPropertyName("id_token")]
     public string? IdToken { get; init; }
 
     /// <summary>
-    ///     The <c>nonce</c> sent with the authorization request that produced <see cref="IdToken" />.
-    ///     Validating it against the token's <c>nonce</c> claim is part of the pending verification.
+    ///     The <c>nonce</c> sent with the authorization request that produced <see cref="IdToken" />. It is
+    ///     the value verification compares the token's <c>nonce</c> claim against, so it is kept only while
+    ///     the token it belongs to is kept.
     /// </summary>
     [JsonPropertyName("id_token_nonce")]
     public string? IdTokenNonce { get; init; }
+
+    /// <summary>
+    ///     When <see cref="IdToken" /> passed verification. Its only job is to keep the "stored means verified"
+    ///     rule true across builds: a token file written before verification existed has an <c>id_token</c> but
+    ///     no stamp, and <see cref="SectlAuthService.InitializeAsync" /> drops such a claim set on load instead
+    ///     of trusting it — no signature check is repeated at startup, because that would need the key set on
+    ///     every launch and would discard a perfectly good token whenever the network is down.
+    /// </summary>
+    [JsonPropertyName("id_token_verified_at")]
+    public DateTimeOffset? IdTokenVerifiedAt { get; init; }
 }
 
 public sealed record SectlUser(
