@@ -17,14 +17,14 @@ namespace SecRandom.Services;
 ///     generations feed the same counters.
 ///     An increment carries no time at all: the service side stamps it with its own receive time, so the
 ///     client's clock and timezone can never move an event into another day, week, or month bucket.
+///     The increment goes through the aggregate entrance (<see cref="PlatformStatsApi.ReportUri" />): `field_key`
+///     without `value` plus a `delta` is what makes it a usage increment there. Never add a `value` to this
+///     payload — that would be judged as a last-value field report and the counters would stop accumulating.
 ///     Reporting is gated by <see cref="OnlineStatusMode.Off" /> and is always best-effort: no failure here
 ///     may ever reach a draw.
 /// </summary>
 public sealed class PlatformUsageReportService : IHostedService, IDisposable
 {
-    private const string ApiBaseUrl = "https://appwrite.sectl.cn";
-    private const string PlatformId = "69c8cd6a0012dd3ea10a";
-    private static readonly Uri IncrementUri = new($"{ApiBaseUrl}/api/stats/usage/increment");
     // Draws arrive in bursts; a short delay merges them into one batch the way the v2 reporter does.
     private static readonly TimeSpan ReportDelay = TimeSpan.FromSeconds(3);
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
@@ -153,9 +153,9 @@ public sealed class PlatformUsageReportService : IHostedService, IDisposable
         try
         {
             using var response = await _httpClient.PostAsync(
-                IncrementUri,
+                PlatformStatsApi.ReportUri,
                 JsonContent.Create(
-                    new UsageIncrementPayload(PlatformId, fieldKey, delta),
+                    new UsageIncrementPayload(PlatformStatsApi.PlatformId, fieldKey, delta),
                     options: JsonOptions))
                 .ConfigureAwait(false);
             return response.IsSuccessStatusCode;

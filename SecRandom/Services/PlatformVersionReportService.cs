@@ -9,11 +9,14 @@ using SecRandom.Services.Config;
 namespace SecRandom.Services;
 
 /// <summary>
-///     Reports which version this installation runs to the SECTL version-usage counter
-///     (`POST /api/stats/version`), which counts people per version: the service dedups by identity and this client
-///     sends only the pseudo-anonymous device UUID — never the SECTL account id — so a version figure can never be
-///     tied to an account. Nothing else can produce that figure: `/api/fields/values` keeps only the last
-///     reporter's value and `/api/stats/usage/increment` counts reports, not people.
+///     Reports which version this installation runs to the SECTL version-usage counter, which counts people per
+///     version: the service dedups by identity and this client sends only the pseudo-anonymous device UUID —
+///     never the SECTL account id — so a version figure can never be tied to an account. Nothing else can
+///     produce that figure: the last-value field report keeps only the last reporter's value and the usage
+///     increment counts reports, not people.
+///     The report goes through the aggregate entrance (<see cref="PlatformStatsApi.ReportUri" />), where carrying
+///     `version` is what makes it a version report; it must not carry a usage container (`metrics`/`delta`/…) or a
+///     `field_key`+`value` pair, because the earlier judgment rules would claim it.
 ///     The API asks for one report per start, so this runs exactly once per process: no polling, no retry storm,
 ///     and no state to keep. Unlike the online-status and usage-counter channels it is deliberately **not** gated by
 ///     <c>PrivacySettings.OnlineStatusMode</c> — the version mix is the project's own release baseline, which is
@@ -22,9 +25,6 @@ namespace SecRandom.Services;
 /// </summary>
 public sealed class PlatformVersionReportService : BackgroundService
 {
-    private const string ApiBaseUrl = "https://appwrite.sectl.cn";
-    private const string PlatformId = "69c8cd6a0012dd3ea10a";
-    private static readonly Uri VersionReportUri = new($"{ApiBaseUrl}/api/stats/version");
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -57,7 +57,7 @@ public sealed class PlatformVersionReportService : BackgroundService
         try
         {
             payload = VersionUsageReportPayload.Create(
-                PlatformId,
+                PlatformStatsApi.PlatformId,
                 // 版本号保留构建产物自带的 v 前缀：控制台按这个字符串归并人数，不要改成 Tag 或去掉前缀
                 GlobalConstants.Version,
                 _deviceUuidStore.GetOrCreate().ToString("D"));
@@ -74,7 +74,7 @@ public sealed class PlatformVersionReportService : BackgroundService
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(RequestTimeout);
             using var response = await _httpClientFactory.CreateClient()
-                .PostAsync(VersionReportUri, JsonContent.Create(payload, options: JsonOptions), timeout.Token)
+                .PostAsync(PlatformStatsApi.ReportUri, JsonContent.Create(payload, options: JsonOptions), timeout.Token)
                 .ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)

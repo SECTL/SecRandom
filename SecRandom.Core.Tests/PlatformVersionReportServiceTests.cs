@@ -91,6 +91,34 @@ public sealed class PlatformVersionReportServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ReportGoesThroughTheAggregateEntrance()
+    {
+        // 汇聚入口按字段判定类型，带 version 即被认作版本上报；旧端点 /api/stats/version 只是兼容保留
+        Uri? requested = null;
+        var reported = new TaskCompletionSource();
+        var client = new HttpClient(new StubHttpMessageHandler(request =>
+        {
+            requested = request.RequestUri;
+            reported.TrySetResult();
+            return new HttpResponseMessage(HttpStatusCode.OK);
+        }));
+        var service = CreateService(new ConcurrentQueue<string>(), reported, config: null, client);
+
+        await service.StartAsync(TestContext.Current.CancellationToken);
+        try
+        {
+            await reported.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        }
+        finally
+        {
+            await service.StopAsync(TestContext.Current.CancellationToken);
+            service.Dispose();
+        }
+
+        Assert.Equal(SecRandom.Core.Services.Stats.PlatformStatsApi.ReportUri, requested);
+    }
+
+    [Fact]
     public async Task UnreachableEndpointIsSwallowed()
     {
         var reports = new ConcurrentQueue<string>();

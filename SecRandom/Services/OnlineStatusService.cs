@@ -8,6 +8,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Stats;
 using SecRandom.Services.Config;
 
 namespace SecRandom.Services;
@@ -19,6 +20,9 @@ namespace SecRandom.Services;
 ///     client — including calls to third-party IP lookup services — and are deliberately gone: the
 ///     service sees the request address already, so shipping it from the client only leaked the address
 ///     to extra parties without adding information.
+///     The report goes through the aggregate entrance (<see cref="PlatformStatsApi.ReportUri" />), where this
+///     payload — no `field_key`/`value`, no `version`, no usage container — is judged as the online heartbeat.
+///     Keep it that way: adding any of those fields here silently re-books heartbeats as another figure.
 /// </summary>
 public sealed class OnlineStatusService : BackgroundService
 {
@@ -27,11 +31,9 @@ public sealed class OnlineStatusService : BackgroundService
 
     private static readonly TimeSpan ReportInterval = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(10);
-    private static readonly Uri OnlineReportUri = new($"{ApiBaseUrl}/api/stats/online");
-    private static readonly Uri OnlineStatsUri = new($"{ApiBaseUrl}/api/stats/platform/{PlatformId}");
 
-    private const string ApiBaseUrl = "https://appwrite.sectl.cn";
-    private const string PlatformId = "69c8cd6a0012dd3ea10a";
+    private static readonly Uri OnlineStatsUri =
+        new($"{PlatformStatsApi.BaseUrl}/api/stats/platform/{PlatformStatsApi.PlatformId}");
 
     private readonly DeviceUuidStore _deviceUuidStore;
     private readonly MainConfigHandler _configHandler;
@@ -139,14 +141,14 @@ public sealed class OnlineStatusService : BackgroundService
     private async Task ReportOnceAsync(CancellationToken cancellationToken)
     {
         OnlineStatusPayload payload = OnlineStatusPayload.Create(
-            PlatformId,
+            PlatformStatsApi.PlatformId,
             _deviceUuidStore.GetOrCreate(),
             OnlineStatusDeviceType.Detect());
 
         try
         {
             using HttpResponseMessage response = await _httpClient
-                .PostAsJsonAsync(OnlineReportUri, payload, JsonOptions, cancellationToken)
+                .PostAsJsonAsync(PlatformStatsApi.ReportUri, payload, JsonOptions, cancellationToken)
                 .ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)

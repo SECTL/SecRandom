@@ -123,6 +123,9 @@ public sealed record UsageCounterSnapshot(
 ///     One increment as the SECTL statistics API expects it. The names are the API's (`platform_id`,
 ///     `field_key`), not the app's: camel-casing them makes every call fail validation and the counters
 ///     silently never arrive, so they are pinned here and covered by a test.
+///     It is posted to the reporting aggregate entrance (<see cref="PlatformStatsApi.ReportUri" />), where
+///     `field_key` without `value` and a `delta` are what make it a usage increment; adding a `value` here
+///     would re-match it as a last-value field report and the counters would stop accumulating.
 ///     There is deliberately no time field: the service side stamps each increment with its own receive time.
 /// </summary>
 public sealed record UsageIncrementPayload(

@@ -3,11 +3,12 @@ using System.Text.Json.Serialization;
 namespace SecRandom.Core.Services.Stats;
 
 /// <summary>
-///     One version-usage report as the SECTL statistics API expects it (`POST /api/stats/version`), which counts
-///     *people* per version: the service dedups by identity — here always the pseudo-anonymous device UUID — and
-///     keeps one current version per identity, so a version's head count answers "how many are still on this
-///     build". Neither other statistics endpoint can: `/api/fields/values` keeps only the last reporter's value and
-///     `/api/stats/usage/increment` counts reports, not people.
+///     One version-usage report as the SECTL statistics API expects it, sent to the reporting aggregate entrance
+///     (<see cref="PlatformStatsApi.ReportUri" />) where the presence of `version` is what makes it a version
+///     report. It counts *people* per version: the service dedups by identity — here always the pseudo-anonymous
+///     device UUID — and keeps one current version per identity, so a version's head count answers "how many are
+///     still on this build". Neither other report type can: the last-value field report keeps only the last
+///     reporter's value and the usage increment counts reports, not people.
 ///     The account identity the API also accepts (`user_id`) is deliberately never sent: a version figure must not
 ///     be tied to a SECTL account, so the device UUID is the only identity that travels and the only one the
 ///     service can dedup this installation by. The names are the API's (`platform_id`, `version`, `device_uuid`),
