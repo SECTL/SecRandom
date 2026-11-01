@@ -50,21 +50,26 @@ public partial class DrawEngine
     private StudentList StudentList => _profileService.CurrentStudentList ?? new StudentList();
     private PrizeList PrizeList => _profileService.CurrentPrizeList ?? new PrizeList();
 
-    public DrawResult<Student> DrawStudent(int count, Func<Student, bool> filter, string courseName = "")
+    public DrawResult<Student> DrawStudent(
+        int count,
+        Func<Student, bool> filter,
+        string courseName = "",
+        string historyGroup = "")
     {
-        return DrawStudent(count, filter, DrawSettingsType.RollCall, courseName);
+        return DrawStudent(count, filter, DrawSettingsType.RollCall, courseName, historyGroup);
     }
 
     public DrawResult<Student> DrawStudent(
         int count,
         Func<Student, bool> filter,
         DrawSettingsType drawSettingsType,
-        string courseName = "")
+        string courseName = "",
+        string historyGroup = "")
     {
         return DrawStudent(count, filter, drawSettingsType, StudentDrawExecutionPolicy.DesktopConfigured(
             GetStudentDrawType(drawSettingsType),
             ConfigData.FairDrawSettings,
-            GetStudentAlgorithmId(drawSettingsType)), courseName);
+            GetStudentAlgorithmId(drawSettingsType)), courseName, historyGroup);
     }
 
     internal DrawResult<Student> DrawStudent(
@@ -72,11 +77,12 @@ public partial class DrawEngine
         Func<Student, bool> filter,
         DrawSettingsType drawSettingsType,
         StudentDrawExecutionPolicy executionPolicy,
-        string courseName = "")
+        string courseName = "",
+        string historyGroup = "")
     {
         var hasBaseCandidates = false;
         var repeatThreshold = GetStudentRepeatThreshold(drawSettingsType);
-        var historyCache = BuildStudentHistoryCache(StudentList.Students, courseName);
+        var historyCache = BuildStudentHistoryCache(StudentList.Students, courseName, historyGroup);
         _logger.LogInformation("开始学生抽取：请求数量={Count}，设置类型={SettingsType}，重复阈值={RepeatThreshold}，抽取类型={DrawType}.",
             count, drawSettingsType, repeatThreshold, executionPolicy.DrawType);
 
@@ -122,32 +128,38 @@ public partial class DrawEngine
         }
     }
 
-    public DrawResult<Student> DrawStudent(int count, IReadOnlyCollection<Student> candidates, string courseName = "")
+    public DrawResult<Student> DrawStudent(
+        int count,
+        IReadOnlyCollection<Student> candidates,
+        string courseName = "",
+        string historyGroup = "")
     {
         var candidateSet = candidates as HashSet<Student> ?? candidates.ToHashSet();
-        return DrawStudent(count, candidate => candidateSet.Contains(candidate), courseName);
+        return DrawStudent(count, candidate => candidateSet.Contains(candidate), courseName, historyGroup);
     }
 
     public DrawResult<Student> DrawStudent(
         int count,
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType,
-        string courseName = "")
+        string courseName = "",
+        string historyGroup = "")
     {
         var candidateSet = candidates as HashSet<Student> ?? candidates.ToHashSet();
-        return DrawStudent(count, candidate => candidateSet.Contains(candidate), drawSettingsType, courseName);
+        return DrawStudent(count, candidate => candidateSet.Contains(candidate), drawSettingsType, courseName, historyGroup);
     }
 
     public DrawResult<Student> DrawPreparedStudents(
         int count,
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType,
-        string courseName = "")
+        string courseName = "",
+        string historyGroup = "")
     {
         return DrawPreparedStudents(count, candidates, drawSettingsType, StudentDrawExecutionPolicy.DesktopConfigured(
             GetStudentDrawType(drawSettingsType),
             ConfigData.FairDrawSettings,
-            GetStudentAlgorithmId(drawSettingsType)), courseName);
+            GetStudentAlgorithmId(drawSettingsType)), courseName, historyGroup);
     }
 
     internal DrawResult<Student> DrawPreparedStudentsWithMobileDesktopDefaults(
@@ -155,24 +167,27 @@ public partial class DrawEngine
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType,
         DrawType drawType,
-        string courseName = "")
+        string courseName = "",
+        string historyGroup = "")
     {
         return DrawPreparedStudents(
             count,
             candidates,
             drawSettingsType,
             StudentDrawExecutionPolicy.MobileDesktopDefaultsV1(drawType),
-            courseName);
+            courseName,
+            historyGroup);
     }
 
     internal DrawPreparedStudentsSnapshot PrepareStudentsForDraw(
         int count,
         IReadOnlyCollection<Student> candidates,
         StudentDrawExecutionPolicy executionPolicy,
-        string courseName = "")
+        string courseName = "",
+        string historyGroup = "")
     {
         var preparedCandidates = candidates.Where(student => student.IsCandidate).ToList();
-        var historyCache = BuildStudentHistoryCache(preparedCandidates, courseName);
+        var historyCache = BuildStudentHistoryCache(preparedCandidates, courseName, historyGroup);
         var usable = FilterPreparedStudents(preparedCandidates, count, historyCache, executionPolicy);
         var weightedCandidates = BuildStudentWeightedCandidates(usable, historyCache, executionPolicy, courseName, count);
         return new DrawPreparedStudentsSnapshot(usable, weightedCandidates, historyCache);
@@ -183,13 +198,15 @@ public partial class DrawEngine
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType,
         DrawType drawType,
-        string courseName = "")
+        string courseName = "",
+        string historyGroup = "")
     {
         return PrepareStudentsForDraw(
             count,
             candidates,
             StudentDrawExecutionPolicy.MobileDesktopDefaultsV1(drawType),
-            courseName);
+            courseName,
+            historyGroup);
     }
 
     internal DrawResult<Student> DrawPreparedStudents(
@@ -197,11 +214,12 @@ public partial class DrawEngine
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType,
         StudentDrawExecutionPolicy executionPolicy,
-        string courseName = "")
+        string courseName = "",
+        string historyGroup = "")
     {
         try
         {
-            var prepared = PrepareStudentsForDraw(count, candidates, executionPolicy, courseName);
+            var prepared = PrepareStudentsForDraw(count, candidates, executionPolicy, courseName, historyGroup);
             return DrawPreparedStudents(prepared, count);
         }
         catch (CandidateNotFoundException)
@@ -276,9 +294,9 @@ public partial class DrawEngine
         return DrawRepeatPolicy.ResolveThreshold(ConfigData.LotterySettings.DrawMode, ConfigData.LotterySettings.HalfRepeat);
     }
 
-    public DrawResult<Prize> DrawPrize(int count, Func<Prize, bool> filter)
+    public DrawResult<Prize> DrawPrize(int count, Func<Prize, bool> filter, string historyGroup = "")
     {
-        var historyCache = BuildPrizeHistoryCache(PrizeList.Prizes);
+        var historyCache = BuildPrizeHistoryCache(PrizeList.Prizes, historyGroup: historyGroup);
         _logger.LogInformation("开始奖品抽取：请求数量={Count}，抽取模式={DrawMode}，抽取类型={DrawType}.",
             count, ConfigData.LotterySettings.DrawMode, ConfigData.LotterySettings.DrawType);
 
@@ -309,8 +327,11 @@ public partial class DrawEngine
     public DrawResult<Prize> DrawPrizeWithTemporaryCounts(
         int count,
         Func<Prize, bool> filter,
-        IReadOnlyDictionary<string, int> temporaryCounts)
+        IReadOnlyDictionary<string, int> temporaryCounts,
+        string historyGroup = "")
     {
+        // Temporary records are deliberately scope-independent: a repeat limit must not reset just because
+        // the caller narrowed the persistent-history scope, so historyGroup does not enter this cache.
         var historyCache = BuildPrizeTemporaryHistoryCache(PrizeList.Prizes, temporaryCounts);
         _logger.LogInformation("开始奖品抽取：请求数量={Count}，抽取模式={DrawMode}，抽取类型={DrawType}，使用临时记录。",
             count, ConfigData.LotterySettings.DrawMode, ConfigData.LotterySettings.DrawType);

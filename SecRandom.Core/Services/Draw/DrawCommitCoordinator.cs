@@ -68,7 +68,8 @@ internal sealed class DrawCommitCoordinator(
                     commit.DrawMethod,
                     commit.Weights,
                     commit.CourseName,
-                    roundId);
+                    roundId,
+                    commit.HistoryGroup);
             }
             catch (Exception exception)
             {
@@ -107,7 +108,8 @@ internal sealed class DrawCommitCoordinator(
             try
             {
                 temporaryRecordService.RecordPrizes(commit.PrizeListName, commit.Prizes);
-                profileService.RecordPrizeHistory(commit.Prizes, commit.DrawTime, commit.RequestedCount, commit.PrizeDrawMethod, roundId);
+                profileService.RecordPrizeHistory(commit.Prizes, commit.DrawTime, commit.RequestedCount, commit.PrizeDrawMethod, roundId,
+                    commit.CourseName, commit.HistoryGroup);
                 if (hasAssignedStudents)
                 {
                     temporaryRecordService.RecordStudents(studentListName, commit.StudentGenderScope, commit.StudentGroupScope, commit.AssignedStudents!);
@@ -120,7 +122,8 @@ internal sealed class DrawCommitCoordinator(
                         commit.StudentDrawMethod,
                         weights: null,
                         commit.CourseName,
-                        roundId);
+                        roundId,
+                        commit.HistoryGroup);
                 }
             }
             catch (Exception exception)

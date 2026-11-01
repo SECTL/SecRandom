@@ -277,6 +277,8 @@ internal sealed class HistoryExportService(
             string.IsNullOrWhiteSpace(item.DrawGender) ? labels.AllGenders : item.DrawGender,
             string.IsNullOrWhiteSpace(item.DrawGroup) ? labels.AllGroups : item.DrawGroup,
             item.CourseName == BreakCourseMarker ? labels.BreakSubject : item.CourseName,
+            // 默认组是空串，原样输出成空单元格（不翻译成「默认组」）。
+            item.HistoryGroup ?? string.Empty,
             item.DrawMethod == (int)DrawType.Fair
                 ? item.Weight.ToString(WeightFormat, CultureInfo.InvariantCulture)
                 : string.Empty);
@@ -567,6 +569,7 @@ internal sealed class HistoryExportService(
         string DrawGender,
         string DrawGroup,
         string Subject,
+        string HistoryGroup,
         string Weight)
     {
         public Dictionary<string, object?> ToRow(HistoryExportKind kind, HistoryExportLabels labels) => new()
@@ -582,6 +585,9 @@ internal sealed class HistoryExportService(
             [labels.DrawGender] = DrawGender,
             [labels.DrawGroup] = DrawGroup,
             [labels.Subject] = Subject,
+            // 记录组与课程是同一层的两个历史维度，所以紧跟在课程后面；默认组渲染成空单元格，
+            // 不能写「默认组」这类字样——那是界面文案，Core 不持有。
+            [labels.HistoryGroup] = HistoryGroup,
             [labels.Weight] = Weight
         };
     }

@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="using:SecRandom.ViewModels.MainPages"
+             xmlns:langs="using:SecRandom.Langs.MainPages.QuickDraw"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="320"
              x:Name="QuickDraw"
@@ -103,14 +104,23 @@
                     </ItemsControl>
                 </ScrollViewer>
             </Grid>
-            <TextBlock Grid.Row="1"
-                       x:Name="AutoCloseHintTextBlock"
-                       IsVisible="{Binding IsResultVisible}"
-                       HorizontalAlignment="Center"
-                       TextAlignment="Center"
-                       Opacity="0.68"
-                       FontSize="12"
-                       Margin="0 8 0 0" />
+            <!-- 记录组提示：闪抽没有自己的选择器，锁定组时只在这里说明权重与记录的范围。
+                 两个提示都折叠时这一行高度为 0，不会挤动既有布局。 -->
+            <StackPanel Grid.Row="1" HorizontalAlignment="Center" Spacing="2">
+                <TextBlock x:Name="AutoCloseHintTextBlock"
+                           IsVisible="{Binding IsResultVisible}"
+                           HorizontalAlignment="Center"
+                           TextAlignment="Center"
+                           Opacity="0.68"
+                           FontSize="12"
+                           Margin="0 8 0 0" />
+                <TextBlock IsVisible="{Binding IsHistoryGroupHintVisible}"
+                           FontSize="10" Opacity="0.7" HorizontalAlignment="Center"
+                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                           Margin="0 0 0 2">
+                    <Run Text="{x:Static langs:Resources.M_HistoryGroupLocked}" /><Run Text=" " /><Run Text="{Binding HistoryGroupHintText}" />
+                </TextBlock>
+            </StackPanel>
             <!-- 插件界面插槽：快捷抽签结果区（跨两行，插件内容叠加在结果之上） -->
             <sr:UiSlotHost SlotId="main.quickdraw.result.extra" Grid.RowSpan="2" />
         </Grid>

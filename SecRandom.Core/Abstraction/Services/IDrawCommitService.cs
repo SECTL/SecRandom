@@ -16,7 +16,8 @@ public sealed record StudentDrawCommit(
     int DrawMethod = 0,
     IReadOnlyDictionary<Student, double>? Weights = null,
     string CourseName = "",
-    string? DrawRoundId = null);
+    string? DrawRoundId = null,
+    string HistoryGroup = "");
 
 /// <summary>
 ///     One logical lottery draw. Prizes and their assigned students share a single DrawRoundId so history
@@ -35,7 +36,8 @@ public sealed record LotteryDrawCommit(
     int PrizeDrawMethod = 0,
     int StudentDrawMethod = 0,
     string CourseName = "",
-    string? DrawRoundId = null);
+    string? DrawRoundId = null,
+    string HistoryGroup = "");
 
 /// <summary>
 ///     Transactional commit boundary for every draw channel (pages, quick draw, mobile

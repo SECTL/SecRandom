@@ -74,6 +74,16 @@ public sealed record HistoryExportLabels
     public required string DrawGender { get; init; }
     public required string DrawGroup { get; init; }
     public required string Subject { get; init; }
+
+    /// <summary>
+    ///     「记录组」列的表头（历史记录组，见 <see cref="SecRandom.Shared.Models.Profile.HistoryItem.HistoryGroup" />）。
+    /// </summary>
+    /// <remarks>
+    ///     带默认值而不是 <c>required</c>：新增一个 required 成员会让所有既有构造点（桌面导出页的
+    ///     <c>BuildExportLabels()</c>）立刻编译失败，而那个构造点属于应用层本次并行改动范围。默认空串让
+    ///     本次改动不产生连锁编译错误，应用层补上本地化文案后可以再收回成 required。
+    /// </remarks>
+    public string HistoryGroup { get; init; } = string.Empty;
     public required string Weight { get; init; }
     public required string TotalCount { get; init; }
     public required string LastDrawTime { get; init; }

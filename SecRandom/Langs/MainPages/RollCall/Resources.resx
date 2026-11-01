@@ -84,4 +84,16 @@
   <data name="M_ResultSeparator" xml:space="preserve">
     <value>、</value>
   </data>
+  <data name="O_HistoryGroup" xml:space="preserve">
+    <value>记录组</value>
+  </data>
+  <data name="O_HistoryGroupDefault" xml:space="preserve">
+    <value>不使用记录组</value>
+  </data>
+  <data name="O_HistoryGroupEmpty" xml:space="preserve">
+    <value>该组还没有任何记录，本次抽取按等权处理</value>
+  </data>
+  <data name="O_HistoryGroupLocked" xml:space="preserve">
+    <value>已锁定记录组</value>
+  </data>
 </root>

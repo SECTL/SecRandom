@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -47,6 +48,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private readonly ISecurityService _securityService;
     private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
+    private readonly IHistoryGroupCatalog _historyGroupCatalog;
     private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
     private readonly NotificationService? _notificationService;
     private bool _isDrawCommandRunning;
@@ -74,6 +76,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         ISecurityService securityService,
         LinkageDrawCoordinator linkageDrawCoordinator,
         VerificationDrawCoordinator verificationDrawCoordinator,
+        IHistoryGroupCatalog historyGroupCatalog,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         NotificationService? notificationService = null)
         : base(configHandler)
@@ -88,9 +91,12 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         _securityService = securityService;
         _linkageDrawCoordinator = linkageDrawCoordinator;
         _verificationDrawCoordinator = verificationDrawCoordinator;
+        _historyGroupCatalog = historyGroupCatalog;
         _voiceAnnouncementService = voiceAnnouncementService;
         _notificationService = notificationService;
         ResultItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ResultFontSize));
+        Config.QuickDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
+        Config.General.HistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
         RefreshStudentLists();
     }
 
@@ -108,6 +114,14 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         LastResultStudents.Select(FormatStudent).ToArray();
     public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && !_isCoolingDown && GetEligibleCandidates().Any());
     public string DrawButtonText => IsDrawing ? QuickDrawResources.C_Stop : QuickDrawResources.C_Start;
+
+    /// <summary>
+    ///     闪抽是否真的锁定了某个历史记录组（悬浮窗只在此时显示提示）。
+    /// </summary>
+    public bool IsHistoryGroupHintVisible => ResolveQuickDrawHistoryGroup().Length > 0;
+
+    /// <summary>悬浮窗显示的记录组提示文本（配置为空时不可见，见 <see cref="IsHistoryGroupHintVisible" />）。</summary>
+    public string HistoryGroupHintText => Config.QuickDrawSettings.HistoryGroup;
     public double ResultFontSize
     {
         get
@@ -243,12 +257,16 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
             skipPreview = !showBuiltInNotificationAnimation;
             var courseName = _linkageDrawCoordinator.GetCourseName();
+
+            // 记录组与候选池在同一刻冻结（和点名页一致）：抽取中途改设置不会让这一轮读到另一个组的历史。
+            var historyGroup = ResolveQuickDrawHistoryGroup();
             var verificationDrawTask = _verificationDrawCoordinator.DrawStudentsAsync(
                 count,
                 candidates,
                 DrawSettingsType.QuickDraw,
                 DrawProofExportContext.ForStudents(SelectedStudentListName, courseName: courseName),
                 courseName: courseName,
+                historyGroup: historyGroup,
                 cancellationToken: default);
             var previewTask = skipPreview
                 ? Task.CompletedTask
@@ -305,7 +323,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                 SelectedStudentListName,
                 DrawMethod: (int)Config.QuickDrawSettings.DrawType,
                 Weights: weights,
-                CourseName: courseName));
+                CourseName: courseName,
+                HistoryGroup: historyGroup));
             try
             {
                 _verificationDrawCoordinator.Publish(drawOutcome);
@@ -789,8 +808,55 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(CanStartDraw));
     }
 
+    /// <summary>
+    ///     解析本次闪抽要锁定的历史记录组；解析不出来时按全局历史处理（返回空串）。
+    /// </summary>
+    private string ResolveQuickDrawHistoryGroup()
+    {
+        if (!Config.General.HistoryGroups.Enabled)
+            return string.Empty;
+
+        var configured = Config.QuickDrawSettings.HistoryGroup;
+        if (string.IsNullOrWhiteSpace(configured))
+            return string.Empty;
+
+        try
+        {
+            // 组可能已被删除或改名。此时绝不拿一个不存在的组名去抽：那会让每条新记录都带上一个
+            // 没有任何历史的幽灵组名，权重静默退回等权，而用户以为自己仍在锁定状态。
+            return _historyGroupCatalog.GetGroupNames(HistoryGroupKind.RollCall)
+                .Contains(configured, StringComparer.Ordinal)
+                ? configured
+                : string.Empty;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "读取历史记录组失败，本次闪抽按全局历史处理。");
+            return string.Empty;
+        }
+    }
+
+    private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (sender == Config.QuickDrawSettings)
+        {
+            if (!string.IsNullOrEmpty(e.PropertyName)
+                && e.PropertyName != nameof(QuickDrawSettingsConfig.HistoryGroup))
+                return;
+        }
+        else if (sender != Config.General.HistoryGroups)
+        {
+            return;
+        }
+
+        OnPropertyChanged(nameof(IsHistoryGroupHintVisible));
+        OnPropertyChanged(nameof(HistoryGroupHintText));
+    }
+
     public void Dispose()
     {
+        Config.QuickDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.General.HistoryGroups.PropertyChanged -= SettingsOnPropertyChanged;
         StopPreview();
     }
 }

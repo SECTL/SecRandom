@@ -10,4 +10,5 @@
   <data name="M_ResetDone" xml:space="preserve"><value>Current list roll-call records cleared</value></data>
   <data name="M_DefaultListRequired" xml:space="preserve"><value>Select a default member list in Quick Draw settings first</value></data>
   <data name="M_DefaultListMissing" xml:space="preserve"><value>The default member list no longer exists. Select it again in Quick Draw settings</value></data>
+  <data name="M_HistoryGroupLocked" xml:space="preserve"><value>Record group</value></data>
 </root>

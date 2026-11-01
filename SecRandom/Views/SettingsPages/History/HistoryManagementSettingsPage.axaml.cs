@@ -355,6 +355,7 @@ public partial class HistoryManagementSettingsPage : UserControl
         RecordName = LR.E_RecordName,
         Gender = LR.E_Gender,
         Group = LR.E_Group,
+        HistoryGroup = LR.E_HistoryGroup,
         DrawMethod = LR.E_DrawMethod,
         DrawCount = LR.E_DrawCount,
         DrawGender = LR.E_DrawGender,

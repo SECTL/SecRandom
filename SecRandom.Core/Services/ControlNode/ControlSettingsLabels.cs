@@ -164,6 +164,13 @@ public static class ControlSettingsLabels
         // 证明留存属于验证页的"本地证明保留期限"，路径挂在 general.proof_retention 下。
         ["general.proof_retention.retention_days"] = R(Verification, "S_LocalProofRetention"),
 
+        // 历史记录组总开关不属于任何一个既有设置页的字段令牌，内联三语比借一个含义不合的资源键清楚。
+        ["general.history_groups.enabled"] = L(
+            "历史记录组", "History record groups", "履歴記録グループ",
+            "允许在主页面把抽取锁定到某个记录组，权重只参考组内记录",
+            "Let a main page lock a draw to one record group so weights only count that group's records",
+            "メイン画面で抽選を記録グループに固定し、重みはそのグループの記録だけを参照する"),
+
         // 悬浮窗位置就是浮窗左上角的屏幕坐标。
         ["float_position.x"] = L(
             "横坐标", "Horizontal position", "横位置",

@@ -10,4 +10,5 @@
   <data name="M_ResetDone" xml:space="preserve"><value>現在のリストの点呼記録を消去しました</value></data>
   <data name="M_DefaultListRequired" xml:space="preserve"><value>先にクイック抽選設定で既定のメンバーリストを選択してください</value></data>
   <data name="M_DefaultListMissing" xml:space="preserve"><value>既定のメンバーリストが存在しません。クイック抽選設定で選び直してください</value></data>
+  <data name="M_HistoryGroupLocked" xml:space="preserve"><value>記録グループ</value></data>
 </root>

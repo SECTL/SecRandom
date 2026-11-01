@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models;
 using SecRandom.Core.Services.Config;
@@ -215,7 +216,9 @@ public sealed class MobileHistoryPageTests
             Assert.False(columns[8].IsVisible); // 性别限制
             Assert.False(columns[9].IsVisible); // 小组限制
             Assert.True(columns[10].IsVisible); // 科目
-            Assert.True(columns[11].IsVisible); // 权重
+            // 记录组 (#294) 插在科目与权重之间；功能默认关闭且这里没有任何组，所以该列不显示
+            Assert.False(columns[11].IsVisible); // 记录组
+            Assert.True(columns[12].IsVisible);  // 权重
         }
         finally
         {
@@ -245,6 +248,9 @@ public sealed class MobileHistoryPageTests
         services.AddSingleton<IProfileService>(profileService);
         services.AddSingleton(historyQueryService ?? new TestHistoryQueryService());
         services.AddSingleton(catalogManager ?? new TestProfileCatalogManager());
+        // History record groups (#294): the history pages read their group filter from this catalog, so the
+        // minimal mobile host has to answer it. The fake has no groups, which is the state of a fresh profile.
+        services.AddSingleton<IHistoryGroupCatalog>(new TestHistoryGroupCatalog());
         services.AddSingleton(new DrawEngine(configHandler, profileService, NullLogger<DrawEngine>.Instance));
         services.AddTransient<RollCallHistoryViewModel>();
         services.AddTransient<LotteryHistoryViewModel>();
@@ -290,6 +296,33 @@ public sealed class MobileHistoryPageTests
             string.Equals(name, prizeHistory?.Name, StringComparison.Ordinal) ? prizeHistory : null;
     }
 
+    /// <summary>
+    ///     Empty history-group catalog for the minimal mobile host: no registered groups, nothing to move.
+    ///     The history pages only need <see cref="GetGroupNames" /> here; the rest answers "nothing happened".
+    /// </summary>
+    private sealed class TestHistoryGroupCatalog : IHistoryGroupCatalog
+    {
+        public IReadOnlyList<string> GetGroupNames(HistoryGroupKind kind) => [];
+
+        public bool TryCreate(HistoryGroupKind kind, string name, out string error)
+        {
+            error = string.Empty;
+            return false;
+        }
+
+        public bool TryRename(HistoryGroupKind kind, string from, string to, out string error)
+        {
+            error = string.Empty;
+            return false;
+        }
+
+        public void Delete(HistoryGroupKind kind, string name) { }
+
+        public void Touch(HistoryGroupKind kind, string name) { }
+
+        public int CountRecords(HistoryGroupKind kind, string name) => 0;
+    }
+
     private sealed class TestProfileCatalogManager(StudentList? studentList = null, PrizeList? prizeList = null)
         : IProfileCatalogManager
     {
@@ -315,6 +348,11 @@ public sealed class MobileHistoryPageTests
         public void SetDefaultPrizePool(string name) { }
         public bool ClearStudentHistory(string name) => false;
         public bool ClearPrizeHistory(string name) => false;
+
+        // History record groups (#294): the mobile history page never moves records between groups,
+        // so the fake answers "nothing moved" and stays a pure read-only double.
+        public int MoveStudentHistoryGroup(string profileName, IReadOnlyCollection<string> recordIds, string targetGroup) => 0;
+        public int MovePrizeHistoryGroup(string profileName, IReadOnlyCollection<string> recordIds, string targetGroup) => 0;
     }
 
     private sealed class EmptyProfileService : IProfileService
@@ -332,10 +370,11 @@ public sealed class MobileHistoryPageTests
 
         public void RecordStudentHistory(IReadOnlyList<Student> students, DateTime now, int requestedCount,
             string drawGroup = "", string drawGender = "", int drawMethod = 0,
-            IReadOnlyDictionary<Student, double>? weights = null, string courseName = "", string? drawRoundId = null) { }
+            IReadOnlyDictionary<Student, double>? weights = null, string courseName = "", string? drawRoundId = null,
+            string historyGroup = "") { }
 
         public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount,
-            int drawMethod = 0, string? drawRoundId = null) { }
+            int drawMethod = 0, string? drawRoundId = null, string courseName = "", string historyGroup = "") { }
 
         public void ClearCurrentStudentHistory() { }
         public void ClearCurrentPrizeHistory() { }

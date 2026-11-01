@@ -27,4 +27,8 @@
   <data name="M_InvalidWeight" xml:space="preserve"><value>重みの設定が無効です</value></data>
   <data name="M_DrawFailed" xml:space="preserve"><value>抽選に失敗しました</value></data>
   <data name="M_ResultSeparator" xml:space="preserve"><value>、</value></data>
+  <data name="O_HistoryGroup" xml:space="preserve"><value>記録グループ</value></data>
+  <data name="O_HistoryGroupDefault" xml:space="preserve"><value>記録グループを使わない</value></data>
+  <data name="O_HistoryGroupEmpty" xml:space="preserve"><value>このグループにはまだ記録がないため、今回は等確率で抽選します</value></data>
+  <data name="O_HistoryGroupLocked" xml:space="preserve"><value>記録グループを固定中</value></data>
 </root>

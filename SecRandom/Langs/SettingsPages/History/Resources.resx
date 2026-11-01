@@ -1,0 +1,41 @@
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true" />
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="S_HistoryGroup" xml:space="preserve">
+    <value>记录组</value>
+  </data>
+  <data name="S_Filter_HistoryGroup" xml:space="preserve">
+    <value>记录组</value>
+  </data>
+  <data name="S_HistoryGroup_All" xml:space="preserve">
+    <value>全部记录组</value>
+  </data>
+  <data name="S_HistoryGroup_Default" xml:space="preserve">
+    <value>默认组</value>
+  </data>
+  <data name="S_HistoryGroup_Move" xml:space="preserve">
+    <value>移到另一组…</value>
+  </data>
+  <data name="S_HistoryGroup_MoveHint" xml:space="preserve">
+    <value>只修改记录组标记，不新增记录、不影响权重</value>
+  </data>
+  <data name="S_HistoryGroup_MoveDone" xml:space="preserve">
+    <value>已移动 {0} 条记录</value>
+  </data>
+  <data name="S_HistoryGroup_New" xml:space="preserve">
+    <value>新建组…</value>
+  </data>
+</root>

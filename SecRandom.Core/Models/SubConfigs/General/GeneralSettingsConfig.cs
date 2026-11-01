@@ -12,6 +12,7 @@ public partial class GeneralSettingsConfig : ObservableObject
     [ObservableProperty] private ProofRetentionConfig _proofRetention = new();
     [ObservableProperty] private VerificationSettingsConfig _verification = new();
     [ObservableProperty] private PerformanceSettingsConfig _performanceSettings = new();
+    [ObservableProperty] private HistoryGroupSettingsConfig _historyGroups = new();
 
     public void ApplyLegacyBasic(BasicSettingsConfig? legacyBasic)
     {

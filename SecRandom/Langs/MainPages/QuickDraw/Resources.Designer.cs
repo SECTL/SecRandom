@@ -38,6 +38,7 @@ public class Resources
     public static string M_DrawFailed => ResourceManager.GetString(nameof(M_DrawFailed), resourceCulture)!;
     public static string M_Drawing => ResourceManager.GetString(nameof(M_Drawing), resourceCulture)!;
     public static string M_DrawnCountFormat => ResourceManager.GetString(nameof(M_DrawnCountFormat), resourceCulture)!;
+    public static string M_HistoryGroupLocked => ResourceManager.GetString(nameof(M_HistoryGroupLocked), resourceCulture)!;
     public static string M_NoMembers => ResourceManager.GetString(nameof(M_NoMembers), resourceCulture)!;
     public static string M_Ready => ResourceManager.GetString(nameof(M_Ready), resourceCulture)!;
     public static string M_ResetDone => ResourceManager.GetString(nameof(M_ResetDone), resourceCulture)!;

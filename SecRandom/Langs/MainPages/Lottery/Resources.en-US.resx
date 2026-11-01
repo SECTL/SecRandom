@@ -29,4 +29,8 @@
   <data name="M_InvalidWeight" xml:space="preserve"><value>Invalid weight settings</value></data>
   <data name="M_Drawing" xml:space="preserve"><value>Drawing...</value></data>
   <data name="M_RemainingCountFormat" xml:space="preserve"><value>Remaining: {0} / Drawn: {1}</value></data>
+  <data name="O_HistoryGroup" xml:space="preserve"><value>Record group</value></data>
+  <data name="O_HistoryGroupDefault" xml:space="preserve"><value>Do not use a record group</value></data>
+  <data name="O_HistoryGroupEmpty" xml:space="preserve"><value>This group has no records yet, so this draw uses equal weights</value></data>
+  <data name="O_HistoryGroupLocked" xml:space="preserve"><value>Record group locked</value></data>
 </root>

@@ -365,6 +365,12 @@ namespace SecRandom.Langs.SettingsPages.HistoryManagement {
             }
         }
 
+        public static string E_HistoryGroup {
+            get {
+                return ResourceManager.GetString("E_HistoryGroup", resourceCulture);
+            }
+        }
+
         public static string E_DrawMethod {
             get {
                 return ResourceManager.GetString("E_DrawMethod", resourceCulture);

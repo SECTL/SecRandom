@@ -2,8 +2,11 @@ using System.Collections.ObjectModel;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
+using SecRandom.Shared.Abstraction;
+using SecRandom.Shared.ComponentModels;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Models.Profile;
 
@@ -12,6 +15,7 @@ namespace SecRandom.Core.Services.Profiles;
 internal sealed class ProfileCatalogManager(
     ConfigServiceBase configService,
     IProfileService profileService,
+    IHistoryGroupCatalog historyGroupCatalog,
     MainConfigHandler configHandler,
     ILogger<ProfileCatalogManager> logger) : IProfileCatalogManager
 {
@@ -250,6 +254,216 @@ internal sealed class ProfileCatalogManager(
         config.Save();
         logger.LogInformation("已清空抽奖历史：奖池={PoolName}。", name);
         return true;
+    }
+
+    public int MoveStudentHistoryGroup(
+        string profileName,
+        IReadOnlyCollection<string> recordIds,
+        string targetGroup) =>
+        MoveHistoryGroup(HistoryGroupKind.RollCall, profileName, recordIds, targetGroup);
+
+    public int MovePrizeHistoryGroup(
+        string profileName,
+        IReadOnlyCollection<string> recordIds,
+        string targetGroup) =>
+        MoveHistoryGroup(HistoryGroupKind.Lottery, profileName, recordIds, targetGroup);
+
+    /// <summary>
+    ///     Re-marks the given records of one profile's history file as belonging to <paramref name="targetGroup" />.
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         <b>Marker only.</b> A move is a correction of where a record belongs, not a new draw: it never appends a
+    ///         <see cref="HistoryItem" />, never creates a <see cref="HistoryItem.DrawRoundId" />, and never touches
+    ///         <see cref="History.TotalCount" />, <see cref="History.LastDrawnTime" />, <see cref="History.RoundsMissed" />
+    ///         or <see cref="HistoryItem.Weight" />. Those are the fairness inputs; editing them here would let a
+    ///         regrouping operation rewrite the draw weights it is supposed to be orthogonal to.
+    ///     </para>
+    ///     <para>
+    ///         <b>One file, saved once, and only when something changed.</b> The save goes through the profile's own
+    ///         history handler (<see cref="IProfileService.StudentHistoryConfig" /> / <see cref="IProfileService.PrizeHistoryConfig" />
+    ///         → the atomic temp-file-and-replace write in <c>FileConfigService</c>), exactly like
+    ///         <see cref="HistoryGroupCatalog" />; never <see cref="IProfileService.SaveProfile" />, which would also
+    ///         rewrite the roster and the other history file for an operation that cannot have changed them. A call
+    ///         that matches no record returns 0 and writes nothing.
+    ///     </para>
+    ///     <para>
+    ///         <b>Active profile vs. a detached one.</b> When the name matches the active profile, the in-memory
+    ///         instance is mutated and saved, so the UI's observable collections see the new markers immediately.
+    ///         Otherwise the history file is loaded through a detached <see cref="StudentHistoryConfig" /> /
+    ///         <see cref="PrizeHistoryConfig" /> (the same path <see cref="ClearStudentHistory" /> uses) and saved
+    ///         without switching the active profile — a move must not make the moved list the active one.
+    ///     </para>
+    /// </remarks>
+    private int MoveHistoryGroup(
+        HistoryGroupKind kind,
+        string profileName,
+        IReadOnlyCollection<string> recordIds,
+        string targetGroup)
+    {
+        ArgumentNullException.ThrowIfNull(recordIds);
+        // 档案名会参与拼路径：非法名字在这里就以 ArgumentException 拒绝，绝不落到不安全的路径拼接上。
+        ProfileConfigBase.ValidateProfileName(profileName);
+
+        // 空串是默认组，不是「名为空的组」：先短路，否则移回默认组永远过不了命名校验。
+        var target = HistoryGroupName.Normalize(targetGroup);
+        if (target.Length > 0 && !HistoryGroupName.Validate(target, out target, out var nameError))
+            throw new ArgumentException(nameError, nameof(targetGroup));
+
+        var ids = new HashSet<string>(
+            recordIds.Where(id => !string.IsNullOrEmpty(id)),
+            StringComparer.Ordinal);
+        if (ids.Count == 0)
+            return 0;
+
+        var activeName = kind == HistoryGroupKind.RollCall
+            ? profileService.StudentHistoryConfig?.Name
+            : profileService.PrizeHistoryConfig?.Name;
+        var isActive = activeName is not null && string.Equals(activeName, profileName, StringComparison.Ordinal);
+
+        var view = isActive
+            ? ResolveActiveHistory(kind)
+            : LoadHistorySnapshot(kind, profileName);
+        if (view is null)
+            throw new InvalidOperationException(HistoryGroupName.ErrorProfileUnavailable);
+
+        var moved = MoveIntoGroup(view.Records, ids, target);
+        if (moved == 0)
+            return 0;
+
+        if (target.Length > 0)
+        {
+            if (isActive)
+            {
+                historyGroupCatalog.Touch(kind, target);
+            }
+            else
+            {
+                // IHistoryGroupCatalog.Touch 解析的是**活动**档案的历史，对另一个档案调用会把组记到错的
+                // 文件上（下一次保存就多出一个没有记录的空组）。这里直接登记在即将保存的那份历史上，
+                // 语义与 Touch 的自愈分支一致：已登记就更新 LastUsedAt，未登记就带着创建时间登记。
+                RegisterGroup(view.Groups, target);
+            }
+        }
+
+        try
+        {
+            view.Save();
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "保存历史记录组移动失败：类型={Kind}，档案={ProfileName}。", kind, profileName);
+            throw new InvalidOperationException(HistoryGroupName.ErrorSaveFailed, exception);
+        }
+
+        // 默认组没有登记项，只记条数，不记组名。
+        logger.LogInformation(
+            "已移动历史记录到记录组：类型={Kind}，档案={ProfileName}，记录数={MovedCount}，目标组={GroupName}。",
+            kind, profileName, moved, target.Length == 0 ? "(默认组)" : target);
+
+        return moved;
+    }
+
+    /// <summary>One history file's live view: its registered groups, its records, and how it is saved.</summary>
+    private sealed record HistoryView(
+        ObservableDictionary<string, HistoryGroupInfo> Groups,
+        ObservableDictionary<string, History> Records,
+        Action Save);
+
+    private HistoryView? ResolveActiveHistory(HistoryGroupKind kind)
+    {
+        switch (kind)
+        {
+            case HistoryGroupKind.RollCall:
+            {
+                var history = profileService.CurrentStudentHistory;
+                var config = profileService.StudentHistoryConfig;
+                return history is null || config is null
+                    ? null
+                    : new HistoryView(history.HistoryGroups, history.Students, config.Save);
+            }
+
+            case HistoryGroupKind.Lottery:
+            {
+                var history = profileService.CurrentPrizeHistory;
+                var config = profileService.PrizeHistoryConfig;
+                return history is null || config is null
+                    ? null
+                    : new HistoryView(history.HistoryGroups, history.Prizes, config.Save);
+            }
+
+            default:
+                throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown history group kind.");
+        }
+    }
+
+    /// <summary>
+    ///     Loads another profile's history file without switching the active profile. Returns null when the file does
+    ///     not exist — checked before the handler is constructed, because constructing it on a missing file would
+    ///     write a fallback history file as a side effect.
+    /// </summary>
+    private HistoryView? LoadHistorySnapshot(HistoryGroupKind kind, string profileName)
+    {
+        try
+        {
+            var path = kind == HistoryGroupKind.RollCall
+                ? Utils.GetFilePath("history", "roll_call_history", $"{profileName}.json")
+                : Utils.GetFilePath("history", "lottery_history", $"{profileName}.json");
+            if (!File.Exists(path))
+                return null;
+
+            if (kind == HistoryGroupKind.RollCall)
+            {
+                var studentConfig = new StudentHistoryConfig(profileName, logger, configService);
+                return new HistoryView(
+                    studentConfig.Data.HistoryGroups, studentConfig.Data.Students, studentConfig.Save);
+            }
+
+            var prizeConfig = new PrizeHistoryConfig(profileName, logger, configService);
+            return new HistoryView(
+                prizeConfig.Data.HistoryGroups, prizeConfig.Data.Prizes, prizeConfig.Save);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "读取历史档案失败：类型={Kind}，档案={ProfileName}。", kind, profileName);
+            return null;
+        }
+    }
+
+    private static int MoveIntoGroup(
+        ObservableDictionary<string, History> records,
+        HashSet<string> recordIds,
+        string target)
+    {
+        var moved = 0;
+        foreach (var pair in records)
+        {
+            if (!recordIds.Contains(pair.Key))
+                continue;
+
+            foreach (var item in pair.Value.Histories)
+            {
+                if (string.Equals(item.HistoryGroup ?? string.Empty, target, StringComparison.Ordinal))
+                    continue;
+
+                item.HistoryGroup = target;
+                moved++;
+            }
+        }
+
+        return moved;
+    }
+
+    private static void RegisterGroup(ObservableDictionary<string, HistoryGroupInfo> groups, string name)
+    {
+        var now = DateTime.Now;
+        if (groups.TryGetValue(name, out var info))
+        {
+            info.LastUsedAt = now;
+            return;
+        }
+
+        groups[name] = new HistoryGroupInfo { CreatedAt = now, LastUsedAt = now };
     }
 
     private void SyncActiveStudentProfile(string name)

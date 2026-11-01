@@ -65,6 +65,11 @@
                               IsChecked="{Binding Settings.RollCallGenderSelector}" />
                 </fa:FASettingsExpanderItem>
 
+                <fa:FASettingsExpanderItem x:Name="C_RollCallHistoryGroupSelector">
+                    <CheckBox Content="{x:Static lsp:Resources.C_RollCallHistoryGroupSelector}"
+                              IsChecked="{Binding Settings.RollCallHistoryGroupSelector}" />
+                </fa:FASettingsExpanderItem>
+
                 <fa:FASettingsExpanderItem x:Name="C_RollCallRemainingButton">
                     <CheckBox Content="{x:Static lsp:Resources.C_RollCallRemainingButton}"
                               IsChecked="{Binding Settings.RollCallRemainingButton}" />
@@ -142,6 +147,11 @@
                  <fa:FASettingsExpanderItem x:Name="C_LotteryGenderSelector">
                      <CheckBox Content="{x:Static lsp:Resources.C_LotteryGenderSelector}"
                               IsChecked="{Binding Settings.LotteryGenderSelector}" />
+                </fa:FASettingsExpanderItem>
+
+                 <fa:FASettingsExpanderItem x:Name="C_LotteryHistoryGroupSelector">
+                     <CheckBox Content="{x:Static lsp:Resources.C_LotteryHistoryGroupSelector}"
+                              IsChecked="{Binding Settings.LotteryHistoryGroupSelector}" />
                 </fa:FASettingsExpanderItem>
 
                  <fa:FASettingsExpanderItem x:Name="C_LotteryRemainingButton">

@@ -59,5 +59,9 @@ namespace SecRandom.Langs.MainPages.Lottery {
         public static string O_AllGenders => ResourceManager.GetString("O_AllGenders", resourceCulture);
         public static string O_AllGroups => ResourceManager.GetString("O_AllGroups", resourceCulture);
         public static string O_NoStudentAssignment => ResourceManager.GetString("O_NoStudentAssignment", resourceCulture);
+        public static string O_HistoryGroup => ResourceManager.GetString("O_HistoryGroup", resourceCulture);
+        public static string O_HistoryGroupDefault => ResourceManager.GetString("O_HistoryGroupDefault", resourceCulture);
+        public static string O_HistoryGroupEmpty => ResourceManager.GetString("O_HistoryGroupEmpty", resourceCulture);
+        public static string O_HistoryGroupLocked => ResourceManager.GetString("O_HistoryGroupLocked", resourceCulture);
     }
 }

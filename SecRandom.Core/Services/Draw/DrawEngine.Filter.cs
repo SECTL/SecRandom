@@ -172,8 +172,12 @@ public partial class DrawEngine
         return BuildPrizeHistoryCache([prize]).GetValueOrDefault(prize)?.TotalCount ?? 0;
     }
 
-    private Dictionary<Student, History> BuildStudentHistoryCache(IEnumerable<Student> candidates, string courseName = "")
+    private Dictionary<Student, History> BuildStudentHistoryCache(
+        IEnumerable<Student> candidates,
+        string courseName = "",
+        string historyGroup = "")
     {
+        var unfiltered = string.IsNullOrWhiteSpace(courseName) && string.IsNullOrWhiteSpace(historyGroup);
         var legacyKeySet = BuildUniqueStudentLegacyKeySet();
         Dictionary<Student, History> cache = new();
         foreach (var candidate in candidates)
@@ -183,18 +187,26 @@ public partial class DrawEngine
                 candidate,
                 legacyKeySet.Contains);
             if (history is not null)
-                cache[candidate] = string.IsNullOrWhiteSpace(courseName)
+                cache[candidate] = unfiltered
                     ? history
-                    : FilterHistoryForCourse(history, courseName);
+                    : FilterHistoryForScope(history, courseName, historyGroup);
         }
 
         return cache;
     }
 
-    private static History FilterHistoryForCourse(History history, string courseName)
+    /// <summary>
+    ///     Narrows one candidate's history to the records that belong to the requested scope. Both axes are
+    ///     optional and combine by intersection: an empty value leaves that axis unfiltered, so a caller that
+    ///     passes neither gets the untouched history back.
+    /// </summary>
+    private static History FilterHistoryForScope(History history, string courseName, string historyGroup)
     {
         var matches = history.Histories
-            .Where(item => string.Equals(item.CourseName, courseName, StringComparison.Ordinal))
+            .Where(item => string.IsNullOrWhiteSpace(courseName)
+                           || string.Equals(item.CourseName, courseName, StringComparison.Ordinal))
+            .Where(item => string.IsNullOrWhiteSpace(historyGroup)
+                           || string.Equals(item.HistoryGroup, historyGroup, StringComparison.Ordinal))
             .OrderBy(item => item.DrawTime)
             .ToArray();
         History result = new()
@@ -207,8 +219,12 @@ public partial class DrawEngine
         return result;
     }
 
-    private Dictionary<Prize, History> BuildPrizeHistoryCache(IEnumerable<Prize> candidates)
+    private Dictionary<Prize, History> BuildPrizeHistoryCache(
+        IEnumerable<Prize> candidates,
+        string courseName = "",
+        string historyGroup = "")
     {
+        var unfiltered = string.IsNullOrWhiteSpace(courseName) && string.IsNullOrWhiteSpace(historyGroup);
         var legacyKeySet = BuildUniquePrizeLegacyKeySet();
         Dictionary<Prize, History> cache = new();
         foreach (var candidate in candidates)
@@ -218,7 +234,9 @@ public partial class DrawEngine
                 candidate,
                 legacyKeySet.Contains);
             if (history is not null)
-                cache[candidate] = history;
+                cache[candidate] = unfiltered
+                    ? history
+                    : FilterHistoryForScope(history, courseName, historyGroup);
         }
 
         return cache;

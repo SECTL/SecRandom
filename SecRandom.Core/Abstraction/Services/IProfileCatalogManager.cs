@@ -58,4 +58,15 @@ public interface IProfileCatalogManager
     /// </summary>
     bool ClearStudentHistory(string name);
     bool ClearPrizeHistory(string name);
+
+    /// <summary>
+    /// Moves the named history records into the target record group ("移到另一组"). Only the
+    /// HistoryGroup marker changes: no new record is appended, no DrawRoundId is created, weights and
+    /// counters are untouched. Empty target means the default group. Returns how many records were
+    /// moved; throws when the history file is missing or the save fails.
+    /// </summary>
+    int MoveStudentHistoryGroup(string profileName, IReadOnlyCollection<string> recordIds, string targetGroup);
+
+    /// <inheritdoc cref="MoveStudentHistoryGroup" />
+    int MovePrizeHistoryGroup(string profileName, IReadOnlyCollection<string> recordIds, string targetGroup);
 }

@@ -25,7 +25,8 @@ public sealed record RollCallDrawSnapshot(
     public int RemainingCount => Remaining.Count;
 }
 
-public sealed record RollCallDrawRequest(string ListName, string Group, string Gender, int Count, string CourseName);
+public sealed record RollCallDrawRequest(string ListName, string Group, string Gender, int Count, string CourseName,
+    string HistoryGroup = "");
 
 public sealed record RollCallDrawResult(
     IReadOnlyList<Student> Students,
@@ -96,6 +97,7 @@ public sealed class RollCallDrawService(
             DrawSettingsType.RollCall,
             DrawProofExportContext.ForStudents(GetListName(), request.Group, request.Gender, request.CourseName),
             courseName: request.CourseName,
+            historyGroup: request.HistoryGroup,
             cancellationToken: cancellationToken).ConfigureAwait(false);
         // Every remaining member can be temporarily excluded (post-draw shield), so nothing is drawable yet.
         if (outcome is null)
@@ -129,7 +131,8 @@ public sealed class RollCallDrawService(
                 (int)configHandler.Data.RollCallSettings.DrawType,
                 weights,
                 request.CourseName,
-                edit?.OverrideRoundId));
+                edit?.OverrideRoundId,
+                request.HistoryGroup));
         try
         {
             verification.Publish(outcome);
@@ -199,7 +202,8 @@ public sealed record LotteryDrawRequest(
     string Group,
     string Gender,
     int Count,
-    string CourseName);
+    string CourseName,
+    string HistoryGroup = "");
 
 public sealed record LotteryDrawResult(
     IReadOnlyList<Prize> Prizes,
@@ -293,7 +297,9 @@ public sealed class LotteryDrawService(
             return null;
         var prizes = await verification.DrawPrizesAsync(count,
             temporaryRecords.GetPrizeCounts(GetPrizePoolName()), snapshot.Prizes,
-            DrawProofExportContext.ForPrizes(GetPrizePoolName()), cancellationToken).ConfigureAwait(false);
+            DrawProofExportContext.ForPrizes(GetPrizePoolName()),
+            request.HistoryGroup,
+            cancellationToken).ConfigureAwait(false);
         if (prizes is null)
             return null;
         IReadOnlyList<Student> assigned = [];
@@ -302,7 +308,7 @@ public sealed class LotteryDrawService(
         {
             assignedOutcome = await verification.DrawStudentsAsync(count, snapshot.EligibleStudents, DrawSettingsType.RollCall,
                 DrawProofExportContext.ForStudents(GetStudentListName(), request.Group, request.Gender, request.CourseName),
-                prizes.Proof.ProofId, request.CourseName, cancellationToken).ConfigureAwait(false);
+                prizes.Proof.ProofId, request.CourseName, request.HistoryGroup, cancellationToken).ConfigureAwait(false);
             if (assignedOutcome is null)
                 return null;
             assigned = assignedOutcome.Winners;
@@ -336,7 +342,8 @@ public sealed class LotteryDrawService(
                 (int)configHandler.Data.LotterySettings.DrawType,
                 (int)configHandler.Data.RollCallSettings.DrawType,
                 request.CourseName,
-                edit?.OverrideRoundId));
+                edit?.OverrideRoundId,
+                request.HistoryGroup));
         PublishProof(prizes);
         if (assignedOutcome is not null)
             PublishProof(assignedOutcome);

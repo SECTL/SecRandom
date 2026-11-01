@@ -176,4 +176,10 @@
   <data name="C_ShortcutExampleLottery" xml:space="preserve">
     <value>例如 Ctrl+Alt+L</value>
   </data>
+  <data name="C_RollCallHistoryGroupSelector" xml:space="preserve">
+    <value>点名页面显示历史记录组选择</value>
+  </data>
+  <data name="C_LotteryHistoryGroupSelector" xml:space="preserve">
+    <value>抽奖页面显示历史记录组选择</value>
+  </data>
 </root>

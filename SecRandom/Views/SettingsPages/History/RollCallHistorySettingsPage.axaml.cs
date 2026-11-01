@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
@@ -41,7 +42,8 @@ public partial class RollCallHistorySettingsPage : UserControl
     {
         if (e.PropertyName is nameof(RollCallHistoryViewModel.SelectedMode)
                            or nameof(RollCallHistoryViewModel.HasWeightRows)
-                           or nameof(RollCallHistoryViewModel.ShouldShowSubjectColumn))
+                           or nameof(RollCallHistoryViewModel.ShouldShowSubjectColumn)
+                           or nameof(RollCallHistoryViewModel.ShouldShowHistoryGroupColumn))
             UpdateColumns();
     }
 
@@ -51,10 +53,27 @@ public partial class RollCallHistorySettingsPage : UserControl
             ViewModel.RefreshSubjectFiltering();
     }
 
+    /// <summary>表格选中项变化 → 同步给 ViewModel，作为「移到另一组」的作用对象。</summary>
+    private void OnHistoryGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        ViewModel.SetSelectedRows(HistoryGrid.SelectedItems.OfType<HistoryDisplayRow>());
+    }
+
+    private void OnConfirmMoveHistoryGroup(object? sender, RoutedEventArgs e)
+    {
+        // 命令已由 Command 绑定执行，这里只负责收起 Flyout
+        MoveHistoryGroupButton.Flyout?.Hide();
+    }
+
+    /// <summary>
+    ///     列可见性按索引设置，所以列的增删必须同步改索引：
+    ///     原来 0..11（点名时间/学号/姓名/学生性别/学生小组/点名次数/点名模式/点名人数/选择性别/选择小组/科目/权重），
+    ///     现在 0..12，其中 11 是新增的「记录组」，权重后移到 12。
+    /// </summary>
     private void UpdateColumns()
     {
         var cols = HistoryGrid.Columns;
-        if (cols.Count < 12) return;
+        if (cols.Count < 13) return;
 
         var mode       = ViewModel.SelectedMode;
         var isOverview = mode == HistoryMode.Overview;
@@ -72,6 +91,7 @@ public partial class RollCallHistorySettingsPage : UserControl
         cols[8].IsVisible = isPersonal;               // 选择性别
         cols[9].IsVisible = isPersonal;               // 选择小组
         cols[10].IsVisible = ViewModel.ShouldShowSubjectColumn; // 科目
-        cols[11].IsVisible = ViewModel.HasWeightRows; // 权重
+        cols[11].IsVisible = ViewModel.ShouldShowHistoryGroupColumn; // 记录组
+        cols[12].IsVisible = ViewModel.HasWeightRows; // 权重
     }
 }

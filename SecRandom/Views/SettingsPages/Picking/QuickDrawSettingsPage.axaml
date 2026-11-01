@@ -71,6 +71,25 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <!-- 闪抽没有自己的记录组选择器，所以这里选定的组就是它的默认值：锁定后权重只读该组历史，
+                 写出的记录也只进该组。总开关关闭时不显示选择器，改为说明为什么不可用。 -->
+            <fa:FASettingsExpander x:Name="S_QuickDrawHistoryGroup"
+                                   Header="{x:Static lp:Resources.S_QuickDrawHistoryGroup}"
+                                   Description="{x:Static lp:Resources.S_QuickDrawHistoryGroup_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Spacing="4" MinWidth="220">
+                        <ComboBox IsVisible="{Binding IsHistoryGroupSelectorVisible}"
+                                  ItemsSource="{Binding HistoryGroupOptions}"
+                                  SelectedItem="{Binding SelectedHistoryGroup, Mode=TwoWay}" />
+                        <TextBlock Text="{x:Static lp:Resources.S_QuickDrawHistoryGroup_Disabled}"
+                                   IsVisible="{Binding !IsHistoryGroupSelectorVisible}"
+                                   Opacity="0.72" FontSize="12" TextWrapping="Wrap"
+                                   HorizontalAlignment="Right" TextAlignment="Right" MaxWidth="320" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <Separator Margin="0 12 0 4" />
             <sr:IconText Text="{x:Static lp:Resources.Section_Overridable}" Glyph="{sr:Fi SettingsFilled}"
                          Margin="0 0 0 4" />

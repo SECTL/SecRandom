@@ -31,6 +31,7 @@ public sealed class HistoryExportTests : IDisposable
         DrawGender = "性别限制",
         DrawGroup = "小组限制",
         Subject = "课程",
+        HistoryGroup = "记录组",
         Weight = "权重",
         TotalCount = "累计次数",
         LastDrawTime = "最近抽取时间",
@@ -84,8 +85,11 @@ public sealed class HistoryExportTests : IDisposable
         Assert.Equal("Alice", details[0]["姓名"]);
         Assert.Equal("公平抽取", details[0]["抽取方式"]);
         Assert.Equal("数学", details[0]["课程"]);
+        // 记录组列与课程列同层：分组记录写出组名，默认组保持空单元格（Core 不持有「默认组」这种界面文案）。
+        Assert.Equal("课堂", details[0]["记录组"]);
         Assert.Equal("2.50", details[0]["权重"]);
         Assert.Equal("随机抽取", details[1]["抽取方式"]);
+        Assert.True(string.IsNullOrEmpty(details[1]["记录组"]?.ToString()));
         Assert.Equal(2, Convert.ToInt32(details[1]["抽取人数"], CultureInfo.InvariantCulture));
         Assert.Equal("男", details[1]["性别限制"]);
         Assert.Equal("二组", details[1]["小组限制"]);
@@ -394,7 +398,8 @@ public sealed class HistoryExportTests : IDisposable
             1,
             drawMethod: (int)DrawType.Fair,
             weights: new Dictionary<Student, double> { [alice] = 2.5 },
-            courseName: "数学");
+            courseName: "数学",
+            historyGroup: "课堂");
     }
 
     private static void SeedPrizePool(ServiceProvider provider, string poolName)

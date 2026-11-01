@@ -5,6 +5,7 @@
              xmlns:vm="using:SecRandom.ViewModels.SettingsPages.History"
              xmlns:conv="using:SecRandom.Converters"
              xmlns:langs="using:SecRandom.Langs.MainPages.History"
+             xmlns:hsr="using:SecRandom.Langs.SettingsPages.History"
              mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="640"
              x:Class="SecRandom.Views.SettingsPages.History.LotteryHistorySettingsPage"
              x:DataType="vm:LotteryHistoryViewModel"
@@ -14,8 +15,8 @@
         <conv:HistoryModeNameConverter x:Key="ModeNameConverter" />
     </UserControl.Resources>
 
-    <Grid RowDefinitions="Auto,*" RowSpacing="8" Classes="page-container">
-        <Grid Grid.Row="0" ColumnDefinitions="* * Auto" ColumnSpacing="4">
+    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8" Classes="page-container">
+        <Grid Grid.Row="0" ColumnDefinitions="* * Auto Auto Auto" ColumnSpacing="4">
             <ComboBox Grid.Column="0"
                       HorizontalAlignment="Stretch"
                       PlaceholderText="{x:Static langs:Resources.C_SelectClass}"
@@ -35,12 +36,70 @@
                 </ComboBox.ItemTemplate>
             </ComboBox>
 
-            <Button Grid.Column="2"
+            <!-- 记录组筛选：只重新过滤已加载的快照，不重新读文件 -->
+            <ComboBox Grid.Column="2"
+                      x:Name="S_Filter_HistoryGroup"
+                      Width="160"
+                      HorizontalAlignment="Stretch"
+                      PlaceholderText="{x:Static hsr:Resources.S_HistoryGroup}"
+                      ItemsSource="{Binding HistoryGroupOptions}"
+                      SelectedItem="{Binding SelectedHistoryGroupFilter, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding DisplayName}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+
+            <Button Grid.Column="3"
                     Content="{x:Static langs:Resources.C_Refresh}"
                     Command="{Binding RefreshCommand}" />
+
+            <!-- 移到另一组：Flyout 而不是对话框，与点名历史页保持一致 -->
+            <Button Grid.Column="4"
+                    x:Name="MoveHistoryGroupButton"
+                    Content="{x:Static hsr:Resources.S_HistoryGroup_Move}">
+                <Button.Flyout>
+                    <Flyout Placement="Bottom">
+                        <StackPanel Width="300" Spacing="8">
+                            <TextBlock Text="{x:Static hsr:Resources.S_HistoryGroup_MoveHint}"
+                                       TextWrapping="Wrap"
+                                       Opacity="0.75" />
+
+                            <ComboBox x:Name="MoveTargetBox"
+                                      HorizontalAlignment="Stretch"
+                                      ItemsSource="{Binding MoveTargetOptions}"
+                                      SelectedItem="{Binding SelectedMoveTargetGroup, Mode=TwoWay}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding DisplayName}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+
+                            <TextBox Text="{Binding NewMoveTargetGroup, Mode=TwoWay}"
+                                     PlaceholderText="{x:Static hsr:Resources.S_HistoryGroup_New}" />
+
+                            <Button HorizontalAlignment="Right"
+                                    x:Name="MoveHistoryGroupConfirmButton"
+                                    Content="{x:Static hsr:Resources.S_HistoryGroup_Move}"
+                                    IsEnabled="{Binding CanMoveSelectedRecords}"
+                                    Command="{Binding MoveSelectedHistoryGroupCommand}"
+                                    Click="OnConfirmMoveHistoryGroup" />
+                        </StackPanel>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
         </Grid>
 
-        <Border Grid.Row="1"
+        <TextBlock Grid.Row="1"
+                   x:Name="HistoryGroupMoveStatus"
+                   Text="{Binding MoveStatus}"
+                   IsVisible="{Binding HasMoveStatus}"
+                   TextWrapping="Wrap"
+                   Opacity="0.85" />
+
+        <Border Grid.Row="2"
                 BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                 BorderThickness="1"
                 CornerRadius="4 4 0 0" ClipToBounds="True">
@@ -52,7 +111,8 @@
                       GridLinesVisibility="Horizontal"
                       HeadersVisibility="Column"
                       IsReadOnly="True"
-                      SelectionMode="Single"
+                      SelectionMode="Extended"
+                      SelectionChanged="OnHistoryGridSelectionChanged"
                       ItemsSource="{Binding Rows}">
                 <DataGrid.Styles>
                     <Style Selector="DataGridColumnHeader">
@@ -88,6 +148,11 @@
                                         Header="{x:Static langs:Resources.H_TotalCountLottery}"
                                         SortMemberPath="TotalCount"
                                         Binding="{Binding TotalCount}" />
+
+                    <DataGridTextColumn Width="1*" MinWidth="100" IsVisible="False"
+                                        Header="{x:Static hsr:Resources.S_HistoryGroup}"
+                                        SortMemberPath="HistoryGroup"
+                                        Binding="{Binding HistoryGroup}" />
 
                     <DataGridTextColumn Width="1*" MinWidth="100" IsVisible="False"
                                         Header="{x:Static langs:Resources.H_Weight}"

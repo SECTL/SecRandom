@@ -377,6 +377,99 @@ public sealed class FairDrawAlgorithmTests
         };
     }
 
+    /// <summary>
+    ///     The anonymous audit payload declares which slice of the profile history it measured, and never the
+    ///     course or group name itself (#294).
+    /// </summary>
+    [Fact]
+    public void CreateStudentVerificationInput_DeclaresHistoryScopeWithoutLeakingNames()
+    {
+        var first = new Student { Name = "First", RecordId = Guid.NewGuid(), Group = "A" };
+        var second = new Student { Name = "Second", RecordId = Guid.NewGuid(), Group = "B" };
+        var history = new StudentHistory
+        {
+            Students =
+            {
+                [first.RecordId.ToString("D")] = new History
+                {
+                    TotalCount = 1,
+                    Histories = new ObservableCollection<HistoryItem>(
+                    [
+                        new HistoryItem
+                        {
+                            CourseName = "数学",
+                            HistoryGroup = "期末抽奖",
+                            DrawTime = new DateTime(2026, 9, 1, 8, 0, 0)
+                        }
+                    ])
+                }
+            }
+        };
+        var config = CreateConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = true,
+            FairDrawGroup = false,
+            FairDrawGender = false,
+            FairDrawTime = false,
+            ColdStartEnabled = false,
+            EnableAvgGapProtection = false
+        });
+        var students = new StudentList { Students = [first, second] };
+
+        using var host = CreateHost(config, new TestProfileService(history, students));
+        var engine = CreateEngine(host);
+
+        static string ReadScope(DrawEngine engine, StudentList students, string courseName, string historyGroup)
+        {
+            var input = engine.CreateStudentVerificationInput(
+                1,
+                students.Students,
+                DrawSettingsType.RollCall,
+                courseName,
+                includeInternalRules: true,
+                rosterDigest: string.Empty,
+                historyGroup: historyGroup);
+            using var audit = JsonDocument.Parse(input.AuditPayload);
+            return audit.RootElement.GetProperty("fairness").GetProperty("historyScope").GetString()!;
+        }
+
+        Assert.Equal("global", ReadScope(engine, students, string.Empty, string.Empty));
+        Assert.Equal("course", ReadScope(engine, students, "数学", string.Empty));
+        Assert.Equal("history-group", ReadScope(engine, students, string.Empty, "期末抽奖"));
+        Assert.Equal("course-and-history-group", ReadScope(engine, students, "数学", "期末抽奖"));
+
+        // Only the scope name is uploaded: the audit payload must not carry the course or the group the user typed.
+        // The check parses the document instead of scanning the raw bytes, because the serializer escapes non-ASCII
+        // text and a substring test on the bytes would pass even while the name was uploaded.
+        var scoped = engine.CreateStudentVerificationInput(
+            1, students.Students, DrawSettingsType.RollCall, "数学",
+            includeInternalRules: true, rosterDigest: string.Empty, historyGroup: "期末抽奖");
+        using var scopedAudit = JsonDocument.Parse(scoped.AuditPayload);
+        var uploadedText = CollectStrings(scopedAudit.RootElement).ToArray();
+        Assert.DoesNotContain(uploadedText, text => text.Contains("期末抽奖", StringComparison.Ordinal));
+        Assert.DoesNotContain(uploadedText, text => text.Contains("数学", StringComparison.Ordinal));
+
+        static IEnumerable<string> CollectStrings(JsonElement element)
+        {
+            switch (element.ValueKind)
+            {
+                case JsonValueKind.String:
+                    yield return element.GetString()!;
+                    break;
+                case JsonValueKind.Object:
+                    foreach (var property in element.EnumerateObject())
+                    foreach (var value in CollectStrings(property.Value))
+                        yield return value;
+                    break;
+                case JsonValueKind.Array:
+                    foreach (var item in element.EnumerateArray())
+                    foreach (var value in CollectStrings(item))
+                        yield return value;
+                    break;
+            }
+        }
+    }
+
     private static IHost CreateHost(MainConfigModel config, IProfileService profile)
     {
         return Host.CreateDefaultBuilder()
@@ -447,8 +540,8 @@ public sealed class FairDrawAlgorithmTests
         public PrizeHistoryConfig? PrizeHistoryConfig => null;
         public void LoadStudentProfile(string name, bool saveCurrent = true) { }
         public void LoadPrizeProfile(string name, bool saveCurrent = true) { }
-        public void RecordStudentHistory(IReadOnlyList<Student> students, DateTime now, int requestedCount, string drawGroup = "", string drawGender = "", int drawMethod = 0, IReadOnlyDictionary<Student, double>? weights = null, string courseName = "", string? drawRoundId = null) { }
-        public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount, int drawMethod = 0, string? drawRoundId = null) { }
+        public void RecordStudentHistory(IReadOnlyList<Student> students, DateTime now, int requestedCount, string drawGroup = "", string drawGender = "", int drawMethod = 0, IReadOnlyDictionary<Student, double>? weights = null, string courseName = "", string? drawRoundId = null, string historyGroup = "") { }
+        public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount, int drawMethod = 0, string? drawRoundId = null, string courseName = "", string historyGroup = "") { }
         public void ClearCurrentStudentHistory() { }
         public void ClearCurrentPrizeHistory() { }
         public void SaveProfile() { }

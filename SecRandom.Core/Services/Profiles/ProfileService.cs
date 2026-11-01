@@ -139,7 +139,8 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         int drawMethod = 0,
         IReadOnlyDictionary<Student, double>? weights = null,
         string courseName = "",
-        string? drawRoundId = null)
+        string? drawRoundId = null,
+        string historyGroup = "")
     {
         var history = CurrentStudentHistory;
         if (history is null || students.Count == 0)
@@ -181,6 +182,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
                 DrawGender = drawGender,
                 DrawMethod = drawMethod,
                 CourseName = courseName,
+                HistoryGroup = historyGroup,
                 Weight = weights?.GetValueOrDefault(student, 1) ?? 1
             });
 
@@ -209,7 +211,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
             students.Count);
     }
 
-    public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount, int drawMethod = 0, string? drawRoundId = null)
+    public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount, int drawMethod = 0, string? drawRoundId = null, string courseName = "", string historyGroup = "")
     {
         var history = CurrentPrizeHistory;
         if (history is null || prizes.Count == 0)
@@ -248,6 +250,8 @@ public static partial class CoreRuntimeServiceCollectionExtensions
                 DrawGroup = string.Empty,
                 DrawGender = string.Empty,
                 DrawMethod = drawMethod,
+                CourseName = courseName,
+                HistoryGroup = historyGroup,
                 Weight = prize.Weight
             });
         }

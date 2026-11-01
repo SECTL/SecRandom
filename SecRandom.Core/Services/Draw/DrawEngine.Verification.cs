@@ -20,12 +20,14 @@ public partial class DrawEngine
         int count,
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType,
-        string courseName = "") => CreateStudentVerificationInput(
+        string courseName = "",
+        string historyGroup = "") => CreateStudentVerificationInput(
         count,
         candidates,
         drawSettingsType,
         courseName,
-        includeInternalRules: true);
+        includeInternalRules: true,
+        historyGroup: historyGroup);
 
     public VerificationDrawInput CreateStudentVerificationInput(
         int count,
@@ -33,7 +35,8 @@ public partial class DrawEngine
         DrawSettingsType drawSettingsType,
         string courseName,
         bool includeInternalRules,
-        string rosterDigest = "")
+        string rosterDigest = "",
+        string historyGroup = "")
     {
         var preparedCandidates = candidates.Where(student => student.IsCandidate).ToList();
         if (preparedCandidates.Count == 0 || count <= 0 || count > preparedCandidates.Count)
@@ -51,7 +54,7 @@ public partial class DrawEngine
         DrawPreparedStudentsSnapshot prepared;
         try
         {
-            prepared = PrepareStudentsForDraw(count, preparedCandidates, executionPolicy, courseName);
+            prepared = PrepareStudentsForDraw(count, preparedCandidates, executionPolicy, courseName, historyGroup);
         }
         catch (Exception exception) when (exception is CandidateNotFoundException or RepeatLimitExhaustedException)
         {
@@ -83,6 +86,11 @@ public partial class DrawEngine
                 algorithmProfile = algorithmProfile.ToString(),
                 repeatMode = ToAuditName(drawMode),
                 halfRepeatLimit = drawMode == DrawMode.HalfRepeat ? GetStudentRepeatThreshold(drawSettingsType) : (int?)null,
+                // Declares which slice of the profile history the per-candidate historyCount/lastDrawnUtc below
+                // were taken from. The group name itself never leaves the device: it is user-typed text that can
+                // contain a class or a person's name. A narrowed scope is exactly what makes these counts legal to
+                // read as "not the whole history", so it ships with the audit payload rather than being assumed.
+                historyScope = ToHistoryScopeName(courseName, historyGroup),
                 averageGapProtectionApplied = executionPolicy.DrawType == DrawType.Fair,
                 candidateCountBeforeAverageGapProtection = preparedCandidates.Count,
                 candidateCountAfterAverageGapProtection = prepared.UsableCandidates.Count,
@@ -100,16 +108,24 @@ public partial class DrawEngine
     /// </summary>
     public VerificationDrawInput CreatePrizeVerificationInput(
         int count,
-        IReadOnlyDictionary<string, int> temporaryCounts) => CreatePrizeVerificationInput(
+        IReadOnlyDictionary<string, int> temporaryCounts,
+        string historyGroup = "") => CreatePrizeVerificationInput(
         count,
         temporaryCounts,
-        includeInternalRules: true);
+        includeInternalRules: true,
+        historyGroup: historyGroup);
 
+    /// <param name="historyGroup">
+    ///     Accepted for signature symmetry with the student entry points and reserved for the persistent
+    ///     prize-history scope. The verified prize pool is built from temporary counts only, so it does not
+    ///     narrow this request; the anonymous audit payload therefore stays unchanged.
+    /// </param>
     public VerificationDrawInput CreatePrizeVerificationInput(
         int count,
         IReadOnlyDictionary<string, int> temporaryCounts,
         bool includeInternalRules,
-        string rosterDigest = "")
+        string rosterDigest = "",
+        string historyGroup = "")
     {
         var historyCache = BuildPrizeTemporaryHistoryCache(PrizeList.Prizes, temporaryCounts);
         List<Prize> usable;
@@ -224,6 +240,24 @@ public partial class DrawEngine
         DrawMode.HalfRepeat => "half-repeat",
         _ => "unknown"
     };
+
+    /// <summary>
+    ///     Names the history scope a draw's per-candidate history counts came from, for the anonymous audit payload.
+    /// </summary>
+    /// <remarks>
+    ///     The two narrowing axes are independent and intersecting: an empty course means the whole profile history
+    ///     was read, an empty group means no record-group filter was applied, and both together mean the counts are
+    ///     the intersection. Only the scope name leaves the device — never the course or group name — because both
+    ///     are user-typed text that can carry a class or a person's name.
+    /// </remarks>
+    private static string ToHistoryScopeName(string courseName, string historyGroup) =>
+        (string.IsNullOrWhiteSpace(courseName), string.IsNullOrWhiteSpace(historyGroup)) switch
+        {
+            (true, true) => "global",
+            (false, true) => "course",
+            (true, false) => "history-group",
+            _ => "course-and-history-group"
+        };
 
     /// <summary>
     ///     Rejects a frozen pool that cannot actually produce <paramref name="count"/> winners. Shielded

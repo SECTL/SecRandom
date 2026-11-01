@@ -39,6 +39,7 @@ public partial class MoreSettingsConfig : ObservableObject
     [ObservableProperty] private bool _rollCallListSelector = true;
     [ObservableProperty] private bool _rollCallRangeSelector = true;
     [ObservableProperty] private bool _rollCallGenderSelector = true;
+    [ObservableProperty] private bool _rollCallHistoryGroupSelector = true;
     [ObservableProperty] private bool _rollCallRemainingButton = true;
     [ObservableProperty] private bool _rollCallQuantityLabel = true;
     [ObservableProperty] private RollCallControlPanelPosition _lotteryControlPanelPosition = RollCallControlPanelPosition.Right;
@@ -49,6 +50,7 @@ public partial class MoreSettingsConfig : ObservableObject
     [ObservableProperty] private bool _lotteryStudentListSelector = true;
     [ObservableProperty] private bool _lotteryRangeSelector = true;
     [ObservableProperty] private bool _lotteryGenderSelector = true;
+    [ObservableProperty] private bool _lotteryHistoryGroupSelector = true;
     [ObservableProperty] private bool _lotteryRemainingButton = true;
     [ObservableProperty] private bool _lotteryQuantityLabel = true;
     [ObservableProperty] private bool _enableShortcut = false;

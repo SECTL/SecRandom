@@ -17,7 +17,21 @@ public static class VerificationWireCodec
     public const string InventoryLotteryAlgorithmId = "secrandom-inventory-permutation-chacha20/v3";
     public const string WeightedLotteryAlgorithmId = "secrandom-lottery-weighted-without-replacement-chacha20/v3";
     public const string AlgorithmId = StudentAlgorithmId;
-    public const string AlgorithmEngineVersion = "3.3.0";
+
+    /// <summary>
+    ///     Engine version stamped into every new proof.
+    /// </summary>
+    /// <remarks>
+    ///     3.4.0 changes no replay arithmetic: student draws still sample over history-balanced weights and the
+    ///     frozen candidate weights are unchanged. It marks the proof protocol that may declare a
+    ///     <c>fairness.historyScope</c> — the anonymous audit payload can now say that a candidate's
+    ///     <c>historyCount</c>/<c>lastDrawnUtc</c> came from a course, a history record group, or both, instead of the
+    ///     whole profile history. A 3.3-era verifier would read those narrowed counts as global history, which is why
+    ///     the scope declaration needs its own engine version and why <c>fair.sectl.cn</c> must accept 3.4.0 before a
+    ///     build that emits it is released. Proofs already stamped 3.3.0 and earlier keep replaying under their own
+    ///     branch.
+    /// </remarks>
+    public const string AlgorithmEngineVersion = "3.4.0";
 
     private static readonly byte[] InputMagic = "SRDI"u8.ToArray();
     private static readonly byte[] RequestMagic = "SRDQ"u8.ToArray();

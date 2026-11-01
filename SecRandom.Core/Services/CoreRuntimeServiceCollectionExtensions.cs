@@ -18,6 +18,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         services.AddSingleton<ConfigServiceBase, FileConfigService>();
         services.AddSingleton<MainConfigHandler>();
         services.AddSingleton<IProfileService, ProfileService>();
+        services.AddSingleton<IHistoryGroupCatalog, HistoryGroupCatalog>();
         services.AddSingleton<IProfileCatalogEditor, ProfileCatalogEditor>();
         services.AddSingleton<IProfileCatalogManager, ProfileCatalogManager>();
         services.AddSingleton<IDrawTemporaryRecordService, DrawTemporaryRecordService>();

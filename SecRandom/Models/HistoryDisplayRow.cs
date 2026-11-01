@@ -20,6 +20,9 @@ public static class HistoryMode
 /// </summary>
 public sealed class HistoryDisplayRow
 {
+    /// <summary>历史记录自身的稳定标识；总览模式的行是汇总行，没有对应记录，因此为空。</summary>
+    public string RecordId { get; init; } = string.Empty;
+
     public string Id { get; init; } = string.Empty;
     public string Name { get; init; } = string.Empty;
     public string Gender { get; init; } = string.Empty;
@@ -27,6 +30,11 @@ public sealed class HistoryDisplayRow
     public string Subject { get; init; } = string.Empty;
     public string DrawGender { get; init; } = string.Empty;
     public string DrawGroup { get; init; } = string.Empty;
+
+    /// <summary>历史记录组（用户自定义的用途分组，空串=默认组）。与 Group（学生自身分组）、
+    /// DrawGroup（抽取时的分组范围）、Subject（联动课程）四者互不相同，不要互相赋值。</summary>
+    public string HistoryGroup { get; init; } = string.Empty;
+
     public int TotalCount { get; init; }
     public string DrawTime { get; init; } = string.Empty;
     public string DrawMethod { get; init; } = string.Empty;
@@ -156,4 +164,16 @@ public sealed class HistoryDisplayRow
             _ => 0
         };
     }
+}
+
+/// <summary>
+///     历史记录页「记录组」筛选/移动下拉的一项。
+///     <see cref="Value" /> 才是记录上的取值：<c>null</c>=不做记录组筛选（「全部记录组」）、
+///     空串=默认组、其余为具体组名；<see cref="DisplayName" /> 只用于显示。
+///     两者必须分开，因为默认组的取值就是空串，不能拿它当文本用。
+/// </summary>
+public sealed class HistoryGroupOption
+{
+    public string? Value { get; init; }
+    public string DisplayName { get; init; } = string.Empty;
 }

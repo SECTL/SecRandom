@@ -504,4 +504,79 @@
   <data name="C_SetAvatarViaPrize_D" xml:space="preserve">
     <value>くじ引き名簿ページを開き、景品の追加設定（画像表示）で景品画像を設定します</value>
   </data>
+  <data name="S_HistoryGroups_Enabled" xml:space="preserve">
+    <value>履歴記録グループ</value>
+  </data>
+  <data name="S_HistoryGroups_Enabled_D" xml:space="preserve">
+    <value>有効にするとメイン画面で抽選を特定の履歴記録グループに固定でき、重みはそのグループの既存の記録だけを参照し、新しい記録もそのグループにのみ書き込まれます；旧バージョンはこの記録項目を認識しないため、ダウングレードしても記録は残りますがグループの印は破棄され、そのグループの記録は全体の履歴に戻ります</value>
+  </data>
+  <data name="S_HistoryGroups_Manage" xml:space="preserve">
+    <value>点名履歴記録グループ</value>
+  </data>
+  <data name="S_HistoryGroups_Add" xml:space="preserve">
+    <value>記録グループを追加</value>
+  </data>
+  <data name="S_HistoryGroups_Rename" xml:space="preserve">
+    <value>名前を変更</value>
+  </data>
+  <data name="S_HistoryGroups_Delete" xml:space="preserve">
+    <value>削除</value>
+  </data>
+  <data name="S_HistoryGroups_ConfirmDelete" xml:space="preserve">
+    <value>削除を確認</value>
+  </data>
+  <data name="S_HistoryGroups_DeleteHint" xml:space="preserve">
+    <value>削除するとこのグループの記録は既定グループに戻り、記録自体は削除されません</value>
+  </data>
+  <data name="S_HistoryGroups_Save" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="S_HistoryGroups_Cancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="S_HistoryGroups_Empty" xml:space="preserve">
+    <value>記録グループはまだありません</value>
+  </data>
+  <data name="S_HistoryGroups_RecordCount" xml:space="preserve">
+    <value>{0} 件</value>
+  </data>
+  <data name="S_HistoryGroups_Error_NameEmpty" xml:space="preserve">
+    <value>グループ名は空にできません</value>
+  </data>
+  <data name="S_HistoryGroups_Error_NameTooLong" xml:space="preserve">
+    <value>グループ名が長すぎます</value>
+  </data>
+  <data name="S_HistoryGroups_Error_NameControlChars" xml:space="preserve">
+    <value>グループ名に制御文字は使用できません</value>
+  </data>
+  <data name="S_HistoryGroups_Error_NameReserved" xml:space="preserve">
+    <value>そのグループ名は予約されているため使用できません</value>
+  </data>
+  <data name="S_HistoryGroups_Error_AlreadyExists" xml:space="preserve">
+    <value>同じ名前の記録グループが既に存在します</value>
+  </data>
+  <data name="S_HistoryGroups_Error_NotFound" xml:space="preserve">
+    <value>記録グループが存在しません（削除された可能性があります）</value>
+  </data>
+  <data name="S_HistoryGroups_Error_NameUnchanged" xml:space="preserve">
+    <value>新しい名前が現在の名前と同じです</value>
+  </data>
+  <data name="S_HistoryGroups_Error_ProfileUnavailable" xml:space="preserve">
+    <value>現在のプロファイルが利用できないため、記録グループを管理できません</value>
+  </data>
+  <data name="S_HistoryGroups_Error_SaveFailed" xml:space="preserve">
+    <value>保存に失敗しました（もう一度お試しください）</value>
+  </data>
+  <data name="S_QuickDrawHistoryGroup" xml:space="preserve">
+    <value>記録グループ</value>
+  </data>
+  <data name="S_QuickDrawHistoryGroup_D" xml:space="preserve">
+    <value>グループを選ぶとクイック抽選はそのグループの履歴だけで重みを計算し、今回の記録もそのグループにのみ書き込みます；不要なときは「記録グループを使わない」を選んでください</value>
+  </data>
+  <data name="O_QuickDrawHistoryGroupNone" xml:space="preserve">
+    <value>記録グループを使わない</value>
+  </data>
+  <data name="S_QuickDrawHistoryGroup_Disabled" xml:space="preserve">
+    <value>履歴記録グループ機能が有効になっていません。「既定の抽選設定」で有効にできます</value>
+  </data>
 </root>

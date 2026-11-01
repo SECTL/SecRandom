@@ -28,4 +28,10 @@ public partial class PrizeHistory : ProfileConfigBase
     public ObservableDictionary<string, History> Prizes { get; set; } = [];
     public ObservableDictionary<string, int> GroupStats { get; set; } = [];
     public ObservableDictionary<string, int> GenderStatus { get; set; } = [];
+
+    /// <summary>
+    ///     Registered history groups of this pool. Empty group names are the implicit default group and are never
+    ///     listed. Counts are derived from <see cref="Prizes"/> records, never stored here.
+    /// </summary>
+    public ObservableDictionary<string, HistoryGroupInfo> HistoryGroups { get; set; } = [];
 }

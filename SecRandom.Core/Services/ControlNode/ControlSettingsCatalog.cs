@@ -167,7 +167,11 @@ public static class ControlSettingsCatalog
     private static readonly string[] ReadOnlyPathPrefixes =
     [
         // 证明留存是"本机证据链还能留多久"的所有权，控制面把它调短等于替管理员销毁证据。
-        "general.proof_retention."
+        "general.proof_retention.",
+
+        // 历史记录组是"这台机器现在按什么范围抽"的设备本地决定：远程打开或切换会让课堂抽取
+        // 静默落到另一个记录组，而现场的人看不出来，所以整段只读。
+        "general.history_groups."
     ];
 
     private static readonly IReadOnlyList<CategoryPlan> Categories;

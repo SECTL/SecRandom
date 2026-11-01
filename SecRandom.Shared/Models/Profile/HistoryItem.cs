@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace SecRandom.Shared.Models.Profile;
 
@@ -14,6 +14,10 @@ public partial class HistoryItem : ObservableRecipient
     [ObservableProperty] private string _drawGroup = string.Empty;
     // Empty is the legacy/global-history value; populated entries are scoped to a linkage course.
     [ObservableProperty] private string _courseName = string.Empty;
+
+    // Empty is the default history group; populated values partition a profile's history so a draw can weigh
+    // only the records of that group. Orthogonal to CourseName: both filters combine by intersection.
+    [ObservableProperty] private string _historyGroup = string.Empty;
 
     [ObservableProperty] private int _drawMethod = 1;
     [ObservableProperty] private int _drawNumbers = 1;

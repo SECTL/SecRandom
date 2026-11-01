@@ -25,6 +25,13 @@ using SecRandom.Core.Services.Draw.Exceptions;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Shared.Models.Profile;
 
+// HISTORY RECORD GROUPS (#294): this audit tool was written against the pre-group engine and
+// always runs with an empty historyGroup (see the draw calls below), i.e. it validates the
+// "not locked to any record group" path — the path every existing user is on by default. It
+// therefore says nothing about group-scoped fairness, and deliberately does not seed group
+// markers: BumpStudentHistory only advances TotalCount/LastDrawnTime without appending a
+// HistoryItem, so a seeded pool has no per-record markers to filter on.
+
 CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
 CultureInfo.CurrentUICulture = CultureInfo.InvariantCulture;
 
@@ -499,13 +506,16 @@ th{background:#f1f5f9}
             int drawMethod = 0,
             IReadOnlyDictionary<Student, double>? weights = null,
             string courseName = "",
-            string? drawRoundId = null) { }
+            string? drawRoundId = null,
+            string historyGroup = "") { }
         public void RecordPrizeHistory(
             IReadOnlyList<Prize> prizes,
             DateTime now,
             int requestedCount,
             int drawMethod = 0,
-            string? drawRoundId = null) { }
+            string? drawRoundId = null,
+            string courseName = "",
+            string historyGroup = "") { }
         public void ClearCurrentStudentHistory() { }
         public void ClearCurrentPrizeHistory() { }
         public void SaveProfile() { }

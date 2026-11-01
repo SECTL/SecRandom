@@ -14,4 +14,5 @@
   <data name="M_ResetDone" xml:space="preserve"><value>已清空当前名单点名记录</value></data>
   <data name="M_DefaultListRequired" xml:space="preserve"><value>请先在闪抽设置中选择默认成员名单</value></data>
   <data name="M_DefaultListMissing" xml:space="preserve"><value>默认成员名单不存在，请在闪抽设置中重新选择</value></data>
+  <data name="M_HistoryGroupLocked" xml:space="preserve"><value>记录组</value></data>
 </root>

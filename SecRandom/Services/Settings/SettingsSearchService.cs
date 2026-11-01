@@ -67,7 +67,8 @@ public class SettingsSearchService
                 "S_StudentImage", "S_StudentImagePosition", "S_StudentImageSize", "S_AnimationMusic", "S_ResultMusic",
                 "S_AnimationMusicLoop", "S_AnimationMusicVolume", "S_ResultMusicVolume", "S_AnimationMusicFade",
                 "S_ResultMusicFade", "S_VoiceAnnouncementEnabled", "S_ReminderText", "S_ReminderFontSize",
-                "S_ReminderTextColor", "S_ReminderTextOpacity"
+                "S_ReminderTextColor", "S_ReminderTextOpacity",
+                "S_HistoryGroups_Enabled", "S_HistoryGroups_Manage"
             },
             ["settings.picking.rollCall"] = new HashSet<string>
             {
@@ -82,7 +83,8 @@ public class SettingsSearchService
             },
             ["settings.picking.quickDraw"] = new HashSet<string>
             {
-                "S_DrawMode", "S_HalfRepeat", "S_DrawType", "S_DefaultClass", "S_DisableAfterClick", "S_FontSource",
+                "S_DrawMode", "S_HalfRepeat", "S_DrawType", "S_DefaultClass", "S_DisableAfterClick",
+                "S_QuickDrawHistoryGroup", "S_FontSource",
                 "S_CustomFont", "S_FontSize", "S_DisplayFormat", "S_ShowTags", "S_Animation", "S_AnimationInterval",
                 "S_AutoplayCount", "S_AnimationStyle", "S_ColorTheme", "S_FixedColor", "S_StudentImage",
                 "S_StudentImagePosition", "S_StudentImageSize", "S_AnimationMusic", "S_ResultMusic",

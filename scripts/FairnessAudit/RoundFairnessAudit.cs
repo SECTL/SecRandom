@@ -528,13 +528,16 @@ th{background:#f1f5f9}
             int drawMethod = 0,
             IReadOnlyDictionary<Student, double>? weights = null,
             string courseName = "",
-            string? drawRoundId = null) { }
+            string? drawRoundId = null,
+            string historyGroup = "") { }
         public void RecordPrizeHistory(
             IReadOnlyList<Prize> prizes,
             DateTime now,
             int requestedCount,
             int drawMethod = 0,
-            string? drawRoundId = null) { }
+            string? drawRoundId = null,
+            string courseName = "",
+            string historyGroup = "") { }
         public void ClearCurrentStudentHistory() { }
         public void ClearCurrentPrizeHistory() { }
         public void SaveProfile() { }

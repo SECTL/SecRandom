@@ -148,6 +148,9 @@
   <data name="E_Group" xml:space="preserve">
     <value>小组</value>
   </data>
+  <data name="E_HistoryGroup" xml:space="preserve">
+    <value>记录组</value>
+  </data>
   <data name="E_DrawMethod" xml:space="preserve">
     <value>抽取方式</value>
   </data>
