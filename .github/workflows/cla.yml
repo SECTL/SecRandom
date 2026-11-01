@@ -11,6 +11,17 @@ name: CLA Assistant
 #
 # 安全提示：pull_request_target 会在有仓库写权限的上下文里运行，
 # 所以这里的 action 版本必须固定，不要改成 @master 或浮动的 tag。
+#
+# 签名存放位置：signatures/version1/cla.json 在专门的 `cla-signatures` 分支上，**不在 master**。
+# 原因（实测过，不要"顺手改回 master"）：
+#   机器人是用 GITHUB_TOKEN 提交的，它不是管理员、也没有任何 bypass 权限，而 master 上挂着
+#   required status check「CLA Assistant」，直接推送会被拒绝，错误是
+#   `Required status check "CLA Assistant" is expected`。
+#   Ruleset 的 bypass_actors 也救不了它：机构仓库要求被授权的 app 属于组织已安装的集成，
+#   而 GitHub Actions 是 GitHub 一方应用，API 会返回
+#   `Actor GitHub Actions integration must be part of the ruleset source or owner organization`（422）。
+#   因此让签名落在不受 required check 约束的分支上；master 的保护对人和 PR 照常生效。
+#   该分支由 ruleset 单独保护（禁止删除 / 禁止 force push），内容仍可由机器人正常追加。
 
 on:
   issue_comment:
@@ -37,13 +48,15 @@ jobs:
         uses: contributor-assistant/github-action@v2.6.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # 机器人需要把签名文件提交回 master；用 PAT 才有权限，否则回落到 GITHUB_TOKEN
-          # PAT 需带 repo 权限，保存在仓库 secret CLA_ASSISTANT_PAT
+          # 机器人需要把签名文件提交回仓库；用 PAT 才有权限，否则回落到 GITHUB_TOKEN。
+          # 当前用 GITHUB_TOKEN + 独立签名分支（见文件头部说明），因此**不需要**再配 PAT。
+          # 若将来想改回 master 存签名，必须同时提供带 repo 权限的 secrets.CLA_ASSISTANT_PAT。
           PERSONAL_ACCESS_TOKEN: ${{ secrets.CLA_ASSISTANT_PAT || secrets.GITHUB_TOKEN }}
         with:
           path-to-signatures: 'signatures/version1/cla.json'
           path-to-document: 'https://github.com/SECTL/SecRandom/blob/master/CLA.md'
-          branch: 'master'
+          # 必须是已存在、且不带 required status check 的分支
+          branch: 'cla-signatures'
           # 自己人不需要签署；新增维护者务必加到这里，否则会被自己的检查拦住
           allowlist: lzy98276,dependabot[bot],renovate[bot],github-actions[bot],copilot-swe-agent[bot]
           remote-organization-name: 'SECTL'
