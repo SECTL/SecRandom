@@ -27,9 +27,12 @@ permissions:
 
 jobs:
   cla:
+    # job name 就是分支保护里 required status check 的显示名称；
+    # 改这一行等于改 required check 的名字，必须同步仓库设置，否则分支会永远等不到检查。
+    name: CLA Assistant
     runs-on: ubuntu-latest
     steps:
-      - name: CLA Assistant
+      - name: Run CLA Assistant
         if: (github.event.comment.body == 'recheck' || github.event.comment.body == 'recheck 重新检查' || github.event_name == 'pull_request_target')
         uses: contributor-assistant/github-action@v2.6.1
         env:
