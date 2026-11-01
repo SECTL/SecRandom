@@ -70,7 +70,7 @@ jobs:
           # 必须是已存在、且不带 required status check 的分支
           branch: 'cla-signatures'
           # 自己人不需要签署；新增维护者务必加到这里，否则会被自己的检查拦住
-          allowlist: dependabot[bot],renovate[bot],github-actions[bot],copilot-swe-agent[bot]
+          allowlist: lzy98276,dependabot[bot],renovate[bot],github-actions[bot],copilot-swe-agent[bot]
           remote-organization-name: 'SECTL'
           remote-repository-name: 'SecRandom'
 
