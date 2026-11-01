@@ -1,9 +1,9 @@
-﻿<!--
+<!--
 感谢您参与 SecRandom 的贡献！
 
 提交 PR 前请确认:
 您已阅读贡献指南:
-https://github.com/SecRandom/SecRandom/blob/master/CONTRIBUTING.md
+https://github.com/SECTL/SecRandom/blob/master/CONTRIBUTING.md
 
 ⚠ 在提交 PR 前，请确保您已在本地完成必要的测试，且确保要实现的功能或修复的问题能正常工作。 ⚠
 ⚠ 谎报测试结果可能会导致您最高被**永久**限制向本组织中的仓库提交 PR 和进行其它互动。 ⚠
@@ -66,4 +66,5 @@ Fixes #456
 
 - [ ] 我阅读并已经在本地测试过这个 PR，确保欲实现的功能或修复的问题能正常工作。
 - [ ] 我已阅读并遵循贡献指南
+- [ ] 我已在 PR 评论中签署 [贡献者许可协议（CLA）](https://github.com/SECTL/SecRandom/blob/master/CLA.md)（维护者及已签署过的贡献者可跳过；勾选前请确认 CLA 检查已通过）
 - [ ] 涉及 UI 变更时，我已补充截图或录屏（如适用）
