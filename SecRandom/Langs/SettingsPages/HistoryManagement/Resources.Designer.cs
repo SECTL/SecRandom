@@ -605,6 +605,18 @@ namespace SecRandom.Langs.SettingsPages.HistoryManagement {
             }
         }
 
+        public static string S_HistoryGroups_Manage_D {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Manage_D", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Existing {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Existing", resourceCulture);
+            }
+        }
+
         public static string S_HistoryGroups_Add {
             get {
                 return ResourceManager.GetString("S_HistoryGroups_Add", resourceCulture);

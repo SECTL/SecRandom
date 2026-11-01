@@ -38,6 +38,8 @@ public sealed class HistoryGroupLocalizationTests
             "S_HistoryGroups_Enabled",
             "S_HistoryGroups_Enabled_D",
             "S_HistoryGroups_Manage",
+            "S_HistoryGroups_Manage_D",
+            "S_HistoryGroups_Existing",
             "S_HistoryGroups_Add",
             "S_HistoryGroups_Rename",
             "S_HistoryGroups_Delete",

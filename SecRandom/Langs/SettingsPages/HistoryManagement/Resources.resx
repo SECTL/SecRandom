@@ -268,6 +268,12 @@
   <data name="S_HistoryGroups_Manage" xml:space="preserve">
     <value>点名历史记录组</value>
   </data>
+  <data name="S_HistoryGroups_Manage_D" xml:space="preserve">
+    <value>展开后可以新建记录组，也可以改名或删除已有的组</value>
+  </data>
+  <data name="S_HistoryGroups_Existing" xml:space="preserve">
+    <value>已有记录组</value>
+  </data>
   <data name="S_HistoryGroups_Add" xml:space="preserve">
     <value>新建记录组</value>
   </data>
