@@ -77,6 +77,27 @@ dotnet test SecRandom.Core.Tests/SecRandom.Core.Tests.csproj -c Release --no-res
 - 提交 PR 前至少运行与改动范围相符的还原、构建和测试命令，并在 PR 描述中说明未运行的检查及原因。
 - 不要未经人工审阅直接提交生成式 AI 产出的代码、测试或文档；贡献者对提交内容的正确性和许可合规性负责。
 
+## 贡献者许可协议（CLA）
+
+仓库根目录的 [`CLA.md`](CLA.md) 是本项目的贡献者许可协议（版本 1.0，2026 年 11 月 1 日生效）。
+
+- **首次提交 Pull Request 时会被要求在 PR 中签署。** 签署由 `.github/workflows/cla.yml` 的 CLA Assistant 自动记录，结果保存在 `signatures/version1/cla.json`。
+- **未签署的 PR 不会被合并。** 这不影响你已经获得的 GPLv3 权利，只是该次贡献不会进入维护者可再许可的范围。
+- 签署语句由机器人自动附在 PR 留言中。如果你的贡献全部是新的，直接发送：
+
+  ```text
+  I have read the CLA Document and I hereby sign the CLA
+  ```
+
+- 如果希望这次签署**同时覆盖你此前已提交的历史贡献**（`CLA.md` §9.5，可选），在句末追加一句：
+
+  ```text
+  I have read the CLA Document and I hereby sign the CLA, and I agree that this CLA also covers my prior contributions
+  ```
+
+- CLA 只做**许可授予**，不做版权转让：你仍然拥有自己贡献的版权，也仍然可以按 GPLv3 对它做任何事。维护者获得的是额外的一项「可再许可」授权，用于将来可能调整项目的出站许可证；调整前必须提前 30 天公示并接受异议（`CLA.md` §4）。
+- CLA **不改变**任何已发布版本在 GNU GPLv3 下的授权，也**不覆盖** `vendors/` 下的子模块与其他第三方依赖。
+
 ## CI 与发布
 
 仓库使用 GitHub Actions：

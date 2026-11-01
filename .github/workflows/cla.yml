@@ -1,0 +1,83 @@
+name: CLA Assistant
+
+# 贡献者许可协议检查（CLA.md v1.0，生效 2026-11-01）
+#
+# 流程：首次 PR → 机器人在 PR 上留言 → 贡献者按提示在评论中粘贴签署语句
+#       → 机器人把签署记录写进 signatures/version1/cla.json 并把 status 置为 success。
+#
+# 重要：这个 job 只有在仓库设置里对 master 开启分支保护、
+# 并把「CLA Assistant」设为 required status check 时，才真正**阻止**未签署的 PR 合并。
+# 没有 required check 时它只是一个红色提示，维护者依然可以手动合并。
+#
+# 安全提示：pull_request_target 会在有仓库写权限的上下文里运行，
+# 所以这里的 action 版本必须固定，不要改成 @master 或浮动的 tag。
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_target:
+    types: [opened, synchronize, reopened, closed]
+    branches: [master]
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+  statuses: write
+
+jobs:
+  cla:
+    runs-on: ubuntu-latest
+    steps:
+      - name: CLA Assistant
+        if: (github.event.comment.body == 'recheck' || github.event.comment.body == 'recheck 重新检查' || github.event_name == 'pull_request_target')
+        uses: contributor-assistant/github-action@v2.6.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # 机器人需要把签名文件提交回 master；用 PAT 才有权限，否则回落到 GITHUB_TOKEN
+          # PAT 需带 repo 权限，保存在仓库 secret CLA_ASSISTANT_PAT
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.CLA_ASSISTANT_PAT || secrets.GITHUB_TOKEN }}
+        with:
+          path-to-signatures: 'signatures/version1/cla.json'
+          path-to-document: 'https://github.com/SECTL/SecRandom/blob/master/CLA.md'
+          branch: 'master'
+          # 自己人不需要签署；新增维护者务必加到这里，否则会被自己的检查拦住
+          allowlist: lzy98276,dependabot[bot],renovate[bot],github-actions[bot],copilot-swe-agent[bot]
+          remote-organization-name: 'SECTL'
+          remote-repository-name: 'SecRandom'
+
+          # 故意留空：留空时 action 退回内置正则匹配
+          #   ^.*i have read the cla document and i hereby sign the cla.*$
+          # 它允许语句后面再跟任意内容 —— 这正是 CLA.md §9.5 需要的效果：
+          # 贡献者可以在同一句后面追加追认历史贡献的声明，仍然被认作有效签署。
+          # 一旦在这里写死固定语句，匹配会变成「整条评论必须严格等于该句」，
+          # 追认句式就再也签不上了。改这个值之前先读 CLA.md §9.5。
+          custom-pr-sign-comment: ''
+
+          custom-notsigned-prcomment: |
+            感谢你的 PR！本项目自 2026-11-01 起要求在合并前签署[贡献者许可协议（CLA）](https://github.com/SECTL/SecRandom/blob/master/CLA.md)。
+
+            这是**许可授予**协议（license grant），**不转让著作权**：你仍然是自己贡献的版权人，只是同时授权维护者以任何许可证再许可本项目（含当下使用的 GPLv3）。它不改变任何已发布版本的 GPLv3 授权，也允许你随时停止贡献。
+
+            请在下方评论中粘贴下面的语句完成签署（机器人会自动把它附在本条消息里）。
+
+            如果你希望这次签署**同时覆盖你此前已提交的历史贡献**（CLA.md §9.5，可选），请在句末追加：
+            `, and I agree that this CLA also covers my prior contributions`
+
+            ---
+
+            Thank you for your PR! This project requires signing the [Contributor License Agreement (CLA)](https://github.com/SECTL/SecRandom/blob/master/CLA.md) before merging.
+
+            It is a license grant, **not** a copyright assignment: you keep the copyright of your contribution and additionally license the maintainer to relicense the project under any terms, including the current GPLv3. It does not change the GPLv3 license of any published release, and you may stop contributing at any time.
+
+            Please paste the statement below in a comment to sign (the bot appends it automatically).
+
+            To make this signature also cover your **earlier** commits (CLA.md §9.5, optional), append:
+            `, and I agree that this CLA also covers my prior contributions`
+
+          custom-allsigned-prcomment: '所有贡献者均已签署 CLA ✅ / All contributors have signed the CLA.'
+          signed-commit-message: 'chore(cla): @$contributorName 签署 CLA v1.0'
+          # 合并后锁定 PR：否则贡献者可以在合并之后删改自己的签署评论，
+          # 让已生效的签署记录失去凭据。签名是法律行为，这里保持锁定。
+          lock-pullrequest-aftermerge: true
+          suggest-recheck: true

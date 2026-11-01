@@ -86,6 +86,7 @@ Notes:
 ## License and third-party notices
 
 - SecRandom is released under [GNU GPLv3](../LICENSE).
+- Contributions are covered by the [Contributor License Agreement](../CLA.md) (v1.0, effective 1 November 2026), signed inside the pull request. The CLA is a license grant, not a copyright assignment: you keep the copyright in your contribution and your GPLv3 rights against anyone, and it does not change the licensing of any released version.
 - See [THIRD-PARTY-NOTICES.md](../THIRD-PARTY-NOTICES.md) for third-party components, copyright information, and distribution-review notes.
 - History-balanced weights and candidate filters help reduce repeat selections and improve long-term distribution. They do not replace management of real-world rosters, rules, or processes, and SecRandom does not claim to verify those conditions.
 

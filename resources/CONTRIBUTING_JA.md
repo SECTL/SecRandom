@@ -77,6 +77,27 @@ dotnet test SecRandom.Core.Tests/SecRandom.Core.Tests.csproj -c Release --no-res
 - PR を開く前に、変更範囲に適した restore、build、test を実行し、実行していない確認項目と理由を記載してください。
 - 人間によるレビューなしに生成 AI の出力を提出しないでください。貢献者は正確性とライセンス遵守に責任を負います。
 
+## コントリビューターライセンス契約（CLA）
+
+[`CLA.md`](../CLA.md) は本プロジェクトのコントリビューターライセンス契約です（v1.0、2026 年 11 月 1 日発効）。
+
+- 最初の Pull Request で、PR コメント内での署名を求められます。署名は CLA Assistant ワークフロー（`.github/workflows/cla.yml`）が `signatures/version1/cla.json` に記録します。
+- 署名のない Pull Request はマージされません。これはあなたの GPLv3 上の権利には影響せず、当該コントリビューションがメンテナの再許諾範囲に入らないという意味だけです。
+- 署名の文言はボットのコメントに自動で添付されます。すべてのコントリビューションが新規であれば、そのまま投稿してください:
+
+  ```text
+  I have read the CLA Document and I hereby sign the CLA
+  ```
+
+- この署名で**過去**のコントリビューションも対象にしたい場合（`CLA.md` §9.5、任意）は、一文を追加してください:
+
+  ```text
+  I have read the CLA Document and I hereby sign the CLA, and I agree that this CLA also covers my prior contributions
+  ```
+
+- 本 CLA は著作権の譲渡ではなく利用許諾です。著作権はあなたに残り、GPLv3 の下で自由に扱えます。メンテナが得るのは再許諾の権利一つだけで、将来の出站ライセンス変更にのみ用いられ、その場合も 30 日前の公示と異議期間が必要です（`CLA.md` §4）。
+- 本 CLA は公開済みバージョンの GNU GPLv3 上のライセンスを変更せず、`vendors/` 配下のサブモジュールやその他の第三者依存も対象外です。
+
 ## CI とリリース
 
 リポジトリは GitHub Actions を使用しています。

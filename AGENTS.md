@@ -47,6 +47,7 @@ SecRandom-C/
 ├── CHANGELOG/             # Versioned release notes, mostly v3 tree; CHANGELOG/README.md holds the stable-release note template
 ├── resources/             # README mirrors, screenshots, banners, root static assets
 ├── vendors/EdgeTtsSharp/  # Edge TTS synthesis submodule; app supplies a cross-platform transport seam
+├── CLA.md                 # Contributor License Agreement v1.0 (effective 2026-11-01); license-grant form, sublicensable
 ├── Global.props           # Main shared MSBuild policy; imported by projects
 ├── Directory.Build.props  # Avalonia version pin only
 └── SecRandom.sln          # Build/test solution entrypoint
@@ -144,6 +145,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 
 ## CONVENTIONS
 - `docs/project_rules.md` overrides inference when adding features.
+- Contributor intake is governed by the repository-root `CLA.md` (v1.0, effective 2026-11-01): every new contributor signs the license-grant CLA via the `.github/workflows/cla.yml` CLA Assistant check before a PR may merge, and signatures are stored in `signatures/version1/cla.json`. The CLA grants a sublicensable licence, **does not** assign copyright, and never re-licenses an already published GPLv3 release; signing may optionally also cover the signer's earlier commits (§9.5). The maintainer allowlist lives in that workflow, so a new maintainer must be added there or the check blocks them. Never edit `CLA.md` in place: the version number, the effective date, and the `signatures/versionN/` directory move together, because changing the terms of an already-signed version would invalidate the existing signatures.
 - General settings now live under `MainConfigModel.General`; `MainConfigModel.Basic` / `Backup` remain compatibility bridges for existing callers while new config splits belong under `SecRandom.Core/Models/SubConfigs/General/`.
 - Basic settings are functional runtime controls: `ShowStartupWindow`, primary-window topmost mode, and background residency apply only to the primary `MainWindow`; `AutoSaveWindowSize` preserves independent geometry/maximized state for the primary and settings windows. Cross-platform autostart and `secrandom://` protocol registration belong to app-layer `DesktopIntegrationService`, which must use user-level Windows/Linux/macOS mechanisms and not silently persist a failed integration request.
 - Selecting `TopmostMode.UiAccess` for the primary or floating window persists the setting and requests a restart. `SecRandom.Desktop/UiAccessStartup` is the Windows-only pre-Avalonia launcher boundary: following `killtimer0/uiaccess`, it elevates a bootstrap process, impersonates same-session `winlogon.exe`, sets `TokenUIAccess` on a duplicate of the bootstrap's current token, and starts the UIAccess replacement before Avalonia initializes. The original process waits only for the bootstrap to create the replacement, never for Avalonia or Host initialization; denied elevation, preparation failure, or timeout keeps the original process in ordinary topmost and preserves the configured mode for a later retry.

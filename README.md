@@ -23,6 +23,9 @@
 > [!NOTE]
 > SecRandom 以 GNU GPLv3 协议发布！您可以修改和再发布源代码，但再发布的衍生作品也必须遵循 GNU GPLv3
 
+> [!IMPORTANT]
+> 本仓库自 2026 年 11 月 1 日起要求贡献者签署[贡献者许可协议（CLA）](CLA.md)。首次提交 Pull Request 时会被要求在 PR 中签署，未签署的 PR 不会被合并。CLA 只做许可授予、不转让版权，也不改变任何已发布版本在 GNU GPLv3 下的授权。
+
 ## SecRandom
 
 SecRandom 是面向课堂、团队、活动、决策等场景的公平抽取应用

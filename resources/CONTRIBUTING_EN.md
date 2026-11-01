@@ -77,6 +77,27 @@ Read the root [AGENTS.md](../AGENTS.md) and [project rules](../docs/project_rule
 - Before opening a PR, run restore, build, and test commands appropriate to the changed scope. State any checks you did not run and why.
 - Do not submit generative-AI output without human review. Contributors remain responsible for correctness and license compliance.
 
+## Contributor License Agreement (CLA)
+
+[`CLA.md`](../CLA.md) is this project's Contributor License Agreement (v1.0, effective 1 November 2026).
+
+- Your first pull request will ask you to sign it in a PR comment. Signatures are recorded by the CLA Assistant workflow (`.github/workflows/cla.yml`) in `signatures/version1/cla.json`.
+- An unsigned pull request will not be merged. This does not affect your GPLv3 rights; it only means the contribution falls outside what the maintainers may relicense.
+- The signing statement is attached automatically to the bot's comment. If all your contributions are new, post it as is:
+
+  ```text
+  I have read the CLA Document and I hereby sign the CLA
+  ```
+
+- If you also want this signature to cover your **earlier** contributions (`CLA.md` §9.5, optional), append one clause:
+
+  ```text
+  I have read the CLA Document and I hereby sign the CLA, and I agree that this CLA also covers my prior contributions
+  ```
+
+- The CLA is a license grant, not a copyright assignment: you keep the copyright and may do anything with your contribution under GPLv3. The maintainers gain one extra sublicensing right, usable only for a possible future outbound license change, which requires 30 days' public notice and an objection period (`CLA.md` §4).
+- The CLA does not change the licensing of any released version under GNU GPLv3, and does not cover submodules under `vendors/` or other third-party dependencies.
+
 ## CI and releases
 
 The repository uses GitHub Actions:
