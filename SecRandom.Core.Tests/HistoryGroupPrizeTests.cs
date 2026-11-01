@@ -97,8 +97,10 @@ public sealed class HistoryGroupPrizeTests : IDisposable
         // 组内已抽过 → 被重复上限挡下；换到「课堂」组 → 组内 0 条，可以抽。
         Assert.Equal(DrawStatus.RepeatLimitExhausted, engine.DrawPrize(1, _ => true, "期末抽奖").Status);
         Assert.True(engine.DrawPrize(1, _ => true, "课堂").IsSuccess);
-        // 不分组（功能关闭）视角看到的是全量历史，所以依然被挡下。
-        Assert.Equal(DrawStatus.RepeatLimitExhausted, engine.DrawPrize(1, _ => true, string.Empty).Status);
+        // null = 组轴关闭（功能关闭）：看到的是全量历史，所以依然被挡下。
+        Assert.Equal(DrawStatus.RepeatLimitExhausted, engine.DrawPrize(1, _ => true, null).Status);
+        // "" = 默认记录组：那条记录在「期末抽奖」组里，组内 0 条 → 可以抽。
+        Assert.True(engine.DrawPrize(1, _ => true, string.Empty).IsSuccess);
     }
 
     [Fact]

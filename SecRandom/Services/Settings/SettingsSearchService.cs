@@ -30,7 +30,12 @@ public class SettingsSearchService
             ["HistoryManagement"] = new HashSet<string>
             {
                 "S_History", "S_History_ShowRollCall", "S_History_ShowLottery", "S_History_SelectWeight",
-                "S_Filter", "S_Filter_SelectedClassName", "S_Filter_SelectedPoolName"
+                "S_Filter", "S_Filter_SelectedClassName", "S_Filter_SelectedPoolName",
+                // 历史记录组的按钮文案、占位与格式串不是可跳转的设置行，只有 S_HistoryGroups
+                // 及其 _Enabled/_Manage 行由页面 x:Name 承载。
+                "S_HistoryGroups_Add", "S_HistoryGroups_Rename", "S_HistoryGroups_Delete",
+                "S_HistoryGroups_ConfirmDelete", "S_HistoryGroups_DeleteHint", "S_HistoryGroups_Save",
+                "S_HistoryGroups_Cancel", "S_HistoryGroups_Empty", "S_HistoryGroups_RecordCount"
             },
             ["General.Backup"] = new HashSet<string>
             {
@@ -67,8 +72,7 @@ public class SettingsSearchService
                 "S_StudentImage", "S_StudentImagePosition", "S_StudentImageSize", "S_AnimationMusic", "S_ResultMusic",
                 "S_AnimationMusicLoop", "S_AnimationMusicVolume", "S_ResultMusicVolume", "S_AnimationMusicFade",
                 "S_ResultMusicFade", "S_VoiceAnnouncementEnabled", "S_ReminderText", "S_ReminderFontSize",
-                "S_ReminderTextColor", "S_ReminderTextOpacity",
-                "S_HistoryGroups_Enabled", "S_HistoryGroups_Manage"
+                "S_ReminderTextColor", "S_ReminderTextOpacity"
             },
             ["settings.picking.rollCall"] = new HashSet<string>
             {

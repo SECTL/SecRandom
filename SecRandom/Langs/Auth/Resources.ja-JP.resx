@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>1.3</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="C_AuthCallback_Title_Success" xml:space="preserve"><value>認可が完了しました</value></data>
+  <data name="C_AuthCallback_Lede_Success" xml:space="preserve"><value>SecRandom に戻りました。閉じてもかまいません</value></data>
+  <data name="C_AuthCallback_Title_Denied" xml:space="preserve"><value>認可はキャンセルされました</value></data>
+  <data name="C_AuthCallback_Lede_Denied" xml:space="preserve"><value>認可ページでサインインをキャンセルしました</value></data>
+  <data name="C_AuthCallback_Title_Failed" xml:space="preserve"><value>認可を完了できませんでした</value></data>
+  <data name="C_AuthCallback_Lede_Failed" xml:space="preserve"><value>SecRandom でもう一度お試しください</value></data>
+</root>

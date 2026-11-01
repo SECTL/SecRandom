@@ -580,5 +580,137 @@ namespace SecRandom.Langs.SettingsPages.HistoryManagement {
                 return ResourceManager.GetString("M_ExportInvalidRange", resourceCulture);
             }
         }
+
+        public static string S_HistoryGroups {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Enabled {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Enabled", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Enabled_D {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Enabled_D", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Manage {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Manage", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Add {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Add", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Rename {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Rename", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Delete {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Delete", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_ConfirmDelete {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_ConfirmDelete", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_DeleteHint {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_DeleteHint", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Save {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Save", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Cancel {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Cancel", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Empty {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Empty", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_RecordCount {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_RecordCount", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Error_NameEmpty {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Error_NameEmpty", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Error_NameTooLong {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Error_NameTooLong", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Error_NameControlChars {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Error_NameControlChars", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Error_NameReserved {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Error_NameReserved", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Error_AlreadyExists {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Error_AlreadyExists", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Error_NotFound {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Error_NotFound", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Error_NameUnchanged {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Error_NameUnchanged", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Error_ProfileUnavailable {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Error_ProfileUnavailable", resourceCulture);
+            }
+        }
+
+        public static string S_HistoryGroups_Error_SaveFailed {
+            get {
+                return ResourceManager.GetString("S_HistoryGroups_Error_SaveFailed", resourceCulture);
+            }
+        }
     }
 }

@@ -32,8 +32,9 @@ public sealed class HistoryGroupLocalizationTests
     /// </summary>
     private static readonly (string[] Folder, string[] Keys)[] CoveredFolders =
     [
-        (["SettingsPages", "Picking"],
+        (["SettingsPages", "HistoryManagement"],
         [
+            "S_HistoryGroups",
             "S_HistoryGroups_Enabled",
             "S_HistoryGroups_Enabled_D",
             "S_HistoryGroups_Manage",
@@ -54,8 +55,11 @@ public sealed class HistoryGroupLocalizationTests
             "S_HistoryGroups_Error_NotFound",
             "S_HistoryGroups_Error_NameUnchanged",
             "S_HistoryGroups_Error_ProfileUnavailable",
-            "S_HistoryGroups_Error_SaveFailed",
-            // 闪抽默认记录组（M4）：同一页面资源文件夹，卡片与下拉都挂在 settings.picking.quickDraw。
+            "S_HistoryGroups_Error_SaveFailed"
+        ]),
+        (["SettingsPages", "Picking"],
+        [
+            // 闪抽默认记录组（M4）留在这里：卡片与下拉都挂在 settings.picking.quickDraw。
             "S_QuickDrawHistoryGroup",
             "S_QuickDrawHistoryGroup_D",
             "S_QuickDrawHistoryGroup_Disabled",
@@ -69,16 +73,12 @@ public sealed class HistoryGroupLocalizationTests
         (["MainPages", "RollCall"],
         [
             "O_HistoryGroup",
-            "O_HistoryGroupDefault",
-            "O_HistoryGroupEmpty",
-            "O_HistoryGroupLocked"
+            "O_HistoryGroupDefault"
         ]),
         (["MainPages", "Lottery"],
         [
             "O_HistoryGroup",
-            "O_HistoryGroupDefault",
-            "O_HistoryGroupEmpty",
-            "O_HistoryGroupLocked"
+            "O_HistoryGroupDefault"
         ]),
         (["MainPages", "QuickDraw"],
         [

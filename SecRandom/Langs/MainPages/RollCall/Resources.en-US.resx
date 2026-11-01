@@ -97,12 +97,6 @@
      <value>Record group</value>
   </data>
   <data name="O_HistoryGroupDefault" xml:space="preserve">
-     <value>Do not use a record group</value>
-  </data>
-  <data name="O_HistoryGroupEmpty" xml:space="preserve">
-     <value>This group has no records yet, so this draw uses equal weights</value>
-  </data>
-  <data name="O_HistoryGroupLocked" xml:space="preserve">
-     <value>Record group locked</value>
+     <value>Default record group</value>
   </data>
 </root>

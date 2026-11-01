@@ -1,4 +1,8 @@
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
+using System.Text;
+using SecRandom.Langs.Auth;
 using SecRandom.Mobile;
 using SecRandom.Services.Auth;
 using SecRandom.Shared;
@@ -28,7 +32,9 @@ public sealed class LoopbackAuthRedirectBrokerTests
         var result = await wait;
 
         Assert.True(response.IsSuccessStatusCode);
-        Assert.Contains("Authorization successful", await response.Content.ReadAsStringAsync(
+        // The page goes out before state validation and the code exchange, so its copy reports the redirect,
+        // never a finished sign-in.
+        Assert.Contains(Resources.C_AuthCallback_Title_Success, await response.Content.ReadAsStringAsync(
             TestContext.Current.CancellationToken), StringComparison.Ordinal);
         Assert.Equal("code-1", result.Code);
         Assert.Equal("expected-state", result.State);
@@ -50,7 +56,7 @@ public sealed class LoopbackAuthRedirectBrokerTests
             TestContext.Current.CancellationToken);
         var result = await wait;
 
-        Assert.Contains("Authorization failed", await response.Content.ReadAsStringAsync(
+        Assert.Contains(Resources.C_AuthCallback_Title_Denied, await response.Content.ReadAsStringAsync(
             TestContext.Current.CancellationToken), StringComparison.Ordinal);
         Assert.Equal("denied", result.Error);
         Assert.Null(result.Code);
@@ -63,6 +69,78 @@ public sealed class LoopbackAuthRedirectBrokerTests
 
         Assert.Null(await broker.TakePendingRedirectAsync(TestContext.Current.CancellationToken));
         Assert.Equal(TimeSpan.FromMinutes(5), broker.WaitTimeout);
+    }
+
+    [Fact]
+    public async Task WaitForRedirectAsync_AnswersAPageAssetWithoutConsumingTheCallback()
+    {
+        using var broker = new LoopbackAuthRedirectBroker();
+        var attempt = new AuthRedirectAttempt(broker.CreateRedirectUri(), "expected-state", "verifier");
+        await broker.PrepareAsync(attempt, TestContext.Current.CancellationToken);
+        using var client = new HttpClient();
+
+        // A browser asks for the page asset on its own; spending the single accepted context on it would leave
+        // the real redirect waiting until the timeout. The wait has to be listening before the stray request is
+        // sent, because an HttpListener only produces that response once a context is taken.
+        var wait = broker.WaitForRedirectAsync(attempt, TestContext.Current.CancellationToken);
+        using var stray = await client.GetAsync($"{attempt.RedirectUri}/favicon.ico",
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.NotFound, stray.StatusCode);
+
+        using var response = await client.GetAsync($"{attempt.RedirectUri}?code=code-after-stray&state=expected-state",
+            TestContext.Current.CancellationToken);
+        var result = await wait;
+
+        Assert.True(response.IsSuccessStatusCode);
+        Assert.Equal("code-after-stray", result.Code);
+    }
+
+    [Fact]
+    public async Task WaitForRedirectAsync_SendsAPolicyThatForbidsExternalRequests()
+    {
+        using var broker = new LoopbackAuthRedirectBroker();
+        var attempt = new AuthRedirectAttempt(broker.CreateRedirectUri(), "expected-state", "verifier");
+        await broker.PrepareAsync(attempt, TestContext.Current.CancellationToken);
+        using var client = new HttpClient();
+
+        var wait = broker.WaitForRedirectAsync(attempt, TestContext.Current.CancellationToken);
+        using var response = await client.GetAsync($"{attempt.RedirectUri}?code=code-1&state=expected-state",
+            TestContext.Current.CancellationToken);
+        await wait;
+
+        Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
+        var policy = Assert.Single(response.Headers.GetValues("Content-Security-Policy"));
+        Assert.Contains("default-src 'none'", policy, StringComparison.Ordinal);
+        Assert.Contains("img-src data:", policy, StringComparison.Ordinal);
+        Assert.Contains("no-store", Assert.Single(response.Headers.GetValues("Cache-Control")), StringComparison.Ordinal);
+        Assert.Contains("nosniff", Assert.Single(response.Headers.GetValues("X-Content-Type-Options")),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task WaitForRedirectAsync_KeepsTheCodeWhenTheBrowserClosesThePageFirst()
+    {
+        using var broker = new LoopbackAuthRedirectBroker();
+        var attempt = new AuthRedirectAttempt(broker.CreateRedirectUri(), "expected-state", "verifier");
+        await broker.PrepareAsync(attempt, TestContext.Current.CancellationToken);
+
+        var wait = broker.WaitForRedirectAsync(attempt, TestContext.Current.CancellationToken);
+
+        // Send the redirect and drop the connection without reading the answer: the write throws, but the
+        // callback has already been read and must still be handed to the token exchange.
+        var redirectUri = new Uri(attempt.RedirectUri);
+        using (var tcp = new TcpClient())
+        {
+            await tcp.ConnectAsync(redirectUri.Host, redirectUri.Port, TestContext.Current.CancellationToken);
+            var request = $"GET {redirectUri.AbsolutePath}?code=kept-code&state=expected-state HTTP/1.1\r\n"
+                          + $"Host: {redirectUri.Authority}\r\nConnection: close\r\n\r\n";
+            await tcp.GetStream().WriteAsync(Encoding.ASCII.GetBytes(request), TestContext.Current.CancellationToken);
+        }
+
+        var result = await wait;
+
+        Assert.Equal("kept-code", result.Code);
+        Assert.Equal("expected-state", result.State);
     }
 }
 

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
     <xsd:element name="root" msdata:IsDataSet="true" />
@@ -93,13 +93,5 @@
   <data name="O_HistoryGroup" xml:space="preserve">
     <value>记录组</value>
   </data>
-  <data name="O_HistoryGroupDefault" xml:space="preserve">
-    <value>不使用记录组</value>
-  </data>
-  <data name="O_HistoryGroupEmpty" xml:space="preserve">
-    <value>该组还没有任何记录，本次抽取按等权处理</value>
-  </data>
-  <data name="O_HistoryGroupLocked" xml:space="preserve">
-    <value>已锁定记录组</value>
-  </data>
-</root>
+  <data name="O_HistoryGroupDefault" xml:space="preserve"><value>默认记录组</value></data>
+  </root>

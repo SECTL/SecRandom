@@ -169,13 +169,6 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     public bool IsHistoryGroupSelectorVisible =>
         Config.General.HistoryGroups.Enabled && MoreSettings.RollCallHistoryGroupSelector;
 
-    /// <summary>已锁定到某个记录组时为真：此时结果区上方常驻一个可见的组标识。</summary>
-    public bool IsHistoryGroupLocked => IsHistoryGroupSelectorVisible && CurrentHistoryGroup.Length > 0;
-
-    /// <summary>抽取前的轻提示文案（空串表示不显示）；目前只有「所选组还没有记录」一种。</summary>
-    public string HistoryGroupHintText { get; private set; } = string.Empty;
-
-    public bool IsHistoryGroupHintVisible => HistoryGroupHintText.Length > 0;
     public bool CanDecreaseCount => DrawCount > 1;
     public bool CanIncreaseCount => DrawCount < MaximumDrawCount;
     public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0);
@@ -225,22 +218,26 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private string CurrentGenderScope => SelectedGender == AllGendersOption ? string.Empty : SelectedGender;
 
     /// <summary>
-    ///     本次抽取要读写的记录组名；默认组用空串表示（与 <c>HistoryItem.HistoryGroup</c> 的空串约定一致）。
+    ///     本次抽取要读写的记录组；<see langword="null" /> 表示不做组隔离（看全部历史）。
     /// </summary>
     /// <remarks>
-    ///     选择器里第一项是「不使用记录组」，它对应 <b>全局历史</b>——也就是加这个功能之前的既有行为。
-    ///     所以空串不是「某个叫默认组的真实组」，而是「不做组隔离」。为了让这种「同一份历史两个身份」
-    ///     不至于让用户误判，界面在锁定到具体组时常驻一个组标识（<see cref="IsHistoryGroupLocked" />）。
     ///     <para>
-    ///         这里刻意把「选择器当前不可见」也算成空串：功能总闸被关掉、或本页显隐开关被关掉之后，
-    ///         隐藏起来的选择器不可能再被用户看见，这时若继续沿用内存里残留的旧选择，抽取就会静默落进
-    ///         一个用户以为已经失效的组——这是这个功能最容易出的「静默写错地方」，所以在唯一取值点上兜住。
+    ///         三态语义：<see langword="null" /> = 不按组过滤（功能关闭或本页选择器隐藏时的旧行为）；
+    ///         空串 = 「默认记录组」，即 <c>HistoryItem.HistoryGroup</c> 为空串的未分组记录；
+    ///         其余 = 该组的记录。空串与 <see langword="null" /> 必须分开，否则「默认记录组」这个
+    ///         选项会把已分组记录也算进来，标签就成了假话。
+    ///     </para>
+    ///     <para>
+    ///         这里刻意把「选择器当前不可见」也算成 <see langword="null" />：功能总闸被关掉、或本页
+    ///         显隐开关被关掉之后，隐藏起来的选择器不可能再被用户看见，这时若继续沿用内存里残留的
+    ///         旧选择，抽取就会静默落进一个用户以为已经失效的组——这是这个功能最容易出的
+    ///         「静默写错地方」，所以在唯一取值点上兜住。
     ///     </para>
     /// </remarks>
-    private string CurrentHistoryGroup =>
-        IsHistoryGroupSelectorVisible && SelectedHistoryGroup != DefaultHistoryGroupOption
-            ? SelectedHistoryGroup
-            : string.Empty;
+    private string? CurrentHistoryGroup =>
+        IsHistoryGroupSelectorVisible
+            ? SelectedHistoryGroup == DefaultHistoryGroupOption ? string.Empty : SelectedHistoryGroup
+            : null;
 
     partial void OnSelectedStudentListNameChanged(string value)
     {
@@ -271,17 +268,9 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     partial void OnSelectedHistoryGroupChanged(string value)
     {
-        // 组锁定是纯界面状态：不写配置、不触发验证、只刷新计数与常驻标识。
+        // 组选择是纯界面状态：不写配置、不触发验证、只刷新计数与剩余名单。
         // 「换组即改权重」全靠这一条路径，所以这里绝不能顺手 Save()。
         RefreshCounts();
-        OnPropertyChanged(nameof(IsHistoryGroupLocked));
-    }
-
-    /// <summary>「取消锁定」：把选择器拨回默认项，等价于回到全局历史。</summary>
-    [RelayCommand]
-    private void ClearHistoryGroup()
-    {
-        SelectedHistoryGroup = DefaultHistoryGroupOption;
     }
 
     partial void OnDrawCountChanged(int value)
@@ -709,11 +698,11 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
         if (sender == Config.MoreSettings || sender == Config.General.HistoryGroups)
         {
-            // 选择器显隐会改变「当前生效的组」的含义（隐藏即回到全局历史），所以两种开关变化
-            // 都要重算派生属性并刷新一次计数。
+            // 选择器显隐会改变「当前生效的组」的含义（隐藏即不做组隔离），所以两种开关变化
+            // 都要重算派生属性、刷新可选组与计数。
             OnPropertyChanged(nameof(IsHistoryGroupSelectorVisible));
-            OnPropertyChanged(nameof(IsHistoryGroupLocked));
             RefreshHistoryGroupOptions();
+            RefreshCounts();
         }
 
         if (IsResultVisible)
@@ -874,41 +863,6 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             SelectedHistoryGroup = DefaultHistoryGroupOption;
     }
 
-    /// <summary>
-    ///     抽取前的记录组提示：选中了一个还没有任何记录的组时，明确告诉用户这一抽是等权起算。
-    /// </summary>
-    /// <remarks>
-    ///     这条提示是这个功能最重要的一处「说人话」：组隔离之后，一个新建的空组在权重上和全局历史
-    ///     完全相反（所有人都没被抽过），用户很容易把「怎么又是他」和「怎么全班都一个概率」搞混。
-    ///     </remarks>
-    private void RefreshHistoryGroupHint()
-    {
-        var hint = string.Empty;
-        var group = CurrentHistoryGroup;
-        if (group.Length > 0)
-        {
-            var count = 0;
-            try
-            {
-                count = _historyGroupCatalog.CountRecords(HistoryGroupKind.RollCall, group);
-            }
-            catch (Exception exception)
-            {
-                _logger.LogWarning(exception, "统计点名历史记录组记录数失败。");
-            }
-
-            if (count == 0)
-                hint = SR.O_HistoryGroupEmpty;
-        }
-
-        if (HistoryGroupHintText == hint)
-            return;
-
-        HistoryGroupHintText = hint;
-        OnPropertyChanged(nameof(HistoryGroupHintText));
-        OnPropertyChanged(nameof(IsHistoryGroupHintVisible));
-    }
-
     private void RefreshCounts()
     {
         UpdateStudentIdPadWidth();
@@ -918,7 +872,6 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         RemainingCount = GetEligibleCandidates(candidates).Count();
         DrawCount = Math.Clamp(DrawCount, 1, Math.Max(1, TotalCount));
         RefreshRemainingList(candidates);
-        RefreshHistoryGroupHint();
 
         OnPropertyChanged(nameof(TotalCount));
         OnPropertyChanged(nameof(RemainingCount));
@@ -927,7 +880,6 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         OnPropertyChanged(nameof(CanDecreaseCount));
         OnPropertyChanged(nameof(CanIncreaseCount));
         OnPropertyChanged(nameof(CanStartDraw));
-        OnPropertyChanged(nameof(IsHistoryGroupLocked));
     }
 
     public void RefreshRemainingList()

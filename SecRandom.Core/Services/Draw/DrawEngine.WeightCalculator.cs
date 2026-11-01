@@ -14,7 +14,7 @@ public partial class DrawEngine
         List<Student> candidates,
         IReadOnlyDictionary<Student, History>? historyCacheOverride = null,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         return CalculateStudentWeight(candidates, FairDrawPolicySnapshot.FromConfig(ConfigData.FairDrawSettings), historyCacheOverride, courseName, historyGroup);
     }
@@ -23,7 +23,7 @@ public partial class DrawEngine
         List<Student> candidates,
         IReadOnlyDictionary<Student, History>? historyCacheOverride = null,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         return CalculateStudentWeight(candidates, FairDrawPolicySnapshot.MobileDesktopDefaultsV1, historyCacheOverride, courseName, historyGroup);
     }
@@ -33,7 +33,7 @@ public partial class DrawEngine
         FairDrawPolicySnapshot fairSettings,
         IReadOnlyDictionary<Student, History>? historyCacheOverride = null,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         if (candidates.Count == 0)
             return [];

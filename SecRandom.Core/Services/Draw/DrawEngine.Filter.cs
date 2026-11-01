@@ -175,9 +175,9 @@ public partial class DrawEngine
     private Dictionary<Student, History> BuildStudentHistoryCache(
         IEnumerable<Student> candidates,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
-        var unfiltered = string.IsNullOrWhiteSpace(courseName) && string.IsNullOrWhiteSpace(historyGroup);
+        var unfiltered = string.IsNullOrWhiteSpace(courseName) && historyGroup is null;
         var legacyKeySet = BuildUniqueStudentLegacyKeySet();
         Dictionary<Student, History> cache = new();
         foreach (var candidate in candidates)
@@ -197,15 +197,22 @@ public partial class DrawEngine
 
     /// <summary>
     ///     Narrows one candidate's history to the records that belong to the requested scope. Both axes are
-    ///     optional and combine by intersection: an empty value leaves that axis unfiltered, so a caller that
-    ///     passes neither gets the untouched history back.
+    ///     optional and combine by intersection: an empty course leaves the course axis unfiltered, and a
+    ///     <see langword="null" /> group leaves the group axis unfiltered, so a caller that passes neither gets the
+    ///     untouched history back.
     /// </summary>
-    private static History FilterHistoryForScope(History history, string courseName, string historyGroup)
+    /// <param name="historyGroup">
+    ///     The record group to read. <see langword="null" /> means the group axis is off (the feature is disabled or
+    ///     no group is selected, so weights see the whole history); the empty string is the default group and
+    ///     therefore matches only the records that carry no group marker. Those two must stay distinct: an empty
+    ///     value must never fall back to the unfiltered history.
+    /// </param>
+    private static History FilterHistoryForScope(History history, string courseName, string? historyGroup)
     {
         var matches = history.Histories
             .Where(item => string.IsNullOrWhiteSpace(courseName)
                            || string.Equals(item.CourseName, courseName, StringComparison.Ordinal))
-            .Where(item => string.IsNullOrWhiteSpace(historyGroup)
+            .Where(item => historyGroup is null
                            || string.Equals(item.HistoryGroup, historyGroup, StringComparison.Ordinal))
             .OrderBy(item => item.DrawTime)
             .ToArray();
@@ -222,9 +229,9 @@ public partial class DrawEngine
     private Dictionary<Prize, History> BuildPrizeHistoryCache(
         IEnumerable<Prize> candidates,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
-        var unfiltered = string.IsNullOrWhiteSpace(courseName) && string.IsNullOrWhiteSpace(historyGroup);
+        var unfiltered = string.IsNullOrWhiteSpace(courseName) && historyGroup is null;
         var legacyKeySet = BuildUniquePrizeLegacyKeySet();
         Dictionary<Prize, History> cache = new();
         foreach (var candidate in candidates)

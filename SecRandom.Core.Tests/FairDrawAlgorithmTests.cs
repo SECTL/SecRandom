@@ -419,7 +419,7 @@ public sealed class FairDrawAlgorithmTests
         using var host = CreateHost(config, new TestProfileService(history, students));
         var engine = CreateEngine(host);
 
-        static string ReadScope(DrawEngine engine, StudentList students, string courseName, string historyGroup)
+        static string ReadScope(DrawEngine engine, StudentList students, string courseName, string? historyGroup)
         {
             var input = engine.CreateStudentVerificationInput(
                 1,
@@ -433,9 +433,11 @@ public sealed class FairDrawAlgorithmTests
             return audit.RootElement.GetProperty("fairness").GetProperty("historyScope").GetString()!;
         }
 
-        Assert.Equal("global", ReadScope(engine, students, string.Empty, string.Empty));
-        Assert.Equal("course", ReadScope(engine, students, "数学", string.Empty));
+        // null = 组轴不参与过滤（global/course）；"" 是默认记录组，仍然是一个组范围，因此归入 history-group。
+        Assert.Equal("global", ReadScope(engine, students, string.Empty, null));
+        Assert.Equal("course", ReadScope(engine, students, "数学", null));
         Assert.Equal("history-group", ReadScope(engine, students, string.Empty, "期末抽奖"));
+        Assert.Equal("history-group", ReadScope(engine, students, string.Empty, string.Empty));
         Assert.Equal("course-and-history-group", ReadScope(engine, students, "数学", "期末抽奖"));
 
         // Only the scope name is uploaded: the audit payload must not carry the course or the group the user typed.
@@ -540,8 +542,8 @@ public sealed class FairDrawAlgorithmTests
         public PrizeHistoryConfig? PrizeHistoryConfig => null;
         public void LoadStudentProfile(string name, bool saveCurrent = true) { }
         public void LoadPrizeProfile(string name, bool saveCurrent = true) { }
-        public void RecordStudentHistory(IReadOnlyList<Student> students, DateTime now, int requestedCount, string drawGroup = "", string drawGender = "", int drawMethod = 0, IReadOnlyDictionary<Student, double>? weights = null, string courseName = "", string? drawRoundId = null, string historyGroup = "") { }
-        public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount, int drawMethod = 0, string? drawRoundId = null, string courseName = "", string historyGroup = "") { }
+        public void RecordStudentHistory(IReadOnlyList<Student> students, DateTime now, int requestedCount, string drawGroup = "", string drawGender = "", int drawMethod = 0, IReadOnlyDictionary<Student, double>? weights = null, string courseName = "", string? drawRoundId = null, string? historyGroup = null) { }
+        public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount, int drawMethod = 0, string? drawRoundId = null, string courseName = "", string? historyGroup = null) { }
         public void ClearCurrentStudentHistory() { }
         public void ClearCurrentPrizeHistory() { }
         public void SaveProfile() { }

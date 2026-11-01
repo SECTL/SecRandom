@@ -68,27 +68,6 @@
                               ItemsSource="{Binding HistoryGroupOptions}" SelectedItem="{Binding SelectedHistoryGroup}">
                         <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" /></DataTemplate></ComboBox.ItemTemplate>
                     </ComboBox>
-                    <Border IsVisible="{Binding IsHistoryGroupLocked}" HorizontalAlignment="Stretch"
-                            Padding="8,4" CornerRadius="4" BorderThickness="1"
-                            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="4">
-                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
-                                <TextBlock Text="{x:Static langs:Resources.O_HistoryGroupLocked}" FontSize="11"
-                                           Opacity="0.7" VerticalAlignment="Center" />
-                                <TextBlock Text="{Binding SelectedHistoryGroup}" FontSize="12" FontWeight="SemiBold"
-                                           VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-                            </StackPanel>
-                            <Button Grid.Column="1" Content="✕" Width="20" Height="20" Padding="0" FontSize="11"
-                                    VerticalAlignment="Center" HorizontalAlignment="Right"
-                                    ToolTip.Tip="{x:Static langs:Resources.O_HistoryGroupDefault}"
-                                    Command="{Binding ClearHistoryGroupCommand}" />
-                        </Grid>
-                    </Border>
-                    <Viewbox HorizontalAlignment="Stretch" StretchDirection="DownOnly"
-                             IsVisible="{Binding IsHistoryGroupHintVisible}">
-                        <TextBlock Text="{Binding HistoryGroupHintText}" FontSize="11" Opacity="0.75"
-                                   TextWrapping="Wrap" HorizontalAlignment="Center" TextAlignment="Center" />
-                    </Viewbox>
                     <Button Content="{x:Static langs:Resources.C_ShowRemainingList}"
                             IsVisible="{Binding MoreSettings.RollCallRemainingButton}"
                             Click="RemainingListButton_OnClick" />

@@ -26,7 +26,7 @@ public sealed record RollCallDrawSnapshot(
 }
 
 public sealed record RollCallDrawRequest(string ListName, string Group, string Gender, int Count, string CourseName,
-    string HistoryGroup = "");
+    string? HistoryGroup = null);
 
 public sealed record RollCallDrawResult(
     IReadOnlyList<Student> Students,
@@ -203,7 +203,7 @@ public sealed record LotteryDrawRequest(
     string Gender,
     int Count,
     string CourseName,
-    string HistoryGroup = "");
+    string? HistoryGroup = null);
 
 public sealed record LotteryDrawResult(
     IReadOnlyList<Prize> Prizes,

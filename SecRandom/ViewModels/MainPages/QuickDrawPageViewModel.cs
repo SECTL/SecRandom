@@ -118,7 +118,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     /// <summary>
     ///     闪抽是否真的锁定了某个历史记录组（悬浮窗只在此时显示提示）。
     /// </summary>
-    public bool IsHistoryGroupHintVisible => ResolveQuickDrawHistoryGroup().Length > 0;
+    public bool IsHistoryGroupHintVisible => !string.IsNullOrEmpty(ResolveQuickDrawHistoryGroup());
 
     /// <summary>悬浮窗显示的记录组提示文本（配置为空时不可见，见 <see cref="IsHistoryGroupHintVisible" />）。</summary>
     public string HistoryGroupHintText => Config.QuickDrawSettings.HistoryGroup;
@@ -809,12 +809,16 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
-    ///     解析本次闪抽要锁定的历史记录组；解析不出来时按全局历史处理（返回空串）。
+    ///     解析本次闪抽要锁定的历史记录组；<see langword="null" /> 表示不做组隔离（看全部历史）。
     /// </summary>
-    private string ResolveQuickDrawHistoryGroup()
+    /// <remarks>
+    ///     空串不是「不分组」而是「默认记录组」（未分组记录），所以功能关闭或组已失效时必须返回
+    ///     <see langword="null" />，不能返回空串——否则闪抽会悄悄把权重收窄到未分组记录上。
+    /// </remarks>
+    private string? ResolveQuickDrawHistoryGroup()
     {
         if (!Config.General.HistoryGroups.Enabled)
-            return string.Empty;
+            return null;
 
         var configured = Config.QuickDrawSettings.HistoryGroup;
         if (string.IsNullOrWhiteSpace(configured))
@@ -827,12 +831,12 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             return _historyGroupCatalog.GetGroupNames(HistoryGroupKind.RollCall)
                 .Contains(configured, StringComparer.Ordinal)
                 ? configured
-                : string.Empty;
+                : null;
         }
         catch (Exception exception)
         {
-            _logger.LogWarning(exception, "读取历史记录组失败，本次闪抽按全局历史处理。");
-            return string.Empty;
+            _logger.LogWarning(exception, "读取历史记录组失败，本次闪抽按全部历史处理。");
+            return null;
         }
     }
 

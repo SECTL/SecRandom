@@ -21,7 +21,7 @@ public partial class DrawEngine
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType,
         string courseName = "",
-        string historyGroup = "") => CreateStudentVerificationInput(
+        string? historyGroup = null) => CreateStudentVerificationInput(
         count,
         candidates,
         drawSettingsType,
@@ -36,7 +36,7 @@ public partial class DrawEngine
         string courseName,
         bool includeInternalRules,
         string rosterDigest = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         var preparedCandidates = candidates.Where(student => student.IsCandidate).ToList();
         if (preparedCandidates.Count == 0 || count <= 0 || count > preparedCandidates.Count)
@@ -109,7 +109,7 @@ public partial class DrawEngine
     public VerificationDrawInput CreatePrizeVerificationInput(
         int count,
         IReadOnlyDictionary<string, int> temporaryCounts,
-        string historyGroup = "") => CreatePrizeVerificationInput(
+        string? historyGroup = null) => CreatePrizeVerificationInput(
         count,
         temporaryCounts,
         includeInternalRules: true,
@@ -125,7 +125,7 @@ public partial class DrawEngine
         IReadOnlyDictionary<string, int> temporaryCounts,
         bool includeInternalRules,
         string rosterDigest = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         var historyCache = BuildPrizeTemporaryHistoryCache(PrizeList.Prizes, temporaryCounts);
         List<Prize> usable;
@@ -246,12 +246,14 @@ public partial class DrawEngine
     /// </summary>
     /// <remarks>
     ///     The two narrowing axes are independent and intersecting: an empty course means the whole profile history
-    ///     was read, an empty group means no record-group filter was applied, and both together mean the counts are
-    ///     the intersection. Only the scope name leaves the device — never the course or group name — because both
-    ///     are user-typed text that can carry a class or a person's name.
+    ///     was read, a <see langword="null" /> group means no record-group filter was applied, and both together mean
+    ///     the counts are the intersection. The empty group string is <i>not</i> "no filter" — it is the default
+    ///     record group, so it narrows the history like any other group and must report a group scope. Only the scope
+    ///     name leaves the device — never the course or group name — because both are user-typed text that can carry
+    ///     a class or a person's name.
     /// </remarks>
-    private static string ToHistoryScopeName(string courseName, string historyGroup) =>
-        (string.IsNullOrWhiteSpace(courseName), string.IsNullOrWhiteSpace(historyGroup)) switch
+    private static string ToHistoryScopeName(string courseName, string? historyGroup) =>
+        (string.IsNullOrWhiteSpace(courseName), historyGroup is null) switch
         {
             (true, true) => "global",
             (false, true) => "course",

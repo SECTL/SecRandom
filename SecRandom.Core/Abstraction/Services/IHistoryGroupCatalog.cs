@@ -61,6 +61,10 @@ public interface IHistoryGroupCatalog
     /// <summary>Stamps <see cref="SecRandom.Shared.Models.Profile.HistoryGroupInfo.LastUsedAt" />, registering an unknown but in-use name.</summary>
     void Touch(HistoryGroupKind kind, string name);
 
-    /// <summary>Record count of a group of that kind, derived on demand from the records themselves (never stored).</summary>
+    /// <summary>
+    ///     Record count of a group of that kind, derived on demand from the records themselves (never stored). The
+    ///     empty name is the default group, so it counts the records that carry no group marker — it is a real group
+    ///     here, not "every record".
+    /// </summary>
     int CountRecords(HistoryGroupKind kind, string name);
 }

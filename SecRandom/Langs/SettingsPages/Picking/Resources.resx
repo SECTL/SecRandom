@@ -282,69 +282,6 @@
   <data name="C_SetAvatarViaPrize_D" xml:space="preserve">
     <value>前往抽奖名单页面，用奖品附加设置「展示图片」设置奖品图片</value>
   </data>
-  <data name="S_HistoryGroups_Enabled" xml:space="preserve">
-    <value>历史记录组</value>
-  </data>
-  <data name="S_HistoryGroups_Enabled_D" xml:space="preserve">
-    <value>启用后主页面可以把抽取锁定到某个历史记录组，权重只参考该组已有记录，新记录也只写进该组；旧版本不认这个记录字段，降级后记录还在，但组标记会被静默丢弃，该组记录会退回全局历史</value>
-  </data>
-  <data name="S_HistoryGroups_Manage" xml:space="preserve">
-    <value>点名历史记录组</value>
-  </data>
-  <data name="S_HistoryGroups_Add" xml:space="preserve">
-    <value>新建记录组</value>
-  </data>
-  <data name="S_HistoryGroups_Rename" xml:space="preserve">
-    <value>改名</value>
-  </data>
-  <data name="S_HistoryGroups_Delete" xml:space="preserve">
-    <value>删除</value>
-  </data>
-  <data name="S_HistoryGroups_ConfirmDelete" xml:space="preserve">
-    <value>确认删除</value>
-  </data>
-  <data name="S_HistoryGroups_DeleteHint" xml:space="preserve">
-    <value>删除后该组记录会移回默认组，不会被删除</value>
-  </data>
-  <data name="S_HistoryGroups_Save" xml:space="preserve">
-    <value>保存</value>
-  </data>
-  <data name="S_HistoryGroups_Cancel" xml:space="preserve">
-    <value>取消</value>
-  </data>
-  <data name="S_HistoryGroups_Empty" xml:space="preserve">
-    <value>还没有记录组</value>
-  </data>
-  <data name="S_HistoryGroups_RecordCount" xml:space="preserve">
-    <value>{0} 条记录</value>
-  </data>
-  <data name="S_HistoryGroups_Error_NameEmpty" xml:space="preserve">
-    <value>组名不能为空</value>
-  </data>
-  <data name="S_HistoryGroups_Error_NameTooLong" xml:space="preserve">
-    <value>组名过长</value>
-  </data>
-  <data name="S_HistoryGroups_Error_NameControlChars" xml:space="preserve">
-    <value>组名不能包含控制字符</value>
-  </data>
-  <data name="S_HistoryGroups_Error_NameReserved" xml:space="preserve">
-    <value>该组名为保留名称，不能使用</value>
-  </data>
-  <data name="S_HistoryGroups_Error_AlreadyExists" xml:space="preserve">
-    <value>已存在同名记录组</value>
-  </data>
-  <data name="S_HistoryGroups_Error_NotFound" xml:space="preserve">
-    <value>记录组不存在，可能已被删除</value>
-  </data>
-  <data name="S_HistoryGroups_Error_NameUnchanged" xml:space="preserve">
-    <value>新组名与原名相同</value>
-  </data>
-  <data name="S_HistoryGroups_Error_ProfileUnavailable" xml:space="preserve">
-    <value>当前配置不可用，无法管理记录组</value>
-  </data>
-  <data name="S_HistoryGroups_Error_SaveFailed" xml:space="preserve">
-    <value>保存失败，请重试</value>
-  </data>
   <data name="S_QuickDrawHistoryGroup" xml:space="preserve">
     <value>记录组</value>
   </data>

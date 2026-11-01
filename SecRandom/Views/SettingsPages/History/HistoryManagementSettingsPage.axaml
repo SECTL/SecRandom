@@ -8,9 +8,91 @@
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
               x:Class="SecRandom.Views.SettingsPages.History.HistoryManagementSettingsPage"
-              x:DataType="local:HistoryManagementSettingsPage">
+              x:DataType="local:HistoryManagementSettingsPage"
+              Loaded="OnLoaded"
+              Unloaded="OnUnloaded">
+    <UserControl.Styles>
+        <!-- 行内两步删除：第一次点击后该行保持高亮，直到第二次点击确认。 -->
+        <Style Selector="Border.history-group-row.deleting">
+            <Setter Property="Background" Value="#22C42B1C" />
+        </Style>
+    </UserControl.Styles>
+
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro settings">
+            <sr:IconText x:Name="S_HistoryGroups"
+                         Text="{x:Static lsp:Resources.S_HistoryGroups}"
+                         Glyph="{sr:Fi HistoryFilled}"
+                         Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_HistoryGroups_Enabled"
+                                   Header="{x:Static lsp:Resources.S_HistoryGroups_Enabled}"
+                                   Description="{x:Static lsp:Resources.S_HistoryGroups_Enabled_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding HistoryGroups.Enabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_HistoryGroups_Manage"
+                                   Header="{x:Static lsp:Resources.S_HistoryGroups_Manage}"
+                                   Description="{x:Static lsp:Resources.S_HistoryGroups_DeleteHint}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}"
+                                   IsVisible="{Binding HistoryGroups.Enabled}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Spacing="8" MinWidth="380">
+                        <TextBlock x:Name="HistoryGroupEmptyHint"
+                                   Text="{x:Static lsp:Resources.S_HistoryGroups_Empty}"
+                                   Opacity="0.7" />
+                        <ItemsControl ItemsSource="{Binding HistoryGroupRows}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="local:HistoryGroupRow">
+                                    <Border Classes="history-group-row" Classes.deleting="{Binding IsDeleting}"
+                                            Padding="8 6" CornerRadius="4" Margin="0 0 0 4">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                            <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center"
+                                                        IsVisible="{Binding !IsRenaming}">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"
+                                                           TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding CountText}" Opacity="0.7" FontSize="12" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8"
+                                                        VerticalAlignment="Center" IsVisible="{Binding IsRenaming}">
+                                                <TextBox Text="{Binding RenameText, Mode=TwoWay}" MinWidth="160" />
+                                                <Button Content="{x:Static lsp:Resources.S_HistoryGroups_Save}"
+                                                        Click="SaveHistoryGroupRename_OnClick" />
+                                                <Button Content="{x:Static lsp:Resources.S_HistoryGroups_Cancel}"
+                                                        Click="CancelHistoryGroupRename_OnClick" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8"
+                                                        VerticalAlignment="Center" IsVisible="{Binding !IsRenaming}">
+                                                <Button Content="{x:Static lsp:Resources.S_HistoryGroups_Rename}"
+                                                        Click="RenameHistoryGroup_OnClick" />
+                                                <Button Content="{x:Static lsp:Resources.S_HistoryGroups_Delete}"
+                                                        Click="DeleteHistoryGroup_OnClick"
+                                                        IsVisible="{Binding !IsDeleting}" />
+                                                <Button Content="{x:Static lsp:Resources.S_HistoryGroups_ConfirmDelete}"
+                                                        Click="DeleteHistoryGroup_OnClick"
+                                                        IsVisible="{Binding IsDeleting}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBox x:Name="NewHistoryGroupNameBox" MinWidth="200"
+                                     PlaceholderText="{x:Static lsp:Resources.S_HistoryGroups_Add}" />
+                            <Button Content="{x:Static lsp:Resources.S_HistoryGroups_Add}"
+                                    Click="CreateHistoryGroup_OnClick" />
+                        </StackPanel>
+                        <TextBlock x:Name="HistoryGroupMessageText" IsVisible="False" TextWrapping="Wrap"
+                                   Opacity="0.85" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_ExportHistory"
                          Text="{x:Static lsp:Resources.S_ExportHistory}"
                          Glyph="{sr:Fi ArrowDownloadFilled}"

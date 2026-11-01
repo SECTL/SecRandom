@@ -54,7 +54,7 @@ public partial class DrawEngine
         int count,
         Func<Student, bool> filter,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         return DrawStudent(count, filter, DrawSettingsType.RollCall, courseName, historyGroup);
     }
@@ -64,7 +64,7 @@ public partial class DrawEngine
         Func<Student, bool> filter,
         DrawSettingsType drawSettingsType,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         return DrawStudent(count, filter, drawSettingsType, StudentDrawExecutionPolicy.DesktopConfigured(
             GetStudentDrawType(drawSettingsType),
@@ -78,7 +78,7 @@ public partial class DrawEngine
         DrawSettingsType drawSettingsType,
         StudentDrawExecutionPolicy executionPolicy,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         var hasBaseCandidates = false;
         var repeatThreshold = GetStudentRepeatThreshold(drawSettingsType);
@@ -132,7 +132,7 @@ public partial class DrawEngine
         int count,
         IReadOnlyCollection<Student> candidates,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         var candidateSet = candidates as HashSet<Student> ?? candidates.ToHashSet();
         return DrawStudent(count, candidate => candidateSet.Contains(candidate), courseName, historyGroup);
@@ -143,7 +143,7 @@ public partial class DrawEngine
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         var candidateSet = candidates as HashSet<Student> ?? candidates.ToHashSet();
         return DrawStudent(count, candidate => candidateSet.Contains(candidate), drawSettingsType, courseName, historyGroup);
@@ -154,7 +154,7 @@ public partial class DrawEngine
         IReadOnlyCollection<Student> candidates,
         DrawSettingsType drawSettingsType,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         return DrawPreparedStudents(count, candidates, drawSettingsType, StudentDrawExecutionPolicy.DesktopConfigured(
             GetStudentDrawType(drawSettingsType),
@@ -168,7 +168,7 @@ public partial class DrawEngine
         DrawSettingsType drawSettingsType,
         DrawType drawType,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         return DrawPreparedStudents(
             count,
@@ -184,7 +184,7 @@ public partial class DrawEngine
         IReadOnlyCollection<Student> candidates,
         StudentDrawExecutionPolicy executionPolicy,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         var preparedCandidates = candidates.Where(student => student.IsCandidate).ToList();
         var historyCache = BuildStudentHistoryCache(preparedCandidates, courseName, historyGroup);
@@ -199,7 +199,7 @@ public partial class DrawEngine
         DrawSettingsType drawSettingsType,
         DrawType drawType,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         return PrepareStudentsForDraw(
             count,
@@ -215,7 +215,7 @@ public partial class DrawEngine
         DrawSettingsType drawSettingsType,
         StudentDrawExecutionPolicy executionPolicy,
         string courseName = "",
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         try
         {
@@ -294,7 +294,7 @@ public partial class DrawEngine
         return DrawRepeatPolicy.ResolveThreshold(ConfigData.LotterySettings.DrawMode, ConfigData.LotterySettings.HalfRepeat);
     }
 
-    public DrawResult<Prize> DrawPrize(int count, Func<Prize, bool> filter, string historyGroup = "")
+    public DrawResult<Prize> DrawPrize(int count, Func<Prize, bool> filter, string? historyGroup = null)
     {
         var historyCache = BuildPrizeHistoryCache(PrizeList.Prizes, historyGroup: historyGroup);
         _logger.LogInformation("开始奖品抽取：请求数量={Count}，抽取模式={DrawMode}，抽取类型={DrawType}.",
@@ -328,7 +328,7 @@ public partial class DrawEngine
         int count,
         Func<Prize, bool> filter,
         IReadOnlyDictionary<string, int> temporaryCounts,
-        string historyGroup = "")
+        string? historyGroup = null)
     {
         // Temporary records are deliberately scope-independent: a repeat limit must not reset just because
         // the caller narrowed the persistent-history scope, so historyGroup does not enter this cache.

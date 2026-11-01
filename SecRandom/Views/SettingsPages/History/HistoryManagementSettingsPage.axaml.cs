@@ -1,19 +1,25 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using CommunityToolkit.Mvvm.ComponentModel;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Controls;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
+using SecRandom.Core.Models.SubConfigs.General;
+using SecRandom.Core.Services.Config;
 using LR = SecRandom.Langs.SettingsPages.HistoryManagement.Resources;
 
 namespace SecRandom.Views.SettingsPages.History;
@@ -29,13 +35,252 @@ public partial class HistoryManagementSettingsPage : UserControl
     private const string SortAscending = "asc";
     private const string BreakCourseMarker = "__break__";
 
+    private bool _isHistoryGroupsSubscribed;
+    private IHistoryGroupCatalog? _historyGroupCatalog;
+
     public HistoryManagementSettingsPage()
     {
+        HistoryGroups = IAppHost.GetService<MainConfigHandler>().Data.General.HistoryGroups;
         DataContext = this;
         InitializeComponent();
         InitializeExportOptions();
         RefreshCombos();
+        SubscribeHistoryGroups();
+        RefreshHistoryGroups();
     }
+
+    public HistoryGroupSettingsConfig HistoryGroups { get; }
+    public ObservableCollection<HistoryGroupRow> HistoryGroupRows { get; } = [];
+
+    private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
+    private IHistoryGroupCatalog? HistoryGroupCatalog => _historyGroupCatalog ??= IAppHost.TryGetService<IHistoryGroupCatalog>();
+
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        SubscribeHistoryGroups();
+        RefreshHistoryGroups();
+    }
+
+    private void OnUnloaded(object? sender, RoutedEventArgs e)
+    {
+        UnsubscribeHistoryGroups();
+    }
+
+    // ============ 历史记录组 ============
+
+    private void HistoryGroupsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        // 本页的保存边界：子配置属性一变就落盘。
+        ConfigHandler.Save();
+
+        if (e.PropertyName == nameof(HistoryGroupSettingsConfig.Enabled))
+            SyncHistoryGroupSection();
+    }
+
+    private void SubscribeHistoryGroups()
+    {
+        if (_isHistoryGroupsSubscribed)
+            return;
+
+        HistoryGroups.PropertyChanged += HistoryGroupsOnPropertyChanged;
+        _isHistoryGroupsSubscribed = true;
+    }
+
+    private void UnsubscribeHistoryGroups()
+    {
+        if (!_isHistoryGroupsSubscribed)
+            return;
+
+        HistoryGroups.PropertyChanged -= HistoryGroupsOnPropertyChanged;
+        _isHistoryGroupsSubscribed = false;
+    }
+
+    private void SyncHistoryGroupSection()
+    {
+        if (!HistoryGroups.Enabled)
+        {
+            ShowHistoryGroupMessage(string.Empty);
+            return;
+        }
+
+        RefreshHistoryGroups();
+    }
+
+    /// <summary>
+    ///     重新从记录组目录拉取点名历史的记录组，并重建行列表。
+    /// </summary>
+    public void RefreshHistoryGroups()
+    {
+        HistoryGroupRows.Clear();
+
+        var catalog = HistoryGroupCatalog;
+        if (catalog is not null)
+        {
+            try
+            {
+                foreach (var name in catalog.GetGroupNames(HistoryGroupKind.RollCall))
+                {
+                    HistoryGroupRows.Add(new HistoryGroupRow(name)
+                    {
+                        Count = catalog.CountRecords(HistoryGroupKind.RollCall, name)
+                    });
+                }
+            }
+            catch (Exception)
+            {
+                ShowHistoryGroupMessage(MapHistoryGroupError(null));
+            }
+        }
+
+        HistoryGroupEmptyHint.IsVisible = HistoryGroupRows.Count == 0;
+    }
+
+    private void CreateHistoryGroup_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var catalog = HistoryGroupCatalog;
+        if (catalog is null)
+        {
+            ShowHistoryGroupMessage(MapHistoryGroupError("group_profile_unavailable"));
+            return;
+        }
+
+        var name = (NewHistoryGroupNameBox.Text ?? string.Empty).Trim();
+
+        try
+        {
+            if (catalog.TryCreate(HistoryGroupKind.RollCall, name, out var error))
+            {
+                NewHistoryGroupNameBox.Text = string.Empty;
+                ShowHistoryGroupMessage(string.Empty);
+                RefreshHistoryGroups();
+                return;
+            }
+
+            ShowHistoryGroupMessage(MapHistoryGroupError(error));
+        }
+        catch (Exception)
+        {
+            ShowHistoryGroupMessage(MapHistoryGroupError("group_save_failed"));
+        }
+    }
+
+    private void RenameHistoryGroup_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if ((sender as Control)?.DataContext is not HistoryGroupRow row)
+            return;
+
+        foreach (var other in HistoryGroupRows)
+        {
+            other.IsDeleting = false;
+
+            if (!ReferenceEquals(other, row))
+                other.IsRenaming = false;
+        }
+
+        row.RenameText = row.Name;
+        row.IsRenaming = true;
+        ShowHistoryGroupMessage(string.Empty);
+    }
+
+    private void SaveHistoryGroupRename_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if ((sender as Control)?.DataContext is not HistoryGroupRow row)
+            return;
+
+        var catalog = HistoryGroupCatalog;
+        if (catalog is null)
+        {
+            ShowHistoryGroupMessage(MapHistoryGroupError("group_profile_unavailable"));
+            return;
+        }
+
+        try
+        {
+            if (catalog.TryRename(HistoryGroupKind.RollCall, row.Name, (row.RenameText ?? string.Empty).Trim(), out var error))
+            {
+                row.IsRenaming = false;
+                ShowHistoryGroupMessage(string.Empty);
+                RefreshHistoryGroups();
+                return;
+            }
+
+            ShowHistoryGroupMessage(MapHistoryGroupError(error));
+        }
+        catch (Exception)
+        {
+            ShowHistoryGroupMessage(MapHistoryGroupError("group_save_failed"));
+        }
+    }
+
+    private void CancelHistoryGroupRename_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if ((sender as Control)?.DataContext is not HistoryGroupRow row)
+            return;
+
+        row.RenameText = row.Name;
+        row.IsRenaming = false;
+        ShowHistoryGroupMessage(string.Empty);
+    }
+
+    private void DeleteHistoryGroup_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if ((sender as Control)?.DataContext is not HistoryGroupRow row)
+            return;
+
+        // 两步确认：第一次点击只把该行置为待确认状态。
+        if (!row.IsDeleting)
+        {
+            foreach (var other in HistoryGroupRows)
+            {
+                other.IsDeleting = false;
+                other.IsRenaming = false;
+            }
+
+            row.IsDeleting = true;
+            ShowHistoryGroupMessage(LR.S_HistoryGroups_DeleteHint);
+            return;
+        }
+
+        var catalog = HistoryGroupCatalog;
+        if (catalog is null)
+        {
+            row.IsDeleting = false;
+            ShowHistoryGroupMessage(MapHistoryGroupError("group_profile_unavailable"));
+            return;
+        }
+
+        try
+        {
+            catalog.Delete(HistoryGroupKind.RollCall, row.Name);
+            ShowHistoryGroupMessage(string.Empty);
+        }
+        catch (Exception)
+        {
+            ShowHistoryGroupMessage(MapHistoryGroupError("group_save_failed"));
+        }
+
+        RefreshHistoryGroups();
+    }
+
+    private void ShowHistoryGroupMessage(string message)
+    {
+        HistoryGroupMessageText.Text = message;
+        HistoryGroupMessageText.IsVisible = !string.IsNullOrEmpty(message);
+    }
+
+    private static string MapHistoryGroupError(string? error) => error switch
+    {
+        "group_name_empty" => LR.S_HistoryGroups_Error_NameEmpty,
+        "group_name_too_long" => LR.S_HistoryGroups_Error_NameTooLong,
+        "group_name_control_chars" => LR.S_HistoryGroups_Error_NameControlChars,
+        "group_name_reserved" => LR.S_HistoryGroups_Error_NameReserved,
+        "group_already_exists" => LR.S_HistoryGroups_Error_AlreadyExists,
+        "group_not_found" => LR.S_HistoryGroups_Error_NotFound,
+        "group_name_unchanged" => LR.S_HistoryGroups_Error_NameUnchanged,
+        "group_profile_unavailable" => LR.S_HistoryGroups_Error_ProfileUnavailable,
+        "group_save_failed" => LR.S_HistoryGroups_Error_SaveFailed,
+        _ => LR.S_HistoryGroups_Error_SaveFailed
+    };
 
     private void RefreshCombos()
     {
@@ -456,4 +701,59 @@ public partial class HistoryManagementSettingsPage : UserControl
         DatePicker To,
         ComboBox Sort,
         ComboBox Format);
+}
+
+public sealed class HistoryGroupRow : ObservableObject
+{
+    private string _name;
+    private int _count;
+    private bool _isRenaming;
+    private bool _isDeleting;
+    private string _renameText;
+
+    public HistoryGroupRow(string name)
+    {
+        _name = name;
+        _renameText = name;
+    }
+
+    public string Name
+    {
+        get => _name;
+        set
+        {
+            if (SetProperty(ref _name, value))
+                OnPropertyChanged(nameof(CountText));
+        }
+    }
+
+    public int Count
+    {
+        get => _count;
+        set
+        {
+            if (SetProperty(ref _count, value))
+                OnPropertyChanged(nameof(CountText));
+        }
+    }
+
+    public string CountText => string.Format(LR.S_HistoryGroups_RecordCount, Count);
+
+    public bool IsRenaming
+    {
+        get => _isRenaming;
+        set => SetProperty(ref _isRenaming, value);
+    }
+
+    public bool IsDeleting
+    {
+        get => _isDeleting;
+        set => SetProperty(ref _isDeleting, value);
+    }
+
+    public string RenameText
+    {
+        get => _renameText;
+        set => SetProperty(ref _renameText, value);
+    }
 }
