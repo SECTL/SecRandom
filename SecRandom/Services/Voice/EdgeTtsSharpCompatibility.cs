@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.WebSockets;
@@ -7,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Edge_tts_sharp.Model;
+using SecRandom.Services.Voice;
 
 namespace Edge_tts_sharp
 {
@@ -15,7 +17,12 @@ namespace Edge_tts_sharp
     public sealed class Wss : IDisposable
     {
         private const string ChromiumVersion = "143.0.3650.75";
-        private const string SecMsGecVersion = "1-" + ChromiumVersion;
+
+        // v2 令牌（<cs64>-<摘要>）必须配 2-<Chromium 版本>；配 1- 或只给 v1 令牌都会被 403 拒绝。
+        private const string SecMsGecVersion = "2-" + ChromiumVersion;
+
+        private const string SecMsGecParameter = "Sec-MS-GEC";
+        private const string SecMsGecVersionParameter = "Sec-MS-GEC-Version";
         private const string UserAgent =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
             + "(KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0";
@@ -180,20 +187,38 @@ namespace Edge_tts_sharp
 
         private static Uri CreateRequestUri(string url)
         {
-            const string versionParameter = "Sec-MS-GEC-Version=";
-            var versionStart = url.IndexOf(versionParameter, StringComparison.OrdinalIgnoreCase);
-            if (versionStart >= 0)
+            // 子模块里拼出的还是 v1 令牌与 1- 版本号，服务端只认 v2，所以每次连接都整体重写这两个参数。
+            url = SetQueryParameter(url, SecMsGecParameter, EdgeTtsGecToken.Create(DateTimeOffset.UtcNow));
+            url = SetQueryParameter(url, SecMsGecVersionParameter, SecMsGecVersion);
+            return new Uri($"{url}&ConnectionId={Guid.NewGuid():N}");
+        }
+
+        private static string SetQueryParameter(string url, string name, string value)
+        {
+            var queryStart = url.IndexOf('?');
+            var address = queryStart < 0 ? url : url[..queryStart];
+            var query = queryStart < 0 ? string.Empty : url[(queryStart + 1)..];
+            var parameters = query.Length == 0
+                ? new List<string>()
+                : new List<string>(query.Split('&'));
+
+            var replaced = false;
+            for (var i = 0; i < parameters.Count; i++)
             {
-                var valueStart = versionStart + versionParameter.Length;
-                var valueEnd = url.IndexOf('&', valueStart);
-                url = url[..valueStart] + SecMsGecVersion + (valueEnd < 0 ? string.Empty : url[valueEnd..]);
-            }
-            else
-            {
-                url += (url.Contains('?') ? "&" : "?") + versionParameter + SecMsGecVersion;
+                var separator = parameters[i].IndexOf('=');
+                var key = separator < 0 ? parameters[i] : parameters[i][..separator];
+                if (!string.Equals(key, name, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                parameters[i] = $"{key}={value}";
+                replaced = true;
+                break;
             }
 
-            return new Uri($"{url}&ConnectionId={Guid.NewGuid():N}");
+            if (!replaced)
+                parameters.Add($"{name}={value}");
+
+            return $"{address}?{string.Join('&', parameters)}";
         }
     }
 
