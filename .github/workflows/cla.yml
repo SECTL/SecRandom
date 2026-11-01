@@ -44,7 +44,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run CLA Assistant
-        if: (github.event.comment.body == 'recheck' || github.event.comment.body == 'recheck 重新检查' || github.event_name == 'pull_request_target')
+        # 只有这几类事件才真的运行 action：
+        #   1. pull_request_target：PR 新建/更新/重开/关闭时检查
+        #   2. 评论正文正好是 'recheck' / 'recheck 重新检查'：贡献者手动要求重查
+        #   3. 评论正文**包含**签署语句：贡献者粘贴签署语句（issue_comment 事件）时必须进来
+        # 第 3 条曾漏掉，后果是：签署评论会触发 workflow，但 if 不成立 → 步骤被跳过 →
+        # 签名永远写不进去、CLA 检查永远不过，贡献者怎么签都签不上。
+        # 这里用 contains 而不是 ==，因为 CLA.md §9.5 允许在签署语句后面追加
+        # 追认历史贡献的后缀；真正的严格校验由 action 内部的签名正则负责。
+        if: |
+          github.event_name == 'pull_request_target'
+          || github.event.comment.body == 'recheck'
+          || github.event.comment.body == 'recheck 重新检查'
+          || contains(github.event.comment.body || '', 'I have read the CLA Document and I hereby sign the CLA')
         uses: contributor-assistant/github-action@v2.6.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
