@@ -95,6 +95,7 @@ public sealed class CourseLinkageService
             && a.State == b.State
             && a.Source == b.Source
             && a.Version == b.Version
+            && a.IsOutdoorCourse == b.IsOutdoorCourse
             && a.CurrentCourse?.Name == b.CurrentCourse?.Name
             && a.PreviousCourse?.Name == b.PreviousCourse?.Name
             && a.NextCourse?.Name == b.NextCourse?.Name
@@ -107,6 +108,16 @@ public sealed class CourseLinkageService
 
     public bool IsConfirmedNonClassTime => Settings.InstantDrawDisable
         && IsConfirmedBreakTime;
+
+    /// <summary>
+    ///     上课时段禁用户外课程：只有 ClassIsland 数据源携带科目的户外课程标记。开启后当前
+    ///     课程被标记为户外课程时，即使处于上课时段也限制抽取和重置，验证例外与
+    ///     <see cref="IsConfirmedNonClassTime" /> 共用。
+    /// </summary>
+    public bool IsConfirmedOutdoorCourse => Settings.DisableOnOutdoorCourse
+        && _snapshot.IsAvailable
+        && _snapshot.State == CourseTimeState.OnClass
+        && _snapshot.IsOutdoorCourse;
 
     public string GetSubjectFilter()
     {

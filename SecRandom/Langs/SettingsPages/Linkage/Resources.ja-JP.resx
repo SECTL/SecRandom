@@ -18,6 +18,12 @@
   <data name="S_External_InstantDrawDisable_D">
     <value>休み時間や授業外と確認された場合に抽選とリセットを制限します</value>
   </data>
+  <data name="S_External_OutdoorCourse">
+    <value>授業時間中は屋外科目で抽選を無効化</value>
+  </data>
+  <data name="S_External_OutdoorCourse_D">
+    <value>ClassIsland 時間割の科目についている屋外フラグを読み取り、現在の授業が屋外とマークされている場合は授業時間中でも抽選とリセットを制限します。検証の例外は「授業時間外の操作制限」と共通です</value>
+  </data>
   <data name="S_External_DataSource">
     <value>データソース</value>
   </data>

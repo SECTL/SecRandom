@@ -18,6 +18,12 @@
   <data name="S_External_InstantDrawDisable_D">
     <value>Restrict drawing and reset when course data confirms a break or non-class period; disable for no restriction</value>
   </data>
+  <data name="S_External_OutdoorCourse">
+    <value>Disable draws during outdoor courses</value>
+  </data>
+  <data name="S_External_OutdoorCourse_D">
+    <value>Reads each subject's outdoor-course flag from the ClassIsland timetable: while the current course is marked outdoor, drawing and resetting stay limited even during class; shares the verification exception with the non-class-time restriction</value>
+  </data>
   <data name="S_External_DataSource">
     <value>Data source</value>
   </data>
