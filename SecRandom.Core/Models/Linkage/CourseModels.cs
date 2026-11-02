@@ -1,4 +1,4 @@
-﻿namespace SecRandom.Core.Models.Linkage;
+namespace SecRandom.Core.Models.Linkage;
 
 public enum CourseTimeState
 {
@@ -26,6 +26,7 @@ public sealed record CourseScheduleSnapshot(
     TimeSpan? TimeSincePreviousCourseEnd,
     string Source,
     string Version,
+    bool IsOutdoorCourse = false,
     string? Error = null)
 {
     public static CourseScheduleSnapshot Unavailable(string source, string? error = null) => new(
@@ -39,5 +40,6 @@ public sealed record CourseScheduleSnapshot(
         null,
         source,
         string.Empty,
+        false,
         error);
 }

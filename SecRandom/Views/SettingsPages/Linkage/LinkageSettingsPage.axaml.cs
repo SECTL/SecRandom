@@ -11,6 +11,7 @@ using Avalonia.Platform.Storage;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
@@ -27,6 +28,8 @@ public partial class LinkageSettingsPage : UserControl
     private bool _isSubscribed;
     public static readonly StyledProperty<string> CsesSummaryProperty =
         AvaloniaProperty.Register<LinkageSettingsPage, string>(nameof(CsesSummary));
+    public static readonly StyledProperty<bool> IsOutdoorCourseRowVisibleProperty =
+        AvaloniaProperty.Register<LinkageSettingsPage, bool>(nameof(IsOutdoorCourseRowVisible));
 
     public LinkageSettingsPage()
     {
@@ -34,6 +37,7 @@ public partial class LinkageSettingsPage : UserControl
         DataContext = this;
         InitializeComponent();
         RefreshCsesSummary();
+        IsOutdoorCourseRowVisible = Settings.DataSource == LinkageDataSource.ClassIsland;
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
@@ -42,6 +46,13 @@ public partial class LinkageSettingsPage : UserControl
     {
         get => GetValue(CsesSummaryProperty);
         private set => SetValue(CsesSummaryProperty, value);
+    }
+
+    /// <summary>户外课程标记只有 ClassIsland 数据源提供，CSES 数据源下隐藏该行。</summary>
+    public bool IsOutdoorCourseRowVisible
+    {
+        get => GetValue(IsOutdoorCourseRowVisibleProperty);
+        private set => SetValue(IsOutdoorCourseRowVisibleProperty, value);
     }
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
@@ -68,6 +79,7 @@ public partial class LinkageSettingsPage : UserControl
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        IsOutdoorCourseRowVisible = Settings.DataSource == LinkageDataSource.ClassIsland;
         ConfigHandler.Save();
         _ = IAppHost.GetService<CourseLinkageService>().RefreshAsync();
     }

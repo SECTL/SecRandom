@@ -7,6 +7,7 @@ public partial class LinkageSettingsConfig : ObservableObject
 {
     [ObservableProperty] private bool _verificationRequired = true;
     [ObservableProperty] private bool _instantDrawDisable = false;
+    [ObservableProperty] private bool _disableOnOutdoorCourse = false;
     [ObservableProperty] private LinkageDataSource _dataSource = LinkageDataSource.Off;
     [ObservableProperty] private bool _hideFloatingWindowOnClassEnd = false;
     [ObservableProperty] private bool _preClassResetEnabled = false;

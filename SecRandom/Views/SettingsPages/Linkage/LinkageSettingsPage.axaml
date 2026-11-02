@@ -37,6 +37,16 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_External_OutdoorCourse"
+                                    Header="{x:Static lsp:Resources.S_External_OutdoorCourse}"
+                                    Description="{x:Static lsp:Resources.S_External_OutdoorCourse_D}"
+                                    IsVisible="{Binding IsOutdoorCourseRowVisible}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi RunFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.DisableOnOutdoorCourse}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_External_DataSource"
                                    Header="{x:Static lsp:Resources.S_External_DataSource}"
                                    Description="{x:Static lsp:Resources.S_External_DataSource_D}"

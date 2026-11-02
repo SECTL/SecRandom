@@ -33,6 +33,12 @@
   <data name="S_External_InstantDrawDisable_D" xml:space="preserve">
     <value>课程数据源明确显示处于课间或非上课时段时，限制抽取和重置；关闭后不作限制</value>
   </data>
+  <data name="S_External_OutdoorCourse" xml:space="preserve">
+    <value>上课时段禁用户外课程</value>
+  </data>
+  <data name="S_External_OutdoorCourse_D" xml:space="preserve">
+    <value>读取 ClassIsland 课表科目的户外课程标记，当前课程被标记为户外课程时，即使处于上课时段也限制抽取和重置；验证例外与"限制非上课时段操作"共用</value>
+  </data>
   <data name="S_External_DataSource" xml:space="preserve">
     <value>数据源</value>
   </data>
