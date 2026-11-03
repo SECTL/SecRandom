@@ -81,6 +81,12 @@
   <data name="S_ClassTime_HideFloatingWindow_D">
     <value>授業終了時に自動で非表示にします</value>
   </data>
+  <data name="S_ClassTime_HideFloatingWindowOnOutdoorCourse">
+    <value>屋外授業中は非表示</value>
+  </data>
+  <data name="S_ClassTime_HideFloatingWindowOnOutdoorCourse_D">
+    <value>現在の授業が屋外授業の場合、フローティングウィンドウを自動で非表示にします</value>
+  </data>
   <data name="S_ClassTime_PreClassReset">
     <value>授業前にリセット</value>
   </data>

@@ -88,6 +88,16 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_ClassTime_HideFloatingWindowOnOutdoorCourse"
+                                   Header="{x:Static lsp:Resources.S_ClassTime_HideFloatingWindowOnOutdoorCourse}"
+                                   Description="{x:Static lsp:Resources.S_ClassTime_HideFloatingWindowOnOutdoorCourse_D}"
+                                   IsVisible="{Binding IsOutdoorCourseRowVisible}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.HideFloatingWindowOnOutdoorCourse}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_ClassTime_PreClassReset"
                                    Header="{x:Static lsp:Resources.S_ClassTime_PreClassReset}"
                                    Description="{x:Static lsp:Resources.S_ClassTime_PreClassReset_D}"

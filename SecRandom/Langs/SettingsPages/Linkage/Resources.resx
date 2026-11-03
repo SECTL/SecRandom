@@ -96,6 +96,12 @@
   <data name="S_ClassTime_HideFloatingWindow_D" xml:space="preserve">
     <value>课程结束时自动隐藏悬浮窗</value>
   </data>
+  <data name="S_ClassTime_HideFloatingWindowOnOutdoorCourse" xml:space="preserve">
+    <value>户外课程隐藏悬浮窗</value>
+  </data>
+  <data name="S_ClassTime_HideFloatingWindowOnOutdoorCourse_D" xml:space="preserve">
+    <value>上课时段当前课程为户外课程时自动隐藏悬浮窗</value>
+  </data>
   <data name="S_ClassTime_PreClassReset" xml:space="preserve">
     <value>课前重置</value>
   </data>

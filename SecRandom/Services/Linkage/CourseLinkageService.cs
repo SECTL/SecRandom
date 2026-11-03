@@ -115,7 +115,13 @@ public sealed class CourseLinkageService
     ///     <see cref="IsConfirmedNonClassTime" /> 共用。
     /// </summary>
     public bool IsConfirmedOutdoorCourse => Settings.DisableOnOutdoorCourse
-        && _snapshot.IsAvailable
+        && IsOutdoorCourseOnClass;
+
+    /// <summary>
+    ///     当前处于上课时段且课程被标记为户外课程的纯状态判断，不依赖任何开关；
+    ///     抽取限制看 <see cref="IsConfirmedOutdoorCourse" />，悬浮窗隐藏由调用方结合自己的开关判断。
+    /// </summary>
+    public bool IsOutdoorCourseOnClass => _snapshot.IsAvailable
         && _snapshot.State == CourseTimeState.OnClass
         && _snapshot.IsOutdoorCourse;
 
