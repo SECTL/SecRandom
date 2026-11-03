@@ -10,6 +10,7 @@ public partial class LinkageSettingsConfig : ObservableObject
     [ObservableProperty] private bool _disableOnOutdoorCourse = false;
     [ObservableProperty] private LinkageDataSource _dataSource = LinkageDataSource.Off;
     [ObservableProperty] private bool _hideFloatingWindowOnClassEnd = false;
+    [ObservableProperty] private bool _hideFloatingWindowOnOutdoorCourse = false;
     [ObservableProperty] private bool _preClassResetEnabled = false;
     [ObservableProperty] private int _preClassResetTime = 120;
     [ObservableProperty] private int _preClassEnableTime = 0;

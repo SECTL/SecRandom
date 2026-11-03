@@ -81,6 +81,12 @@
   <data name="S_ClassTime_HideFloatingWindow_D">
     <value>Automatically hide the floating window when class ends</value>
   </data>
+  <data name="S_ClassTime_HideFloatingWindowOnOutdoorCourse">
+    <value>Hide floating window on outdoor courses</value>
+  </data>
+  <data name="S_ClassTime_HideFloatingWindowOnOutdoorCourse_D">
+    <value>Automatically hide the floating window when the current course is marked as an outdoor course</value>
+  </data>
   <data name="S_ClassTime_PreClassReset">
     <value>Reset before class</value>
   </data>

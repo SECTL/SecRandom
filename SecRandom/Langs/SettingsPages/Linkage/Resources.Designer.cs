@@ -238,7 +238,25 @@ namespace SecRandom.Langs.SettingsPages.Linkage {
                 return ResourceManager.GetString("S_ClassTime_HideFloatingWindow_D", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to 户外课程隐藏悬浮窗.
+        /// </summary>
+        public static string S_ClassTime_HideFloatingWindowOnOutdoorCourse {
+            get {
+                return ResourceManager.GetString("S_ClassTime_HideFloatingWindowOnOutdoorCourse", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 上课时段当前课程为户外课程时自动隐藏悬浮窗.
+        /// </summary>
+        public static string S_ClassTime_HideFloatingWindowOnOutdoorCourse_D {
+            get {
+                return ResourceManager.GetString("S_ClassTime_HideFloatingWindowOnOutdoorCourse_D", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 课后禁用延迟.
         /// </summary>

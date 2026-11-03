@@ -442,6 +442,8 @@ public static class ControlSettingsLabels
         ["instant_draw_disable"] = R(Linkage, "S_External_InstantDrawDisable"),
         ["verification_required"] = R(Linkage, "S_External_VerificationRequired"),
         ["hide_floating_window_on_class_end"] = R(Linkage, "S_ClassTime_HideFloatingWindow"),
+        ["hide_floating_window_on_outdoor_course"] = R(Linkage, "S_ClassTime_HideFloatingWindowOnOutdoorCourse"),
+        ["disable_on_outdoor_course"] = R(Linkage, "S_External_OutdoorCourse"),
         ["pre_class_reset_enabled"] = R(Linkage, "S_ClassTime_PreClassReset"),
         ["pre_class_reset_time"] = R(Linkage, "S_ClassTime_PreClassResetTime"),
         ["post_class_disable_delay"] = R(Linkage, "S_ClassTime_PostClassDisableDelay"),

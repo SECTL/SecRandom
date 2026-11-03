@@ -229,8 +229,11 @@ public partial class FloatingWindow : Window
 
     private void ApplyCourseLinkageVisibility()
     {
-        var shouldHide = ViewModel.Config.LinkageSettings.HideFloatingWindowOnClassEnd
-            && _linkageService.IsConfirmedBreakTime;
+        var linkageSettings = ViewModel.Config.LinkageSettings;
+        var shouldHide = (linkageSettings.HideFloatingWindowOnClassEnd
+                && _linkageService.IsConfirmedBreakTime)
+            || (linkageSettings.HideFloatingWindowOnOutdoorCourse
+                && _linkageService.IsOutdoorCourseOnClass);
         if (shouldHide == _hiddenByCourseLinkage)
             return;
 
