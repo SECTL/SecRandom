@@ -28,6 +28,7 @@ public partial class QuickDrawSettingsPage : UserControl
 {
     private bool _normalizingSettings;
     private bool _isSubscribed;
+    private bool _syncingHistoryGroupSelection;
     private string _lastKnownDefaultClass = string.Empty;
 
     public QuickDrawSettingsPage()
@@ -84,10 +85,58 @@ public partial class QuickDrawSettingsPage : UserControl
     private IHistoryGroupCatalog HistoryGroupCatalog { get; } = IAppHost.GetService<IHistoryGroupCatalog>();
     private MusicLibraryService MusicLibrary { get; } = IAppHost.GetService<MusicLibraryService>();
 
+    /// <summary>
+    ///     用户在这一行里换了组：写回配置。重建候选值期间下拉框会先清空选中项，那不是用户选择。
+    /// </summary>
+    private void HistoryGroupSelectorOnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_syncingHistoryGroupSelection || HistoryGroupSelector is null)
+            return;
+
+        HistoryGroup.Selected = HistoryGroupSelector.SelectedItem as string;
+    }
+
+    /// <summary>重建候选值并把选中项重新落回下拉框。</summary>
+    private void RefreshHistoryGroupSelection()
+    {
+        _syncingHistoryGroupSelection = true;
+        try
+        {
+            HistoryGroup.Refresh();
+            ApplyHistoryGroupSelection();
+        }
+        finally
+        {
+            _syncingHistoryGroupSelection = false;
+        }
+    }
+
+    /// <summary>配置里的组名变了（导入、另一页改、组被删），把选中项同步到下拉框。</summary>
+    private void SyncHistoryGroupSelection()
+    {
+        _syncingHistoryGroupSelection = true;
+        try
+        {
+            ApplyHistoryGroupSelection();
+        }
+        finally
+        {
+            _syncingHistoryGroupSelection = false;
+        }
+    }
+
+    private void ApplyHistoryGroupSelection()
+    {
+        if (HistoryGroupSelector is null)
+            return;
+
+        HistoryGroupSelector.SelectedIndex = HistoryGroup.SelectedIndex;
+    }
+
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         MusicLibrary.Refresh();
-        HistoryGroup.Refresh();
+        RefreshHistoryGroupSelection();
         SubscribeSettings();
     }
 
@@ -107,6 +156,7 @@ public partial class QuickDrawSettingsPage : UserControl
             return;
 
         HistoryGroup.Refresh();
+        ApplyHistoryGroupSelection();
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -115,7 +165,10 @@ public partial class QuickDrawSettingsPage : UserControl
             SynchronizeLegacyDrawType();
 
         if (e.PropertyName == nameof(QuickDrawSettingsConfig.HistoryGroup))
+        {
             HistoryGroup.NotifySelectionChanged();
+            SyncHistoryGroupSelection();
+        }
 
         if (e.PropertyName == nameof(QuickDrawSettingsConfig.DefaultClass))
         {

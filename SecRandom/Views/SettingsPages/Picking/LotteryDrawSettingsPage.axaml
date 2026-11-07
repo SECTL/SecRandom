@@ -58,7 +58,8 @@
                                    Description="{x:Static lp:Resources.S_DefaultPool_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi LotteryFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <ComboBox ItemsSource="{Binding PrizeListNames}" SelectedItem="{Binding Settings.DefaultPool}"
+                    <ComboBox ItemsSource="{Binding DefaultPoolOptions}"
+                              SelectedItem="{Binding SelectedDefaultPool, Mode=TwoWay}"
                               MinWidth="220" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
@@ -70,10 +71,12 @@
                                    Description="{x:Static lp:Resources.S_LotteryHistoryGroup_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <StackPanel Spacing="4" MinWidth="220">
-                        <ComboBox IsVisible="{Binding HistoryGroup.IsSelectorVisible}"
+                    <StackPanel Spacing="4" HorizontalAlignment="Right">
+                        <ComboBox x:Name="HistoryGroupSelector"
+                                  MinWidth="220"
+                                  IsVisible="{Binding HistoryGroup.IsSelectorVisible}"
                                   ItemsSource="{Binding HistoryGroup.Options}"
-                                  SelectedItem="{Binding HistoryGroup.Selected, Mode=TwoWay}" />
+                                  SelectionChanged="HistoryGroupSelectorOnSelectionChanged" />
                         <TextBlock Text="{x:Static lp:Resources.S_HistoryGroup_Disabled}"
                                    IsVisible="{Binding !HistoryGroup.IsSelectorVisible}"
                                    Opacity="0.72" FontSize="12" TextWrapping="Wrap"

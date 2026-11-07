@@ -74,6 +74,26 @@ public sealed class DrawHistoryGroupSetting : ObservableObject
     /// <summary>总开关关闭时整行只显示说明，不再显示下拉框。</summary>
     public bool IsSelectorVisible => _isFeatureEnabled();
 
+    /// <summary>
+    ///     下拉框按索引选择。选项里永远至少有一个「默认记录组」，所以页面刚打开、或是
+    ///     <see cref="Refresh" /> 刚重建过候选值时都不会出现「一个都没选中」的空下拉框。
+    /// </summary>
+    public int SelectedIndex
+    {
+        get
+        {
+            var index = Options.IndexOf(Selected);
+            return index >= 0 ? index : 0;
+        }
+        set
+        {
+            if (_rebuilding || value < 0 || value >= Options.Count)
+                return;
+
+            Selected = Options[value];
+        }
+    }
+
     /// <summary>配置里的组名与下拉框选项之间的映射；空串与首项「默认记录组」互为同一个值。</summary>
     public string Selected
     {
@@ -97,6 +117,7 @@ public sealed class DrawHistoryGroupSetting : ObservableObject
 
             _write(resolved);
             OnPropertyChanged(nameof(Selected));
+            OnPropertyChanged(nameof(SelectedIndex));
         }
     }
 
@@ -118,11 +139,16 @@ public sealed class DrawHistoryGroupSetting : ObservableObject
         }
 
         OnPropertyChanged(nameof(Selected));
+        OnPropertyChanged(nameof(SelectedIndex));
         OnPropertyChanged(nameof(IsSelectorVisible));
     }
 
     /// <summary>配置里的组名被别处改了（另一页、导入、删除组），让下拉框重新取一次值。</summary>
-    public void NotifySelectionChanged() => OnPropertyChanged(nameof(Selected));
+    public void NotifySelectionChanged()
+    {
+        OnPropertyChanged(nameof(Selected));
+        OnPropertyChanged(nameof(SelectedIndex));
+    }
 
     private void RebuildGroupNames()
     {
