@@ -400,7 +400,11 @@ public partial class FloatingWindow : Window
         }
 
         CustomTextBlock.Text = text;
-        CustomTextBlock.FontSize = Math.Clamp(settings.FloatingWindowSize * 0.25, 11, 20);
+        // 0 = 跟随悬浮窗尺寸自动缩放（旧行为）；显式配置时按像素取值，仍夹在可读区间内
+        var configuredFontSize = settings.FloatingWindowTextFontSize;
+        CustomTextBlock.FontSize = configuredFontSize > 0
+            ? Math.Clamp(configuredFontSize, 8, 72)
+            : Math.Clamp(settings.FloatingWindowSize * 0.25, 11, 20);
         CustomTextBlock.MaxWidth = Math.Clamp(contentWidth > 1 ? contentWidth : 160, 120, 360);
     }
 

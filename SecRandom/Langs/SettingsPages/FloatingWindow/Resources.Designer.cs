@@ -652,5 +652,23 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
                 return ResourceManager.GetString("S_Display_CustomText_D", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 自定义文字字号.
+        /// </summary>
+        public static string S_Display_CustomTextSize {
+            get {
+                return ResourceManager.GetString("S_Display_CustomTextSize", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 自定义文字的像素字号，0 表示跟随悬浮窗尺寸自动缩放.
+        /// </summary>
+        public static string S_Display_CustomTextSize_D {
+            get {
+                return ResourceManager.GetString("S_Display_CustomTextSize_D", resourceCulture);
+            }
+        }
     }
 }

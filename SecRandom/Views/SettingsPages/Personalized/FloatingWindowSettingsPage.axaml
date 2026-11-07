@@ -56,15 +56,26 @@
                                    Description="{x:Static lsp:Resources.S_Display_CustomText_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <Grid ColumnDefinitions="260,Auto" ColumnSpacing="12">
-                        <TextBox Text="{Binding Settings.FloatingWindowText}"
-                                 IsEnabled="{Binding Settings.EnableFloatingWindowText}"
-                                 MaxLength="120"
-                                 AcceptsReturn="False"
-                                 TextWrapping="NoWrap" />
-                        <ToggleSwitch Grid.Column="1"
-                                      IsChecked="{Binding Settings.EnableFloatingWindowText}" />
-                    </Grid>
+                    <StackPanel Spacing="8">
+                        <Grid ColumnDefinitions="260,Auto" ColumnSpacing="12">
+                            <TextBox Text="{Binding Settings.FloatingWindowText}"
+                                     IsEnabled="{Binding Settings.EnableFloatingWindowText}"
+                                     MaxLength="120"
+                                     AcceptsReturn="False"
+                                     TextWrapping="NoWrap" />
+                            <ToggleSwitch Grid.Column="1"
+                                          IsChecked="{Binding Settings.EnableFloatingWindowText}" />
+                        </Grid>
+                        <!-- 0 = 跟随悬浮窗尺寸自动缩放，与按钮字号同一比例 -->
+                        <StackPanel Orientation="Horizontal" Spacing="12"
+                                    IsEnabled="{Binding Settings.EnableFloatingWindowText}">
+                            <TextBlock Text="{x:Static lsp:Resources.S_Display_CustomTextSize}"
+                                       VerticalAlignment="Center" />
+                            <NumericUpDown Value="{Binding Settings.FloatingWindowTextFontSize}"
+                                           Minimum="0" Maximum="72" Increment="1"
+                                           FormatString="0" MinWidth="140" />
+                        </StackPanel>
+                    </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
