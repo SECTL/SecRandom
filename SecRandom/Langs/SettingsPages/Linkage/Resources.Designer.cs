@@ -384,7 +384,7 @@ namespace SecRandom.Langs.SettingsPages.Linkage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 上课时段禁用户外课程.
+        ///   Looks up a localized string similar to 户外课程上课时段禁用.
         /// </summary>
         public static string S_External_OutdoorCourse {
             get {
@@ -393,7 +393,7 @@ namespace SecRandom.Langs.SettingsPages.Linkage {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 读取 ClassIsland 课表科目的户外课程标记，当前课程被标记为户外课程时，即使处于上课时段也限制抽取和重置；验证例外与"限制非上课时段操作"共用.
+        ///   Looks up a localized string similar to 读取 ClassIsland 课表科目的户外课程标记，当前课程被标记为户外课程时，即使处于上课时段也限制抽取和重置.
         /// </summary>
         public static string S_External_OutdoorCourse_D {
             get {
