@@ -12,6 +12,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.CrashRecovery;
+using SecRandom.Shared;
 
 namespace SecRandom.Services.Desktop;
 
@@ -279,9 +280,38 @@ public sealed class DesktopIntegrationService(
 
     private static IReadOnlyList<string> GetLaunchArguments(IEnumerable<string> arguments)
     {
-        var startInfo = CrashRecoveryRuntime.CreateRestartStartInfo(arguments)
+        var startInfo = CreateIntegrationStartInfo(arguments)
                         ?? throw new InvalidOperationException("Unable to resolve the SecRandom launch command.");
         return [startInfo.FileName, ..startInfo.ArgumentList];
+    }
+
+    private static ProcessStartInfo? CreateIntegrationStartInfo(IEnumerable<string> arguments)
+    {
+        return CreateIntegrationStartInfo(
+            Utils.TryGetPortableLauncherPath(out string launcherPath) ? launcherPath : null,
+            arguments);
+    }
+
+    /// <summary>
+    ///     Autostart and URL-protocol entries live outside this process and must survive an update. A
+    ///     portable package replaces its activated <c>app-*</c> payload directory on every update, so an
+    ///     entry that pointed inside it would start a deleted version; those entries launch the stable
+    ///     launcher at the package root instead. Installed packages keep launching the application
+    ///     executable beside this build, because their directory does not change on update.
+    /// </summary>
+    internal static ProcessStartInfo? CreateIntegrationStartInfo(string? launcherPath,
+        IEnumerable<string> arguments)
+    {
+        string[] integrationArguments = [..arguments];
+        if (launcherPath is not null)
+        {
+            ProcessStartInfo launcherStartInfo = new(launcherPath) { UseShellExecute = true };
+            foreach (string argument in integrationArguments)
+                launcherStartInfo.ArgumentList.Add(argument);
+            return launcherStartInfo;
+        }
+
+        return CrashRecoveryRuntime.CreateRestartStartInfo(integrationArguments);
     }
 
     private static string CreateWindowsCommandLine(IEnumerable<string> arguments)

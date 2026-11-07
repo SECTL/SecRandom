@@ -139,6 +139,8 @@ protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 - 后台常驻: BasicSettings.BackgroundResident
 - URL协议: BasicSettings.UrlProtocol
 
+自动启动与 URL 协议注册由 `DesktopIntegrationService` 负责，条目会长期留在系统里，因此便携版必须指向包根目录的 `SecRandomLauncher`（`Utils.TryGetPortableLauncherPath`），而不是当前 `app-*` 版本目录里的 `SecRandom.Desktop`——更新会替换该目录，旧路径随即失效。安装版目录不随更新变化，继续直接指向应用可执行文件；应用内重启与崩溃恢复始终重启当前正在运行的版本，不复用这条启动命令。
+
 ## 5. 关键架构决策
 
 ### IAppHost 静态服务访问

@@ -1889,8 +1889,7 @@ public partial class App : Application
 
     public async Task RestartThroughLauncherAsync()
     {
-        var launcherName = OperatingSystem.IsWindows() ? "SecRandomLauncher.exe" : "SecRandomLauncher";
-        var launcherPath = Path.Combine(Utils.PackageRoot, launcherName);
+        var launcherPath = Path.Combine(Utils.PackageRoot, Utils.LauncherFileName);
         if (!File.Exists(launcherPath))
             throw new FileNotFoundException("便携版 Launcher 不存在。", launcherPath);
 

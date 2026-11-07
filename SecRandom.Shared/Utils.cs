@@ -20,6 +20,13 @@ public static class Utils
         string? ErrorMessage);
 
     public static string PackageRoot => ResolvePackageRoot();
+
+    /// <summary>
+    ///     File name of the stable portable-package launcher kept beside the version directories.
+    /// </summary>
+    public static string LauncherFileName =>
+        OperatingSystem.IsWindows() ? "SecRandomLauncher.exe" : "SecRandomLauncher";
+
     public static string DataRoot
     {
         get
@@ -221,6 +228,41 @@ public static class Utils
         }
     }
 
+    /// <summary>
+    ///     Resolves the launcher executable of the portable package this process runs from.
+    ///     Installed packages have no launcher; callers then keep using the application executable
+    ///     that lives beside this build.
+    /// </summary>
+    public static bool TryGetPortableLauncherPath(out string launcherPath)
+    {
+        return TryGetPortableLauncherPath(PackageRoot, AppContext.BaseDirectory, out launcherPath);
+    }
+
+    private static bool TryGetPortableLauncherPath(
+        string? packageRoot,
+        string? appBaseDirectory,
+        out string launcherPath)
+    {
+        launcherPath = string.Empty;
+        if (string.IsNullOrWhiteSpace(packageRoot) || string.IsNullOrWhiteSpace(appBaseDirectory))
+            return false;
+
+        var appDirectory = Path.GetFullPath(appBaseDirectory);
+
+        // An integration entry that outlives this build must only point at the launcher when that
+        // launcher will accept the payload beside it, so both the app-* package layout and the
+        // portable-zip marker are required.
+        if (!IsPortablePackageRoot(packageRoot, appDirectory) || !HasPortablePayloadKind(appDirectory))
+            return false;
+
+        var candidate = Path.Combine(Path.GetFullPath(packageRoot), LauncherFileName);
+        if (!File.Exists(candidate))
+            return false;
+
+        launcherPath = candidate;
+        return true;
+    }
+
     private static string ResolvePackageRoot()
     {
         var appDirectory = Path.GetFullPath(AppContext.BaseDirectory);
@@ -244,9 +286,12 @@ public static class Utils
     private static bool IsPortablePackage(string packageRoot)
     {
         var appDirectory = Path.GetFullPath(AppContext.BaseDirectory);
-        if (!IsPortablePackageRoot(packageRoot, appDirectory))
-            return false;
+        return IsPortablePackageRoot(packageRoot, appDirectory)
+               && HasPortablePayloadKind(appDirectory);
+    }
 
+    private static bool HasPortablePayloadKind(string appDirectory)
+    {
         var markerPath = Path.Combine(appDirectory, "SecRandom.package.json");
         try
         {
@@ -255,6 +300,10 @@ public static class Utils
                    && string.Equals(packageKind.GetString(), "portable-zip", StringComparison.Ordinal);
         }
         catch (IOException)
+        {
+            return false;
+        }
+        catch (UnauthorizedAccessException)
         {
             return false;
         }
