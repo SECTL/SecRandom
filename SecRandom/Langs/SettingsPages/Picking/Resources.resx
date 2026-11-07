@@ -41,6 +41,8 @@
   <data name="S_DefaultPool_D" xml:space="preserve"><value>打开抽奖页时默认使用的奖池</value></data>
   <data name="S_DisableAfterClick" xml:space="preserve"><value>点击后禁用时间</value></data>
   <data name="S_DisableAfterClick_D" xml:space="preserve"><value>点击一次闪抽后禁用按钮的秒数</value></data>
+  <data name="S_ShowDrawingStatus" xml:space="preserve"><value>显示抽取中状态</value></data>
+  <data name="S_ShowDrawingStatus_D" xml:space="preserve"><value>在闪抽窗口显示“正在抽取”，关闭后抽取期间画面保持上一轮内容，结果落定才刷新</value></data>
   <data name="S_FontSource" xml:space="preserve"><value>字体来源</value></data>
   <data name="S_FontSource_D" xml:space="preserve"><value>跟随全局字体或为抽取结果单独指定字体</value></data>
   <data name="S_CustomFont" xml:space="preserve"><value>自定义字体</value></data>

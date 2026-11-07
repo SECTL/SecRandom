@@ -744,6 +744,24 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 显示抽取中状态.
+        /// </summary>
+        public static string S_ShowDrawingStatus {
+            get {
+                return ResourceManager.GetString("S_ShowDrawingStatus", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 在闪抽窗口显示“正在抽取”，关闭后抽取期间画面保持上一轮内容，结果落定才刷新.
+        /// </summary>
+        public static string S_ShowDrawingStatus_D {
+            get {
+                return ResourceManager.GetString("S_ShowDrawingStatus_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 显示格式.
         /// </summary>
         public static string S_DisplayFormat {
