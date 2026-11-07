@@ -50,7 +50,7 @@
   <data name="S_Enabled" xml:space="preserve"><value>启用安全保护</value></data>
   <data name="S_Enabled_D" xml:space="preserve"><value>启用后，已选的操作会在执行前要求验证</value></data>
   <data name="S_Password" xml:space="preserve"><value>密码</value></data>
-  <data name="S_Password_D" xml:space="preserve"><value>密码至少需要 6 位</value></data>
+  <data name="S_Password_D" xml:space="preserve"><value>密码至少需要 6 位，下方强度只是粗略估算</value></data>
   <data name="S_Totp" xml:space="preserve"><value>TOTP 动态口令</value></data>
   <data name="S_Totp_D" xml:space="preserve"><value>配置后可使用认证器应用生成的 6 位验证码</value></data>
   <data name="S_Usb" xml:space="preserve"><value>绑定 U 盘</value></data>
@@ -185,4 +185,17 @@
   <data name="C_SudoMode_CredentialScope" xml:space="preserve"><value>不受影响的操作：配置或移除 TOTP、修改或移除密码、绑定 USB 设备始终需要重新验证</value></data>
   <data name="Menu_ExitSudoMode" xml:space="preserve"><value>退出 Sudo 模式</value></data>
   <data name="M_SudoModeExited" xml:space="preserve"><value>已退出 Sudo 模式</value></data>
+  <data name="M_PasswordStrength" xml:space="preserve"><value>安全程度</value></data>
+  <data name="M_StrengthPlaceholder" xml:space="preserve"><value>输入新密码后显示估算</value></data>
+  <data name="M_Strength_0" xml:space="preserve"><value>非常弱</value></data>
+  <data name="M_Strength_1" xml:space="preserve"><value>弱</value></data>
+  <data name="M_Strength_2" xml:space="preserve"><value>一般</value></data>
+  <data name="M_Strength_3" xml:space="preserve"><value>强</value></data>
+  <data name="M_Strength_4" xml:space="preserve"><value>非常强</value></data>
+  <data name="M_StrengthEstimateFormat" xml:space="preserve"><value>约 10^{0} 次尝试</value></data>
+  <data name="M_StrengthHint_TooShort" xml:space="preserve"><value>至少 6 位，再长一些更安全</value></data>
+  <data name="M_StrengthHint_Common" xml:space="preserve"><value>这是常见口令，换一个不常见的说法</value></data>
+  <data name="M_StrengthHint_Pattern" xml:space="preserve"><value>避开连续字母、键盘走位和重复片段</value></data>
+  <data name="M_StrengthHint_Length" xml:space="preserve"><value>长度最划算，用一句话当口令更好</value></data>
+  <data name="M_StrengthHint_Variety" xml:space="preserve"><value>混合大小写、数字和符号，或者继续加长</value></data>
 </root>

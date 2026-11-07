@@ -49,6 +49,14 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- Ranked common-password list for the password strength estimator; embedded so a
+             portable install cannot lose or tamper with it. -->
+        <EmbeddedResource Include="Services\Security\PasswordStrength\Data\common-passwords.txt">
+            <LogicalName>SecRandom.Core.Services.Security.PasswordStrength.Data.common-passwords.txt</LogicalName>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <ItemGroup>
         <Compile Update="Langs\Common\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>

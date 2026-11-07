@@ -1,3 +1,4 @@
+using System.Globalization;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -11,6 +12,7 @@ using FluentAvalonia.UI.Controls;
 using QRCoder;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Icons;
+using SecRandom.Core.Services.Security.PasswordStrength;
 using SR = SecRandom.Langs.SettingsPages.Security.Resources;
 
 namespace SecRandom.Services.Security;
@@ -37,6 +39,7 @@ internal static class SecuritySetupDialogs
         }
         panel.Children.Add(new TextBlock { Text = SR.C_NewPassword });
         panel.Children.Add(password);
+        panel.Children.Add(CreatePasswordStrengthIndicator(password));
         panel.Children.Add(new TextBlock { Text = SR.C_ConfirmPassword });
         panel.Children.Add(confirmation);
 
@@ -302,6 +305,127 @@ internal static class SecuritySetupDialogs
         InputMethod.SetIsInputMethodEnabled(input, false);
         return input;
     }
+
+    /// <summary>
+    /// Advisory strength readout under the new-password box. It reserves its own height, updates
+    /// on every keystroke and never blocks saving: the estimator only explains how an attacker
+    /// would attack this particular string, the six-character floor stays the only hard rule.
+    /// </summary>
+    private static Control CreatePasswordStrengthIndicator(TextBox passwordInput)
+    {
+        const int segmentCount = 5;
+        var neutralBrush = ResolveBrush("SystemControlForegroundBaseLowBrush", Brushes.Gray);
+
+        var segments = new Grid { ColumnDefinitions = new ColumnDefinitions("*,*,*,*,*") };
+        var bars = new Border[segmentCount];
+        for (var index = 0; index < segmentCount; index++)
+        {
+            var bar = new Border
+            {
+                Height = 5,
+                CornerRadius = new CornerRadius(2.5),
+                Margin = new Thickness(index == 0 ? 0 : 2, 0, index == segmentCount - 1 ? 0 : 2, 0),
+                Background = neutralBrush,
+                Opacity = 0.25
+            };
+            Grid.SetColumn(bar, index);
+            bars[index] = bar;
+            segments.Children.Add(bar);
+        }
+
+        var summary = new TextBlock { Text = SR.M_StrengthPlaceholder, FontSize = 12, Opacity = 0.6 };
+        var hint = new TextBlock
+        {
+            FontSize = 12,
+            TextWrapping = TextWrapping.Wrap,
+            MinHeight = 32,
+            Opacity = 0.8
+        };
+
+        var panel = new StackPanel { Spacing = 6 };
+        panel.Children.Add(new TextBlock { Text = SR.M_PasswordStrength, FontSize = 12, FontWeight = FontWeight.SemiBold });
+        panel.Children.Add(segments);
+        panel.Children.Add(summary);
+        panel.Children.Add(hint);
+
+        void Refresh()
+        {
+            var text = passwordInput.Text ?? string.Empty;
+            if (text.Length == 0)
+            {
+                summary.Text = SR.M_StrengthPlaceholder;
+                summary.Opacity = 0.6;
+                hint.Text = string.Empty;
+                foreach (var bar in bars)
+                {
+                    bar.Background = neutralBrush;
+                    bar.Opacity = 0.25;
+                }
+
+                return;
+            }
+
+            var result = PasswordStrengthEvaluator.Evaluate(text);
+            var strengthBrush = ResolveBrush(StrengthBrushKey(result.Level), StrengthFallbackBrush(result.Level));
+            var filled = Math.Clamp((int)result.Level + 1, 1, segmentCount);
+            for (var index = 0; index < bars.Length; index++)
+            {
+                var isFilled = index < filled;
+                bars[index].Background = isFilled ? strengthBrush : neutralBrush;
+                bars[index].Opacity = isFilled ? 1 : 0.25;
+            }
+
+            var exponent = (int)Math.Floor(result.Log10Guesses);
+            summary.Text =
+                $"{StrengthLabel(result.Level)} · {string.Format(CultureInfo.CurrentCulture, SR.M_StrengthEstimateFormat, exponent)}";
+            summary.Opacity = 0.85;
+            hint.Text = StrengthHint(result.Issue);
+        }
+
+        passwordInput.TextChanged += (_, _) => Refresh();
+        Refresh();
+        return panel;
+    }
+
+    private static string StrengthLabel(PasswordStrengthLevel level) => level switch
+    {
+        PasswordStrengthLevel.VeryWeak => SR.M_Strength_0,
+        PasswordStrengthLevel.Weak => SR.M_Strength_1,
+        PasswordStrengthLevel.Fair => SR.M_Strength_2,
+        PasswordStrengthLevel.Strong => SR.M_Strength_3,
+        _ => SR.M_Strength_4
+    };
+
+    private static string StrengthHint(PasswordStrengthIssue issue) => issue switch
+    {
+        PasswordStrengthIssue.TooShort => SR.M_StrengthHint_TooShort,
+        PasswordStrengthIssue.CommonPassword => SR.M_StrengthHint_Common,
+        PasswordStrengthIssue.PredictablePattern => SR.M_StrengthHint_Pattern,
+        PasswordStrengthIssue.ShortPassword => SR.M_StrengthHint_Length,
+        PasswordStrengthIssue.WeakComposition => SR.M_StrengthHint_Variety,
+        _ => string.Empty
+    };
+
+    private static string StrengthBrushKey(PasswordStrengthLevel level) => level switch
+    {
+        PasswordStrengthLevel.VeryWeak or PasswordStrengthLevel.Weak => "SystemFillColorCriticalBrush",
+        PasswordStrengthLevel.Fair => "SystemFillColorCautionBrush",
+        _ => "SystemFillColorSuccessBrush"
+    };
+
+    private static IBrush StrengthFallbackBrush(PasswordStrengthLevel level) => level switch
+    {
+        PasswordStrengthLevel.VeryWeak or PasswordStrengthLevel.Weak => Brushes.IndianRed,
+        PasswordStrengthLevel.Fair => Brushes.Goldenrod,
+        _ => Brushes.SeaGreen
+    };
+
+    private static IBrush ResolveBrush(string key, IBrush fallback) =>
+        Application.Current is { } application &&
+        application.TryFindResource(key, out var resource) &&
+        resource is IBrush brush
+            ? brush
+            : fallback;
 
     private static IImage BuildQrCode(string content)
     {

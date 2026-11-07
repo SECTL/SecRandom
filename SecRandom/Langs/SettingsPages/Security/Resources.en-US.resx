@@ -21,7 +21,7 @@
   <data name="S_Enabled" xml:space="preserve"><value>Enable Security Protection</value></data>
   <data name="S_Enabled_D" xml:space="preserve"><value>Enabled operations require verification before they run</value></data>
   <data name="S_Password" xml:space="preserve"><value>Password</value></data>
-  <data name="S_Password_D" xml:space="preserve"><value>Passwords must contain at least 6 characters</value></data>
+  <data name="S_Password_D" xml:space="preserve"><value>Passwords must contain at least 6 characters; the strength below is only an estimate</value></data>
   <data name="S_Totp" xml:space="preserve"><value>TOTP Code</value></data>
   <data name="S_Totp_D" xml:space="preserve"><value>Use a 6-digit code from an authenticator app</value></data>
   <data name="S_Usb" xml:space="preserve"><value>USB Drive</value></data>
@@ -156,4 +156,17 @@
   <data name="C_SudoMode_CredentialScope" xml:space="preserve"><value>Never affected: setting up or removing TOTP, changing or removing the password and binding a USB device always ask again</value></data>
   <data name="Menu_ExitSudoMode" xml:space="preserve"><value>Exit Sudo Mode</value></data>
   <data name="M_SudoModeExited" xml:space="preserve"><value>Sudo mode deactivated</value></data>
+  <data name="M_PasswordStrength" xml:space="preserve"><value>Strength</value></data>
+  <data name="M_StrengthPlaceholder" xml:space="preserve"><value>Enter a new password to see the estimate</value></data>
+  <data name="M_Strength_0" xml:space="preserve"><value>Very weak</value></data>
+  <data name="M_Strength_1" xml:space="preserve"><value>Weak</value></data>
+  <data name="M_Strength_2" xml:space="preserve"><value>Fair</value></data>
+  <data name="M_Strength_3" xml:space="preserve"><value>Strong</value></data>
+  <data name="M_Strength_4" xml:space="preserve"><value>Very strong</value></data>
+  <data name="M_StrengthEstimateFormat" xml:space="preserve"><value>About 10^{0} guesses</value></data>
+  <data name="M_StrengthHint_TooShort" xml:space="preserve"><value>At least 6 characters; a few more helps</value></data>
+  <data name="M_StrengthHint_Common" xml:space="preserve"><value>This is a common password, use an uncommon phrase</value></data>
+  <data name="M_StrengthHint_Pattern" xml:space="preserve"><value>Avoid runs, keyboard walks and repeats</value></data>
+  <data name="M_StrengthHint_Length" xml:space="preserve"><value>Length pays off most, try a short sentence</value></data>
+  <data name="M_StrengthHint_Variety" xml:space="preserve"><value>Mix cases, digits and symbols, or make it longer</value></data>
 </root>

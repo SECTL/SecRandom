@@ -21,7 +21,7 @@
   <data name="S_Enabled" xml:space="preserve"><value>セキュリティ保護を有効にする</value></data>
   <data name="S_Enabled_D" xml:space="preserve"><value>有効にすると、選択した操作の前に認証が必要になります</value></data>
   <data name="S_Password" xml:space="preserve"><value>パスワード</value></data>
-  <data name="S_Password_D" xml:space="preserve"><value>パスワードは 6 文字以上必要です</value></data>
+  <data name="S_Password_D" xml:space="preserve"><value>パスワードは 6 文字以上、下の強度はあくまで目安です</value></data>
   <data name="S_Totp" xml:space="preserve"><value>TOTP コード</value></data>
   <data name="S_Totp_D" xml:space="preserve"><value>認証アプリの 6 桁コードを使用します</value></data>
   <data name="S_Usb" xml:space="preserve"><value>USB ドライブ</value></data>
@@ -156,4 +156,17 @@
   <data name="C_SudoMode_CredentialScope" xml:space="preserve"><value>影響を受けない操作：TOTP の設定・削除、パスワードの変更・削除、USB デバイスの登録は常に再認証が必要です</value></data>
   <data name="Menu_ExitSudoMode" xml:space="preserve"><value>Sudo モードを終了</value></data>
   <data name="M_SudoModeExited" xml:space="preserve"><value>Sudo モードを無効にしました</value></data>
+  <data name="M_PasswordStrength" xml:space="preserve"><value>強度</value></data>
+  <data name="M_StrengthPlaceholder" xml:space="preserve"><value>新しいパスワードを入力すると強度を表示します</value></data>
+  <data name="M_Strength_0" xml:space="preserve"><value>非常に弱い</value></data>
+  <data name="M_Strength_1" xml:space="preserve"><value>弱い</value></data>
+  <data name="M_Strength_2" xml:space="preserve"><value>ふつう</value></data>
+  <data name="M_Strength_3" xml:space="preserve"><value>強い</value></data>
+  <data name="M_Strength_4" xml:space="preserve"><value>非常に強い</value></data>
+  <data name="M_StrengthEstimateFormat" xml:space="preserve"><value>約 10^{0} 回の試行</value></data>
+  <data name="M_StrengthHint_TooShort" xml:space="preserve"><value>6 文字以上、できればさらに長く</value></data>
+  <data name="M_StrengthHint_Common" xml:space="preserve"><value>よくあるパスワードなので別の言い回しに変えてください</value></data>
+  <data name="M_StrengthHint_Pattern" xml:space="preserve"><value>連続文字やキーボード配列、繰り返しは避けてください</value></data>
+  <data name="M_StrengthHint_Length" xml:space="preserve"><value>長さがいちばん効果的、短い文にするとさらに安全</value></data>
+  <data name="M_StrengthHint_Variety" xml:space="preserve"><value>大文字と小文字、数字、記号を混ぜるか、さらに長くしてください</value></data>
 </root>

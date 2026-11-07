@@ -143,4 +143,17 @@ public partial class Resources
     public static string C_SudoMode_CredentialScope => Text(nameof(C_SudoMode_CredentialScope));
     public static string Menu_ExitSudoMode => Text(nameof(Menu_ExitSudoMode));
     public static string M_SudoModeExited => Text(nameof(M_SudoModeExited));
+    public static string M_PasswordStrength => Text(nameof(M_PasswordStrength));
+    public static string M_StrengthPlaceholder => Text(nameof(M_StrengthPlaceholder));
+    public static string M_Strength_0 => Text(nameof(M_Strength_0));
+    public static string M_Strength_1 => Text(nameof(M_Strength_1));
+    public static string M_Strength_2 => Text(nameof(M_Strength_2));
+    public static string M_Strength_3 => Text(nameof(M_Strength_3));
+    public static string M_Strength_4 => Text(nameof(M_Strength_4));
+    public static string M_StrengthEstimateFormat => Text(nameof(M_StrengthEstimateFormat));
+    public static string M_StrengthHint_TooShort => Text(nameof(M_StrengthHint_TooShort));
+    public static string M_StrengthHint_Common => Text(nameof(M_StrengthHint_Common));
+    public static string M_StrengthHint_Pattern => Text(nameof(M_StrengthHint_Pattern));
+    public static string M_StrengthHint_Length => Text(nameof(M_StrengthHint_Length));
+    public static string M_StrengthHint_Variety => Text(nameof(M_StrengthHint_Variety));
 }
