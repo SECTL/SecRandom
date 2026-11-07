@@ -120,11 +120,11 @@ public sealed class HistoryGroupCommitTests : IDisposable
         Assert.Empty(profile.CurrentStudentHistory!.Students);
         Assert.Equal(0, profile.CurrentStudentHistory.TotalRounds);
         Assert.Empty(provider.GetRequiredService<IDrawTemporaryRecordService>()
-            .GetStudentCounts(profile.StudentListConfig!.Name, string.Empty, string.Empty));
+            .GetStudentCounts(profile.StudentListConfig!.Name, "期末抽奖"));
     }
 
     [Fact]
-    public void TemporaryRecords_StayInOneListBucketNoMatterWhichGroupWasDrawn()
+    public void TemporaryRecords_AreCountedPerHistoryGroup()
     {
         using var provider = CreateProvider();
         var profile = provider.GetRequiredService<IProfileService>();
@@ -139,12 +139,13 @@ public sealed class HistoryGroupCommitTests : IDisposable
         commits.CommitStudentDraw(new StudentDrawCommit([student], DateTime.Now, 1, listName, HistoryGroup: "课堂"));
 
         var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
-        var unscoped = temporary.GetStudentCounts(listName, string.Empty, string.Empty);
 
-        // 临时记录（以及由它驱动的重复上限）绝对不按组分桶：换个范围过滤就能重置重复上限等于开了一个后门。
-        Assert.Equal(2, unscoped[key]);
-        Assert.Equal(unscoped.Count, temporary.GetStudentCounts(listName, "女", "期末抽奖").Count);
-        Assert.Equal(2, temporary.GetStudentCounts(listName, "女", "期末抽奖")[key]);
+        // 每个记录组是独立的一轮课堂：「已抽过几次」只在它自己的组里累积，换组不会借用别的组的计数。
+        Assert.Equal(1, temporary.GetStudentCounts(listName, "期末抽奖")[key]);
+        Assert.Equal(1, temporary.GetStudentCounts(listName, "课堂")[key]);
+        Assert.Empty(temporary.GetStudentCounts(listName, null));
+        Assert.Empty(temporary.GetStudentCounts(listName, string.Empty));
+        Assert.Equal(2, temporary.GetStudentCountsForList(listName)[key]);
     }
 
     [Fact]

@@ -265,7 +265,7 @@ public sealed class ProfileCatalogManagerTests : IDisposable
         profile.CurrentStudentList!.Students.Add(new Student { Name = "Alice" });
         var student = profile.CurrentStudentList.Students[0];
         profile.RecordStudentHistory([student], DateTime.Now, 1);
-        temporary.RecordStudents(oldName, string.Empty, string.Empty, [student]);
+        temporary.RecordStudents(oldName, null, [student]);
 
         Assert.True(manager.RenameStudentList(oldName, newName));
         Assert.Equal(newName, profile.StudentListConfig!.Name);
@@ -273,7 +273,7 @@ public sealed class ProfileCatalogManagerTests : IDisposable
         Assert.False(manager.StudentListExists(oldName));
         Assert.True(File.Exists(Utils.GetFilePath("history", "roll_call_history", $"{newName}.json")));
         Assert.False(File.Exists(Utils.GetFilePath("TEMP", $"roll_call_record_{oldName}.json")));
-        Assert.NotEmpty(temporary.GetStudentCounts(newName, string.Empty, string.Empty));
+        Assert.NotEmpty(temporary.GetStudentCounts(newName, null));
     }
 
     [Fact]

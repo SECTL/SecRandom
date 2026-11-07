@@ -490,7 +490,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         _lotteryDrawService.Reset(
             IsStudentAssignmentEnabled ? SelectedStudentListName : string.Empty,
             CurrentGroupScope,
-            CurrentGenderScope);
+            CurrentGenderScope,
+            CurrentHistoryGroup);
         IsResultVisible = false;
         StatusText = SR.M_ResetDone;
         if (showToast)
@@ -1089,7 +1090,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             return [];
 
         var threshold = DrawRepeatPolicy.ResolveThreshold(Config.RollCallSettings.DrawMode, Config.RollCallSettings.HalfRepeat);
-        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentHistoryGroup);
         return DrawCandidateFilter.FilterEligibleStudents(
             _profileService.CurrentStudentList?.Students ?? [],
             CurrentGroupScope,
@@ -1137,7 +1138,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             var studentPool = GetStudentPoolCandidates().ToList();
             if (studentPool.Count > 0 && !GetStudentCandidates().Any())
             {
-                _temporaryRecordService.ResetStudentList(SelectedStudentListName);
+                // 只重置当前记录组的学生计数：别的组是别的课堂进度。
+                _temporaryRecordService.ClearStudentScope(SelectedStudentListName, CurrentHistoryGroup);
                 reset = true;
             }
         }

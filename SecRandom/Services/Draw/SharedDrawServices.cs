@@ -51,7 +51,7 @@ public sealed class RollCallDrawService(
     IDrawPipelineService? pipeline = null,
     IPluginEventBus? eventBus = null)
 {
-    public RollCallDrawSnapshot GetSnapshot(string group, string gender)
+    public RollCallDrawSnapshot GetSnapshot(string group, string gender, string? historyGroup = null)
     {
         var students = profileService.CurrentStudentList?.Students ?? [];
         var candidates = students.Where(student => DrawCandidateFilter.MatchesScope(student, group, gender))
@@ -62,7 +62,7 @@ public sealed class RollCallDrawService(
         var threshold = DrawRepeatPolicy.ResolveThreshold(configHandler.Data.RollCallSettings.DrawMode,
             configHandler.Data.RollCallSettings.HalfRepeat);
         var remaining = DrawCandidateFilter.FilterEligibleStudents(candidates, group, gender,
-                temporaryRecords.GetStudentCounts(GetListName(), gender, group), threshold)
+                temporaryRecords.GetStudentCounts(GetListName(), historyGroup), threshold)
             .OrderForList().ToArray();
         return new RollCallDrawSnapshot(
             profileCatalogManager.GetStudentListNames(),
@@ -86,7 +86,7 @@ public sealed class RollCallDrawService(
     public async Task<RollCallDrawResult?> DrawAsync(RollCallDrawRequest request, CancellationToken cancellationToken = default)
     {
         SwitchList(request.ListName);
-        var snapshot = GetSnapshot(request.Group, request.Gender);
+        var snapshot = GetSnapshot(request.Group, request.Gender, request.HistoryGroup);
         var count = Math.Clamp(request.Count, 1, snapshot.RemainingCount);
         if (snapshot.RemainingCount == 0)
             return null;
@@ -158,7 +158,8 @@ public sealed class RollCallDrawService(
             edit?.Note, edit?.SuppressPresentation ?? false);
     }
 
-    public void Reset(string group, string gender) => temporaryRecords.ClearStudentScope(GetListName(), gender, group);
+    public void Reset(string group, string gender, string? historyGroup = null) =>
+        temporaryRecords.ClearStudentScope(GetListName(), historyGroup);
 
     private DrawPipelineContext BuildRollCallContext(string group, string gender, string courseName, int requestedCount) =>
         new(DrawPresentationChannel.RollCall,
@@ -228,14 +229,14 @@ public sealed class LotteryDrawService(
     IDrawPipelineService? pipeline = null,
     IPluginEventBus? eventBus = null)
 {
-    public LotteryDrawSnapshot GetSnapshot(string studentListName, string group, string gender)
+    public LotteryDrawSnapshot GetSnapshot(string studentListName, string group, string gender, string? historyGroup = null)
     {
         var prizes = (profileService.CurrentPrizeList?.Prizes ?? []).Where(prize => prize.IsCandidate).ToArray();
         var settings = configHandler.Data.LotterySettings;
         var counts = temporaryRecords.GetPrizeCounts(GetPrizePoolName());
         var remaining = DrawCandidateFilter.FilterEligiblePrizes(prizes, counts, settings.DrawType,
             DrawRepeatPolicy.ResolveThreshold(settings.DrawMode, settings.HalfRepeat)).OrderForList().ToArray();
-        var students = GetEligibleStudents(studentListName, group, gender);
+        var students = GetEligibleStudents(studentListName, group, gender, historyGroup);
         // 插件候选集过滤器同时作用于奖池与参与学生（与点名通道共用同一套过滤点）。
         var filtered = pipeline?.ApplyFilters(
             BuildLotteryContext(group, gender, string.Empty, 0), students, prizes);
@@ -289,7 +290,7 @@ public sealed class LotteryDrawService(
         if (hasStudentAssignment)
             SwitchStudentList(request.StudentListName);
 
-        var snapshot = GetSnapshot(request.StudentListName, request.Group, request.Gender);
+        var snapshot = GetSnapshot(request.StudentListName, request.Group, request.Gender, request.HistoryGroup);
         if (snapshot.RemainingCount == 0)
             return null;
         var count = Math.Clamp(request.Count, 1, snapshot.RemainingCount);
@@ -363,11 +364,11 @@ public sealed class LotteryDrawService(
             edit?.Note, edit?.SuppressPresentation ?? false);
     }
 
-    public void Reset(string studentListName, string group, string gender)
+    public void Reset(string studentListName, string group, string gender, string? historyGroup = null)
     {
         temporaryRecords.ClearPrizeList(GetPrizePoolName());
         if (!string.IsNullOrWhiteSpace(studentListName))
-            temporaryRecords.ClearStudentScope(GetStudentListName(), gender, group);
+            temporaryRecords.ClearStudentScope(GetStudentListName(), historyGroup);
     }
 
     private DrawPipelineContext BuildLotteryContext(string group, string gender, string courseName, int requestedCount) =>
@@ -393,14 +394,14 @@ public sealed class LotteryDrawService(
         }
     }
 
-    private IReadOnlyList<Student> GetEligibleStudents(string selectedList, string group, string gender)
+    private IReadOnlyList<Student> GetEligibleStudents(string selectedList, string group, string gender, string? historyGroup = null)
     {
         if (string.IsNullOrWhiteSpace(selectedList))
             return [];
         var threshold = DrawRepeatPolicy.ResolveThreshold(configHandler.Data.RollCallSettings.DrawMode,
             configHandler.Data.RollCallSettings.HalfRepeat);
         return DrawCandidateFilter.FilterEligibleStudents(profileService.CurrentStudentList?.Students ?? [], group, gender,
-            temporaryRecords.GetStudentCounts(GetStudentListName(), gender, group), threshold).ToArray();
+            temporaryRecords.GetStudentCounts(GetStudentListName(), historyGroup), threshold).ToArray();
     }
 
     private IReadOnlyList<string> GetStudentScopeValues(Func<Student, string> selector) =>

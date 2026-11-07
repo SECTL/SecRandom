@@ -19,7 +19,8 @@ internal sealed class RollCallSession(
         var students = profileService.CurrentStudentList?.Students ?? [];
         var settings = configHandler.Data.RollCallSettings;
         var threshold = DrawRepeatPolicy.ResolveThreshold(settings.DrawMode, settings.HalfRepeat);
-        var counts = temporaryRecordService.GetStudentCounts(GetListName(), string.Empty, string.Empty);
+        // 这个会话没有记录组概念（移动端快速点名），因此落在"不按组"的桶里。
+        var counts = temporaryRecordService.GetStudentCounts(GetListName(), null);
         return DrawCandidateFilter.FilterEligibleStudents(students, string.Empty, string.Empty, counts, threshold);
     }
 

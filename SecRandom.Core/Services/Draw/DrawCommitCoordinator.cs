@@ -22,8 +22,8 @@ internal interface IDrawHistorySnapshotCompensation
 /// </summary>
 internal interface IDrawTemporaryRecordCompensation
 {
-    string? CaptureStudentScopeSnapshot(string listName, string gender, string group);
-    void RestoreStudentScopeSnapshot(string listName, string gender, string group, string? snapshotJson);
+    string? CaptureStudentScopeSnapshot(string listName, string? historyGroup);
+    void RestoreStudentScopeSnapshot(string listName, string? historyGroup, string? snapshotJson);
     string? CapturePrizeScopeSnapshot(string listName);
     void RestorePrizeScopeSnapshot(string listName, string? snapshotJson);
 }
@@ -54,11 +54,11 @@ internal sealed class DrawCommitCoordinator(
             var historyCompensation = profileService as IDrawHistorySnapshotCompensation;
             var recordCompensation = temporaryRecordService as IDrawTemporaryRecordCompensation;
             var historySnapshot = historyCompensation?.CaptureStudentHistorySnapshot();
-            var recordSnapshot = recordCompensation?.CaptureStudentScopeSnapshot(commit.ListName, commit.GenderScope, commit.GroupScope);
+            var recordSnapshot = recordCompensation?.CaptureStudentScopeSnapshot(commit.ListName, commit.HistoryGroup);
 
             try
             {
-                temporaryRecordService.RecordStudents(commit.ListName, commit.GenderScope, commit.GroupScope, commit.Winners);
+                temporaryRecordService.RecordStudents(commit.ListName, commit.HistoryGroup, commit.Winners);
                 profileService.RecordStudentHistory(
                     commit.Winners,
                     commit.DrawTime,
@@ -77,7 +77,7 @@ internal sealed class DrawCommitCoordinator(
                 if (historyCompensation is not null && historySnapshot is not null)
                     TryCompensate(() => historyCompensation.RestoreStudentHistorySnapshot(historySnapshot), roundId);
                 if (recordCompensation is not null)
-                    TryCompensate(() => recordCompensation.RestoreStudentScopeSnapshot(commit.ListName, commit.GenderScope, commit.GroupScope, recordSnapshot), roundId);
+                    TryCompensate(() => recordCompensation.RestoreStudentScopeSnapshot(commit.ListName, commit.HistoryGroup, recordSnapshot), roundId);
                 throw;
             }
 
@@ -102,7 +102,7 @@ internal sealed class DrawCommitCoordinator(
             var prizeRecordSnapshot = recordCompensation?.CapturePrizeScopeSnapshot(commit.PrizeListName);
             var studentHistorySnapshot = hasAssignedStudents ? historyCompensation?.CaptureStudentHistorySnapshot() : null;
             var studentRecordSnapshot = hasAssignedStudents
-                ? recordCompensation?.CaptureStudentScopeSnapshot(studentListName, commit.StudentGenderScope, commit.StudentGroupScope)
+                ? recordCompensation?.CaptureStudentScopeSnapshot(studentListName, commit.HistoryGroup)
                 : null;
 
             try
@@ -112,7 +112,7 @@ internal sealed class DrawCommitCoordinator(
                     commit.CourseName, commit.HistoryGroup);
                 if (hasAssignedStudents)
                 {
-                    temporaryRecordService.RecordStudents(studentListName, commit.StudentGenderScope, commit.StudentGroupScope, commit.AssignedStudents!);
+                    temporaryRecordService.RecordStudents(studentListName, commit.HistoryGroup, commit.AssignedStudents!);
                     profileService.RecordStudentHistory(
                         commit.AssignedStudents!,
                         commit.DrawTime,
@@ -134,7 +134,7 @@ internal sealed class DrawCommitCoordinator(
                     if (historyCompensation is not null && studentHistorySnapshot is not null)
                         TryCompensate(() => historyCompensation.RestoreStudentHistorySnapshot(studentHistorySnapshot), roundId);
                     if (recordCompensation is not null)
-                        TryCompensate(() => recordCompensation.RestoreStudentScopeSnapshot(studentListName, commit.StudentGenderScope, commit.StudentGroupScope, studentRecordSnapshot), roundId);
+                        TryCompensate(() => recordCompensation.RestoreStudentScopeSnapshot(studentListName, commit.HistoryGroup, studentRecordSnapshot), roundId);
                 }
 
                 if (historyCompensation is not null && prizeHistorySnapshot is not null)

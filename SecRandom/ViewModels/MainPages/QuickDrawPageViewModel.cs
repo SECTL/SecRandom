@@ -235,6 +235,11 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (!TryLoadDefaultStudentList())
             return;
 
+        // 记录组与候选池在同一刻冻结（和点名页一致）：候选过滤与"已抽过几次"必须读同一个组，
+        // 抽取中途改设置也不会让这一轮读到另一个组的历史。
+        RefreshHistoryGroupScope();
+        var historyGroup = _historyGroupScope.Group;
+
         ResetForNewRoundIfExhausted();
 
         var candidates = GetEligibleCandidates().ToList();
@@ -269,7 +274,6 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             var courseName = _linkageDrawCoordinator.GetCourseName();
 
             // 记录组与候选池在同一刻冻结（和点名页一致）：抽取中途改设置不会让这一轮读到另一个组的历史。
-            var historyGroup = ResolveQuickDrawHistoryGroup();
             var verificationDrawTask = _verificationDrawCoordinator.DrawStudentsAsync(
                 count,
                 candidates,
@@ -398,7 +402,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private void ClearHistoryCore()
     {
         _notificationAutoCloseTime = null;
-        _temporaryRecordService.ClearStudentScope(SelectedStudentListName, string.Empty, string.Empty);
+        _temporaryRecordService.ClearStudentScope(SelectedStudentListName, _historyGroupScope.Group);
         ResultItems.Clear();
         LastDrawnStudent = null;
         IsResultVisible = false;
@@ -531,7 +535,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private IEnumerable<Student> GetEligibleCandidates()
     {
         var threshold = DrawRepeatPolicy.ResolveThreshold(Config.QuickDrawSettings.DrawMode, Config.QuickDrawSettings.HalfRepeat);
-        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, string.Empty, string.Empty);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, _historyGroupScope.Group);
         return DrawCandidateFilter.FilterEligibleStudents(
             _profileService.CurrentStudentList?.Students ?? [],
             string.Empty,
@@ -553,11 +557,12 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             return false;
 
         var threshold = DrawRepeatPolicy.ResolveThreshold(Config.QuickDrawSettings.DrawMode, Config.QuickDrawSettings.HalfRepeat);
-        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, string.Empty, string.Empty);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, _historyGroupScope.Group);
         if (DrawCandidateFilter.FilterEligibleStudents(students, string.Empty, string.Empty, counts, threshold).Any())
             return false;
 
-        _temporaryRecordService.ResetStudentList(SelectedStudentListName);
+        // 只重置当前记录组的一轮：别的组是别的课堂进度。
+        _temporaryRecordService.ClearStudentScope(SelectedStudentListName, _historyGroupScope.Group);
         return true;
     }
 
@@ -819,21 +824,9 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
-    ///     解析本次闪抽要锁定的历史记录组；<see langword="null" /> 表示不做组隔离（看全部历史）。
-    /// </summary>
-    /// <remarks>
-    ///     空串不是「不分组」而是「默认记录组」（未分组记录），所以功能关闭时必须返回
-    ///     <see langword="null" />——那时选择器不显示，没人能看出范围，只能按全部历史。
-    /// </remarks>
-    private string? ResolveQuickDrawHistoryGroup()
-    {
-        RefreshHistoryGroupScope();
-        return _historyGroupScope.Group;
-    }
-
-    /// <summary>
     ///     重新解析「默认记录组」配置：组已被删除或改名时回落到默认记录组（删除组会把记录移回默认组），
-    ///     目录读不到时不做组隔离（不拿一个未知清单去判断组名是否失效）。
+    ///     目录读不到时不做组隔离（不拿一个未知清单去判断组名是否失效）。空串不是「不分组」而是
+    ///     「默认记录组」（未分组记录），所以功能关闭时解析结果是 <see langword="null" />、按全部历史。
     /// </summary>
     private void RefreshHistoryGroupScope()
     {

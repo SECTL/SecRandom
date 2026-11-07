@@ -340,7 +340,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private void ResetDrawHistoryCore(bool showToast = false)
     {        _lastResultStudents.Clear();
         ResultItems.Clear();
-        _rollCallDrawService.Reset(CurrentGroupScope, CurrentGenderScope);
+        _rollCallDrawService.Reset(CurrentGroupScope, CurrentGenderScope, CurrentHistoryGroup);
         IsResultVisible = false;
         ResultText = ReminderSettings.ReminderText;
         StatusText = SR.M_ResetDone;
@@ -934,7 +934,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         if (TotalCount <= 0 || RemainingCount > 0)
             return false;
 
-        _temporaryRecordService.ResetStudentList(SelectedStudentListName);
+        // 只重置当前记录组的计数：别的组是别的课堂进度，自动重置不该把它们一起清掉。
+        _temporaryRecordService.ClearStudentScope(SelectedStudentListName, CurrentHistoryGroup);
         RefreshCounts();
         MainView.ShowSuccessToast(SR.M_AutoResetDone);
         return true;
@@ -967,7 +968,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     {
         var source = candidates ?? GetVisibleStudents();
         var threshold = DrawRepeatPolicy.ResolveThreshold(Config.RollCallSettings.DrawMode, Config.RollCallSettings.HalfRepeat);
-        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentHistoryGroup);
         return DrawCandidateFilter.FilterEligibleStudents(source, CurrentGroupScope, CurrentGenderScope, counts, threshold);
     }
 
@@ -976,7 +977,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private bool HasReachedRepeatLimit(Student student)
     {
         var threshold = DrawRepeatPolicy.ResolveThreshold(Config.RollCallSettings.DrawMode, Config.RollCallSettings.HalfRepeat);
-        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentHistoryGroup);
         return DrawRepeatPolicy.HasReachedLimit(counts.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(student)), threshold);
     }
 

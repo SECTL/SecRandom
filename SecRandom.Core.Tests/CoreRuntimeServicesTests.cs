@@ -92,7 +92,7 @@ public sealed class CoreRuntimeServicesTests : IDisposable
         profile.SaveProfile();
 
         var temporaryRecords = provider.GetRequiredService<IDrawTemporaryRecordService>();
-        temporaryRecords.RecordStudents("mobile-class", string.Empty, string.Empty, [student]);
+        temporaryRecords.RecordStudents("mobile-class", null, [student]);
         temporaryRecords.RecordPrizes("mobile-pool", [prize]);
 
         using var reloadedProvider = CreateProvider();
@@ -101,7 +101,7 @@ public sealed class CoreRuntimeServicesTests : IDisposable
 
         Assert.Equal(student.RecordId, Assert.Single(reloadedProfile.CurrentStudentList!.Students).RecordId);
         Assert.Equal(prize.RecordId, Assert.Single(reloadedProfile.CurrentPrizeList!.Prizes).RecordId);
-        Assert.Equal(1, reloadedTemporaryRecords.GetStudentCounts("mobile-class", string.Empty, string.Empty)[student.RecordId.ToString("D")]);
+        Assert.Equal(1, reloadedTemporaryRecords.GetStudentCounts("mobile-class", null)[student.RecordId.ToString("D")]);
         Assert.Equal(1, reloadedTemporaryRecords.GetPrizeCounts("mobile-pool")[prize.RecordId.ToString("D")]);
         Assert.StartsWith(Path.GetFullPath(_dataRoot), reloadedProfile.CurrentStudentList.ConfigFilePath, StringComparison.Ordinal);
     }
@@ -114,12 +114,12 @@ public sealed class CoreRuntimeServicesTests : IDisposable
         var student = new Student { Name = "Ada", RecordId = Guid.NewGuid() };
         var prize = new Prize { Name = "Book", RecordId = Guid.NewGuid() };
 
-        temporaryRecords.RecordStudents("reset-class", string.Empty, string.Empty, [student]);
+        temporaryRecords.RecordStudents("reset-class", null, [student]);
         temporaryRecords.RecordPrizes("reset-pool", [prize]);
         temporaryRecords.ResetStudentList("reset-class");
         temporaryRecords.ResetPrizeList("reset-pool");
 
-        Assert.Empty(temporaryRecords.GetStudentCounts("reset-class", string.Empty, string.Empty));
+        Assert.Empty(temporaryRecords.GetStudentCounts("reset-class", null));
         Assert.Empty(temporaryRecords.GetPrizeCounts("reset-pool"));
         Assert.True(File.Exists(Utils.GetFilePath("TEMP", "roll_call_record_reset-class.json")));
         Assert.True(File.Exists(Utils.GetFilePath("TEMP", "lottery_record_reset-pool.json")));
@@ -199,7 +199,7 @@ public sealed class CoreRuntimeServicesTests : IDisposable
         Assert.Equal(student.RecordId, Assert.Single(result.Result).RecordId);
         Assert.Single(profile.CurrentStudentHistory!.Students.Values.Single().Histories);
         var listName = profile.StudentListConfig!.Name;
-        Assert.Equal(1, temporary.GetStudentCounts(listName, string.Empty, string.Empty)[student.RecordId.ToString("D")]);
+        Assert.Equal(1, temporary.GetStudentCounts(listName, null)[student.RecordId.ToString("D")]);
     }
 
     [Fact]
@@ -253,19 +253,26 @@ public sealed class CoreRuntimeServicesTests : IDisposable
     }
 
     [Fact]
-    public void StudentTemporaryRecords_AreNotHiddenBySwitchingTheDrawFilter()
+    public void StudentTemporaryRecords_AreScopedToTheHistoryGroup()
     {
         using var provider = CreateProvider();
         var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
         var student = new Student { Name = "Switch", RecordId = Guid.NewGuid() };
+        var other = new Student { Name = "Other", RecordId = Guid.NewGuid() };
 
-        temporary.RecordStudents("filter-class", "男", "A组", [student]);
+        temporary.RecordStudents("filter-class", null, [student]);
 
         var recordId = student.RecordId.ToString("D");
-        Assert.Equal(1, temporary.GetStudentCounts("filter-class", "男", "A组")[recordId]);
-        // Switching the group/gender filter must not restart the repeat limit for an already drawn member.
-        Assert.Equal(1, temporary.GetStudentCounts("filter-class", string.Empty, string.Empty)[recordId]);
-        Assert.Equal(1, temporary.GetStudentCounts("filter-class", "女", "B组")[recordId]);
+        Assert.Equal(1, temporary.GetStudentCounts("filter-class", null)[recordId]);
+        // A different record group is a different round of the class, so it must not inherit the count.
+        Assert.Empty(temporary.GetStudentCounts("filter-class", "A组"));
+        Assert.Empty(temporary.GetStudentCounts("filter-class", string.Empty));
+
+        temporary.RecordStudents("filter-class", "A组", [other]);
+        Assert.Equal(1, temporary.GetStudentCounts("filter-class", "A组")[other.RecordId.ToString("D")]);
+        Assert.DoesNotContain(other.RecordId.ToString("D"), temporary.GetStudentCounts("filter-class", null).Keys);
+        // The whole-list sum still sees both buckets (that is what an all-groups reset needs).
+        Assert.Equal(2, temporary.GetStudentCountsForList("filter-class").Count);
     }
 
     [Fact]
@@ -290,8 +297,10 @@ public sealed class CoreRuntimeServicesTests : IDisposable
         Directory.CreateDirectory(Path.GetDirectoryName(legacyPath)!);
         File.WriteAllText(legacyPath, legacy);
 
-        // The upgrade must sum the old per-filter buckets instead of silently restarting the count.
-        Assert.Equal(5, temporary.GetStudentCounts("legacy-class", string.Empty, string.Empty)[recordId]);
+        // The upgrade must sum the old per-filter buckets into the unscoped bucket instead of losing the count;
+        // those records carry no record-group provenance, so they cannot be attributed to a group.
+        Assert.Equal(5, temporary.GetStudentCounts("legacy-class", null)[recordId]);
+        Assert.Empty(temporary.GetStudentCounts("legacy-class", "A组"));
     }
 
     [Fact]
