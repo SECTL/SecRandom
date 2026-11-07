@@ -110,7 +110,7 @@ public sealed class CourseLinkageService
         && IsConfirmedBreakTime;
 
     /// <summary>
-    ///     上课时段禁用户外课程：只有 ClassIsland 数据源携带科目的户外课程标记。开启后当前
+    ///     户外课程上课时段禁用：只有 ClassIsland 数据源携带科目的户外课程标记。开启后当前
     ///     课程被标记为户外课程时，即使处于上课时段也限制抽取和重置，验证例外与
     ///     <see cref="IsConfirmedNonClassTime" /> 共用。
     /// </summary>
