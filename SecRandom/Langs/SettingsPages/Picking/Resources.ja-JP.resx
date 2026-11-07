@@ -93,6 +93,12 @@
   <data name="S_DisableAfterClick_D" xml:space="preserve">
     <value>クイック抽選後にボタンを無効にする秒数</value>
   </data>
+  <data name="S_ShowDrawingStatus" xml:space="preserve">
+    <value>抽選中のステータスを表示</value>
+  </data>
+  <data name="S_ShowDrawingStatus_D" xml:space="preserve">
+    <value>クイック抽選の実行中に「抽選中」を表示します。オフにすると結果が出るまで画面は前回の内容のまま変わりません</value>
+  </data>
   <data name="S_FontSource" xml:space="preserve">
     <value>フォントの指定元</value>
   </data>

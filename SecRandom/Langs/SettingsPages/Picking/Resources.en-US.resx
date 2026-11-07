@@ -31,6 +31,8 @@
   <data name="S_DefaultPool_D" xml:space="preserve"><value>The prize pool used by default when opening the lottery page</value></data>
   <data name="S_DisableAfterClick" xml:space="preserve"><value>Disable After Click</value></data>
   <data name="S_DisableAfterClick_D" xml:space="preserve"><value>Seconds to disable the button after a Quick Draw</value></data>
+  <data name="S_ShowDrawingStatus" xml:space="preserve"><value>Show drawing status</value></data>
+  <data name="S_ShowDrawingStatus_D" xml:space="preserve"><value>Show the drawing status line while a Quick Draw is running; when off the window stays steady until the result lands</value></data>
   <data name="S_FontSource" xml:space="preserve"><value>Font Source</value></data>
   <data name="S_FontSource_D" xml:space="preserve"><value>Follow the global font or specify a font for draw results</value></data>
   <data name="S_CustomFont" xml:space="preserve"><value>Custom Font</value></data>

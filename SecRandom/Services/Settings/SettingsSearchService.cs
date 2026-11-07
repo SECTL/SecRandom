@@ -88,7 +88,7 @@ public class SettingsSearchService
             ["settings.picking.quickDraw"] = new HashSet<string>
             {
                 "S_DrawMode", "S_HalfRepeat", "S_DrawType", "S_DefaultClass", "S_DisableAfterClick",
-                "S_QuickDrawHistoryGroup", "S_FontSource",
+                "S_ShowDrawingStatus", "S_QuickDrawHistoryGroup", "S_FontSource",
                 "S_CustomFont", "S_FontSize", "S_DisplayFormat", "S_ShowTags", "S_Animation", "S_AnimationInterval",
                 "S_AutoplayCount", "S_AnimationStyle", "S_ColorTheme", "S_FixedColor", "S_StudentImage",
                 "S_StudentImagePosition", "S_StudentImageSize", "S_AnimationMusic", "S_ResultMusic",

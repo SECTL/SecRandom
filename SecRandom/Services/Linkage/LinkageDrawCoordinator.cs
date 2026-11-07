@@ -53,7 +53,12 @@ public sealed class LinkageDrawCoordinator(
             return await securityService.AuthorizeAsync(operations, action, cancellationToken).ConfigureAwait(false);
 
         if (!linkageService.Settings.VerificationRequired)
+        {
+            // 不允许验证绕过时这里是课间唯一的人机拒绝点：页面调用方拿到 false 只会静默收手，
+            // 所以提示必须在这里发，否则用户点了按钮毫无反应。
+            ClassTimeDrawRestrictionNotice.Show(linkageService.Snapshot);
             return false;
+        }
 
         return await securityService.AuthorizeAsync(
             [.. operations, SecurityOperation.BypassClassTimeRestriction],

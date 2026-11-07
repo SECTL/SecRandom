@@ -105,6 +105,13 @@ public sealed class CourseLinkageService
         && _snapshot.State == CourseTimeState.Breaking
         && !IsWithinEnableWindow(_snapshot);
 
+    /// <summary>
+    ///     “课间与下课禁止抽取”此刻是否正在生效：设置开启，快照确认处于课间，且不在课前解禁/课后延迟窗口内。
+    /// </summary>
+    /// <remarks>
+    ///     <see cref="CourseScheduleSnapshot.IsAvailable" /> 为假（ClassIsland 断连、计时器停、课表未加载、
+    ///     CSES 课表缺失）时这里恒为假——断连不是“下课”，不可用必须放行，否则会让人在教室外白等一整天。
+    /// </remarks>
     public bool IsConfirmedNonClassTime => Settings.InstantDrawDisable
         && IsConfirmedBreakTime;
 

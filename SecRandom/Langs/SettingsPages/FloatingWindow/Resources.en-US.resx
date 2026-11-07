@@ -51,5 +51,5 @@
   <data name="S_Interaction_StickToEdgeDisplayStyle"><value>Collapsed handle style</value></data>
   <data name="S_Interaction_StickToEdgeDisplayStyle_D"><value>Choose a roll-call icon, the word “Draw,” or a direction arrow for the edge handle</value></data>
   <data name="S_Dock"><value>Edge Collapse</value></data><data name="S_Dock_Size"><value>Handle size</value></data><data name="S_Dock_Size_D"><value>Adjust the square side length of the edge handle</value></data>
-  <data name="O_StickDisplay_Icon"><value>Icon</value></data><data name="O_StickDisplay_Text"><value>Text</value></data><data name="O_StickDisplay_Arrow"><value>Arrow</value></data>
+  <data name="O_StickDisplay_Icon"><value>Icon</value></data><data name="O_StickDisplay_Text"><value>Text</value></data><data name="O_StickDisplay_Arrow"><value>Arrow</value></data><data name="S_Display_CustomText"><value>Custom text</value></data><data name="S_Display_CustomText_D"><value>Show one line of custom text above the floating buttons, long text is trimmed to fit (120 characters max)</value></data><data name="S_Display_CustomTextSize"><value>Custom text size</value></data><data name="S_Display_CustomTextSize_D"><value>Font size of the custom text in pixels, 0 scales with the floating window</value></data>
 </root>

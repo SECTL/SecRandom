@@ -10,13 +10,13 @@
     <value>認証後の続行を許可</value>
   </data>
   <data name="S_External_VerificationRequired_D">
-    <value>授業外制限が有効な場合、設定したセキュリティ認証後に一時的な抽選やリセットを許可します</value>
+    <value>授業外制限が有効な場合、設定したセキュリティ認証後に一時的な抽選やリセットを許可します（オフの場合は休み時間を直接阻止して通知を表示します）</value>
   </data>
   <data name="S_External_InstantDrawDisable">
     <value>授業外の操作を制限</value>
   </data>
   <data name="S_External_InstantDrawDisable_D">
-    <value>休み時間や授業外と確認された場合に抽選とリセットを制限します</value>
+    <value>データソースが休み時間や下校後と確認している間は点名・即時抽選・抽選の開始とリセットを禁止します（データソースが切断または状態不明の場合は制限しません／オフにすると制限しません）</value>
   </data>
   <data name="S_External_DataSource">
     <value>データソース</value>
@@ -123,6 +123,8 @@
   <data name="S_ClassTime_PreClassEnableTime_D">
     <value>授業の何秒前に制限を解除するか指定します</value>
   </data>
+  <data name="M_ClassTimeDrawBlocked"><value>休み時間または下校後のため抽選できません。次の「{0}」まであと {1} 分です</value></data>
+  <data name="M_ClassTimeDrawBlockedGeneric"><value>休み時間または下校後のため抽選できません</value></data>
   <data name="M_CsesSummary"><value>授業は {0} 件（{1:HH:mm}～{2:HH:mm}）です</value></data>
   <data name="M_CsesErrorEmpty"><value>CSES 時間割ファイルが空です</value></data>
   <data name="M_CsesErrorRoot"><value>CSES 時間割ファイルのルートはオブジェクトである必要があります</value></data>
