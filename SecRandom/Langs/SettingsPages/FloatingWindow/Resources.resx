@@ -213,4 +213,10 @@
   <data name="O_StickDisplay_Arrow" xml:space="preserve">
     <value>箭头</value>
   </data>
+  <data name="S_Display_CustomText" xml:space="preserve">
+    <value>自定义文字</value>
+  </data>
+  <data name="S_Display_CustomText_D" xml:space="preserve">
+    <value>在悬浮窗按钮上方显示一行自定义文字，过长时自动省略（最多 120 字）</value>
+  </data>
 </root>

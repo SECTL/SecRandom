@@ -634,5 +634,23 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
                 return ResourceManager.GetString("O_StickDisplay_Arrow", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 自定义文字.
+        /// </summary>
+        public static string S_Display_CustomText {
+            get {
+                return ResourceManager.GetString("S_Display_CustomText", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 在悬浮窗按钮上方显示一行自定义文字，过长时自动省略.
+        /// </summary>
+        public static string S_Display_CustomText_D {
+            get {
+                return ResourceManager.GetString("S_Display_CustomText_D", resourceCulture);
+            }
+        }
     }
 }
