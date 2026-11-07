@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Helpers;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Config;
@@ -24,6 +25,7 @@ namespace SecRandom.Services.ImportExport;
 public sealed class ImportExportService(
     MainConfigHandler configHandler,
     DataArchiveService dataArchiveService,
+    IHistoryQueryService historyQuery,
     ILogger<ImportExportService> logger) : IImportExportService
 {
     private readonly string _dataDirectory = Utils.DataRoot;
@@ -161,8 +163,9 @@ public sealed class ImportExportService(
         {
             roll_call_lists = CountFiles("list", "roll_call_list"),
             lottery_pools = CountFiles("list", "lottery_list"),
-            roll_call_histories = CountFiles("history", "roll_call_history"),
-            lottery_histories = CountFiles("history", "lottery_history")
+            // 历史记录已迁到每个档案自己的 .srhdb 数据库，数文件个数要问历史查询服务而不是数 *.json。
+            roll_call_histories = historyQuery.GetStudentHistoryNames().Count,
+            lottery_histories = historyQuery.GetPrizeHistoryNames().Count
         }, ConfigServiceBase.JsonOptions), entries);
 
         var crashesDirectory = Path.Combine(_dataDirectory, "crashes");

@@ -14,7 +14,7 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
         FallbackFactory = fallbackFactory;
 
         Logger.LogInformation("Loading config file.");
-        Data = ConfigService.LoadConfig(FallbackFactory());
+        Data = LoadData();
         Data.PropertyChanged += Data_OnPropertyChanged;
     }
 
@@ -25,7 +25,7 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
         FallbackFactory = fallbackFactory;
 
         Logger.LogInformation("Loading config file.");
-        Data = ConfigService.LoadConfig(FallbackFactory());
+        Data = LoadData();
         Data.PropertyChanged += Data_OnPropertyChanged;
     }
 
@@ -38,15 +38,25 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
     /// </summary>
     public event EventHandler? Saved;
 
-    private ILogger Logger { get; }
-    private ConfigServiceBase ConfigService { get; }
-    private Func<T> FallbackFactory { get; }
+    protected ILogger Logger { get; }
+    protected ConfigServiceBase ConfigService { get; }
+    protected Func<T> FallbackFactory { get; }
+
+    /// <summary>
+    ///     从持久化位置读取配置。默认走 <see cref="ConfigServiceBase" /> 的 JSON 文件；历史记录改写到小数据库里，
+    ///     由子类覆盖这三个存储接缝，其余配置仍然共用同一套 JSON 读写。
+    /// </summary>
+    protected virtual T LoadData() => ConfigService.LoadConfig(FallbackFactory());
+
+    protected virtual void SaveData() => ConfigService.SaveConfig(Data);
+
+    protected virtual void DeleteData() => ConfigService.DeleteConfig(Data);
 
     public virtual void Reload()
     {
         Data.PropertyChanged -= Data_OnPropertyChanged;
         Logger.LogInformation("Reloading config file.");
-        Data = ConfigService.LoadConfig(FallbackFactory());
+        Data = LoadData();
         Data.PropertyChanged += Data_OnPropertyChanged;
         Reloaded?.Invoke(this, EventArgs.Empty);
     }
@@ -54,14 +64,14 @@ public abstract class ConfigHandlerBase<T> where T : ConfigBase
     public virtual void Save()
     {
         Logger.LogInformation("Saving config file.");
-        ConfigService.SaveConfig(Data);
+        SaveData();
         Saved?.Invoke(this, EventArgs.Empty);
     }
 
     public virtual void Delete()
     {
         Logger.LogInformation("Deleting config file.");
-        ConfigService.DeleteConfig(Data);
+        DeleteData();
     }
 
     protected virtual void Data_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)

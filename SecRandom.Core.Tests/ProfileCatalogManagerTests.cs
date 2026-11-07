@@ -271,7 +271,7 @@ public sealed class ProfileCatalogManagerTests : IDisposable
         Assert.Equal(newName, profile.StudentListConfig!.Name);
         Assert.True(manager.StudentListExists(newName));
         Assert.False(manager.StudentListExists(oldName));
-        Assert.True(File.Exists(Utils.GetFilePath("history", "roll_call_history", $"{newName}.json")));
+        Assert.True(File.Exists(Utils.GetFilePath("history", "roll_call_history", $"{newName}{Utils.HistoryDatabaseExtension}")));
         Assert.False(File.Exists(Utils.GetFilePath("TEMP", $"roll_call_record_{oldName}.json")));
         Assert.NotEmpty(temporary.GetStudentCounts(newName, null));
     }

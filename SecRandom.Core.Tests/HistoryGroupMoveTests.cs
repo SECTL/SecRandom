@@ -97,7 +97,7 @@ public sealed class HistoryGroupMoveTests : IDisposable
         var history = profile.CurrentStudentHistory!;
         var profileName = profile.StudentHistoryConfig!.Name;
         var key = ProfileRecordIdentity.EnsureRecordId(alice);
-        var path = Utils.GetFilePath("history", "roll_call_history", $"{profileName}.json");
+        var path = Utils.GetFilePath("history", "roll_call_history", $"{profileName}{Utils.HistoryDatabaseExtension}");
         var bytesBefore = File.ReadAllBytes(path);
 
         AssertMoveRejected(manager, profileName, [key], new string('x', HistoryGroupName.MaxLength + 1),
@@ -108,7 +108,7 @@ public sealed class HistoryGroupMoveTests : IDisposable
         AssertMoveRejected(manager, profileName, [key], HistoryGroupName.BreakCourseMarker,
             HistoryGroupName.ErrorNameReserved);
 
-        // 拒绝就是拒绝：记录标记没变、没有凭空登记出组、历史文件一个字节都没动。
+        // 拒绝就是拒绝：记录标记没变、没有凭空登记出组、历史数据库一个字节都没动。
         Assert.Equal(string.Empty, history.Students[key].Histories.Single().HistoryGroup);
         Assert.Empty(history.HistoryGroups);
         Assert.Equal(bytesBefore, File.ReadAllBytes(path));
@@ -124,7 +124,7 @@ public sealed class HistoryGroupMoveTests : IDisposable
 
         var history = profile.CurrentStudentHistory!;
         var profileName = profile.StudentHistoryConfig!.Name;
-        var path = Utils.GetFilePath("history", "roll_call_history", $"{profileName}.json");
+        var path = Utils.GetFilePath("history", "roll_call_history", $"{profileName}{Utils.HistoryDatabaseExtension}");
         var bytesBefore = File.ReadAllBytes(path);
         var lastWriteBefore = File.GetLastWriteTimeUtc(path);
         var writtenAt = DateTime.UtcNow;
@@ -193,6 +193,7 @@ public sealed class HistoryGroupMoveTests : IDisposable
         Assert.Equal(HistoryGroupName.ErrorProfileUnavailable, exception.Message);
         // 档案不存在时绝不顺手写出一个空的历史文件。
         Assert.False(File.Exists(Utils.GetFilePath("history", "roll_call_history", "class-empty.json")));
+        Assert.False(File.Exists(Utils.GetFilePath("history", "roll_call_history", $"class-empty{Utils.HistoryDatabaseExtension}")));
     }
 
     [Fact]

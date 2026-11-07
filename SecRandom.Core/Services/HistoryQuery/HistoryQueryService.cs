@@ -1,9 +1,14 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.HistoryStore;
 using SecRandom.Shared;
-using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.HistoryQuery;
@@ -11,9 +16,11 @@ namespace SecRandom.Core.Services.HistoryQuery;
 internal sealed class HistoryQueryService(ConfigServiceBase configService, ILogger<HistoryQueryService> logger)
     : IHistoryQueryService
 {
-    public IReadOnlyList<string> GetStudentHistoryNames() => GetProfileNames("roll_call_history");
+    public IReadOnlyList<string> GetStudentHistoryNames() =>
+        ProfileHistoryPaths.EnumerateProfileNames(HistoryGroupKind.RollCall);
 
-    public IReadOnlyList<string> GetPrizeHistoryNames() => GetProfileNames("lottery_history");
+    public IReadOnlyList<string> GetPrizeHistoryNames() =>
+        ProfileHistoryPaths.EnumerateProfileNames(HistoryGroupKind.Lottery);
 
     public IReadOnlyList<HistoryQueryItem> GetRecentItems(int maximumCount)
     {
@@ -28,9 +35,8 @@ internal sealed class HistoryQueryService(ConfigServiceBase configService, ILogg
 
     public StudentHistory? LoadStudentHistory(string name)
     {
-        // 缺失时先按文件存在性拦截，避免配置处理器为不存在的档案落盘空文件。
-        if (string.IsNullOrWhiteSpace(name) ||
-            !File.Exists(Utils.GetFilePath("history", "roll_call_history", $"{name}.json")))
+        // 缺失时先按文件存在性拦截，避免配置处理器为不存在的档案落盘空档案。
+        if (string.IsNullOrWhiteSpace(name) || !ProfileHistoryPaths.Exists(name, HistoryGroupKind.RollCall))
             return null;
 
         try
@@ -46,8 +52,7 @@ internal sealed class HistoryQueryService(ConfigServiceBase configService, ILogg
 
     public PrizeHistory? LoadPrizeHistory(string name)
     {
-        if (string.IsNullOrWhiteSpace(name) ||
-            !File.Exists(Utils.GetFilePath("history", "lottery_history", $"{name}.json")))
+        if (string.IsNullOrWhiteSpace(name) || !ProfileHistoryPaths.Exists(name, HistoryGroupKind.Lottery))
             return null;
 
         try
@@ -59,19 +64,6 @@ internal sealed class HistoryQueryService(ConfigServiceBase configService, ILogg
             logger.LogWarning(exception, "读取抽奖历史失败：奖池={PoolName}。", name);
             return null;
         }
-    }
-
-    private IReadOnlyList<string> GetProfileNames(string directory)
-    {
-        var path = Utils.GetDirectoryPath("history", directory);
-        return Directory.Exists(path)
-            ? Directory.GetFiles(path, "*.json")
-                .Select(Path.GetFileNameWithoutExtension)
-                .OfType<string>()
-                .Where(name => !string.IsNullOrWhiteSpace(name))
-                .OrderBy(name => name)
-                .ToArray()
-            : [];
     }
 
     private void AppendStudentItems(List<HistoryQueryItem> target)

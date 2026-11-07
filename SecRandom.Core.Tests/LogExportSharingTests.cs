@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Helpers;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Archive;
@@ -117,6 +118,7 @@ public sealed class LogExportSharingTests : IDisposable
         return new ImportExportService(
             provider.GetRequiredService<MainConfigHandler>(),
             provider.GetRequiredService<DataArchiveService>(),
+            provider.GetRequiredService<IHistoryQueryService>(),
             NullLogger<ImportExportService>.Instance);
     }
 

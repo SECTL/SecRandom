@@ -3,11 +3,13 @@ using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
+using SecRandom.Core.Services.HistoryStore;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Services;
 using SecRandom.Services.Draw;
@@ -89,7 +91,7 @@ public sealed class PluginDrawServiceTests : IDisposable
         profile.CurrentStudentList!.Students.Add(student);
         profile.SaveProfile();
 
-        var historyPath = profile.CurrentStudentHistory!.ConfigFilePath;
+        var historyPath = ProfileHistoryPaths.DatabasePath(profile.CurrentStudentHistory!.Name, HistoryGroupKind.RollCall);
         File.Delete(historyPath);
         Directory.CreateDirectory(historyPath);
 
@@ -123,7 +125,7 @@ public sealed class PluginDrawServiceTests : IDisposable
         profile.CurrentStudentList!.Students.Add(student);
         profile.SaveProfile();
 
-        var historyPath = profile.CurrentPrizeHistory!.ConfigFilePath;
+        var historyPath = ProfileHistoryPaths.DatabasePath(profile.CurrentPrizeHistory!.Name, HistoryGroupKind.Lottery);
         File.Delete(historyPath);
         Directory.CreateDirectory(historyPath);
 

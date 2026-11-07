@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -30,6 +30,8 @@
         <PackageReference Include="DynamicData" Version="9.4.33" />
         <PackageReference Include="FluentAvaloniaUI" Version="3.0.2" />
         <PackageReference Include="LiveMarkdown.Avalonia" Version="2.4.0" />
+        <!-- 历史记录档案是一个小 SQLite 库：整份重写比序列化 JSON 快得多，且事务保证崩溃时旧内容完整。 -->
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.12" />
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
         <PackageReference Include="MiniExcel" Version="1.45.0" />
         <PackageReference Include="Pastel" Version="8.0.0" />

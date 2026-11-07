@@ -143,7 +143,7 @@ public sealed class DataArchiveServiceTests : IDisposable
             Assert.Equal(GlobalConstants.Version, manifest.ProducerVersion);
             Assert.Contains(manifest.Files, file => file.Path == "config/settings.json");
             Assert.Contains(manifest.Files, file => file.Path == "list/roll_call_list/class.json");
-            Assert.Contains(manifest.Files, file => file.Path == "history/roll_call_history/class.json");
+            Assert.Contains(manifest.Files, file => file.Path.StartsWith("history/roll_call_history/", StringComparison.Ordinal));
 
             var dataEntries = zip.Entries.Where(entry => !string.IsNullOrEmpty(entry.Name) && entry.FullName != "manifest.json").ToList();
             Assert.Equal(manifest.Files.Count, dataEntries.Count);
@@ -535,7 +535,7 @@ public sealed class DataArchiveServiceTests : IDisposable
         Assert.Equal(ArchiveKind.CloudBackup, ReadManifestKind(destination));
         Assert.Contains("config/settings.json", paths);
         Assert.Contains("list/roll_call_list/class.json", paths);
-        Assert.Contains("history/roll_call_history/class.json", paths);
+        Assert.Contains(paths, path => path.StartsWith("history/roll_call_history/", StringComparison.Ordinal));
         Assert.Contains("audio/music/track.mp3", paths);
         Assert.DoesNotContain("config/device-uuid.json", paths);
         Assert.DoesNotContain("audio/voice/cache.mp3", paths);

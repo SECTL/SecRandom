@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using System.Text.Json;
 
 namespace SecRandom.Shared;
@@ -379,4 +379,17 @@ public static class Utils
         }
     }
 
+    /// <summary>
+    ///     Suffix of a profile history database. History records live in this file rather than in JSON, because a
+    ///     large history was rewritten in full on every save; the suffix is deliberately not <c>.json</c> so the
+    ///     JSON readers (archive validation, the pre-database snapshot reader) can never pick a database up as one.
+    /// </summary>
+    public const string HistoryDatabaseExtension = ".srhdb";
+
+    /// <summary>
+    ///     Suffix an untouched legacy history JSON is renamed to after its records have been imported into
+    ///     <see cref="HistoryDatabaseExtension" />. It is kept for one-way rollback and is not read again, because the
+    ///     extension no longer matches a <c>*.json</c> enumeration.
+    /// </summary>
+    public const string HistoryLegacyBackupExtension = ".json.migrated";
 }

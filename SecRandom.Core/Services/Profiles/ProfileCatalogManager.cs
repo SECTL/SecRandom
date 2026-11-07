@@ -4,6 +4,7 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.HistoryStore;
 using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.ComponentModels;
@@ -49,10 +50,10 @@ internal sealed class ProfileCatalogManager(
     }
 
     public bool RenameStudentList(string oldName, string newName) =>
-        RenameList(oldName, newName, "roll_call_list", "roll_call_history", "roll_call_record_", isStudent: true);
+        RenameList(oldName, newName, "roll_call_list", "roll_call_record_", isStudent: true);
 
     public bool RenamePrizeList(string oldName, string newName) =>
-        RenameList(oldName, newName, "lottery_list", "lottery_history", "lottery_record_", isStudent: false);
+        RenameList(oldName, newName, "lottery_list", "lottery_record_", isStudent: false);
 
     public bool DeleteStudentList(string name, bool deleteHistory)
     {
@@ -61,7 +62,7 @@ internal sealed class ProfileCatalogManager(
 
         DeleteFile(Utils.GetFilePath("list", "roll_call_list", $"{name}.json"));
         if (deleteHistory)
-            DeleteFile(Utils.GetFilePath("history", "roll_call_history", $"{name}.json"));
+            ProfileHistoryPaths.Delete(name, HistoryGroupKind.RollCall);
 
         if (string.Equals(profileService.StudentListConfig?.Name, name, StringComparison.Ordinal))
         {
@@ -81,7 +82,7 @@ internal sealed class ProfileCatalogManager(
 
         DeleteFile(Utils.GetFilePath("list", "lottery_list", $"{name}.json"));
         if (deleteHistory)
-            DeleteFile(Utils.GetFilePath("history", "lottery_history", $"{name}.json"));
+            ProfileHistoryPaths.Delete(name, HistoryGroupKind.Lottery);
 
         if (string.Equals(profileService.PrizeListConfig?.Name, name, StringComparison.Ordinal))
         {
@@ -215,7 +216,7 @@ internal sealed class ProfileCatalogManager(
             return true;
         }
 
-        if (!File.Exists(Utils.GetFilePath("history", "roll_call_history", $"{name}.json")))
+        if (!ProfileHistoryPaths.Exists(name, HistoryGroupKind.RollCall))
             return false;
 
         var config = new StudentHistoryConfig(name, logger, configService);
@@ -241,7 +242,7 @@ internal sealed class ProfileCatalogManager(
             return true;
         }
 
-        if (!File.Exists(Utils.GetFilePath("history", "lottery_history", $"{name}.json")))
+        if (!ProfileHistoryPaths.Exists(name, HistoryGroupKind.Lottery))
             return false;
 
         var config = new PrizeHistoryConfig(name, logger, configService);
@@ -406,10 +407,7 @@ internal sealed class ProfileCatalogManager(
     {
         try
         {
-            var path = kind == HistoryGroupKind.RollCall
-                ? Utils.GetFilePath("history", "roll_call_history", $"{profileName}.json")
-                : Utils.GetFilePath("history", "lottery_history", $"{profileName}.json");
-            if (!File.Exists(path))
+            if (!ProfileHistoryPaths.Exists(profileName, kind))
                 return null;
 
             if (kind == HistoryGroupKind.RollCall)
@@ -524,7 +522,7 @@ internal sealed class ProfileCatalogManager(
             File.Delete(path);
     }
 
-    private bool RenameList(string oldName, string newName, string listDirectory, string historyDirectory,
+    private bool RenameList(string oldName, string newName, string listDirectory,
         string temporaryPrefix, bool isStudent)
     {
         oldName = oldName.Trim();
@@ -545,17 +543,17 @@ internal sealed class ProfileCatalogManager(
             : string.Equals(profileService.PrizeListConfig?.Name, oldName, StringComparison.Ordinal);
         profileService.SaveProfile();
 
+        var historyKind = isStudent ? HistoryGroupKind.RollCall : HistoryGroupKind.Lottery;
         var moves = new[]
         {
             (Source: Utils.GetFilePath("list", listDirectory, $"{oldName}.json"),
              Target: Utils.GetFilePath("list", listDirectory, $"{newName}.json")),
-            (Source: Utils.GetFilePath("history", historyDirectory, $"{oldName}.json"),
-             Target: Utils.GetFilePath("history", historyDirectory, $"{newName}.json")),
             (Source: Utils.GetFilePath("TEMP", $"{temporaryPrefix}{NormalizeFileComponent(oldName)}.json"),
              Target: Utils.GetFilePath("TEMP", $"{temporaryPrefix}{NormalizeFileComponent(newName)}.json"))
         };
 
         var moved = new List<(string Source, string Target)>();
+        var historyRenamed = false;
         try
         {
             foreach (var move in moves)
@@ -566,6 +564,10 @@ internal sealed class ProfileCatalogManager(
                 File.Move(move.Source, move.Target);
                 moved.Add(move);
             }
+
+            // 历史档案的实际数据在数据库里（旧 JSON 只可能还没迁移），数据库、未迁移的 JSON 与迁移备份一起换名。
+            ProfileHistoryPaths.Rename(oldName, newName, historyKind);
+            historyRenamed = true;
 
             if (isStudent)
             {
@@ -589,6 +591,18 @@ internal sealed class ProfileCatalogManager(
         }
         catch
         {
+            if (historyRenamed)
+            {
+                try
+                {
+                    ProfileHistoryPaths.Rename(newName, oldName, historyKind);
+                }
+                catch (Exception rollbackException)
+                {
+                    logger.LogWarning(rollbackException, "回滚历史档案名称失败：{OldName} -> {NewName}", newName, oldName);
+                }
+            }
+
             foreach (var move in moved.AsEnumerable().Reverse())
             {
                 if (File.Exists(move.Target) && !File.Exists(move.Source))

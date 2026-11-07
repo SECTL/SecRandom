@@ -1,5 +1,7 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Enums;
+using SecRandom.Core.Services.HistoryStore;
 using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.Models.Profile;
 
@@ -60,6 +62,10 @@ public class StudentListConfig : ProfileConfigHandlerBase<StudentList>
     }
 }
 
+/// <summary>
+///     点名历史的处理器。历史记录不再走 JSON 文件，而是走 <see cref="ProfileHistoryDatabase" /> 的小数据库；
+///     第一次读取某个档案时它会把旧的 JSON 无感迁移过去，因此这里的三个存储接缝之外没有任何调用方需要知道格式变了。
+/// </summary>
 public class StudentHistoryConfig : ProfileConfigHandlerBase<StudentHistory>
 {
     public StudentHistoryConfig(string name) : base(name)
@@ -69,6 +75,13 @@ public class StudentHistoryConfig : ProfileConfigHandlerBase<StudentHistory>
     public StudentHistoryConfig(string name, ILogger logger, ConfigServiceBase configService) : base(name, logger, configService)
     {
     }
+
+    protected override StudentHistory LoadData() =>
+        ProfileHistoryDatabase.LoadStudentHistory(FallbackFactory().Name, Logger);
+
+    protected override void SaveData() => ProfileHistoryDatabase.SaveStudentHistory(Data, Logger);
+
+    protected override void DeleteData() => ProfileHistoryDatabase.Delete(Data.Name, HistoryGroupKind.RollCall, Logger);
 }
 
 public class PrizeListConfig : ProfileConfigHandlerBase<PrizeList>
@@ -82,6 +95,7 @@ public class PrizeListConfig : ProfileConfigHandlerBase<PrizeList>
     }
 }
 
+/// <summary>抽奖历史的处理器；存储方式与 <see cref="StudentHistoryConfig" /> 相同。</summary>
 public class PrizeHistoryConfig : ProfileConfigHandlerBase<PrizeHistory>
 {
     public PrizeHistoryConfig(string name) : base(name)
@@ -91,4 +105,11 @@ public class PrizeHistoryConfig : ProfileConfigHandlerBase<PrizeHistory>
     public PrizeHistoryConfig(string name, ILogger logger, ConfigServiceBase configService) : base(name, logger, configService)
     {
     }
+
+    protected override PrizeHistory LoadData() =>
+        ProfileHistoryDatabase.LoadPrizeHistory(FallbackFactory().Name, Logger);
+
+    protected override void SaveData() => ProfileHistoryDatabase.SavePrizeHistory(Data, Logger);
+
+    protected override void DeleteData() => ProfileHistoryDatabase.Delete(Data.Name, HistoryGroupKind.Lottery, Logger);
 }

@@ -40,7 +40,16 @@ public abstract class ProfileConfigBase : ConfigBase
 
     protected string GetProfileFilePath(string root, string directory)
     {
+        return GetProfileFilePath(root, directory, ".json");
+    }
+
+    /// <summary>
+    ///     Resolves a profile's file with an explicit extension. History profiles dropped the JSON suffix when their
+    ///     records moved into a small database file, so the path helper cannot assume <c>.json</c> for every profile.
+    /// </summary>
+    protected string GetProfileFilePath(string root, string directory, string extension)
+    {
         ValidateProfileName(Name);
-        return Utils.GetFilePath(root, directory, $"{Name}.json");
+        return Utils.GetFilePath(root, directory, $"{Name}{extension}");
     }
 }
