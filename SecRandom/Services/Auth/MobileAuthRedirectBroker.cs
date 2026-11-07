@@ -13,12 +13,7 @@ namespace SecRandom.Services.Auth;
 /// <summary>Creates the mobile redirect broker over the one shared callback router.</summary>
 public sealed class MobileAuthRedirectBrokerFactory(MobileAuthCallbackRouter router) : IAuthRedirectBrokerFactory
 {
-    /// <summary>
-    ///     The custom scheme is this platform's only redirect, and the OIDC branch accepts neither a
-    ///     custom scheme nor a wildcard port, so the preference is deliberately ignored here.
-    /// </summary>
-    public IAuthRedirectBroker Create(bool preferOidcRedirectPort = false) =>
-        new MobileAuthRedirectBroker(router);
+    public IAuthRedirectBroker Create() => new MobileAuthRedirectBroker(router);
 }
 
 /// <summary>
@@ -47,7 +42,7 @@ public sealed class MobileAuthRedirectBroker(MobileAuthCallbackRouter router) : 
     {
         ArgumentNullException.ThrowIfNull(attempt);
         WritePending(new PendingAuthorization(attempt.RedirectUri, attempt.State, attempt.CodeVerifier,
-            DateTimeOffset.UtcNow, attempt.Nonce));
+            DateTimeOffset.UtcNow));
         return Task.CompletedTask;
     }
 
@@ -73,7 +68,7 @@ public sealed class MobileAuthRedirectBroker(MobileAuthCallbackRouter router) : 
             return Task.FromResult<AuthRedirectResult?>(null);
 
         var result = ToResult(redirect, new AuthRedirectAttempt(pending.RedirectUri, pending.State,
-            pending.CodeVerifier, pending.Nonce));
+            pending.CodeVerifier));
         if (!string.Equals(result.State, pending.State, StringComparison.Ordinal))
         {
             // A redirect from another attempt can never complete this record; keep the record so a
@@ -95,8 +90,7 @@ public sealed class MobileAuthRedirectBroker(MobileAuthCallbackRouter router) : 
             ReadQueryValue(redirect, "state") ?? string.Empty,
             attempt.CodeVerifier,
             ReadQueryValue(redirect, "code"),
-            ReadQueryValue(redirect, "error_description") ?? ReadQueryValue(redirect, "error"),
-            attempt.Nonce);
+            ReadQueryValue(redirect, "error_description") ?? ReadQueryValue(redirect, "error"));
 
     private static string PendingPath => Utils.GetFilePath("config", PendingFileName);
 
@@ -203,6 +197,5 @@ public sealed class MobileAuthRedirectBroker(MobileAuthCallbackRouter router) : 
         string RedirectUri,
         string State,
         string CodeVerifier,
-        DateTimeOffset CreatedAt,
-        string? Nonce = null);
+        DateTimeOffset CreatedAt);
 }

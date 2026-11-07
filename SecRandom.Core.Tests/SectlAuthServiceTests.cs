@@ -356,15 +356,6 @@ public sealed class SectlAuthServiceTests
         Assert.False(File.Exists(store.Path));
     }
 
-    [Theory]
-    [InlineData("http://localhost:52831/callback", true)]
-    [InlineData("http://127.0.0.1:52831/callback", true)]
-    [InlineData("http://localhost:41337/callback", false)]
-    [InlineData("cn.sectl.secrandom.mobile://oauth/callback", false)]
-    [InlineData("https://localhost:52831/callback", false)]
-    public void IsOidcEligibleRedirect_OnlyAcceptsTheRegisteredLoopbackAddress(string redirectUri, bool expected) =>
-        Assert.Equal(expected, SectlAuthService.IsOidcEligibleRedirect(redirectUri));
-
     [Fact]
     public async Task Refresh_WhenAnotherProcessAlreadyRotated_AdoptsTheStoredPair()
     {
@@ -639,7 +630,7 @@ public sealed class SectlAuthServiceTests
     /// <summary>Hands the service one scripted broker, as the platform registration would.</summary>
     private sealed class SingleBrokerFactory(IAuthRedirectBroker broker) : IAuthRedirectBrokerFactory
     {
-        public IAuthRedirectBroker Create(bool preferOidcRedirectPort = false) => broker;
+        public IAuthRedirectBroker Create() => broker;
     }
 
     /// <summary>

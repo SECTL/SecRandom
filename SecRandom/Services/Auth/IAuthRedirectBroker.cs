@@ -2,11 +2,9 @@ namespace SecRandom.Services.Auth;
 
 /// <summary>
 ///     One OAuth authorization attempt: what the authorization endpoint has to be told, and the PKCE
-///     verifier needed to exchange the code that comes back. <paramref name="Nonce" /> is the OIDC
-///     replay guard; it is only sent when the attempt requests the <c>openid</c> scope.
+///     verifier needed to exchange the code that comes back.
 /// </summary>
-public sealed record AuthRedirectAttempt(string RedirectUri, string State, string CodeVerifier,
-    string? Nonce = null);
+public sealed record AuthRedirectAttempt(string RedirectUri, string State, string CodeVerifier);
 
 /// <summary>
 ///     The redirect the authorization endpoint handed back, together with everything the token
@@ -17,8 +15,7 @@ public sealed record AuthRedirectResult(
     string State,
     string CodeVerifier,
     string? Code,
-    string? Error,
-    string? Nonce = null);
+    string? Error);
 
 /// <summary>
 ///     Obtains the authorization redirect for one sign-in attempt, so the flow around it (PKCE, state
@@ -58,10 +55,6 @@ public interface IAuthRedirectBroker : IDisposable
 /// <summary>Creates a broker per sign-in attempt, because a broker owns one attempt's state.</summary>
 public interface IAuthRedirectBrokerFactory
 {
-    /// <summary>
-    ///     Creates one attempt's broker. <paramref name="preferOidcRedirectPort" /> asks the desktop
-    ///     broker to come back to the pinned loopback port an OIDC redirect URI has to be registered on;
-    ///     a broker that cannot offer such a URI ignores it.
-    /// </summary>
-    IAuthRedirectBroker Create(bool preferOidcRedirectPort = false);
+    /// <summary>Creates one attempt's broker.</summary>
+    IAuthRedirectBroker Create();
 }
