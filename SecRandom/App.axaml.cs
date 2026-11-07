@@ -140,6 +140,7 @@ public partial class App : Application
     private static FloatingWindow? _floatingWindow;
     private static Window? _quickDrawWindow;
     private static NotificationChannelSettings? _quickDrawNotificationSettings;
+    private static bool _positioningQuickDrawWindow;
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
     private static Task? _runtimeServicesStartupTask;
@@ -2672,9 +2673,10 @@ public partial class App : Application
         if (_quickDrawWindow is { IsLoaded: true })
             return _quickDrawWindow;
 
+        var quickDrawPage = IAppHost.GetService<QuickDrawPage>();
         _quickDrawWindow = new Window
         {
-            Content = IAppHost.GetService<QuickDrawPage>(),
+            Content = quickDrawPage,
             Title = @"SecRandom",
             MinWidth = 280,
             MinHeight = 160,
@@ -2689,41 +2691,73 @@ public partial class App : Application
             Background = Brushes.Transparent,
             TransparencyLevelHint = [WindowTransparencyLevel.Transparent]
         };
-        _quickDrawWindow.Loaded += (_, _) =>
-        {
-            _quickDrawWindow.Width = 280;
-        };
+        // 结果卡片随名字长短变化时窗口会自适应缩放；每次尺寸变化都必须按新尺寸重新居中，
+        // 否则窗口以左上角为锚点扩张，视觉中心就会漂移——这正是"名字长短不一画面就跑偏"的根因。
+        EventHandler resultLayoutChanged = (_, _) => RequestQuickDrawWindowCentering(_quickDrawWindow);
+        quickDrawPage.ResultLayoutChanged += resultLayoutChanged;
         _quickDrawWindow.Opened += (_, _) =>
         {
             ApplyQuickDrawWindowBounds(_quickDrawWindow);
-            Dispatcher.UIThread.Post(
-                () => PositionOrCenterQuickDrawWindow(_quickDrawWindow),
-                DispatcherPriority.Render);
+            RequestQuickDrawWindowCentering(_quickDrawWindow);
         };
-        _quickDrawWindow.SizeChanged += (_, _) => Dispatcher.UIThread.Post(
-            () => PositionOrCenterQuickDrawWindow(_quickDrawWindow),
-            DispatcherPriority.Render);
-        _quickDrawWindow.PositionChanged += (_, _) => ApplyQuickDrawWindowBounds(_quickDrawWindow);
-        _quickDrawWindow.ScalingChanged += (_, _) => ApplyQuickDrawWindowBounds(_quickDrawWindow);
+        _quickDrawWindow.SizeChanged += (_, e) => RepositionQuickDrawWindow(_quickDrawWindow, e.NewSize);
+        _quickDrawWindow.ScalingChanged += (_, _) =>
+        {
+            ApplyQuickDrawWindowBounds(_quickDrawWindow);
+            RequestQuickDrawWindowCentering(_quickDrawWindow);
+        };
         _quickDrawWindow.Closed += (_, _) =>
         {
+            quickDrawPage.ResultLayoutChanged -= resultLayoutChanged;
             _quickDrawWindow = null;
             _quickDrawNotificationSettings = null;
         };
         return _quickDrawWindow;
     }
 
-    private static void PositionOrCenterQuickDrawWindow(Window? window)
+    /// <summary>
+    /// 结果区布局稳定后请求一次居中：窗口尺寸在动画/换行过程中会分几步落定，
+    /// 单靠 SizeChanged 可能在最后一帧之后还有一次排版变化，因此在 Loaded 优先级补一次。
+    /// </summary>
+    private static void RequestQuickDrawWindowCentering(Window? window)
     {
-        if (_quickDrawNotificationSettings is { } settings)
-            PositionQuickDrawNotificationWindow(window, settings);
-        else
-            CenterQuickDrawWindow(window);
+        if (window is null)
+            return;
+
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (!ReferenceEquals(window, _quickDrawWindow))
+                    return;
+
+                RepositionQuickDrawWindow(window, window.Bounds.Size);
+            },
+            DispatcherPriority.Loaded);
+    }
+
+    private static void RepositionQuickDrawWindow(Window? window, Size logicalSize)
+    {
+        if (window is null || _positioningQuickDrawWindow)
+            return;
+
+        try
+        {
+            _positioningQuickDrawWindow = true;
+            if (_quickDrawNotificationSettings is { } settings)
+                PositionQuickDrawNotificationWindow(window, settings, logicalSize);
+            else
+                CenterQuickDrawWindow(window, logicalSize);
+        }
+        finally
+        {
+            _positioningQuickDrawWindow = false;
+        }
     }
 
     private static void PositionQuickDrawNotificationWindow(
         Window? window,
-        NotificationChannelSettings settings)
+        NotificationChannelSettings settings,
+        Size? logicalSize = null)
     {
         if (window is null)
             return;
@@ -2747,8 +2781,9 @@ public partial class App : Application
             return;
 
         var scale = window.RenderScaling;
-        var width = (int)Math.Round(window.Bounds.Width * scale);
-        var height = (int)Math.Round(window.Bounds.Height * scale);
+        var size = logicalSize ?? window.Bounds.Size;
+        var width = (int)Math.Round(size.Width * scale);
+        var height = (int)Math.Round(size.Height * scale);
         if (width <= 0 || height <= 0)
             return;
 
@@ -2767,9 +2802,11 @@ public partial class App : Application
             3 or 4 => area.Center.Y - height / 2,
             _ => area.Center.Y - height / 2
         };
-        window.Position = new PixelPoint(
+        var target = new PixelPoint(
             Math.Clamp(x + settings.HorizontalOffset, area.X, Math.Max(area.X, area.Right - width)),
             Math.Clamp(y + settings.VerticalOffset, area.Y, Math.Max(area.Y, area.Bottom - height)));
+        if (window.Position != target)
+            window.Position = target;
     }
 
     private static void ApplyQuickDrawWindowBounds(Window? window)
@@ -2787,25 +2824,28 @@ public partial class App : Application
         window.MaxHeight = Math.Max(window.MinHeight, screen.WorkingArea.Height / scale - edgePadding);
     }
 
-    private static void CenterQuickDrawWindow(Window? window)
+    private static void CenterQuickDrawWindow(Window? window, Size? logicalSize = null)
     {
         if (window is null)
             return;
 
-        var screen = window.Screens.ScreenFromWindow(window);
+        var screen = window.Screens.ScreenFromWindow(window) ?? window.Screens.Primary;
         if (screen is null)
             return;
 
         var scale = window.RenderScaling;
-        var width = (int)Math.Round(window.Bounds.Width * scale);
-        var height = (int)Math.Round(window.Bounds.Height * scale);
+        var size = logicalSize ?? window.Bounds.Size;
+        var width = (int)Math.Round(size.Width * scale);
+        var height = (int)Math.Round(size.Height * scale);
         if (width <= 0 || height <= 0)
             return;
 
         var area = screen.WorkingArea;
-        window.Position = new PixelPoint(
+        var target = new PixelPoint(
             area.X + (area.Width - width) / 2,
             area.Y + (area.Height - height) / 2);
+        if (window.Position != target)
+            window.Position = target;
     }
 
     #endregion
