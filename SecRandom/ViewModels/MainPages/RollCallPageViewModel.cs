@@ -1063,7 +1063,12 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         if (Config.RollCallSettings.DrawType != DrawType.Fair)
             return 1;
 
-        return _drawEngine.CalculateStudentWeight(GetVisibleStudents().ToList(), courseName: _linkageDrawCoordinator.GetCourseName())
+        // 显示的权重要和真正抽取时读到的是同一份历史：锁定记录组时只看该组的记录，
+        // 否则结果卡片上的权重会按全局历史算，选中组的同学权重看起来完全没变。
+        return _drawEngine.CalculateStudentWeight(
+                GetVisibleStudents().ToList(),
+                courseName: _linkageDrawCoordinator.GetCourseName(),
+                historyGroup: CurrentHistoryGroup)
             .FirstOrDefault(candidate => ReferenceEquals(candidate.Candidate, student))
             ?.Weight ?? 1;
     }

@@ -386,7 +386,11 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
         if (Config.RollCallSettings.DrawType != DrawType.Fair)
             return [];
 
-        return _drawEngine.CalculateStudentWeight(visibleStudents, courseName: GetSelectedSubjectFilter())
+        // 预测权重跟随页面上选中的过滤条件，包括记录组过滤：切到某个组时看到的就是该组的历史权重。
+        return _drawEngine.CalculateStudentWeight(
+                visibleStudents,
+                courseName: GetSelectedSubjectFilter(),
+                historyGroup: GetSelectedHistoryGroupFilter())
             .ToDictionary(candidate => candidate.Candidate, candidate => candidate.Weight);
     }
 

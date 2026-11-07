@@ -776,7 +776,11 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (!string.Equals(Config.QuickDrawSettings.AlgorithmId, "builtin.fair", StringComparison.OrdinalIgnoreCase))
             return 1;
 
-        return _drawEngine.CalculateStudentWeight((_profileService.CurrentStudentList?.Students ?? []).Where(s => s.IsCandidate).ToList(), courseName: _linkageDrawCoordinator.GetCourseName())
+        // 闪抽没有自己的选择器，权重按当前冻结的记录组算；否则锁组后显示的权重仍是全局历史的结果。
+        return _drawEngine.CalculateStudentWeight(
+                (_profileService.CurrentStudentList?.Students ?? []).Where(s => s.IsCandidate).ToList(),
+                courseName: _linkageDrawCoordinator.GetCourseName(),
+                historyGroup: _historyGroupScope.Group)
             .FirstOrDefault(candidate => ReferenceEquals(candidate.Candidate, student))?.Weight ?? 1;
     }
 
