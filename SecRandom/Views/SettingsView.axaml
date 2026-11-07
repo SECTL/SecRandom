@@ -261,17 +261,20 @@
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DocumentFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_LogViewer}"
                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_LogViewer_D}"
+                                          IsVisible="{Binding IsAdvancedMenuVisible}"
                                           Click="LogViewerMenuItem_OnClick" />
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi DatabaseArrowDownFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData}"
                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportDiagnosticData_D}"
+                                          IsVisible="{Binding IsAdvancedMenuVisible}"
                                           Click="ExportDiagnosticDataMenuItem_OnClick" />
 
-                                <Separator />
+                                <Separator IsVisible="{Binding IsAdvancedMenuVisible}" />
 
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_ExportSettings}"
-                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportSettings_D}">
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ExportSettings_D}"
+                                          IsVisible="{Binding IsAdvancedMenuVisible}">
                                     <MenuItem Header="{x:Static ls:Resources.C_TransferFileExport}"
                                               Tag="settings:export:file" Click="TransferMenuItem_OnClick" />
                                     <MenuItem Header="{x:Static ls:Resources.C_TransferQuickQrExport}"
@@ -283,7 +286,8 @@
                                 </MenuItem>
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi ArrowClockwiseDashesSettingsFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_ImportSettings}"
-                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportSettings_D}">
+                                          ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportSettings_D}"
+                                          IsVisible="{Binding IsAdvancedMenuVisible}">
                                     <MenuItem Header="{x:Static ls:Resources.C_TransferFileImport}"
                                               Tag="settings:import:file" Click="TransferMenuItem_OnClick" />
                                     <MenuItem Header="{x:Static ls:Resources.C_TransferQuickQrImport}"
@@ -302,7 +306,7 @@
                                           ToolTip.Tip="{x:Static ls:Resources.C_MoreOptions_ImportAllData_D}"
                                           Click="ImportAllDataMenuItem_OnClick" />
 
-                                <Separator />
+                                <Separator IsVisible="{Binding IsAdvancedMenuVisible}" />
 
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi FolderOpenFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_OpenLogDirectory}"
@@ -321,10 +325,12 @@
 
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi MegaphoneFilled}}"
                                           Header="{x:Static ls:Resources.C_Announcements}"
+                                          IsVisible="{Binding IsAdvancedMenuVisible}"
                                           Click="AnnouncementsMenuItem_OnClick" />
 
                                 <MenuItem Icon="{sr:FluentIcon {sr:Fi CommentNoteFilled}}"
                                           Header="{x:Static ls:Resources.C_MoreOptions_Feedback}"
+                                          IsVisible="{Binding IsAdvancedMenuVisible}"
                                           Click="FeedbackMenuItem_OnClick" />
                             </MenuFlyout>
                         </Button.Flyout>

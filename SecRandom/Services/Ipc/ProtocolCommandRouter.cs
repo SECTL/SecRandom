@@ -8,6 +8,7 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Ipc;
+using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Shared.Models.Ipc;
 using SecRandom.Shared.Models.Profile;
 using SecRandom.Services.Security;
@@ -113,6 +114,9 @@ public sealed class ProtocolCommandRouter(
         var page = ProtocolRequestParser.GetLast(query, "page", "page_name", "name", "value");
         if (page is not null && !MainPages.TryGetValue(page, out page))
             return Failure("url", "invalid_parameter", LR.M_InvalidMainPage);
+        // 简洁模式只保留点名主页，其余主页路由直接拒绝
+        if (featureAvailability.IsSimpleModeEnabled && page is not null && !SimpleModePolicy.IsMainPageAllowed(page))
+            return Failure("url", "feature_disabled", "简洁模式下仅支持点名功能。", true);
         if (page == "main.lottery" && !featureAvailability.IsLotteryEnabled)
             return Failure("url", "feature_disabled", "抽奖功能已关闭。", true);
         var action = ParseAction(query, page is null ? "toggle" : "show");
@@ -129,6 +133,9 @@ public sealed class ProtocolCommandRouter(
         var page = ProtocolRequestParser.GetLast(query, "page", "page_name", "name", "value");
         if (page is not null && !SettingsPages.TryGetValue(page, out page))
             return Failure("url", "invalid_parameter", LR.M_InvalidSettingsPage);
+        // 简洁模式只保留基础/外观/名单等少量设置页，其余设置路由直接拒绝
+        if (featureAvailability.IsSimpleModeEnabled && page is not null && !SimpleModePolicy.IsSettingsPageAllowed(page))
+            return Failure("url", "feature_disabled", "简洁模式下该设置页不可用。", true);
         var action = ParseAction(query, "toggle");
         if (action is null) return Failure("url", "invalid_parameter", LR.M_InvalidWindowAction);
         if (action == "hide")
@@ -175,6 +182,10 @@ public sealed class ProtocolCommandRouter(
 
     private async Task<IpcResponseEnvelope> HandleRollCallAsync(string route, IReadOnlyList<ProtocolQueryItem> query, CancellationToken token)
     {
+        // 简洁模式只提供点名本身，闪抽不属于可用功能
+        if (featureAvailability.IsSimpleModeEnabled && route == "roll_call/quick_draw")
+            return Failure("url", "feature_disabled", "简洁模式下仅支持点名功能。", true);
+
         switch (route)
         {
             case "roll_call/start": return await StartLinkageAsync(
@@ -203,6 +214,9 @@ public sealed class ProtocolCommandRouter(
 
     private async Task<IpcResponseEnvelope> HandleLotteryAsync(string route, IReadOnlyList<ProtocolQueryItem> query, CancellationToken token)
     {
+        if (featureAvailability.IsSimpleModeEnabled)
+            return Failure("url", "feature_disabled", "简洁模式下仅支持点名功能。", true);
+
         if (!featureAvailability.IsLotteryEnabled)
             return Failure("url", "feature_disabled", "抽奖功能已关闭。", true);
 

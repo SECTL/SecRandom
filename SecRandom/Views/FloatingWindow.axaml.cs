@@ -20,6 +20,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Helpers;
 using SecRandom.Services.Linkage;
 using SecRandom.Services;
@@ -57,6 +58,11 @@ public partial class FloatingWindow : Window
     private bool _wasVisibleBeforeCourseLinkage;
     private bool _userWantsVisible = true;
 
+    private FloatingWindowSettingsConfig EffectiveFloatingWindowSettings =>
+        _featureAvailability.IsSimpleModeEnabled ? SimpleModeDefaults.FloatingWindowSettings : ViewModel.Config.FloatingWindowSettings;
+
+    private bool IsSimpleMode => _featureAvailability.IsSimpleModeEnabled;
+
     public FloatingWindow()
     {
         DataContext = this;
@@ -86,7 +92,7 @@ public partial class FloatingWindow : Window
                 buttonRegistry.Changed -= FloatingWindowButtonRegistry_OnChanged;
         };
         
-        var settings = ViewModel.Config.FloatingWindowSettings;
+        var settings = EffectiveFloatingWindowSettings;
         ButtonsPanel.Children.Add(GetStartingButton(settings));
         Dispatcher.UIThread.Post(RefreshItems);
     }
@@ -106,7 +112,7 @@ public partial class FloatingWindow : Window
         if (App.Current.IsStopping)
             return;
         
-        var settings = ViewModel.Config.FloatingWindowSettings;
+        var settings = EffectiveFloatingWindowSettings;
         ApplyWindowSettings(settings);
         ButtonsPanel.Children.Clear();
         foreach (var controlName in GetVisibleButtonNames(settings, _featureAvailability.IsLotteryEnabled))
@@ -124,8 +130,11 @@ public partial class FloatingWindow : Window
                 ButtonsPanel.Children.Add(control);
         }
 
-        foreach (var button in GetVisiblePluginButtons(settings))
-            ButtonsPanel.Children.Add(CreatePluginButton(button, settings));
+        if (!IsSimpleMode)
+        {
+            foreach (var button in GetVisiblePluginButtons(settings))
+                ButtonsPanel.Children.Add(CreatePluginButton(button, settings));
+        }
 
         UpdateButtonsPanelWidth(settings);
     }
@@ -190,8 +199,14 @@ public partial class FloatingWindow : Window
         return GetButtonSize(settings.FloatingWindowSize);
     }
 
-    private static IEnumerable<string> GetVisibleButtonNames(FloatingWindowSettingsConfig settings, bool isLotteryEnabled)
+    private IEnumerable<string> GetVisibleButtonNames(FloatingWindowSettingsConfig settings, bool isLotteryEnabled)
     {
+        if (IsSimpleMode)
+        {
+            yield return "roll_call";
+            yield break;
+        }
+
         if (settings.ShowRollCallButton) yield return "roll_call";
         if (settings.ShowQuickDrawButton) yield return "quick_draw";
         if (settings.ShowLotteryButton && isLotteryEnabled) yield return "lottery";
@@ -229,7 +244,7 @@ public partial class FloatingWindow : Window
 
     private void ApplyCourseLinkageVisibility()
     {
-        var shouldHide = ViewModel.Config.LinkageSettings.HideFloatingWindowOnClassEnd
+        var shouldHide = _linkageService.Settings.HideFloatingWindowOnClassEnd
             && _linkageService.IsConfirmedBreakTime;
         if (shouldHide == _hiddenByCourseLinkage)
             return;
@@ -401,7 +416,7 @@ public partial class FloatingWindow : Window
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        ApplyWindowSettings(ViewModel.Config.FloatingWindowSettings);
+        ApplyWindowSettings(EffectiveFloatingWindowSettings);
         Dispatcher.UIThread.Post(RestoreStartupPositionAndScheduleDock, DispatcherPriority.Render);
         // 触发布局更新
         Width = 20;
@@ -448,7 +463,7 @@ public partial class FloatingWindow : Window
     {
         base.OnPointerPressed(e);
         
-        if (ViewModel.Config.FloatingWindowSettings.Draggable
+        if (EffectiveFloatingWindowSettings.Draggable
             && e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
             var source = e.Source as Control;
@@ -550,7 +565,7 @@ public partial class FloatingWindow : Window
         _isMovingWindow = false;
         e.Pointer.Capture(null);
         e.Handled = true;
-        if (ViewModel.Config.FloatingWindowSettings.StickToEdge)
+        if (EffectiveFloatingWindowSettings.StickToEdge)
             _ = SnapToNearestEdgeAsync();
         else
             SavePosition();
@@ -642,7 +657,7 @@ public partial class FloatingWindow : Window
 
     private void ScheduleDock()
     {
-        var seconds = Math.Clamp(ViewModel.Config.FloatingWindowSettings.StickToEdgeRecoverSeconds, 0, 60);
+        var seconds = Math.Clamp(EffectiveFloatingWindowSettings.StickToEdgeRecoverSeconds, 0, 60);
         var dockRevision = ++_dockRevision;
         if (seconds == 0)
             return;
@@ -651,14 +666,14 @@ public partial class FloatingWindow : Window
         {
             if (dockRevision == _dockRevision
                 && !_isDocked
-                && ViewModel.Config.FloatingWindowSettings.StickToEdge)
+                && EffectiveFloatingWindowSettings.StickToEdge)
                 _ = CollapseToDockAsync();
         }, TimeSpan.FromSeconds(seconds));
     }
 
     private void ScheduleDockIfAtEdge()
     {
-        if (_isDocked || !ViewModel.Config.FloatingWindowSettings.StickToEdge)
+        if (_isDocked || !EffectiveFloatingWindowSettings.StickToEdge)
             return;
 
         var width = Math.Max(1, (int)Math.Ceiling(Bounds.Width * RenderScaling));
@@ -680,7 +695,7 @@ public partial class FloatingWindow : Window
 
     private async Task CollapseToDockAsync()
     {
-        if (_isDocked || _isDockTransitioning || !ViewModel.Config.FloatingWindowSettings.StickToEdge)
+        if (_isDocked || _isDockTransitioning || !EffectiveFloatingWindowSettings.StickToEdge)
             return;
 
         _isDockTransitioning = true;
@@ -726,8 +741,8 @@ public partial class FloatingWindow : Window
 
     private void UpdateDockButton()
     {
-        var style = ViewModel.Config.FloatingWindowSettings.StickToEdgeDisplayStyle;
-        var size = Math.Clamp(ViewModel.Config.FloatingWindowSettings.DockedWindowSize, 28, 96);
+        var style = EffectiveFloatingWindowSettings.StickToEdgeDisplayStyle;
+        var size = Math.Clamp(EffectiveFloatingWindowSettings.DockedWindowSize, 28, 96);
         var glyph = _isDockedOnLeft ? ">" : "<";
         DockButton.Content = style switch
         {

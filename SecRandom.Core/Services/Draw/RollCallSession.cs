@@ -2,6 +2,8 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Draw;
+using SecRandom.Core.Models.SubConfigs.Picking;
+using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared.Models.Profile;
 
@@ -14,10 +16,13 @@ internal sealed class RollCallSession(
     IDrawCommitService drawCommitService,
     DrawEngine drawEngine) : IRollCallSession
 {
+    private RollCallSettingsConfig Settings =>
+        configHandler.Data.SimpleModeEnabled ? SimpleModeDefaults.RollCallSettings : configHandler.Data.RollCallSettings;
+
     public IReadOnlyList<Student> GetEligibleStudents()
     {
         var students = profileService.CurrentStudentList?.Students ?? [];
-        var settings = configHandler.Data.RollCallSettings;
+        var settings = Settings;
         var threshold = DrawRepeatPolicy.ResolveThreshold(settings.DrawMode, settings.HalfRepeat);
         // 这个会话没有记录组概念（移动端快速点名），因此落在"不按组"的桶里。
         var counts = temporaryRecordService.GetStudentCounts(GetListName(), null);
@@ -30,7 +35,7 @@ internal sealed class RollCallSession(
         if (candidates.Count == 0)
             return new DrawResult<Student> { Status = DrawStatus.NoEligibleCandidates };
 
-        var drawType = configHandler.Data.RollCallSettings.DrawType;
+        var drawType = Settings.DrawType;
         var prepared = drawType == DrawType.Fair
             ? drawEngine.PrepareStudentsForMobileDesktopDefaults(1, candidates, DrawSettingsType.RollCall, DrawType.Fair)
             : null;

@@ -3,6 +3,8 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Abstraction;
+using SecRandom.Core.Services.Config;
 using SecRandom.Services.Music;
 using SoundFlow.Abstracts;
 using SoundFlow.Abstracts.Devices;
@@ -21,8 +23,16 @@ public sealed class DrawAudioService(MusicLibraryService musicLibrary, ILogger<D
     private PlaybackSession? _fadingSession;
     private bool _isDisposed;
 
+    // 简洁模式隐藏了音乐相关设置页，抽取音乐按默认设置关闭（不播放），
+    // 这里在播放入口直接短路，用户已有的音乐配置不会被改写。
+    private static bool IsSimpleModeEnabled()
+        => IAppHost.TryGetService<MainConfigHandler>()?.Data.SimpleModeEnabled == true;
+
     public Task StartAnimationMusicAsync(string selection, int volume, int fadeIn, bool loop)
     {
+        if (IsSimpleModeEnabled())
+            return Task.CompletedTask;
+
         StartSession(PlaybackKind.Animation, selection, volume, fadeIn, 0, loop);
         return Task.CompletedTask;
     }
@@ -54,6 +64,9 @@ public sealed class DrawAudioService(MusicLibraryService musicLibrary, ILogger<D
         int fadeOut,
         int animationFadeOut)
     {
+        if (IsSimpleModeEnabled())
+            return Task.CompletedTask;
+
         PlaybackSession? animationSession;
         PlaybackSession? fadingSession;
 

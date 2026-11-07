@@ -1,6 +1,8 @@
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Models.Draw;
+using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.Draw;
@@ -12,11 +14,14 @@ internal sealed class LotterySession(
     IDrawCommitService drawCommitService,
     DrawEngine drawEngine) : ILotterySession
 {
+    private LotterySettingsConfig Settings =>
+        configHandler.Data.SimpleModeEnabled ? SimpleModeDefaults.LotterySettings : configHandler.Data.LotterySettings;
+
     public IReadOnlyList<Prize> GetEligiblePrizes()
     {
         var prizes = profileService.CurrentPrizeList?.Prizes ?? [];
         var counts = temporaryRecordService.GetPrizeCounts(GetListName());
-        var settings = configHandler.Data.LotterySettings;
+        var settings = Settings;
         return DrawCandidateFilter.FilterEligiblePrizes(
             prizes,
             counts,
@@ -42,7 +47,7 @@ internal sealed class LotterySession(
             DateTime.Now,
             1,
             GetListName(),
-            PrizeDrawMethod: (int)configHandler.Data.LotterySettings.DrawType));
+            PrizeDrawMethod: (int)Settings.DrawType));
         return output;
     }
 

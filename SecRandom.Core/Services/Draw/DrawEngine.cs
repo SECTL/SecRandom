@@ -7,6 +7,7 @@ using SecRandom.Core.Models;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Core.Services.Draw.Exceptions;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Interfaces;
@@ -44,7 +45,11 @@ public partial class DrawEngine
             [new InventoryLotteryAlgorithm(), new WeightedLotteryAlgorithm()]);
     }
 
-    private MainConfigModel ConfigData => _configHandler.Data;
+    /// <summary>
+    ///     抽取设置来源：简洁模式下隐藏的抽取设置页不再生效，改读默认配置；默认模型只读，绝不写回配置文件。
+    /// </summary>
+    private MainConfigModel ConfigData =>
+        _configHandler.Data.SimpleModeEnabled ? SimpleModeDefaults.Model : _configHandler.Data;
     private StudentHistory StudentHistory => _profileService.CurrentStudentHistory ?? new StudentHistory();
     private PrizeHistory PrizeHistory => _profileService.CurrentPrizeHistory ?? new PrizeHistory();
     private StudentList StudentList => _profileService.CurrentStudentList ?? new StudentList();

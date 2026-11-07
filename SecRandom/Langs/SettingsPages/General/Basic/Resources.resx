@@ -117,4 +117,10 @@
     <data name="S_Performance_LowSpecMode_D" xml:space="preserve">
         <value>关闭页面与弹窗动画、降低图片缩放质量，并停用主窗口与设置窗口的半透明背景；不影响抽取动画与悬浮窗，需重启生效</value>
     </data>
+    <data name="S_SimpleMode_Enabled" xml:space="preserve">
+        <value>简洁模式</value>
+    </data>
+    <data name="S_SimpleMode_Enabled_D" xml:space="preserve">
+        <value>只保留点名和悬浮窗，其余功能及其设置项隐藏并按默认设置运行；切换后需重启生效</value>
+    </data>
 </root>

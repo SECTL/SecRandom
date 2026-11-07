@@ -45,6 +45,7 @@ using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Services.SingleInstance;
+using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Core.Abstraction.Services.Capabilities;
 using SecRandom.Core.Abstraction.Services.Data;
 using SecRandom.Core.Abstraction.Services.Diagnostics;
@@ -1601,7 +1602,9 @@ public partial class App : Application
                         provider.GetRequiredService<ILogger<PluginMarketService>>(),
                         provider.GetRequiredService<IHttpClientFactory>().CreateClient("plugin-market"),
                         provider.GetRequiredService<IPluginManager>()));
-                    pluginManager.Initialize(context, services);
+                    // 简洁模式：插件体系整体关闭（不扫描、不加载、不注册插件页与贡献项）
+                    if (!IsSimpleModeEnabledAtStartup())
+                        pluginManager.Initialize(context, services);
                 }
             })
             .Build();
@@ -1618,7 +1621,9 @@ public partial class App : Application
 
         // 插件被卸载/禁用后，"动画样式"里指向它的那个选择就成了死值：既没有插件接管，
         // 宿主也不会播自己的动画。这里按"贡献项是否还在"把死值退回内置动画。
-        ResetMissingPluginAnimationSelections();
+        // 简洁模式不加载插件，也就没有插件贡献项可清理，跳过以免改写 settings.json。
+        if (!IAppHost.TryGetService<MainConfigHandler>()?.Data.SimpleModeEnabled == true)
+            ResetMissingPluginAnimationSelections();
 
         IAppHost.GetService<IProfileService>();
 
@@ -1628,9 +1633,19 @@ public partial class App : Application
             IAppHost.GetService<SettingsSearchService>().LogTestInformation();
     }
 
+    /// <summary>
+    ///     构建 Host 之前的简洁模式判断：此时 DI 还没起来，直接读 settings.json
+    ///     （插件加载必须在这之前决定，因此不能等 <see cref="MainConfigHandler" />）。
+    /// </summary>
+    private static bool IsSimpleModeEnabledAtStartup()
+        => LoadStartupSettings(new MainConfigModel()).SimpleModeEnabled;
+
+    /// <summary>运行期的简洁模式判断：隐藏功能一律按默认设置运行。</summary>
+    private static bool IsSimpleModeEnabled()
+        => IAppHost.TryGetService<IFeatureAvailabilityService>()?.IsSimpleModeEnabled == true;
+
     private static MainConfigModel LoadStartupSettings(MainConfigModel fallback)
-    {
-        if (!File.Exists(fallback.ConfigFilePath))
+    {        if (!File.Exists(fallback.ConfigFilePath))
             return fallback;
 
         try
@@ -2343,6 +2358,9 @@ public partial class App : Application
                 App.IsDesktop ? DesktopViewIds.Main : GetMobileInitialViewId(),
                 new ViewShowOptions { HostId = App.IsDesktop ? DesktopViewIds.Main : null }).ConfigureAwait(true);
             WriteDesktopStartupDiagnostic("Main window view displayed.");
+            // 简洁模式只有点名主页：任何指向其他主页的请求都归一到点名页
+            if (IsSimpleModeEnabled())
+                pageId = SimpleModePolicy.NormalizeMainPageId(pageId);
             if (!string.IsNullOrWhiteSpace(pageId))
                 MainView.Current?.SelectNavigationItemById(pageId);
             transaction?.Finish(SpanStatus.Ok);
@@ -2358,6 +2376,8 @@ public partial class App : Application
 
     public static void ToggleMainWindow(string? pageId = null)
     {
+        if (IsSimpleModeEnabled())
+            pageId = SimpleModePolicy.NormalizeMainPageId(pageId);
         if (pageId == "main.lottery" && !IAppHost.GetService<IFeatureAvailabilityService>().IsLotteryEnabled)
             return;
 
@@ -2373,6 +2393,8 @@ public partial class App : Application
 
     private static async Task SetMainWindowVisibilityCoreAsync(string action, string? pageId)
     {
+        if (IsSimpleModeEnabled())
+            pageId = SimpleModePolicy.NormalizeMainPageId(pageId);
         if (pageId == "main.lottery" && !IAppHost.GetService<IFeatureAvailabilityService>().IsLotteryEnabled)
             return;
 
@@ -2453,6 +2475,9 @@ public partial class App : Application
 
     public static void ShowSettingsWindow(string? pageId)
     {
+        // 简洁模式设置窗口只保留白名单页，其余请求归一到默认设置页
+        if (IsSimpleModeEnabled())
+            pageId = SimpleModePolicy.NormalizeSettingsPageId(pageId);
         ObserveTask(IAppHost.GetService<ISecurityService>().AuthorizeSettingsAsync(
             async () =>
             {
@@ -2474,6 +2499,8 @@ public partial class App : Application
 
     private static async Task ShowSettingsPreviewAsync(string? pageId)
     {
+        if (IsSimpleModeEnabled())
+            pageId = SimpleModePolicy.NormalizeSettingsPageId(pageId);
         await ShowSettingsWindowCoreAsync();
         if (!string.IsNullOrWhiteSpace(pageId))
             SettingsView.Current?.NavigateToPreviewPage(pageId);
@@ -2489,6 +2516,8 @@ public partial class App : Application
 
     private static async Task SetSettingsWindowVisibilityCoreAsync(string action, string pageId, bool preview)
     {
+        if (IsSimpleModeEnabled())
+            pageId = SimpleModePolicy.NormalizeSettingsPageId(pageId) ?? SimpleModePolicy.DefaultSettingsPageId;
         var shouldShow = action switch
         {
             "show" => true,
@@ -2554,6 +2583,9 @@ public partial class App : Application
 
     public static void ShowQuickDrawWindow()
     {
+        // 简洁模式不提供闪抽
+        if (IsSimpleModeEnabled())
+            return;
         ObserveTask(ShowQuickDrawWindowAsync(), "Quick draw window action failed.");
     }
 
@@ -2565,6 +2597,8 @@ public partial class App : Application
         NotificationChannelSettings windowSettings,
         bool showPreview)
     {
+        if (IsSimpleModeEnabled())
+            return;
         Dispatcher.UIThread.Post(() => ObserveTask(
             ShowQuickDrawNotificationWindowAsync(items, autoCloseTime, animate, preserveQuickDrawResult, windowSettings,
                 showPreview),
@@ -2573,6 +2607,9 @@ public partial class App : Application
 
     public static Task ShowQuickDrawNotificationPreviewWindowAsync(NotificationChannelSettings windowSettings)
     {
+        // 简洁模式不提供闪抽与通知窗口预览
+        if (IsSimpleModeEnabled())
+            return Task.CompletedTask;
         return Dispatcher.UIThread.InvokeAsync(() =>
         {
             _quickDrawNotificationSettings = windowSettings;
@@ -2628,6 +2665,10 @@ public partial class App : Application
 
     private static async Task ShowQuickDrawWindowAsync()
     {
+        // 简洁模式不提供闪抽
+        if (IsSimpleModeEnabled())
+            return;
+
         TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
         using var transaction = telemetry?.StartTransaction("ui.quick_draw_window", "ui.navigation");
 

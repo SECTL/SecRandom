@@ -9,6 +9,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Linkage;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.SimpleMode;
 
 namespace SecRandom.Services.Linkage;
 
@@ -41,7 +42,14 @@ public sealed class CourseLinkageService
 
     public event EventHandler? StateChanged;
     public CourseScheduleSnapshot Snapshot => _snapshot;
-    public LinkageSettingsConfig Settings => _configHandler.Data.LinkageSettings;
+
+    /// <summary>
+    ///     简洁模式隐藏了课程联动设置页，因此这里改读默认联动设置（数据源关闭、不阻止抽取），
+    ///     用户原来的联动配置不会被改写。
+    /// </summary>
+    public LinkageSettingsConfig Settings => _configHandler.Data.SimpleModeEnabled
+        ? SimpleModeDefaults.LinkageSettings
+        : _configHandler.Data.LinkageSettings;
 
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {

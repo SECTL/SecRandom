@@ -329,5 +329,23 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
             }
         }
 
+        /// <summary>
+        ///   Looks up a localized string similar to 简洁模式.
+        /// </summary>
+        public static string S_SimpleMode_Enabled {
+            get {
+                return ResourceManager.GetString("S_SimpleMode_Enabled", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 只保留点名和悬浮窗.
+        /// </summary>
+        public static string S_SimpleMode_Enabled_D {
+            get {
+                return ResourceManager.GetString("S_SimpleMode_Enabled_D", resourceCulture);
+            }
+        }
+
     }
 }

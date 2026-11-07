@@ -118,11 +118,15 @@ public sealed class ShortcutService(
         var bindings = new List<(ShortcutAction Action, string Gesture)>
         {
             (ShortcutAction.OpenRollCallPage, _settings.OpenRollCallPageShortcut),
-            (ShortcutAction.QuickDraw, _settings.QuickDrawShortcut),
             (ShortcutAction.IncreaseRollCallCount, _settings.IncreaseRollCallCountShortcut),
             (ShortcutAction.DecreaseRollCallCount, _settings.DecreaseRollCallCountShortcut),
             (ShortcutAction.StartRollCall, _settings.StartRollCallShortcut)
         };
+
+        // 简洁模式回归抽取本身：只注册点名相关快捷键，闪抽与抽奖动作不注册
+        if (!featureAvailability.IsSimpleModeEnabled)
+            bindings.Insert(1, (ShortcutAction.QuickDraw, _settings.QuickDrawShortcut));
+
         if (featureAvailability.IsLotteryEnabled)
         {
             bindings.Add((ShortcutAction.OpenLotteryPage, _settings.OpenLotteryPageShortcut));
@@ -160,6 +164,10 @@ public sealed class ShortcutService(
     {
         if (!featureAvailability.IsLotteryEnabled && action is ShortcutAction.OpenLotteryPage
             or ShortcutAction.IncreaseLotteryCount or ShortcutAction.DecreaseLotteryCount or ShortcutAction.StartLottery)
+            return;
+
+        // 简洁模式不提供闪抽，即使旧注册残留也不执行
+        if (featureAvailability.IsSimpleModeEnabled && action == ShortcutAction.QuickDraw)
             return;
 
         switch (action)

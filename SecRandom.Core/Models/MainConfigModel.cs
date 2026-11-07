@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Helpers;
 using SecRandom.Core.Models.SubConfigs;
+using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
 using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.AppearanceSettingsConfig;
@@ -64,6 +65,12 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
 
     [JsonIgnore] public override string ConfigFilePath => Utils.GetFilePath("config", "settings.json");
 
+    /// <summary>
+    ///     简洁模式开关。开启后隐藏掉的功能在运行时按默认配置读取，用户已存设置不会被改写。
+    /// </summary>
+    [JsonIgnore]
+    public bool SimpleModeEnabled => General.SimpleMode.Enabled;
+
     [JsonIgnore]
     public BasicSettingsConfig Basic
     {
@@ -119,6 +126,10 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
     public DrawSettingsConfigBase GetOverrideDrawSettings(
         DrawSettingsType drawSettingsType, OverridableDrawSettingsType settingsType)
     {
+        // 简洁模式：抽取页面的显示/动画/音乐/语音等设置按默认值读取，隐藏的设置页不生效。
+        if (SimpleModeEnabled)
+            return SimpleModeDefaults.GetOverrideDrawSettings(drawSettingsType, settingsType);
+
         OverridableDrawSettings settings = drawSettingsType switch
         {
             DrawSettingsType.RollCall => RollCallSettings,
@@ -147,6 +158,9 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
 
     public string GetLotteryProcessDisplayTemplate()
     {
+        if (SimpleModeEnabled)
+            return SimpleModeDefaults.Model.GetLotteryProcessDisplayTemplate();
+
         return LotterySettings.OverrideDisplaySettings
             ? LotteryProcessDisplayFormatter.ResolveTemplate(
                 LotterySettings.LotteryShowRandom,
@@ -156,6 +170,9 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
 
     public NotificationChannelSettings GetNotificationChannelSettings(NotificationSettingsType notificationSettingsType)
     {
+        if (SimpleModeEnabled)
+            return SimpleModeDefaults.Model.GetNotificationChannelSettings(notificationSettingsType);
+
         return notificationSettingsType switch
         {
             NotificationSettingsType.RollCall => NotificationSettings.RollCall,
@@ -170,6 +187,9 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
         NotificationSettingsType notificationSettingsType,
         OverridableNotificationSettingsType settingsType)
     {
+        if (SimpleModeEnabled)
+            return SimpleModeDefaults.Model.GetOverrideNotificationSettings(notificationSettingsType, settingsType);
+
         var settings = (OverridableNotificationChannelSettings)GetNotificationChannelSettings(notificationSettingsType);
         return settingsType switch
         {

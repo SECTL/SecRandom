@@ -163,6 +163,7 @@ public sealed class MainViewLotteryNavigationTests
 
     private sealed class FakeFeatureAvailabilityService : IFeatureAvailabilityService
     {
+        public bool IsSimpleModeEnabled { get; set; }
         public bool IsLotteryEnabled { get; set; }
         public event EventHandler? Changed;
 

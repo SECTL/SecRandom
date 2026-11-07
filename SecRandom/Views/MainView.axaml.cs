@@ -22,6 +22,7 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Models.UI;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.ControlNode;
+using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Core.Views;
 using SecRandom.Helpers;
 using SecRandom.Mobile;
@@ -193,8 +194,13 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 
     private void BuildNavigationMenuItems()
     {
-        var applySampleNav = App.IsDesktop || OperatingSystem.IsBrowser() || UseDesktopUI;
-        
+        var isSimpleMode = IsSimpleMode;
+        var applySampleNav = !isSimpleMode && (App.IsDesktop || OperatingSystem.IsBrowser() || UseDesktopUI);
+
+        var mainPages = isSimpleMode
+            ? PagesRegistryService.MainItems.Where(info => SimpleModePolicy.IsMainPageAllowed(info.Id)).ToList()
+            : PagesRegistryService.MainItems.ToList();
+
         ViewModel.NavigationViewItems.Clear();
         ViewModel.NavigationViewFooterItems.Clear();
         ViewModel.FlattenNavigationItems.Clear();
@@ -202,8 +208,9 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
         // 运行时能力开关不得增删导航项：FluentAvalonia 在 FooterMenuItemsSource 集合变化时会重建
         // 内部选择源，从而丢弃页脚选中项并以 null 触发 ItemInvoked，最终在 RaiseItemInvoked 抛
         // NullReferenceException。因此抽奖入口始终存在，只由 ApplyFeatureAvailability 控制显隐。
+        // 简洁模式是需要重启才生效的固定形态，重建导航本身是安全的，因此在那里直接过滤成单页面。
         ViewModel.NavigationViewItems
-            .AddRange(PagesRegistryService.MainItems
+            .AddRange(mainPages
                 .Where(info => info.Location == PageLocation.Top)
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
                 .Select(x =>
@@ -217,7 +224,7 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
                 }));
 
         ViewModel.NavigationViewFooterItems
-            .AddRange(PagesRegistryService.MainItems
+            .AddRange(mainPages
                 .Where(info => info.Location == PageLocation.Bottom)
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems)
                 .Select(x =>
@@ -230,17 +237,33 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
                     return x;
                 }));
 
-        var settingsItem = CreateSettingsNavigationItem();
-        if (applySampleNav)
+        if (!isSimpleMode)
         {
-            settingsItem.Classes.Add(@"SampleAppNav");
+            var settingsItem = CreateSettingsNavigationItem();
+            if (applySampleNav)
+            {
+                settingsItem.Classes.Add(@"SampleAppNav");
+            }
+
+            ViewModel.NavigationViewFooterItems.Add(settingsItem);
         }
-        
-        ViewModel.NavigationViewFooterItems.Add(settingsItem);
 
         ApplyFeatureAvailability();
-        
-        if (applySampleNav)
+
+        if (isSimpleMode)
+        {
+            // 简洁模式：主窗口就是点名单页面，既没有侧栏也没有折叠按钮。
+            if (_navigationView is not null)
+            {
+                _navigationView.Classes.Remove(@"SampleAppNav");
+                _navigationView.PaneDisplayMode = FANavigationViewPaneDisplayMode.LeftMinimal;
+                _navigationView.IsPaneOpen = false;
+                _navigationView.IsPaneToggleButtonVisible = false;
+            }
+
+            ViewModel.IsNavPaneToggleButtonVisible = false;
+        }
+        else if (applySampleNav)
         {
             _navigationView?.Classes.Add(@"SampleAppNav");
         }
@@ -315,6 +338,9 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 
     public void SelectNavigationItemById(string id)
     {
+        if (IsSimpleMode && !SimpleModePolicy.IsMainPageAllowed(id))
+            id = SimpleModePolicy.DefaultMainPageId;
+
         var info = PagesRegistryService.MainItems.FirstOrDefault(info => info.Id == id);
 
         if (info != null && IsPageAvailable(info)) CoreNavigate(info);
@@ -322,11 +348,17 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 
     private bool IsPageAvailable(PageInfo info)
     {
+        if (IsSimpleMode)
+            return info.Id == SimpleModePolicy.DefaultMainPageId;
+
         if (info.Id == RemoteDrawPageId && !IsRemoteDrawEntryVisible())
             return false;
 
         return info.Id != LotteryPageId || _featureAvailability.IsLotteryEnabled;
     }
+
+    /// <summary>简洁模式：只保留点名，其余功能默认隐藏。</summary>
+    private bool IsSimpleMode => _featureAvailability.IsSimpleModeEnabled;
 
     private void FeatureAvailabilityOnChanged(object? sender, EventArgs e)
     {
@@ -385,6 +417,9 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
                 App.ShowSettingsWindow();
             return;
         }
+
+        if (IsSimpleMode && !SimpleModePolicy.IsMainPageAllowed(info.Id))
+            return;
 
         ViewModel.FrameContent = null;
         SelectNavigationItem(info);

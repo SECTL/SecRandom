@@ -51,7 +51,7 @@ public sealed class NotificationService : IDisposable
         IReadOnlyCollection<ProfileStudent> candidates,
         int drawCount)
     {
-        if (_isDisposed)
+        if (_isDisposed || _configHandler.Data.SimpleModeEnabled)
             return Task.CompletedTask;
 
         var config = _configHandler.Data;
@@ -79,7 +79,7 @@ public sealed class NotificationService : IDisposable
         IReadOnlyCollection<Prize> candidates,
         int drawCount)
     {
-        if (_isDisposed)
+        if (_isDisposed || _configHandler.Data.SimpleModeEnabled)
             return Task.CompletedTask;
 
         var config = _configHandler.Data;
@@ -185,7 +185,8 @@ public sealed class NotificationService : IDisposable
         IReadOnlyCollection<NotificationItem> items,
         IReadOnlyCollection<string> displayItems)
     {
-        if (_isDisposed || items.Count == 0)
+        // 简洁模式隐藏了通知设置页，通知按默认设置关闭，这里直接返回
+        if (_isDisposed || _configHandler.Data.SimpleModeEnabled || items.Count == 0)
             return;
 
         var config = _configHandler.Data;
@@ -285,7 +286,7 @@ public sealed class NotificationService : IDisposable
     /// </remarks>
     public void ShowQuickDrawText(string text)
     {
-        if (_isDisposed || string.IsNullOrWhiteSpace(text))
+        if (_isDisposed || _configHandler.Data.SimpleModeEnabled || string.IsNullOrWhiteSpace(text))
             return;
 
         var config = _configHandler.Data;

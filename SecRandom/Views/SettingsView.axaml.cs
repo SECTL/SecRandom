@@ -28,6 +28,7 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Logging;
+using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Core.Views;
 using SecRandom.Helpers;
 using SecRandom.Models;
@@ -119,6 +120,12 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
     private IImportExportService ImportExportService => IAppHost.GetService<IImportExportService>();
     private IExternalLauncher ExternalLauncher => IAppHost.GetService<IExternalLauncher>();
     public bool IsDesktop => App.IsDesktop;
+
+    /// <summary>简洁模式：只保留基础/外观/名单等必要设置页，其余设置改用默认值运行。</summary>
+    public bool IsSimpleMode => IAppHost.TryGetService<MainConfigHandler>()?.Data.General.SimpleMode.Enabled == true;
+
+    /// <summary>简洁模式隐藏高级维护入口（日志/诊断/传输/公告/反馈），只保留数据导入导出。</summary>
+    public bool IsAdvancedMenuVisible => !IsSimpleMode;
     public bool IsAccountVisible => _auth is not null && IsDesktop;
     public bool IsAccountSignedIn => _auth?.IsSignedIn == true;
     public string AccountDisplayName
@@ -155,10 +162,11 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
         }
     }
     public new event PropertyChangedEventHandler? PropertyChanged;
-    public bool CanOpenFileManagerDirectories => IsDesktop || _platformServiceRoot is MobilePlatformServiceRoot
+    public bool CanOpenFileManagerDirectories => IsAdvancedMenuVisible && (IsDesktop ||
+        _platformServiceRoot is MobilePlatformServiceRoot
         {
             Kind: PlatformKind.Android
-        };
+        });
 
     #region Misc
 
@@ -285,6 +293,11 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
     {
         if (string.IsNullOrWhiteSpace(search) || item is not SettingsMetadata metadata) return false;
 
+        var configHandler = IAppHost.TryGetService<MainConfigHandler>();
+        if (configHandler?.Data.General.SimpleMode.Enabled == true &&
+            !SimpleModePolicy.IsSettingsPageAllowed(metadata.PageId))
+            return false;
+
         search = search.Trim();
 
         const StringComparison mode = StringComparison.OrdinalIgnoreCase;
@@ -331,6 +344,8 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
     private void ExecuteSettingsSearch(SettingsMetadata? settings)
     {
         if (settings == null) return;
+
+        if (IsSimpleMode && !SimpleModePolicy.IsSettingsPageAllowed(settings.PageId)) return;
 
         _logger?.LogInformation("跳转到设置 [{PageId}] {Id}", settings.PageId, settings.Id);
         SelectNavigationItemById(settings.PageId);
@@ -1053,13 +1068,18 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
         ViewModel.NavigationViewFooterItems.Clear();
         ViewModel.FlattenNavigationItems.Clear();
 
+        // 简洁模式下先过滤页面集合：分组头由子项决定，过滤后没有子项的分组会自然消失。
+        var settingsPages = IsSimpleMode
+            ? SimpleModePolicy.FilterSettingsPages(PagesRegistryService.SettingsItems, info => info.Id).ToList()
+            : PagesRegistryService.SettingsItems.ToList();
+
         ViewModel.NavigationViewItems
-            .AddRange(PagesRegistryService.SettingsItems
+            .AddRange(settingsPages
                 .Where(info => info.Location == PageLocation.Top)
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
 
         ViewModel.NavigationViewFooterItems
-            .AddRange(PagesRegistryService.SettingsItems
+            .AddRange(settingsPages
                 .Where(info => info.Location == PageLocation.Bottom)
                 .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
     }
@@ -1094,6 +1114,9 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
 
     public void SelectNavigationItemById(string id, bool isBack = false)
     {
+        if (IsSimpleMode && !SimpleModePolicy.IsSettingsPageAllowed(id))
+            id = SimpleModePolicy.DefaultSettingsPageId;
+
         var info = PagesRegistryService.SettingsItems.FirstOrDefault(info => info.Id == id);
 
         if (info != null) CoreNavigate(info, isBack);
@@ -1132,6 +1155,9 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
     public void NavigateToPage(string id)
     {
         ExitPreview();
+        if (IsSimpleMode && !SimpleModePolicy.IsSettingsPageAllowed(id))
+            id = SimpleModePolicy.DefaultSettingsPageId;
+
         var info = PagesRegistryService.SettingsItems.FirstOrDefault(item => item.Id == id);
         if (info is not null)
             CoreNavigate(info, updateNavigationSelection: !_isMobile);
@@ -1139,6 +1165,9 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
 
     public void NavigateToPreviewPage(string id)
     {
+        if (IsSimpleMode && !SimpleModePolicy.IsSettingsPageAllowed(id))
+            id = SimpleModePolicy.DefaultSettingsPageId;
+
         if (ViewModel.SelectedPageInfo?.Id != id)
         {
             var info = PagesRegistryService.SettingsItems.FirstOrDefault(item => item.Id == id);

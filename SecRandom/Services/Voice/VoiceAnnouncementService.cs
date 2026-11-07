@@ -45,6 +45,10 @@ public sealed class VoiceAnnouncementService(
 
     public Task SpeakAsync(string text, bool waitForCompletion = false, CancellationToken cancellationToken = default)
     {
+        // 简洁模式隐藏了语音设置页，语音按默认设置关闭，这里直接短路
+        if (configHandler.Data.SimpleModeEnabled)
+            return Task.CompletedTask;
+
         if (string.IsNullOrWhiteSpace(text) || !configHandler.Data.VoiceSettings.VoiceEnable)
             return Task.CompletedTask;
 
@@ -58,9 +62,10 @@ public sealed class VoiceAnnouncementService(
 
     public Task PreviewAsync(string text, CancellationToken cancellationToken = default)
     {
-        return string.IsNullOrWhiteSpace(text)
-            ? Task.CompletedTask
-            : SpeakCoreAsync(text, cancellationToken);
+        if (configHandler.Data.SimpleModeEnabled || string.IsNullOrWhiteSpace(text))
+            return Task.CompletedTask;
+
+        return SpeakCoreAsync(text, cancellationToken);
     }
 
     public Task SpeakStudentsAsync(

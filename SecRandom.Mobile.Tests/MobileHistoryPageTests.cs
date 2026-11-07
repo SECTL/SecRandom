@@ -265,6 +265,7 @@ public sealed class MobileHistoryPageTests
 
     private sealed class TestFeatureAvailability(bool lotteryEnabled) : IFeatureAvailabilityService
     {
+        public bool IsSimpleModeEnabled => false;
         public bool IsLotteryEnabled { get; private set; } = lotteryEnabled;
         public event EventHandler? Changed;
         public void Refresh() { }

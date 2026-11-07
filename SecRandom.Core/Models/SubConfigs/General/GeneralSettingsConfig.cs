@@ -13,6 +13,7 @@ public partial class GeneralSettingsConfig : ObservableObject
     [ObservableProperty] private VerificationSettingsConfig _verification = new();
     [ObservableProperty] private PerformanceSettingsConfig _performanceSettings = new();
     [ObservableProperty] private HistoryGroupSettingsConfig _historyGroups = new();
+    [ObservableProperty] private SimpleModeSettingsConfig _simpleMode = new();
 
     public void ApplyLegacyBasic(BasicSettingsConfig? legacyBasic)
     {
