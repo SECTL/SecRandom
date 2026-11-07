@@ -309,4 +309,57 @@
     <data name="C_TransferElapsed" xml:space="preserve"><value>已用时间</value></data>
     <data name="M_QrNotFound" xml:space="preserve"><value>没有识别到名单二维码</value></data>
     <data name="M_QrWrongType" xml:space="preserve"><value>该二维码不是抽奖奖池</value></data>
+    <data name="M_AddPrizeConflictTitle" xml:space="preserve">
+        <value>编号已存在</value>
+    </data>
+    <data name="M_AddPrizeConflictContent" xml:space="preserve">
+        <value>编号 {0} 已被“{1}”使用
+插入到该位置：“{1}”及之后共 {2} 个奖品的编号依次 +1，新奖品使用编号 {0}
+追加到末尾：其他奖品编号不变，新奖品使用编号 {3}
+
+{4}
+
+编号顺延只修改显示编号，不改奖品的历史抽取记录和公平抽取权重</value>
+    </data>
+    <data name="M_AddPrizeConflictNotNumericContent" xml:space="preserve">
+        <value>编号 {0} 已被“{1}”使用
+该编号不是纯数字，无法自动顺延后续编号</value>
+    </data>
+    <data name="M_AddPrizeConflictDuplicatedContent" xml:space="preserve">
+        <value>编号 {0} 已被奖品池中的 {1} 个奖品使用
+自动顺延会使编号仍然重复，因此无法顺延</value>
+    </data>
+    <data name="M_AddPrizeConflictPreviewHeader" xml:space="preserve">
+        <value>受影响的奖品</value>
+    </data>
+    <data name="M_AddPrizeConflictPreviewLine" xml:space="preserve">
+        <value>{0} {1} → {2}</value>
+    </data>
+    <data name="M_AddPrizeConflictPreviewEllipsis" xml:space="preserve">
+        <value>……</value>
+    </data>
+    <data name="M_AddPrizeConflictPrimary" xml:space="preserve">
+        <value>顺延并插入</value>
+    </data>
+    <data name="M_AddPrizeConflictSecondary" xml:space="preserve">
+        <value>追加到末尾</value>
+    </data>
+    <data name="M_AddPrizeConflictKeepDuplicate" xml:space="preserve">
+        <value>保留重复并添加</value>
+    </data>
+    <data name="M_AddPrizeConflictClose" xml:space="preserve">
+        <value>返回修改</value>
+    </data>
+    <data name="M_AddPrizeConflictUnnamed" xml:space="preserve">
+        <value>未命名奖品</value>
+    </data>
+    <data name="M_AddPrizeShiftedSuccess" xml:space="preserve">
+        <value>已添加奖品，{0} 个奖品的编号已顺延</value>
+    </data>
+    <data name="M_AddPrizeAppendedSuccess" xml:space="preserve">
+        <value>已添加奖品，编号为 {0}</value>
+    </data>
+    <data name="M_AddPrizeDuplicateSuccess" xml:space="preserve">
+        <value>已添加奖品，编号与现有奖品重复</value>
+    </data>
 </root>

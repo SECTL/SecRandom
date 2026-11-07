@@ -542,5 +542,95 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.LotteryList {
                 return ResourceManager.GetString("K_TagsColumns", resourceCulture);
             }
         }
+        
+        public static string M_AddPrizeConflictTitle {
+            get {
+                return ResourceManager.GetString("M_AddPrizeConflictTitle", resourceCulture);
+            }
+        }
+        
+        public static string M_AddPrizeConflictContent {
+            get {
+                return ResourceManager.GetString("M_AddPrizeConflictContent", resourceCulture);
+            }
+        }
+        
+        public static string M_AddPrizeConflictNotNumericContent {
+            get {
+                return ResourceManager.GetString("M_AddPrizeConflictNotNumericContent", resourceCulture);
+            }
+        }
+        
+        public static string M_AddPrizeConflictDuplicatedContent {
+            get {
+                return ResourceManager.GetString("M_AddPrizeConflictDuplicatedContent", resourceCulture);
+            }
+        }
+        
+        public static string M_AddPrizeConflictPreviewHeader {
+            get {
+                return ResourceManager.GetString("M_AddPrizeConflictPreviewHeader", resourceCulture);
+            }
+        }
+        
+        public static string M_AddPrizeConflictPreviewLine {
+            get {
+                return ResourceManager.GetString("M_AddPrizeConflictPreviewLine", resourceCulture);
+            }
+        }
+        
+        public static string M_AddPrizeConflictPreviewEllipsis {
+            get {
+                return ResourceManager.GetString("M_AddPrizeConflictPreviewEllipsis", resourceCulture);
+            }
+        }
+        
+        public static string M_AddPrizeConflictPrimary {
+            get {
+                return ResourceManager.GetString("M_AddPrizeConflictPrimary", resourceCulture);
+            }
+        }
+        
+        public static string M_AddPrizeConflictSecondary {
+            get {
+                return ResourceManager.GetString("M_AddPrizeConflictSecondary", resourceCulture);
+            }
+        }
+        
+        public static string M_AddPrizeConflictKeepDuplicate {
+            get {
+                return ResourceManager.GetString("M_AddPrizeConflictKeepDuplicate", resourceCulture);
+            }
+        }
+        
+        public static string M_AddPrizeConflictClose {
+            get {
+                return ResourceManager.GetString("M_AddPrizeConflictClose", resourceCulture);
+            }
+        }
+        
+        public static string M_AddPrizeConflictUnnamed {
+            get {
+                return ResourceManager.GetString("M_AddPrizeConflictUnnamed", resourceCulture);
+            }
+        }
+        
+        public static string M_AddPrizeShiftedSuccess {
+            get {
+                return ResourceManager.GetString("M_AddPrizeShiftedSuccess", resourceCulture);
+            }
+        }
+        
+        public static string M_AddPrizeAppendedSuccess {
+            get {
+                return ResourceManager.GetString("M_AddPrizeAppendedSuccess", resourceCulture);
+            }
+        }
+        
+        public static string M_AddPrizeDuplicateSuccess {
+            get {
+                return ResourceManager.GetString("M_AddPrizeDuplicateSuccess", resourceCulture);
+            }
+        }
     }
 }

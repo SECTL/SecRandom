@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -15,6 +16,7 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
+using SecRandom.Core.Services.Profiles;
 using SecRandom.Langs.SettingsPages.ListManagement.RosterTransfer;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.LotteryList.Resources;
@@ -304,12 +306,84 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
             return;
         }
 
+        PrizeDraft? draft = null;
+        while (true)
+        {
+            draft = await ShowAddPrizeFormAsync(draft);
+            if (draft is null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(draft.Id) && string.IsNullOrWhiteSpace(draft.Name))
+            {
+                this.ShowWarningToast(LR.M_AddPrizeRequired);
+                continue;
+            }
+
+            if (!double.TryParse(draft.Weight, out var prizeWeight) || prizeWeight <= 0 ||
+                !int.TryParse(draft.Count, out var prizeCount) || prizeCount <= 0)
+            {
+                this.ShowWarningToast(LR.M_AddPrizeInvalidValues);
+                continue;
+            }
+
+            if (SelectedPrizeList == null)
+                return;
+
+            var conflict = ProfileSequenceNumbering.Analyze(
+                SelectedPrizeList.Prizes.Select(prize => prize.Id).ToList(), draft.Id);
+            if (conflict.Kind == SequenceNumberConflictKind.None)
+            {
+                await CommitNewPrizeAsync(draft, draft.Id, prizeWeight, prizeCount, insertIndex: null,
+                    shiftedCount: 0, LR.M_AddPrizeSuccess);
+                return;
+            }
+
+            var choice = await SequenceNumberConflictPrompt.ShowAsync(this, conflict,
+                SelectedPrizeList.Prizes.Select(prize => prize.Name).ToList(), CreateConflictText());
+
+            switch (choice)
+            {
+                case SequenceNumberConflictChoice.ShiftAndInsert:
+                {
+                    foreach (var entry in conflict.ShiftEntries)
+                        SelectedPrizeList.Prizes[entry.Index].Id =
+                            entry.NewNumber.ToString(CultureInfo.InvariantCulture);
+                    await CommitNewPrizeAsync(draft, draft.Id, prizeWeight, prizeCount, conflict.InsertIndex,
+                        conflict.ShiftEntries.Count,
+                        string.Format(LR.M_AddPrizeShiftedSuccess, conflict.ShiftEntries.Count));
+                    return;
+                }
+
+                case SequenceNumberConflictChoice.AppendAtEnd:
+                {
+                    var appendNumber = conflict.AppendNumber?.ToString(CultureInfo.InvariantCulture) ?? draft.Id;
+                    await CommitNewPrizeAsync(draft, appendNumber, prizeWeight, prizeCount, insertIndex: null,
+                        shiftedCount: 0, string.Format(LR.M_AddPrizeAppendedSuccess, appendNumber));
+                    return;
+                }
+
+                case SequenceNumberConflictChoice.KeepDuplicate:
+                {
+                    await CommitNewPrizeAsync(draft, draft.Id, prizeWeight, prizeCount, insertIndex: null,
+                        shiftedCount: 0, LR.M_AddPrizeDuplicateSuccess);
+                    return;
+                }
+
+                default:
+                    // 返回修改：保留用户已填写的内容，回到表单继续编辑
+                    continue;
+            }
+        }
+    }
+
+    private async Task<PrizeDraft?> ShowAddPrizeFormAsync(PrizeDraft? previous)
+    {
         var form = new StackPanel { Spacing = 8 };
-        var id = AddInputField(form, LR.C_PrizeId);
-        var name = AddInputField(form, LR.C_Name);
-        var weight = AddInputField(form, LR.C_Weight, "1");
-        var count = AddInputField(form, LR.C_Count, "1");
-        var tags = AddInputField(form, LR.C_Tags);
+        var id = AddInputField(form, LR.C_PrizeId, previous?.Id ?? string.Empty);
+        var name = AddInputField(form, LR.C_Name, previous?.Name ?? string.Empty);
+        var weight = AddInputField(form, LR.C_Weight, previous?.Weight ?? "1");
+        var count = AddInputField(form, LR.C_Count, previous?.Count ?? "1");
+        var tags = AddInputField(form, LR.C_Tags, previous?.Tags ?? string.Empty);
 
         var dialog = new FAContentDialog
         {
@@ -317,7 +391,8 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
             Content = form,
             PrimaryButtonText = LR.C_AddPrize,
             CloseButtonText = LR.C_Cancel,
-            IsPrimaryButtonEnabled = false,
+            IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(previous?.Id) ||
+                                     !string.IsNullOrWhiteSpace(previous?.Name),
             DefaultButton = FAContentDialogButton.Primary
         };
 
@@ -330,39 +405,59 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         id.TextChanged += (_, _) => UpdatePrimaryButtonState();
         name.TextChanged += (_, _) => UpdatePrimaryButtonState();
         var result = await dialog.ShowAsync(TopLevel.GetTopLevel(this));
-
         if (result != FAContentDialogResult.Primary)
+            return null;
+
+        return new PrizeDraft(
+            id.Text?.Trim() ?? string.Empty,
+            name.Text?.Trim() ?? string.Empty,
+            weight.Text?.Trim() ?? string.Empty,
+            count.Text?.Trim() ?? string.Empty,
+            tags.Text?.Trim() ?? string.Empty);
+    }
+
+    private async Task CommitNewPrizeAsync(PrizeDraft draft, string id, double weight, int count, int? insertIndex,
+        int shiftedCount, string toastMessage)
+    {
+        if (SelectedPrizeList == null)
             return;
 
-        var prizeId = id.Text?.Trim() ?? string.Empty;
-        var prizeName = name.Text?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(prizeId) && string.IsNullOrWhiteSpace(prizeName))
+        var prize = new Prize
         {
-            this.ShowWarningToast(LR.M_AddPrizeRequired);
-            return;
-        }
+            Id = id,
+            Name = draft.Name,
+            Weight = weight,
+            Count = count,
+            Tags = draft.Tags
+        };
 
-        if (!double.TryParse(weight.Text, out var prizeWeight) || prizeWeight <= 0 ||
-            !int.TryParse(count.Text, out var prizeCount) || prizeCount <= 0)
-        {
-            this.ShowWarningToast(LR.M_AddPrizeInvalidValues);
-            return;
-        }
+        if (insertIndex is { } index && index >= 0 && index <= SelectedPrizeList.Prizes.Count)
+            SelectedPrizeList.Prizes.Insert(index, prize);
+        else
+            SelectedPrizeList.Prizes.Add(prize);
 
-        SelectedPrizeList.Prizes.Add(new Prize
-        {
-            Id = prizeId,
-            Name = prizeName,
-            Weight = prizeWeight,
-            Count = prizeCount,
-            Tags = tags.Text?.Trim() ?? string.Empty
-        });
         SaveSelectedPrizeList();
         OnPropertyChanged(nameof(SelectedPrizeList));
-        _logger.LogInformation("已向奖品池新增奖品：奖品池={ListName}，当前奖品数={Count}。", SelectedPrizeListName,
-            SelectedPrizeList.Prizes.Count);
-        this.ShowSuccessToast(LR.M_AddPrizeSuccess);
+        _logger.LogInformation("已向奖品池新增奖品：奖品池={ListName}，当前奖品数={Count}，顺延编号个数={ShiftedCount}。",
+            SelectedPrizeListName, SelectedPrizeList.Prizes.Count, shiftedCount);
+        this.ShowSuccessToast(toastMessage);
     }
+
+    private static SequenceNumberConflictText CreateConflictText() => new(
+        LR.M_AddPrizeConflictTitle,
+        LR.M_AddPrizeConflictContent,
+        LR.M_AddPrizeConflictNotNumericContent,
+        LR.M_AddPrizeConflictDuplicatedContent,
+        LR.M_AddPrizeConflictPreviewHeader,
+        LR.M_AddPrizeConflictPreviewLine,
+        LR.M_AddPrizeConflictPreviewEllipsis,
+        LR.M_AddPrizeConflictPrimary,
+        LR.M_AddPrizeConflictSecondary,
+        LR.M_AddPrizeConflictKeepDuplicate,
+        LR.M_AddPrizeConflictClose,
+        LR.M_AddPrizeConflictUnnamed);
+
+    private sealed record PrizeDraft(string Id, string Name, string Weight, string Count, string Tags);
 
     private static TextBox AddInputField(StackPanel form, string label, string initialText = "")
     {

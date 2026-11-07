@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -15,6 +16,7 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
+using SecRandom.Core.Services.Profiles;
 using SecRandom.Langs.SettingsPages.ListManagement.RosterTransfer;
 using SecRandom.Shared.Models.Profile;
 using LR = SecRandom.Langs.SettingsPages.ListManagement.RollCallList.Resources;
@@ -303,12 +305,77 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
             return;
         }
 
+        StudentDraft? draft = null;
+        while (true)
+        {
+            draft = await ShowAddMemberFormAsync(draft);
+            if (draft is null)
+                return;
+
+            if (string.IsNullOrWhiteSpace(draft.Id) && string.IsNullOrWhiteSpace(draft.Name))
+            {
+                this.ShowWarningToast(LR.M_AddMemberRequired);
+                continue;
+            }
+
+            if (SelectedStudentList == null)
+                return;
+
+            var conflict = ProfileSequenceNumbering.Analyze(
+                SelectedStudentList.Students.Select(student => student.Id).ToList(), draft.Id);
+            if (conflict.Kind == SequenceNumberConflictKind.None)
+            {
+                await CommitNewStudentAsync(draft, draft.Id, insertIndex: null, shiftedCount: 0,
+                    LR.M_AddMemberSuccess);
+                return;
+            }
+
+            var choice = await SequenceNumberConflictPrompt.ShowAsync(this, conflict,
+                SelectedStudentList.Students.Select(student => student.Name).ToList(), CreateConflictText());
+
+            switch (choice)
+            {
+                case SequenceNumberConflictChoice.ShiftAndInsert:
+                {
+                    foreach (var entry in conflict.ShiftEntries)
+                        SelectedStudentList.Students[entry.Index].Id =
+                            entry.NewNumber.ToString(CultureInfo.InvariantCulture);
+                    await CommitNewStudentAsync(draft, draft.Id, conflict.InsertIndex,
+                        conflict.ShiftEntries.Count,
+                        string.Format(LR.M_AddMemberShiftedSuccess, conflict.ShiftEntries.Count));
+                    return;
+                }
+
+                case SequenceNumberConflictChoice.AppendAtEnd:
+                {
+                    var appendNumber = conflict.AppendNumber?.ToString(CultureInfo.InvariantCulture) ?? draft.Id;
+                    await CommitNewStudentAsync(draft, appendNumber, insertIndex: null, shiftedCount: 0,
+                        string.Format(LR.M_AddMemberAppendedSuccess, appendNumber));
+                    return;
+                }
+
+                case SequenceNumberConflictChoice.KeepDuplicate:
+                {
+                    await CommitNewStudentAsync(draft, draft.Id, insertIndex: null, shiftedCount: 0,
+                        LR.M_AddMemberDuplicateSuccess);
+                    return;
+                }
+
+                default:
+                    // 返回修改：保留用户已填写的内容，回到表单继续编辑
+                    continue;
+            }
+        }
+    }
+
+    private async Task<StudentDraft?> ShowAddMemberFormAsync(StudentDraft? previous)
+    {
         var form = new StackPanel { Spacing = 8 };
-        var id = AddInputField(form, LR.C_StudentId);
-        var name = AddInputField(form, LR.C_Name);
-        var gender = AddInputField(form, LR.C_Gender);
-        var group = AddInputField(form, LR.C_Group);
-        var tags = AddInputField(form, LR.C_Tags);
+        var id = AddInputField(form, LR.C_StudentId, previous?.Id ?? string.Empty);
+        var name = AddInputField(form, LR.C_Name, previous?.Name ?? string.Empty);
+        var gender = AddInputField(form, LR.C_Gender, previous?.Gender ?? string.Empty);
+        var group = AddInputField(form, LR.C_Group, previous?.Group ?? string.Empty);
+        var tags = AddInputField(form, LR.C_Tags, previous?.Tags ?? string.Empty);
 
         var dialog = new FAContentDialog
         {
@@ -316,7 +383,8 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
             Content = form,
             PrimaryButtonText = LR.C_AddMember,
             CloseButtonText = LR.C_Cancel,
-            IsPrimaryButtonEnabled = false,
+            IsPrimaryButtonEnabled = !string.IsNullOrWhiteSpace(previous?.Id) ||
+                                     !string.IsNullOrWhiteSpace(previous?.Name),
             DefaultButton = FAContentDialogButton.Primary
         };
 
@@ -329,35 +397,62 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         id.TextChanged += (_, _) => UpdateCanConfirm();
         name.TextChanged += (_, _) => UpdateCanConfirm();
         var result = await dialog.ShowAsync(TopLevel.GetTopLevel(this));
-
-        var studentId = id.Text?.Trim() ?? string.Empty;
-        var studentName = name.Text?.Trim() ?? string.Empty;
         if (result != FAContentDialogResult.Primary)
-            return;
+            return null;
 
-        if (string.IsNullOrWhiteSpace(studentId) && string.IsNullOrWhiteSpace(studentName))
-        {
-            this.ShowWarningToast(LR.M_AddMemberRequired);
+        return new StudentDraft(
+            id.Text?.Trim() ?? string.Empty,
+            name.Text?.Trim() ?? string.Empty,
+            gender.Text?.Trim() ?? string.Empty,
+            group.Text?.Trim() ?? string.Empty,
+            tags.Text?.Trim() ?? string.Empty);
+    }
+
+    private async Task CommitNewStudentAsync(StudentDraft draft, string id, int? insertIndex, int shiftedCount,
+        string toastMessage)
+    {
+        if (SelectedStudentList == null)
             return;
-        }
 
         var shouldOfferHistoryClear = ShouldOfferStudentHistoryClear(SelectedStudentList);
-        SelectedStudentList.Students.Add(new Student
+        var student = new Student
         {
-            Id = studentId,
-            Name = studentName,
-            Gender = gender.Text?.Trim() ?? string.Empty,
-            Group = group.Text?.Trim() ?? string.Empty,
-            Tags = tags.Text?.Trim() ?? string.Empty
-        });
+            Id = id,
+            Name = draft.Name,
+            Gender = draft.Gender,
+            Group = draft.Group,
+            Tags = draft.Tags
+        };
+
+        if (insertIndex is { } index && index >= 0 && index <= SelectedStudentList.Students.Count)
+            SelectedStudentList.Students.Insert(index, student);
+        else
+            SelectedStudentList.Students.Add(student);
+
         SaveSelectedStudentList();
         OnPropertyChanged(nameof(SelectedStudentList));
         if (shouldOfferHistoryClear && await ConfirmClearStudentHistoryAsync(SelectedStudentListName))
             _catalogManager.ClearStudentHistory(SelectedStudentListName);
-        _logger.LogInformation("已向点名名单新增成员：名单={ListName}，当前成员数={Count}。", SelectedStudentListName,
-            SelectedStudentList.Students.Count);
-        this.ShowSuccessToast(LR.M_AddMemberSuccess);
+        _logger.LogInformation("已向点名名单新增成员：名单={ListName}，当前成员数={Count}，顺延编号人数={ShiftedCount}。",
+            SelectedStudentListName, SelectedStudentList.Students.Count, shiftedCount);
+        this.ShowSuccessToast(toastMessage);
     }
+
+    private static SequenceNumberConflictText CreateConflictText() => new(
+        LR.M_AddMemberConflictTitle,
+        LR.M_AddMemberConflictContent,
+        LR.M_AddMemberConflictNotNumericContent,
+        LR.M_AddMemberConflictDuplicatedContent,
+        LR.M_AddMemberConflictPreviewHeader,
+        LR.M_AddMemberConflictPreviewLine,
+        LR.M_AddMemberConflictPreviewEllipsis,
+        LR.M_AddMemberConflictPrimary,
+        LR.M_AddMemberConflictSecondary,
+        LR.M_AddMemberConflictKeepDuplicate,
+        LR.M_AddMemberConflictClose,
+        LR.M_AddMemberConflictUnnamed);
+
+    private sealed record StudentDraft(string Id, string Name, string Gender, string Group, string Tags);
 
     private bool ShouldOfferStudentHistoryClear(StudentList list)
     {

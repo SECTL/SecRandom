@@ -560,5 +560,95 @@ namespace SecRandom.Langs.SettingsPages.ListManagement.RollCallList {
                 return ResourceManager.GetString("K_TagsColumns", resourceCulture);
             }
         }
+        
+        public static string M_AddMemberConflictTitle {
+            get {
+                return ResourceManager.GetString("M_AddMemberConflictTitle", resourceCulture);
+            }
+        }
+        
+        public static string M_AddMemberConflictContent {
+            get {
+                return ResourceManager.GetString("M_AddMemberConflictContent", resourceCulture);
+            }
+        }
+        
+        public static string M_AddMemberConflictNotNumericContent {
+            get {
+                return ResourceManager.GetString("M_AddMemberConflictNotNumericContent", resourceCulture);
+            }
+        }
+        
+        public static string M_AddMemberConflictDuplicatedContent {
+            get {
+                return ResourceManager.GetString("M_AddMemberConflictDuplicatedContent", resourceCulture);
+            }
+        }
+        
+        public static string M_AddMemberConflictPreviewHeader {
+            get {
+                return ResourceManager.GetString("M_AddMemberConflictPreviewHeader", resourceCulture);
+            }
+        }
+        
+        public static string M_AddMemberConflictPreviewLine {
+            get {
+                return ResourceManager.GetString("M_AddMemberConflictPreviewLine", resourceCulture);
+            }
+        }
+        
+        public static string M_AddMemberConflictPreviewEllipsis {
+            get {
+                return ResourceManager.GetString("M_AddMemberConflictPreviewEllipsis", resourceCulture);
+            }
+        }
+        
+        public static string M_AddMemberConflictPrimary {
+            get {
+                return ResourceManager.GetString("M_AddMemberConflictPrimary", resourceCulture);
+            }
+        }
+        
+        public static string M_AddMemberConflictSecondary {
+            get {
+                return ResourceManager.GetString("M_AddMemberConflictSecondary", resourceCulture);
+            }
+        }
+        
+        public static string M_AddMemberConflictKeepDuplicate {
+            get {
+                return ResourceManager.GetString("M_AddMemberConflictKeepDuplicate", resourceCulture);
+            }
+        }
+        
+        public static string M_AddMemberConflictClose {
+            get {
+                return ResourceManager.GetString("M_AddMemberConflictClose", resourceCulture);
+            }
+        }
+        
+        public static string M_AddMemberConflictUnnamed {
+            get {
+                return ResourceManager.GetString("M_AddMemberConflictUnnamed", resourceCulture);
+            }
+        }
+        
+        public static string M_AddMemberShiftedSuccess {
+            get {
+                return ResourceManager.GetString("M_AddMemberShiftedSuccess", resourceCulture);
+            }
+        }
+        
+        public static string M_AddMemberAppendedSuccess {
+            get {
+                return ResourceManager.GetString("M_AddMemberAppendedSuccess", resourceCulture);
+            }
+        }
+        
+        public static string M_AddMemberDuplicateSuccess {
+            get {
+                return ResourceManager.GetString("M_AddMemberDuplicateSuccess", resourceCulture);
+            }
+        }
     }
 }
