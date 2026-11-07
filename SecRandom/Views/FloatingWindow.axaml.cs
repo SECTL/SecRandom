@@ -168,6 +168,7 @@ public partial class FloatingWindow : Window
             ? Orientation.Vertical
             : Orientation.Horizontal;
         ButtonsPanel.Width = double.NaN;
+        ApplyCustomText(settings, 0);
 
         if (!settings.StickToEdge && _isDocked)
             RestoreFromDock();
@@ -357,6 +358,7 @@ public partial class FloatingWindow : Window
         if (buttons.Length == 0)
         {
             ButtonsPanel.Width = double.NaN;
+            ApplyCustomText(settings, 0);
             return;
         }
 
@@ -364,9 +366,39 @@ public partial class FloatingWindow : Window
         foreach (var button in buttons)
             button.Width = buttonWidth;
 
+        var rowCount = settings.FloatingWindowPlacement switch
+        {
+            0 => Math.Min(2, buttons.Length),
+            2 => buttons.Length,
+            _ => 1
+        };
         ButtonsPanel.Width = settings.FloatingWindowPlacement == 0
-            ? (buttonWidth + buttons[0].Margin.Left + buttons[0].Margin.Right) * Math.Min(2, buttons.Length)
+            ? (buttonWidth + buttons[0].Margin.Left + buttons[0].Margin.Right) * rowCount
             : double.NaN;
+
+        ApplyCustomText(settings, buttonWidth * rowCount);
+    }
+
+    // 自定义文字是按钮上方的一行横幅：换行折叠成空格，超长按字符省略；字号随控件尺寸缩放，
+    // 宽度以按钮面板为上限，避免长文本把悬浮窗撑开。收纳态下 ExpandedContent 隐藏，文字随之隐藏。
+    private void ApplyCustomText(FloatingWindowSettingsConfig settings, double contentWidth)
+    {
+        var text = (settings.FloatingWindowText ?? string.Empty)
+            .Replace("\r\n", " ")
+            .Replace('\r', ' ')
+            .Replace('\n', ' ')
+            .Trim();
+        var show = settings.EnableFloatingWindowText && text.Length > 0;
+        CustomTextBlock.IsVisible = show;
+        if (!show)
+        {
+            CustomTextBlock.Text = string.Empty;
+            return;
+        }
+
+        CustomTextBlock.Text = text;
+        CustomTextBlock.FontSize = Math.Clamp(settings.FloatingWindowSize * 0.25, 11, 20);
+        CustomTextBlock.MaxWidth = Math.Clamp(contentWidth > 1 ? contentWidth : 160, 120, 360);
     }
 
     private static double GetButtonWidth(int size, string label, int displayStyle, Thickness padding)

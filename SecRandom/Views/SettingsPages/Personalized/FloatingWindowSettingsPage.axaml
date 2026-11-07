@@ -51,6 +51,23 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_Display_CustomText"
+                                   Header="{x:Static lsp:Resources.S_Display_CustomText}"
+                                   Description="{x:Static lsp:Resources.S_Display_CustomText_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <Grid ColumnDefinitions="260,Auto" ColumnSpacing="12">
+                        <TextBox Text="{Binding Settings.FloatingWindowText}"
+                                 IsEnabled="{Binding Settings.EnableFloatingWindowText}"
+                                 MaxLength="120"
+                                 AcceptsReturn="False"
+                                 TextWrapping="NoWrap" />
+                        <ToggleSwitch Grid.Column="1"
+                                      IsChecked="{Binding Settings.EnableFloatingWindowText}" />
+                    </Grid>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <Separator Margin="0 12 0 4" />
             <sr:IconText x:Name="S_Buttons"
                          Text="{x:Static lsp:Resources.S_Buttons}"

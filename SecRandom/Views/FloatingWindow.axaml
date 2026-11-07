@@ -30,6 +30,17 @@
 
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Margin="4">
             <StackPanel x:Name="ExpandedContent">
+                <!-- 自定义文字：位于按钮上方，不参与命中测试，随 ExpandedContent 一起收纳隐藏 -->
+                <TextBlock x:Name="CustomTextBlock"
+                           IsVisible="False"
+                           IsHitTestVisible="False"
+                           TextTrimming="CharacterEllipsis"
+                           TextWrapping="NoWrap"
+                           TextAlignment="Center"
+                           HorizontalAlignment="Center"
+                           FontSize="12"
+                           Margin="2 0 2 4"
+                           Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                 <WrapPanel x:Name="ButtonsPanel" HorizontalAlignment="Center" />
             </StackPanel>
             <Button x:Name="DockButton" IsVisible="False" Click="DockButton_OnClick" />
