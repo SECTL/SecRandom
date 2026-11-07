@@ -5,15 +5,19 @@ using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
+using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Shared;
 using SecRandom.ViewModels;
 using SecRandom.Services.Music;
+using PickingResources = SecRandom.Langs.SettingsPages.Picking.Resources;
 
 namespace SecRandom.Views.SettingsPages.Picking;
 
@@ -28,6 +32,15 @@ public partial class RollCallDrawSettingsPage : UserControl
     {
         Settings = ViewModel.Config.RollCallSettings;
         _lastKnownDefaultClass = Settings.DefaultClass;
+        HistoryGroup = new DrawHistoryGroupSetting(
+            PickingResources.O_HistoryGroupDefault,
+            HistoryGroupKind.RollCall,
+            HistoryGroupCatalog,
+            () => HistoryGroups.Enabled,
+            () => SettingsView.Current?.IsPreviewMode == true,
+            () => Settings.HistoryGroup,
+            value => Settings.HistoryGroup = value);
+        HistoryGroup.Refresh();
         MusicLibrary.Refresh();
         RefreshStudentLists();
         DataContext = this;
@@ -42,6 +55,11 @@ public partial class RollCallDrawSettingsPage : UserControl
     public IReadOnlyList<RollCallAlgorithmOption> Algorithms { get; } =
         RollCallAlgorithmRegistryService.RegisteredAlgorithms
             .Select(x => new RollCallAlgorithmOption(x.Id, x.Name)).ToArray();
+
+    /// <summary>
+    ///     点名页的默认记录组：页面打开时选择器先落到这里，用户当场换组仍然只改界面状态、不写配置。
+    /// </summary>
+    public DrawHistoryGroupSetting HistoryGroup { get; }
 
     public RollCallAlgorithmOption? SelectedAlgorithm
     {
@@ -59,11 +77,14 @@ public partial class RollCallDrawSettingsPage : UserControl
     public ObservableCollection<MusicSelection> MusicSelections => MusicLibrary.Selections;
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
+    private IHistoryGroupCatalog HistoryGroupCatalog { get; } = IAppHost.GetService<IHistoryGroupCatalog>();
     private MusicLibraryService MusicLibrary { get; } = IAppHost.GetService<MusicLibraryService>();
+    private HistoryGroupSettingsConfig HistoryGroups => ViewModel.Config.General.HistoryGroups;
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         MusicLibrary.Refresh();
+        HistoryGroup.Refresh();
         SubscribeSettings();
     }
 
@@ -73,13 +94,25 @@ public partial class RollCallDrawSettingsPage : UserControl
             return;
 
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
+        HistoryGroups.PropertyChanged -= HistoryGroupsOnPropertyChanged;
         _isSubscribed = false;
+    }
+
+    private void HistoryGroupsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is not (nameof(HistoryGroupSettingsConfig.Enabled) or null or ""))
+            return;
+
+        HistoryGroup.Refresh();
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(RollCallSettingsConfig.AlgorithmId))
             SynchronizeLegacyDrawType();
+
+        if (e.PropertyName == nameof(RollCallSettingsConfig.HistoryGroup))
+            HistoryGroup.NotifySelectionChanged();
 
         if (e.PropertyName == nameof(RollCallSettingsConfig.DefaultClass))
         {
@@ -105,6 +138,7 @@ public partial class RollCallDrawSettingsPage : UserControl
             return;
 
         Settings.PropertyChanged += SettingsOnPropertyChanged;
+        HistoryGroups.PropertyChanged += HistoryGroupsOnPropertyChanged;
         _isSubscribed = true;
     }
 

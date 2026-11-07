@@ -76,7 +76,8 @@ public class SettingsSearchService
             },
             ["settings.picking.rollCall"] = new HashSet<string>
             {
-                "S_DrawMode", "S_HalfRepeat", "S_DrawType", "S_DefaultClass", "S_ClearRecord", "S_FontSource",
+                "S_DrawMode", "S_HalfRepeat", "S_DrawType", "S_DefaultClass", "S_RollCallHistoryGroup",
+                "S_ClearRecord", "S_FontSource",
                 "S_CustomFont", "S_FontSize", "S_DisplayFormat", "S_DisplayStyle", "S_ShowWeightTransparency",
                 "S_ShowTags", "S_Animation", "S_AnimationInterval", "S_AutoplayCount", "S_AnimationStyle",
                 "S_ColorTheme", "S_FixedColor", "S_StudentImage", "S_StudentImagePosition", "S_StudentImageSize",
@@ -98,7 +99,8 @@ public class SettingsSearchService
             },
             ["settings.picking.lottery"] = new HashSet<string>
             {
-                "S_DrawMode", "S_HalfRepeat", "S_LotteryDrawType", "S_DefaultPool", "S_ClearRecord", "S_FontSource",
+                "S_DrawMode", "S_HalfRepeat", "S_LotteryDrawType", "S_DefaultPool", "S_LotteryHistoryGroup",
+                "S_ClearRecord", "S_FontSource",
                 "S_CustomFont", "S_FontSize", "S_DisplayStyle", "S_LotteryShowRandom", "S_LotteryShowRandomFormat", "S_ShowTags",
                 "S_ShowWeightTransparency", "S_Animation", "S_AnimationInterval", "S_AutoplayCount",
                 "S_AnimationStyle", "S_ColorTheme", "S_FixedColor", "S_LotteryImage", "S_LotteryImagePosition",

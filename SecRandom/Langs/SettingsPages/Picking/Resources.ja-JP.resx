@@ -504,16 +504,28 @@
   <data name="C_SetAvatarViaPrize_D" xml:space="preserve">
     <value>くじ引き名簿ページを開き、景品の追加設定（画像表示）で景品画像を設定します</value>
   </data>
+  <data name="S_RollCallHistoryGroup" xml:space="preserve">
+    <value>記録グループ</value>
+  </data>
+  <data name="S_RollCallHistoryGroup_D" xml:space="preserve">
+    <value>グループを選ぶと点名ページはそのグループを初期選択にし、重みはそのグループの記録だけを参照、既定の記録グループなら未分類の記録だけを数えます</value>
+  </data>
+  <data name="S_LotteryHistoryGroup" xml:space="preserve">
+    <value>記録グループ</value>
+  </data>
+  <data name="S_LotteryHistoryGroup_D" xml:space="preserve">
+    <value>グループを選ぶと抽選ページはそのグループを初期選択にし、重みはそのグループの記録だけを参照、既定の記録グループなら未分類の記録だけを数えます</value>
+  </data>
   <data name="S_QuickDrawHistoryGroup" xml:space="preserve">
     <value>記録グループ</value>
   </data>
   <data name="S_QuickDrawHistoryGroup_D" xml:space="preserve">
-    <value>グループを選ぶとクイック抽選はそのグループの履歴だけで重みを計算し、今回の記録もそのグループにのみ書き込みます；不要なときは「記録グループを使わない」を選んでください</value>
+    <value>グループを選ぶとクイック抽選はそのグループの履歴だけで重みを計算し、今回の記録もそのグループにのみ書き込みます、既定の記録グループなら未分類の記録だけを数えます</value>
   </data>
-  <data name="O_QuickDrawHistoryGroupNone" xml:space="preserve">
-    <value>記録グループを使わない</value>
+  <data name="O_HistoryGroupDefault" xml:space="preserve">
+    <value>既定の記録グループ</value>
   </data>
-  <data name="S_QuickDrawHistoryGroup_Disabled" xml:space="preserve">
-    <value>履歴記録グループ機能が有効になっていません。「既定の抽選設定」で有効にできます</value>
+  <data name="S_HistoryGroup_Disabled" xml:space="preserve">
+    <value>履歴記録グループ機能が有効になっていません、「履歴記録の管理」で有効にできます</value>
   </data>
 </root>

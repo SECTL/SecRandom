@@ -13,14 +13,18 @@ public partial class QuickDrawSettingsConfig : OverridableDrawSettings
     [ObservableProperty] private int _disableAfterClick = 1;
 
     /// <summary>
-    ///     The history record group Quick Draw uses by default (an empty string means "use global history").
+    ///     闪抽默认锁定的历史记录组（空串 = 默认记录组，即只算未分组的记录）。
     /// </summary>
     /// <remarks>
-    ///     The group name follows the <see cref="SecRandom.Core.Enums.HistoryGroupKind.RollCall" /> purpose and shares
-    ///     the same group set as the roll-call page. Quick Draw has no group selector of its own, so this setting is
-    ///     its default: while a group is picked here, its weights only read that group's records and its new records
-    ///     are written into it. The group is re-validated on every draw, because a saved name may already have been
-    ///     renamed or deleted.
+    ///     <para>
+    ///         组名跟随 <see cref="SecRandom.Core.Enums.HistoryGroupKind.RollCall" /> 用途，与点名页共用
+    ///         同一批组。闪抽没有自己的选择器，所以这项配置就是它的默认值：锁在某个组时权重只读该组
+    ///         记录，新记录也写进该组。
+    ///     </para>
+    ///     <para>
+    ///         空串不是「不分组」而是「默认记录组」：功能关闭时才真正不分组。每次抽取前都会重新校验，
+    ///         组已被删除或改名时回落到默认记录组（删除组会把记录移回默认组）。
+    ///     </para>
     /// </remarks>
     [ObservableProperty] private string _historyGroup = string.Empty;
 }

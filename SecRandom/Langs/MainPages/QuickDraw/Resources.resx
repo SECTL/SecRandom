@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>1.3</value></resheader>
@@ -15,4 +15,5 @@
   <data name="M_DefaultListRequired" xml:space="preserve"><value>请先在闪抽设置中选择默认成员名单</value></data>
   <data name="M_DefaultListMissing" xml:space="preserve"><value>默认成员名单不存在，请在闪抽设置中重新选择</value></data>
   <data name="M_HistoryGroupLocked" xml:space="preserve"><value>记录组</value></data>
+  <data name="M_HistoryGroupMissing" xml:space="preserve"><value>原来的记录组已不存在，本次按默认记录组计算</value></data>
 </root>

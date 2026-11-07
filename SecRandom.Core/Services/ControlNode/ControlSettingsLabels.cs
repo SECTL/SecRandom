@@ -147,6 +147,11 @@ public static class ControlSettingsLabels
         // 抽奖的"抽取方式"是按奖盘还是按剩余数量，与点名页的随机/公平不是同一件事。
         ["lottery.draw_type"] = R(Picking, "S_LotteryDrawType"),
 
+        // 三个抽取页各有自己的"默认记录组"行（点名/抽奖是选择器初始值，闪抽是唯一的选择器）。
+        ["roll_call.history_group"] = R(Picking, "S_RollCallHistoryGroup"),
+        ["quick_draw.history_group"] = R(Picking, "S_QuickDrawHistoryGroup"),
+        ["lottery.history_group"] = R(Picking, "S_LotteryHistoryGroup"),
+
         // 通知类目只暴露渠道开关与显示时长，四个渠道各有一套文案。
         ["notification.default.enabled"] = R(Notification, "S_Default_Enabled"),
         ["notification.roll_call.enabled"] = R(Notification, "S_RollCall_Enabled"),
@@ -409,6 +414,7 @@ public static class ControlSettingsLabels
 
         // ---------------- 悬浮窗
         ["startup_display_floating_window"] = R(FloatingWindow, "S_Display_StartupDisplay"),
+        ["show_on_both_sides"] = R(FloatingWindow, "S_Display_ShowOnBothSides"),
         ["floating_window_opacity"] = R(FloatingWindow, "S_Display_Opacity"),
         ["floating_window_topmost_mode"] = R(FloatingWindow, "S_Display_TopmostMode"),
         ["show_roll_call_button"] = R(FloatingWindow, "S_Buttons_RollCall"),

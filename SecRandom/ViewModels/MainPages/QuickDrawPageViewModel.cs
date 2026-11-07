@@ -21,6 +21,7 @@ using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Services.Profiles;
 using SecRandom.Helpers;
 using QuickDrawResources = SecRandom.Langs.MainPages.QuickDraw.Resources;
 using SecRandom.Services.ControlNode;
@@ -55,6 +56,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private bool _isCoolingDown;
     private CancellationTokenSource? _previewCts;
     private int? _notificationAutoCloseTime;
+    private HistoryGroupScope _historyGroupScope;
 
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
     [ObservableProperty] private string _statusText = QuickDrawResources.M_Ready;
@@ -97,6 +99,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         ResultItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ResultFontSize));
         Config.QuickDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.General.HistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
+        RefreshHistoryGroupScope();
         RefreshStudentLists();
     }
 
@@ -116,12 +119,19 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     public string DrawButtonText => IsDrawing ? QuickDrawResources.C_Stop : QuickDrawResources.C_Start;
 
     /// <summary>
-    ///     闪抽是否真的锁定了某个历史记录组（悬浮窗只在此时显示提示）。
+    ///     闪抽是否真的锁定了某个具名记录组（悬浮窗只在此时显示提示）。
     /// </summary>
-    public bool IsHistoryGroupHintVisible => !string.IsNullOrEmpty(ResolveQuickDrawHistoryGroup());
+    /// <remarks>
+    ///     「默认记录组」不显示提示：它只算未分组的记录，对从不分组的用户来说就是全部历史，
+    ///     此时再往悬浮窗上写一行范围提示只是噪音。
+    /// </remarks>
+    public bool IsHistoryGroupHintVisible => !string.IsNullOrEmpty(_historyGroupScope.Group);
 
-    /// <summary>悬浮窗显示的记录组提示文本（配置为空时不可见，见 <see cref="IsHistoryGroupHintVisible" />）。</summary>
-    public string HistoryGroupHintText => Config.QuickDrawSettings.HistoryGroup;
+    /// <summary>悬浮窗显示的记录组提示文本：解析后的组名，而不是配置里的原值。</summary>
+    public string HistoryGroupHintText => _historyGroupScope.Group ?? string.Empty;
+
+    /// <summary>配置里那个组已经不存在，本次闪抽按默认记录组计算。</summary>
+    public bool IsHistoryGroupMissingHintVisible => _historyGroupScope.ConfiguredGroupMissing;
     public double ResultFontSize
     {
         get
@@ -812,32 +822,37 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     ///     解析本次闪抽要锁定的历史记录组；<see langword="null" /> 表示不做组隔离（看全部历史）。
     /// </summary>
     /// <remarks>
-    ///     空串不是「不分组」而是「默认记录组」（未分组记录），所以功能关闭或组已失效时必须返回
-    ///     <see langword="null" />，不能返回空串——否则闪抽会悄悄把权重收窄到未分组记录上。
+    ///     空串不是「不分组」而是「默认记录组」（未分组记录），所以功能关闭时必须返回
+    ///     <see langword="null" />——那时选择器不显示，没人能看出范围，只能按全部历史。
     /// </remarks>
     private string? ResolveQuickDrawHistoryGroup()
     {
-        if (!Config.General.HistoryGroups.Enabled)
-            return null;
+        RefreshHistoryGroupScope();
+        return _historyGroupScope.Group;
+    }
 
-        var configured = Config.QuickDrawSettings.HistoryGroup;
-        if (string.IsNullOrWhiteSpace(configured))
-            return string.Empty;
+    /// <summary>
+    ///     重新解析「默认记录组」配置：组已被删除或改名时回落到默认记录组（删除组会把记录移回默认组），
+    ///     目录读不到时不做组隔离（不拿一个未知清单去判断组名是否失效）。
+    /// </summary>
+    private void RefreshHistoryGroupScope()
+    {
+        var enabled = Config.General.HistoryGroups.Enabled;
+        IReadOnlyList<string>? groups = null;
+        if (enabled)
+        {
+            try
+            {
+                groups = _historyGroupCatalog.GetGroupNames(HistoryGroupKind.RollCall);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "读取历史记录组失败，本次闪抽按全部历史处理。");
+                groups = null;
+            }
+        }
 
-        try
-        {
-            // 组可能已被删除或改名。此时绝不拿一个不存在的组名去抽：那会让每条新记录都带上一个
-            // 没有任何历史的幽灵组名，权重静默退回等权，而用户以为自己仍在锁定状态。
-            return _historyGroupCatalog.GetGroupNames(HistoryGroupKind.RollCall)
-                .Contains(configured, StringComparer.Ordinal)
-                ? configured
-                : null;
-        }
-        catch (Exception exception)
-        {
-            _logger.LogWarning(exception, "读取历史记录组失败，本次闪抽按全部历史处理。");
-            return null;
-        }
+        _historyGroupScope = HistoryGroupScope.Resolve(enabled, Config.QuickDrawSettings.HistoryGroup, groups);
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -853,8 +868,10 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             return;
         }
 
+        RefreshHistoryGroupScope();
         OnPropertyChanged(nameof(IsHistoryGroupHintVisible));
         OnPropertyChanged(nameof(HistoryGroupHintText));
+        OnPropertyChanged(nameof(IsHistoryGroupMissingHintVisible));
     }
 
     public void Dispose()

@@ -5,16 +5,20 @@ using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Helpers;
 using SecRandom.Core.Icons;
+using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Shared;
 using SecRandom.ViewModels;
 using SecRandom.Services.Music;
+using PickingResources = SecRandom.Langs.SettingsPages.Picking.Resources;
 
 namespace SecRandom.Views.SettingsPages.Picking;
 
@@ -27,6 +31,15 @@ public partial class LotteryDrawSettingsPage : UserControl
     public LotteryDrawSettingsPage()
     {
         Settings = ViewModel.Config.LotterySettings;
+        HistoryGroup = new DrawHistoryGroupSetting(
+            PickingResources.O_HistoryGroupDefault,
+            HistoryGroupKind.RollCall,
+            HistoryGroupCatalog,
+            () => HistoryGroups.Enabled,
+            () => SettingsView.Current?.IsPreviewMode == true,
+            () => Settings.HistoryGroup,
+            value => Settings.HistoryGroup = value);
+        HistoryGroup.Refresh();
         MusicLibrary.Refresh();
         RefreshPrizeLists();
         DataContext = this;
@@ -41,6 +54,12 @@ public partial class LotteryDrawSettingsPage : UserControl
     public IReadOnlyList<LotteryAlgorithmOption> Algorithms { get; } =
         LotteryAlgorithmRegistryService.RegisteredAlgorithms
             .Select(x => new LotteryAlgorithmOption(x.Id, x.Name)).ToArray();
+
+    /// <summary>
+    ///     抽奖页的默认记录组：页面打开时选择器先落到这里，用户当场换组仍然只改界面状态、不写配置。
+    /// </summary>
+    /// <remarks>抽奖的权重来自学生侧历史，所以组名按 <see cref="HistoryGroupKind.RollCall" /> 登记。</remarks>
+    public DrawHistoryGroupSetting HistoryGroup { get; }
 
     public LotteryAlgorithmOption? SelectedAlgorithm
     {
@@ -61,11 +80,14 @@ public partial class LotteryDrawSettingsPage : UserControl
     public ObservableCollection<MusicSelection> MusicSelections => MusicLibrary.Selections;
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
+    private IHistoryGroupCatalog HistoryGroupCatalog { get; } = IAppHost.GetService<IHistoryGroupCatalog>();
     private MusicLibraryService MusicLibrary { get; } = IAppHost.GetService<MusicLibraryService>();
+    private HistoryGroupSettingsConfig HistoryGroups => ViewModel.Config.General.HistoryGroups;
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         MusicLibrary.Refresh();
+        HistoryGroup.Refresh();
         SubscribeSettings();
     }
 
@@ -75,11 +97,23 @@ public partial class LotteryDrawSettingsPage : UserControl
             return;
 
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
+        HistoryGroups.PropertyChanged -= HistoryGroupsOnPropertyChanged;
         _isSubscribed = false;
+    }
+
+    private void HistoryGroupsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is not (nameof(HistoryGroupSettingsConfig.Enabled) or null or ""))
+            return;
+
+        HistoryGroup.Refresh();
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(LotterySettingsConfig.HistoryGroup))
+            HistoryGroup.NotifySelectionChanged();
+
         NormalizeDrawSettings();
         ConfigHandler.Save();
     }
@@ -90,6 +124,7 @@ public partial class LotteryDrawSettingsPage : UserControl
             return;
 
         Settings.PropertyChanged += SettingsOnPropertyChanged;
+        HistoryGroups.PropertyChanged += HistoryGroupsOnPropertyChanged;
         _isSubscribed = true;
     }
 

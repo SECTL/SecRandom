@@ -63,6 +63,25 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <!-- 默认记录组：抽奖页打开时选择器先落到这里，用户当场换组仍然是纯界面状态、不写配置。
+                 选「默认记录组」表示只算未分组的记录；总开关关闭时不显示选择器，改为说明为什么不可用。 -->
+            <fa:FASettingsExpander x:Name="S_LotteryHistoryGroup"
+                                   Header="{x:Static lp:Resources.S_LotteryHistoryGroup}"
+                                   Description="{x:Static lp:Resources.S_LotteryHistoryGroup_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Spacing="4" MinWidth="220">
+                        <ComboBox IsVisible="{Binding HistoryGroup.IsSelectorVisible}"
+                                  ItemsSource="{Binding HistoryGroup.Options}"
+                                  SelectedItem="{Binding HistoryGroup.Selected, Mode=TwoWay}" />
+                        <TextBlock Text="{x:Static lp:Resources.S_HistoryGroup_Disabled}"
+                                   IsVisible="{Binding !HistoryGroup.IsSelectorVisible}"
+                                   Opacity="0.72" FontSize="12" TextWrapping="Wrap"
+                                   HorizontalAlignment="Right" TextAlignment="Right" MaxWidth="320" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_ClearRecord" Header="{x:Static lp:Resources.S_ClearRecord}"
                                    Description="{x:Static lp:Resources.S_ClearRecord_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}">

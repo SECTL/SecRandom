@@ -1692,6 +1692,42 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         /// <summary>
         ///   Looks up a localized string similar to 记录组.
         /// </summary>
+        public static string S_RollCallHistoryGroup {
+            get {
+                return ResourceManager.GetString("S_RollCallHistoryGroup", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 选中后点名页默认按该组的历史计算权重，本次记录也只写进该组；选「默认记录组」表示只算未分组的记录.
+        /// </summary>
+        public static string S_RollCallHistoryGroup_D {
+            get {
+                return ResourceManager.GetString("S_RollCallHistoryGroup_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 记录组.
+        /// </summary>
+        public static string S_LotteryHistoryGroup {
+            get {
+                return ResourceManager.GetString("S_LotteryHistoryGroup", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 选中后抽奖页默认按该组的历史计算权重，本次记录也只写进该组；选「默认记录组」表示只算未分组的记录.
+        /// </summary>
+        public static string S_LotteryHistoryGroup_D {
+            get {
+                return ResourceManager.GetString("S_LotteryHistoryGroup_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 记录组.
+        /// </summary>
         public static string S_QuickDrawHistoryGroup {
             get {
                 return ResourceManager.GetString("S_QuickDrawHistoryGroup", resourceCulture);
@@ -1699,7 +1735,7 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 选中后闪抽只按该组的历史计算权重，本次记录也只写进该组；不需要时选「不使用记录组」.
+        ///   Looks up a localized string similar to 选中后闪抽只按该组的历史计算权重，本次记录也只写进该组；选「默认记录组」表示只算未分组的记录.
         /// </summary>
         public static string S_QuickDrawHistoryGroup_D {
             get {
@@ -1708,20 +1744,20 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 不使用记录组.
+        ///   Looks up a localized string similar to 默认记录组.
         /// </summary>
-        public static string O_QuickDrawHistoryGroupNone {
+        public static string O_HistoryGroupDefault {
             get {
-                return ResourceManager.GetString("O_QuickDrawHistoryGroupNone", resourceCulture);
+                return ResourceManager.GetString("O_HistoryGroupDefault", resourceCulture);
             }
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 历史记录组功能未启用，可在「默认抽取设置」里打开.
+        ///   Looks up a localized string similar to 历史记录组功能未启用，可在「历史记录管理」里打开.
         /// </summary>
-        public static string S_QuickDrawHistoryGroup_Disabled {
+        public static string S_HistoryGroup_Disabled {
             get {
-                return ResourceManager.GetString("S_QuickDrawHistoryGroup_Disabled", resourceCulture);
+                return ResourceManager.GetString("S_HistoryGroup_Disabled", resourceCulture);
             }
         }
 

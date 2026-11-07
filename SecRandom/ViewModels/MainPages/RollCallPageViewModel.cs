@@ -70,6 +70,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private bool _isApplyingSelectionRefresh;
     private bool _isStudentListRefreshQueued;
     private bool _isDrawCommandRunning;
+    private bool _historyGroupDefaultApplied;
     private CancellationTokenSource? _previewCts;
 
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
@@ -705,6 +706,14 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             RefreshCounts();
         }
 
+        if (sender == Config.RollCallSettings && e.PropertyName == nameof(RollCallSettingsConfig.HistoryGroup))
+        {
+            // 默认记录组在设置页被改掉后重新套用一次，回到主页面立刻看到新的初始选择。
+            _historyGroupDefaultApplied = false;
+            RefreshHistoryGroupOptions();
+            RefreshCounts();
+        }
+
         if (IsResultVisible)
             RefreshResultItems();
 
@@ -861,6 +870,22 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         ReplaceOptions(HistoryGroupOptions, DefaultHistoryGroupOption, groups);
         if (!HistoryGroupOptions.Contains(SelectedHistoryGroup))
             SelectedHistoryGroup = DefaultHistoryGroupOption;
+
+        if (_historyGroupDefaultApplied)
+            return;
+
+        // 首次可见时把选择器落到「抽取设置 → 点名」里的默认记录组；此后页面上的切换只是
+        // 本次会话的界面状态，绝不回写配置（选择器本身仍然不是持久化设置）。
+        _historyGroupDefaultApplied = true;
+        ApplyDefaultHistoryGroup();
+    }
+
+    /// <summary>把选择器套用到配置里的默认记录组；默认组已不存在时回落到「默认记录组」。</summary>
+    private void ApplyDefaultHistoryGroup()
+    {
+        var configured = Config.RollCallSettings.HistoryGroup;
+        var option = string.IsNullOrWhiteSpace(configured) ? DefaultHistoryGroupOption : configured;
+        SelectedHistoryGroup = HistoryGroupOptions.Contains(option) ? option : DefaultHistoryGroupOption;
     }
 
     private void RefreshCounts()

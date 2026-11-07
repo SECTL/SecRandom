@@ -78,8 +78,12 @@
   <data name="S_StudentImageSize_D" xml:space="preserve"><value>Display edge length of member images in draw results, in pixels</value></data>
   <data name="S_LotteryImageSize" xml:space="preserve"><value>Prize Image Size</value></data>
   <data name="S_LotteryImageSize_D" xml:space="preserve"><value>Display edge length of prize images in draw results, in pixels</value></data>
+  <data name="S_RollCallHistoryGroup" xml:space="preserve"><value>Record group</value></data>
+  <data name="S_RollCallHistoryGroup_D" xml:space="preserve"><value>When a group is picked, the roll-call page starts on that group and computes weights from its history alone; pick Default record group to count only ungrouped records</value></data>
+  <data name="S_LotteryHistoryGroup" xml:space="preserve"><value>Record group</value></data>
+  <data name="S_LotteryHistoryGroup_D" xml:space="preserve"><value>When a group is picked, the lottery page starts on that group and computes weights from its history alone; pick Default record group to count only ungrouped records</value></data>
   <data name="S_QuickDrawHistoryGroup" xml:space="preserve"><value>Record group</value></data>
-  <data name="S_QuickDrawHistoryGroup_D" xml:space="preserve"><value>When a group is picked, Quick Draw computes weights from that group's history alone and writes this draw's records into it as well; pick No record group when you do not need it</value></data>
-  <data name="O_QuickDrawHistoryGroupNone" xml:space="preserve"><value>No record group</value></data>
-  <data name="S_QuickDrawHistoryGroup_Disabled" xml:space="preserve"><value>Record groups are not enabled; turn them on in Default draw settings</value></data>
+  <data name="S_QuickDrawHistoryGroup_D" xml:space="preserve"><value>When a group is picked, Quick Draw computes weights from that group's history alone and writes this draw's records into it as well; pick Default record group to count only ungrouped records</value></data>
+  <data name="O_HistoryGroupDefault" xml:space="preserve"><value>Default record group</value></data>
+  <data name="S_HistoryGroup_Disabled" xml:space="preserve"><value>Record groups are not enabled; turn them on in History management</value></data>
 </root>

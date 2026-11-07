@@ -439,7 +439,11 @@ public sealed class ControlSettingsCatalogTests
                      "general.basic.show_startup_window",
                      "general.basic.guide_completed",
                      "general.basic.accepted_privacy_policy_version",
-                     "general.proof_retention.retention_days"
+                     "general.proof_retention.retention_days",
+                     // 默认记录组：远程改它会让下一节课的抽取范围在无人操作时静默变化。
+                     "roll_call.history_group",
+                     "quick_draw.history_group",
+                     "lottery.history_group"
                  })
         {
             var field = described.SelectMany(category => category.Fields).Single(item => item.Path == path);

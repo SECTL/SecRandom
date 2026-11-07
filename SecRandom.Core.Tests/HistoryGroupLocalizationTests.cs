@@ -61,11 +61,15 @@ public sealed class HistoryGroupLocalizationTests
         ]),
         (["SettingsPages", "Picking"],
         [
-            // 闪抽默认记录组（M4）留在这里：卡片与下拉都挂在 settings.picking.quickDraw。
+            // 三个抽取页的「默认记录组」行：点名/抽奖是选择器的初始值，闪抽是唯一的选择器。
+            "S_RollCallHistoryGroup",
+            "S_RollCallHistoryGroup_D",
+            "S_LotteryHistoryGroup",
+            "S_LotteryHistoryGroup_D",
             "S_QuickDrawHistoryGroup",
             "S_QuickDrawHistoryGroup_D",
-            "S_QuickDrawHistoryGroup_Disabled",
-            "O_QuickDrawHistoryGroupNone"
+            "O_HistoryGroupDefault",
+            "S_HistoryGroup_Disabled"
         ]),
         (["SettingsPages", "More"],
         [
@@ -84,8 +88,10 @@ public sealed class HistoryGroupLocalizationTests
         ]),
         (["MainPages", "QuickDraw"],
         [
-            // 闪抽没有自己的选择器，只在结果区下方显示一行「已锁定记录组」提示。
-            "M_HistoryGroupLocked"
+            // 闪抽没有自己的选择器，只在结果区下方显示一行「已锁定记录组」提示；
+            // 配置的组被删掉/改名后再多一句「原记录组已不存在」。
+            "M_HistoryGroupLocked",
+            "M_HistoryGroupMissing"
         ])
     ];
 

@@ -160,7 +160,13 @@ public static class ControlSettingsCatalog
         "general.basic.accepted_eula_version",
         "general.basic.accepted_privacy_policy_version",
         "general.basic.accepted_gpl_version",
-        "general.basic.accepted_verification_notice_version"
+        "general.basic.accepted_verification_notice_version",
+
+        // 默认记录组：抽取页选择器的初始值。远程改它会让下一节课的点名/抽奖在没人按按钮的情况下
+        // 从"全部历史"静默变成"只算某个组的历史"，现场看到的只是一个更小的权重范围。
+        "roll_call.history_group",
+        "quick_draw.history_group",
+        "lottery.history_group"
     };
 
     /// <summary>这些路径前缀整体只读。</summary>

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <data name="C_Start" xml:space="preserve"><value>Quick Draw</value></data>
   <data name="C_Stop" xml:space="preserve"><value>Stop</value></data>
@@ -11,4 +11,5 @@
   <data name="M_DefaultListRequired" xml:space="preserve"><value>Select a default member list in Quick Draw settings first</value></data>
   <data name="M_DefaultListMissing" xml:space="preserve"><value>The default member list no longer exists. Select it again in Quick Draw settings</value></data>
   <data name="M_HistoryGroupLocked" xml:space="preserve"><value>Record group</value></data>
+  <data name="M_HistoryGroupMissing" xml:space="preserve"><value>The saved record group no longer exists; this draw uses the default record group</value></data>
 </root>
