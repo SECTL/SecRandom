@@ -97,8 +97,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         _voiceAnnouncementService = voiceAnnouncementService;
         _notificationService = notificationService;
         ResultItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ResultFontSize));
-        Config.QuickDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
-        Config.General.HistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
+        Config.EffectiveQuickDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
+        Config.EffectiveHistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
         RefreshHistoryGroupScope();
         RefreshStudentLists();
     }
@@ -335,7 +335,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                 DateTime.Now,
                 count,
                 SelectedStudentListName,
-                DrawMethod: (int)Config.QuickDrawSettings.DrawType,
+                DrawMethod: (int)Config.EffectiveQuickDrawSettings.DrawType,
                 Weights: weights,
                 CourseName: courseName,
                 HistoryGroup: historyGroup));
@@ -528,13 +528,13 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
     private void EnsureRestartTemporaryRecordsCleared(string listName)
     {
-        if (Config.RollCallSettings.ClearRecord == ClearRecordMode.Restarted)
+        if (Config.EffectiveRollCallSettings.ClearRecord == ClearRecordMode.Restarted)
             _temporaryRecordService.ClearStudentListOnce(listName);
     }
 
     private IEnumerable<Student> GetEligibleCandidates()
     {
-        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.QuickDrawSettings.DrawMode, Config.QuickDrawSettings.HalfRepeat);
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.EffectiveQuickDrawSettings.DrawMode, Config.EffectiveQuickDrawSettings.HalfRepeat);
         var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, _historyGroupScope.Group);
         return DrawCandidateFilter.FilterEligibleStudents(
             _profileService.CurrentStudentList?.Students ?? [],
@@ -556,7 +556,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (students.Count == 0)
             return false;
 
-        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.QuickDrawSettings.DrawMode, Config.QuickDrawSettings.HalfRepeat);
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.EffectiveQuickDrawSettings.DrawMode, Config.EffectiveQuickDrawSettings.HalfRepeat);
         var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, _historyGroupScope.Group);
         if (DrawCandidateFilter.FilterEligibleStudents(students, string.Empty, string.Empty, counts, threshold).Any())
             return false;
@@ -773,7 +773,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
     private double BuildDisplayWeight(Student student)
     {
-        if (!string.Equals(Config.QuickDrawSettings.AlgorithmId, "builtin.fair", StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(Config.EffectiveQuickDrawSettings.AlgorithmId, "builtin.fair", StringComparison.OrdinalIgnoreCase))
             return 1;
 
         // 闪抽没有自己的选择器，权重按当前冻结的记录组算；否则锁组后显示的权重仍是全局历史的结果。
@@ -822,7 +822,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     {
         _isCoolingDown = true;
         OnPropertyChanged(nameof(CanStartDraw));
-        await Task.Delay(Math.Clamp(Config.QuickDrawSettings.DisableAfterClick, 0, 60) * 1000).ConfigureAwait(true);
+        await Task.Delay(Math.Clamp(Config.EffectiveQuickDrawSettings.DisableAfterClick, 0, 60) * 1000).ConfigureAwait(true);
         _isCoolingDown = false;
         OnPropertyChanged(nameof(CanStartDraw));
     }
@@ -834,7 +834,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     /// </summary>
     private void RefreshHistoryGroupScope()
     {
-        var enabled = Config.General.HistoryGroups.Enabled;
+        var enabled = Config.EffectiveHistoryGroups.Enabled;
         IReadOnlyList<string>? groups = null;
         if (enabled)
         {
@@ -849,18 +849,18 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             }
         }
 
-        _historyGroupScope = HistoryGroupScope.Resolve(enabled, Config.QuickDrawSettings.HistoryGroup, groups);
+        _historyGroupScope = HistoryGroupScope.Resolve(enabled, Config.EffectiveQuickDrawSettings.HistoryGroup, groups);
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (sender == Config.QuickDrawSettings)
+        if (sender == Config.EffectiveQuickDrawSettings)
         {
             if (!string.IsNullOrEmpty(e.PropertyName)
                 && e.PropertyName != nameof(QuickDrawSettingsConfig.HistoryGroup))
                 return;
         }
-        else if (sender != Config.General.HistoryGroups)
+        else if (sender != Config.EffectiveHistoryGroups)
         {
             return;
         }
@@ -873,8 +873,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
     public void Dispose()
     {
-        Config.QuickDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
-        Config.General.HistoryGroups.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.EffectiveQuickDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.EffectiveHistoryGroups.PropertyChanged -= SettingsOnPropertyChanged;
         StopPreview();
     }
 }

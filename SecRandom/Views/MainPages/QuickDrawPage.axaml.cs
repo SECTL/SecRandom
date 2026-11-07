@@ -36,7 +36,7 @@ public partial class QuickDrawPage : UserControl
         InitializeComponent();
         _resultPresenter = this.FindControl<ItemsControl>("ResultPresenter");
         ViewModel.PropertyChanged += ViewModel_OnPropertyChanged;
-        ViewModel.Config.FloatingWindowSettings.PropertyChanged += FloatingWindowSettings_OnPropertyChanged;
+        ViewModel.Config.EffectiveFloatingWindowSettings.PropertyChanged += FloatingWindowSettings_OnPropertyChanged;
         UpdateFloatingWindowOpacity();
         Unloaded += OnUnloaded;
     }
@@ -55,7 +55,7 @@ public partial class QuickDrawPage : UserControl
         CancelAutoClose();
         CancelClickSequence();
         ViewModel.PropertyChanged -= ViewModel_OnPropertyChanged;
-        ViewModel.Config.FloatingWindowSettings.PropertyChanged -= FloatingWindowSettings_OnPropertyChanged;
+        ViewModel.Config.EffectiveFloatingWindowSettings.PropertyChanged -= FloatingWindowSettings_OnPropertyChanged;
     }
 
     private void FloatingWindowSettings_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -67,7 +67,7 @@ public partial class QuickDrawPage : UserControl
     private void UpdateFloatingWindowOpacity()
     {
         RootBorder.Opacity = System.Math.Clamp(
-            ViewModel.NotificationOpacity ?? ViewModel.Config.FloatingWindowSettings.FloatingWindowOpacity,
+            ViewModel.NotificationOpacity ?? ViewModel.Config.EffectiveFloatingWindowSettings.FloatingWindowOpacity,
             20,
             100) / 100.0;
     }

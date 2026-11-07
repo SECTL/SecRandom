@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -260,10 +260,10 @@ public sealed class MusicLibraryService(
 
     private IEnumerable<DrawSettingsConfigBase> GetAllDrawSettings()
     {
-        yield return configHandler.Data.DefaultDrawSettings;
-        yield return configHandler.Data.RollCallSettings;
-        yield return configHandler.Data.QuickDrawSettings;
-        yield return configHandler.Data.LotterySettings;
+        yield return configHandler.Data.EffectiveDefaultDrawSettings;
+        yield return configHandler.Data.EffectiveRollCallSettings;
+        yield return configHandler.Data.EffectiveQuickDrawSettings;
+        yield return configHandler.Data.EffectiveLotterySettings;
     }
 
     private void ClearReferences(string trackId)

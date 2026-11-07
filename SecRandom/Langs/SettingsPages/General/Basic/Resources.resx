@@ -121,6 +121,6 @@
         <value>简洁模式</value>
     </data>
     <data name="S_SimpleMode_Enabled_D" xml:space="preserve">
-        <value>只保留点名和悬浮窗，其余功能及其设置项隐藏并按默认设置运行；切换后需重启生效</value>
+        <value>回归抽取的本质，仅保留点名这个主要功能；其余功能及其设置项隐藏并按默认设置运行，切换后需重启生效</value>
     </data>
 </root>

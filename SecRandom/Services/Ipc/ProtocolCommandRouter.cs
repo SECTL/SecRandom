@@ -182,10 +182,6 @@ public sealed class ProtocolCommandRouter(
 
     private async Task<IpcResponseEnvelope> HandleRollCallAsync(string route, IReadOnlyList<ProtocolQueryItem> query, CancellationToken token)
     {
-        // 简洁模式只提供点名本身，闪抽不属于可用功能
-        if (featureAvailability.IsSimpleModeEnabled && route == "roll_call/quick_draw")
-            return Failure("url", "feature_disabled", "简洁模式下仅支持点名功能。", true);
-
         switch (route)
         {
             case "roll_call/start": return await StartLinkageAsync(

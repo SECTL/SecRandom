@@ -457,7 +457,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
         if (_disposed || _attachedViewCount == 0)
             return;
 
-        var settings = _configHandler.Data.TimerSettings;
+        var settings = _configHandler.Data.EffectiveTimerSettings;
         var idleSeconds = (_clock.ElapsedMilliseconds - _lastActivityAt) / 1000d;
 
         if (!settings.ShouldShrinkToMiniWindow(IsAutoMiniWindowEnabledForCurrentMode(), idleSeconds, _autoMiniWindowTriggered))
@@ -470,7 +470,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     /// <summary>当前模式（倒计时/秒表/时钟）有没有开自动缩小。</summary>
     private bool IsAutoMiniWindowEnabledForCurrentMode()
     {
-        var settings = _configHandler.Data.TimerSettings;
+        var settings = _configHandler.Data.EffectiveTimerSettings;
         return _mode switch
         {
             TimerMode.Countdown => settings.AutoMiniWindowCountdownEnabled,

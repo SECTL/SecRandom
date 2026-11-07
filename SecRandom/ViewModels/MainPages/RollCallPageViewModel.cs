@@ -127,10 +127,10 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         StudentListNames.CollectionChanged += StudentListNamesOnCollectionChanged;
         ResultItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ResultText));
 
-        Config.RollCallSettings.PropertyChanged += SettingsOnPropertyChanged;
-        Config.DefaultDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
-        Config.MoreSettings.PropertyChanged += SettingsOnPropertyChanged;
-        Config.General.HistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
+        Config.EffectiveRollCallSettings.PropertyChanged += SettingsOnPropertyChanged;
+        Config.EffectiveDefaultDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
+        Config.EffectiveMoreSettings.PropertyChanged += SettingsOnPropertyChanged;
+        Config.EffectiveHistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged += SettingsOnPropertyChanged;
 
         RefreshLists();
@@ -155,7 +155,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     public IReadOnlyList<string> LastResultDisplayTitles =>
         _lastResultStudents.Select(FormatStudent).ToArray();
 
-    public MoreSettingsConfig MoreSettings => Config.MoreSettings;
+    public MoreSettingsConfig MoreSettings => Config.EffectiveMoreSettings;
     public bool IsControlPanelOnLeft => MoreSettings.RollCallControlPanelPosition == RollCallControlPanelPosition.Left;
     public bool IsControlPanelOnRight => !IsControlPanelOnLeft;
 
@@ -168,7 +168,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     ///     手写 <c>IsVisible</c> 转换器，是为了让移动端复用同一份 VM 时自动一致。
     /// </remarks>
     public bool IsHistoryGroupSelectorVisible =>
-        Config.General.HistoryGroups.Enabled && MoreSettings.RollCallHistoryGroupSelector;
+        Config.EffectiveHistoryGroups.Enabled && MoreSettings.RollCallHistoryGroupSelector;
 
     public bool CanDecreaseCount => DrawCount > 1;
     public bool CanIncreaseCount => DrawCount < MaximumDrawCount;
@@ -641,10 +641,10 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         StopPreview();
         _ = _drawAudioService?.StopAnimationMusicAsync(0, immediate: true);
         StudentListNames.CollectionChanged -= StudentListNamesOnCollectionChanged;
-        Config.RollCallSettings.PropertyChanged -= SettingsOnPropertyChanged;
-        Config.DefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
-        Config.MoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
-        Config.General.HistoryGroups.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.EffectiveRollCallSettings.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.EffectiveDefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.EffectiveMoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.EffectiveHistoryGroups.PropertyChanged -= SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged -= SettingsOnPropertyChanged;
         _studentListWatcher?.Dispose();
     }
@@ -691,13 +691,13 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (sender == Config.MoreSettings)
+        if (sender == Config.EffectiveMoreSettings)
         {
             OnPropertyChanged(nameof(IsControlPanelOnLeft));
             OnPropertyChanged(nameof(IsControlPanelOnRight));
         }
 
-        if (sender == Config.MoreSettings || sender == Config.General.HistoryGroups)
+        if (sender == Config.EffectiveMoreSettings || sender == Config.EffectiveHistoryGroups)
         {
             // 选择器显隐会改变「当前生效的组」的含义（隐藏即不做组隔离），所以两种开关变化
             // 都要重算派生属性、刷新可选组与计数。
@@ -706,7 +706,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             RefreshCounts();
         }
 
-        if (sender == Config.RollCallSettings && e.PropertyName == nameof(RollCallSettingsConfig.HistoryGroup))
+        if (sender == Config.EffectiveRollCallSettings && e.PropertyName == nameof(RollCallSettingsConfig.HistoryGroup))
         {
             // 默认记录组在设置页被改掉后重新套用一次，回到主页面立刻看到新的初始选择。
             _historyGroupDefaultApplied = false;
@@ -883,7 +883,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     /// <summary>把选择器套用到配置里的默认记录组；默认组已不存在时回落到「默认记录组」。</summary>
     private void ApplyDefaultHistoryGroup()
     {
-        var configured = Config.RollCallSettings.HistoryGroup;
+        var configured = Config.EffectiveRollCallSettings.HistoryGroup;
         var option = string.IsNullOrWhiteSpace(configured) ? DefaultHistoryGroupOption : configured;
         SelectedHistoryGroup = HistoryGroupOptions.Contains(option) ? option : DefaultHistoryGroupOption;
     }
@@ -925,7 +925,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     private void EnsureRestartTemporaryRecordsCleared(string listName)
     {
-        if (Config.RollCallSettings.ClearRecord == ClearRecordMode.Restarted)
+        if (Config.EffectiveRollCallSettings.ClearRecord == ClearRecordMode.Restarted)
             _temporaryRecordService.ClearStudentListOnce(listName);
     }
 
@@ -967,7 +967,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private IEnumerable<Student> GetEligibleCandidates(IEnumerable<Student>? candidates = null)
     {
         var source = candidates ?? GetVisibleStudents();
-        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.RollCallSettings.DrawMode, Config.RollCallSettings.HalfRepeat);
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.EffectiveRollCallSettings.DrawMode, Config.EffectiveRollCallSettings.HalfRepeat);
         var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentHistoryGroup);
         return DrawCandidateFilter.FilterEligibleStudents(source, CurrentGroupScope, CurrentGenderScope, counts, threshold);
     }
@@ -976,7 +976,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     private bool HasReachedRepeatLimit(Student student)
     {
-        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.RollCallSettings.DrawMode, Config.RollCallSettings.HalfRepeat);
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.EffectiveRollCallSettings.DrawMode, Config.EffectiveRollCallSettings.HalfRepeat);
         var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentHistoryGroup);
         return DrawRepeatPolicy.HasReachedLimit(counts.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(student)), threshold);
     }
@@ -1060,7 +1060,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     private double BuildDisplayWeight(Student student)
     {
-        if (Config.RollCallSettings.DrawType != DrawType.Fair)
+        if (Config.EffectiveRollCallSettings.DrawType != DrawType.Fair)
             return 1;
 
         // 显示的权重要和真正抽取时读到的是同一份历史：锁定记录组时只看该组的记录，
@@ -1075,7 +1075,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     private double BuildResultOpacity(double weight)
     {
-        if (!DisplaySettings.ShowWeightTransparency || Config.RollCallSettings.DrawType != DrawType.Fair)
+        if (!DisplaySettings.ShowWeightTransparency || Config.EffectiveRollCallSettings.DrawType != DrawType.Fair)
             return 1;
 
         return Math.Clamp(0.42 + Math.Min(weight, 3) / 3 * 0.58, 0.42, 1);

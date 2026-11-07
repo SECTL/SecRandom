@@ -11,6 +11,7 @@ using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.A
 using BackupConfig = SecRandom.Core.Models.SubConfigs.General.BackupConfig;
 using BasicSettingsConfig = SecRandom.Core.Models.SubConfigs.General.BasicSettingsConfig;
 using GeneralSettingsConfig = SecRandom.Core.Models.SubConfigs.General.GeneralSettingsConfig;
+using HistoryGroupSettingsConfig = SecRandom.Core.Models.SubConfigs.General.HistoryGroupSettingsConfig;
 using DefaultDrawSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.DefaultDrawSettingsConfig;
 using DrawSettingsConfigBase = SecRandom.Core.Models.SubConfigs.Picking.DrawSettingsConfigBase;
 using FairDrawSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.FairDrawSettingsConfig;
@@ -70,6 +71,59 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
     /// </summary>
     [JsonIgnore]
     public bool SimpleModeEnabled => General.SimpleMode.Enabled;
+
+    // 简洁模式：隐藏功能在运行时按默认配置读取。这里只提供读取入口，绝不改写用户存下的真实设置。
+    // 需要区分「主流程状态」（例如上次选中的名单/奖池）时，调用方仍然读取真实配置的那一个字段。
+    [JsonIgnore]
+    public MoreSettingsConfig EffectiveMoreSettings => SimpleModeEnabled ? SimpleModeDefaults.MoreSettings : MoreSettings;
+
+    [JsonIgnore]
+    public DefaultDrawSettingsConfig EffectiveDefaultDrawSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.DefaultDrawSettings : DefaultDrawSettings;
+
+    [JsonIgnore]
+    public RollCallSettingsConfig EffectiveRollCallSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.RollCallSettings : RollCallSettings;
+
+    [JsonIgnore]
+    public QuickDrawSettingsConfig EffectiveQuickDrawSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.QuickDrawSettings : QuickDrawSettings;
+
+    [JsonIgnore]
+    public LotterySettingsConfig EffectiveLotterySettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.LotterySettings : LotterySettings;
+
+    [JsonIgnore]
+    public FairDrawSettingsConfig EffectiveFairDrawSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.FairDrawSettings : FairDrawSettings;
+
+    [JsonIgnore]
+    public FloatingWindowSettingsConfig EffectiveFloatingWindowSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.FloatingWindowSettings : FloatingWindowSettings;
+
+    [JsonIgnore]
+    public LinkageSettingsConfig EffectiveLinkageSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.LinkageSettings : LinkageSettings;
+
+    [JsonIgnore]
+    public VoiceSettingsConfig EffectiveVoiceSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.VoiceSettings : VoiceSettings;
+
+    [JsonIgnore]
+    public NotificationSettingsConfig EffectiveNotificationSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.NotificationSettings : NotificationSettings;
+
+    [JsonIgnore]
+    public HistoryManagementSettingsConfig EffectiveHistoryManagementSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.HistoryManagementSettings : HistoryManagementSettings;
+
+    [JsonIgnore]
+    public TimerSettingsConfig EffectiveTimerSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.TimerSettings : TimerSettings;
+
+    [JsonIgnore]
+    public HistoryGroupSettingsConfig EffectiveHistoryGroups =>
+        SimpleModeEnabled ? SimpleModeDefaults.HistoryGroups : General.HistoryGroups;
 
     [JsonIgnore]
     public BasicSettingsConfig Basic

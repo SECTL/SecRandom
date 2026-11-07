@@ -131,10 +131,10 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         }
         PrizeListNames.CollectionChanged += PrizeListNamesOnCollectionChanged;
         StudentListNames.CollectionChanged += StudentListNamesOnCollectionChanged;
-        Config.LotterySettings.PropertyChanged += SettingsOnPropertyChanged;
-        Config.DefaultDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
-        Config.MoreSettings.PropertyChanged += SettingsOnPropertyChanged;
-        Config.General.HistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
+        Config.EffectiveLotterySettings.PropertyChanged += SettingsOnPropertyChanged;
+        Config.EffectiveDefaultDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
+        Config.EffectiveMoreSettings.PropertyChanged += SettingsOnPropertyChanged;
+        Config.EffectiveHistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged += SettingsOnPropertyChanged;
         RefreshPrizeLists();
         RefreshStudentLists();
@@ -159,7 +159,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     /// </summary>
     public IReadOnlyList<string> LastResultDisplayTitles =>
         _lastResultPrizes.Select(static prize => prize.DisplayText).ToArray();
-    public MoreSettingsConfig MoreSettings => Config.MoreSettings;
+    public MoreSettingsConfig MoreSettings => Config.EffectiveMoreSettings;
     public bool IsControlPanelOnLeft => MoreSettings.LotteryControlPanelPosition == RollCallControlPanelPosition.Left;
     public bool IsControlPanelOnRight => !IsControlPanelOnLeft;
     public bool IsStudentAssignmentEnabled => SelectedStudentListName != NoStudentOption;
@@ -170,7 +170,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     ///     记录组选择器是否出现：功能总闸 + 本页显隐开关 + 指派了学生名单（没有学生名单就没有「人的历史」可隔离）。
     /// </summary>
     public bool IsHistoryGroupSelectorVisible =>
-        Config.General.HistoryGroups.Enabled
+        Config.EffectiveHistoryGroups.Enabled
         && MoreSettings.LotteryHistoryGroupSelector
         && IsStudentAssignmentEnabled;
 
@@ -205,15 +205,15 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         Config.GetOverrideDrawSettings(DrawSettingsType.Lottery, OverridableDrawSettingsType.Music);
     private DrawSettingsConfigBase VoiceAnnouncementSettings =>
         Config.GetOverrideDrawSettings(DrawSettingsType.Lottery, OverridableDrawSettingsType.VoiceAnnouncement);
-    private bool IsLotteryImageEnabled => Config.LotterySettings.OverrideStudentImageSettings
-        ? Config.LotterySettings.LotteryImage
-        : Config.DefaultDrawSettings.StudentImage;
-    private StudentImagePositionMode LotteryImagePosition => Config.LotterySettings.OverrideStudentImageSettings
-        ? Config.LotterySettings.LotteryImagePosition
-        : Config.DefaultDrawSettings.StudentImagePosition;
-    private int LotteryImageSize => Config.LotterySettings.OverrideStudentImageSettings
-        ? Config.LotterySettings.LotteryImageSize
-        : Config.DefaultDrawSettings.StudentImageSize;
+    private bool IsLotteryImageEnabled => Config.EffectiveLotterySettings.OverrideStudentImageSettings
+        ? Config.EffectiveLotterySettings.LotteryImage
+        : Config.EffectiveDefaultDrawSettings.StudentImage;
+    private StudentImagePositionMode LotteryImagePosition => Config.EffectiveLotterySettings.OverrideStudentImageSettings
+        ? Config.EffectiveLotterySettings.LotteryImagePosition
+        : Config.EffectiveDefaultDrawSettings.StudentImagePosition;
+    private int LotteryImageSize => Config.EffectiveLotterySettings.OverrideStudentImageSettings
+        ? Config.EffectiveLotterySettings.LotteryImageSize
+        : Config.EffectiveDefaultDrawSettings.StudentImageSize;
     private string CurrentGroupScope => SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup;
     private string CurrentGenderScope => SelectedGender == AllGendersOption ? string.Empty : SelectedGender;
 
@@ -819,7 +819,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private void RefreshCounts()
     {
         var prizes = GetCurrentPrizes().ToList();
-        TotalCount = Config.LotterySettings.DrawType == LotteryDrawType.Count
+        TotalCount = Config.EffectiveLotterySettings.DrawType == LotteryDrawType.Count
             ? prizes.Sum(prize => Math.Max(0, prize.Count))
             : prizes.Count;
         RemainingCount = CalculateRemainingCount(prizes);
@@ -856,10 +856,10 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private int CalculateRemainingCount(IReadOnlyCollection<Prize> prizes)
     {
         var temporaryCounts = _temporaryRecordService.GetPrizeCounts(SelectedPrizeListName);
-        if (Config.LotterySettings.DrawType == LotteryDrawType.Count)
+        if (Config.EffectiveLotterySettings.DrawType == LotteryDrawType.Count)
             return prizes.Sum(prize => Math.Max(0, prize.Count - GetTemporaryPrizeCount(prize, temporaryCounts)));
 
-        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.LotterySettings.DrawMode, Config.LotterySettings.HalfRepeat);
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.EffectiveLotterySettings.DrawMode, Config.EffectiveLotterySettings.HalfRepeat);
 
         return threshold <= 0
             ? prizes.Count
@@ -872,9 +872,9 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         int displayId)
     {
         var drawn = GetTemporaryPrizeCount(prize, temporaryCounts);
-        var remaining = Config.LotterySettings.DrawType == LotteryDrawType.Count
+        var remaining = Config.EffectiveLotterySettings.DrawType == LotteryDrawType.Count
             ? Math.Max(0, prize.Count - drawn)
-            : Config.LotterySettings.DrawMode == DrawMode.Repeat
+            : Config.EffectiveLotterySettings.DrawMode == DrawMode.Repeat
                 ? Math.Max(1, drawn + 1)
                 : Math.Max(0, GetLotteryRepeatThreshold() - drawn);
         return new LotteryRemainingItem(FormatPrize(prize, displayId), prize.Id, prize.Name, prize.Tags, remaining, drawn);
@@ -888,7 +888,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private int GetLotteryRepeatThreshold()
     {
         // 展示口径：Repeat 视为无限剩余，对应抽取阈值 helper 的 0（不限制）。
-        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.LotterySettings.DrawMode, Config.LotterySettings.HalfRepeat);
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.EffectiveLotterySettings.DrawMode, Config.EffectiveLotterySettings.HalfRepeat);
         return threshold <= 0 ? int.MaxValue : threshold;
     }
 
@@ -898,7 +898,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         IReadOnlyList<Student> studentCandidates,
         string animationMusic)
     {
-        if ((Config.LotterySettings.OverrideDisplaySettings && Config.LotterySettings.LotteryShowRandom < 0)
+        if ((Config.EffectiveLotterySettings.OverrideDisplaySettings && Config.EffectiveLotterySettings.LotteryShowRandom < 0)
             || AnimationSettings.Animation == AnimationMode.NoAnimation)
             return;
 
@@ -1089,7 +1089,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         if (!IsStudentAssignmentEnabled)
             return [];
 
-        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.RollCallSettings.DrawMode, Config.RollCallSettings.HalfRepeat);
+        var threshold = DrawRepeatPolicy.ResolveThreshold(Config.EffectiveRollCallSettings.DrawMode, Config.EffectiveRollCallSettings.HalfRepeat);
         var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentHistoryGroup);
         return DrawCandidateFilter.FilterEligibleStudents(
             _profileService.CurrentStudentList?.Students ?? [],
@@ -1111,13 +1111,13 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
     private void EnsureRestartPrizeRecordsCleared(string listName)
     {
-        if (Config.LotterySettings.ClearRecord == ClearRecordMode.Restarted)
+        if (Config.EffectiveLotterySettings.ClearRecord == ClearRecordMode.Restarted)
             _temporaryRecordService.ClearPrizeListOnce(listName);
     }
 
     private void EnsureRestartStudentRecordsCleared(string listName)
     {
-        if (Config.RollCallSettings.ClearRecord == ClearRecordMode.Restarted)
+        if (Config.EffectiveRollCallSettings.ClearRecord == ClearRecordMode.Restarted)
             _temporaryRecordService.ClearStudentListOnce(listName);
     }
 
@@ -1225,7 +1225,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     /// <summary>把选择器套用到配置里的默认记录组；默认组已不存在时回落到「默认记录组」。</summary>
     private void ApplyDefaultHistoryGroup()
     {
-        var configured = Config.LotterySettings.HistoryGroup;
+        var configured = Config.EffectiveLotterySettings.HistoryGroup;
         var option = string.IsNullOrWhiteSpace(configured) ? DefaultHistoryGroupOption : configured;
         SelectedHistoryGroup = HistoryGroupOptions.Contains(option) ? option : DefaultHistoryGroupOption;
     }
@@ -1255,7 +1255,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (sender == Config.MoreSettings)
+        if (sender == Config.EffectiveMoreSettings)
         {
             OnPropertyChanged(nameof(IsControlPanelOnLeft));
             OnPropertyChanged(nameof(IsControlPanelOnRight));
@@ -1263,7 +1263,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             OnPropertyChanged(nameof(IsGenderSelectorVisible));
         }
 
-        if (sender == Config.MoreSettings || sender == Config.General.HistoryGroups)
+        if (sender == Config.EffectiveMoreSettings || sender == Config.EffectiveHistoryGroups)
         {
             // 选择器显隐会改变「当前生效的组」的含义（隐藏即不做组隔离），两种开关变化都要重算并刷新一轮。
             OnPropertyChanged(nameof(IsHistoryGroupSelectorVisible));
@@ -1271,7 +1271,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             RefreshCounts();
         }
 
-        if (sender == Config.LotterySettings && e.PropertyName == nameof(LotterySettingsConfig.HistoryGroup))
+        if (sender == Config.EffectiveLotterySettings && e.PropertyName == nameof(LotterySettingsConfig.HistoryGroup))
         {
             // 默认记录组在设置页被改掉后重新套用一次，回到主页面立刻看到新的初始选择。
             _historyGroupDefaultApplied = false;
@@ -1298,10 +1298,10 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         StopPreview();
         PrizeListNames.CollectionChanged -= PrizeListNamesOnCollectionChanged;
         StudentListNames.CollectionChanged -= StudentListNamesOnCollectionChanged;
-        Config.LotterySettings.PropertyChanged -= SettingsOnPropertyChanged;
-        Config.DefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
-        Config.MoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
-        Config.General.HistoryGroups.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.EffectiveLotterySettings.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.EffectiveDefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.EffectiveMoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.EffectiveHistoryGroups.PropertyChanged -= SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged -= SettingsOnPropertyChanged;
         _prizeListWatcher?.Dispose();
         _studentListWatcher?.Dispose();

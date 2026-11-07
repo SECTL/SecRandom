@@ -4,6 +4,7 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs;
+using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Models.SubConfigs.Picking;
 
 namespace SecRandom.Core.Services.SimpleMode;
@@ -47,6 +48,21 @@ public static class SimpleModeDefaults
 
     /// <summary>简洁模式下抽取设置使用的默认「点名设置」。</summary>
     public static RollCallSettingsConfig RollCallSettings => Model.RollCallSettings;
+
+    /// <summary>简洁模式下抽取设置使用的默认「闪抽设置」。</summary>
+    public static QuickDrawSettingsConfig QuickDrawSettings => Model.QuickDrawSettings;
+
+    /// <summary>简洁模式下抽取设置使用的默认「默认抽取设置」。</summary>
+    public static DefaultDrawSettingsConfig DefaultDrawSettings => Model.DefaultDrawSettings;
+
+    /// <summary>简洁模式下历史记录组使用的默认设置（总开关关闭）。</summary>
+    public static HistoryGroupSettingsConfig HistoryGroups => Model.General.HistoryGroups;
+
+    /// <summary>简洁模式下历史管理使用的默认设置。</summary>
+    public static HistoryManagementSettingsConfig HistoryManagementSettings => Model.HistoryManagementSettings;
+
+    /// <summary>简洁模式下计时器使用的默认设置。</summary>
+    public static TimerSettingsConfig TimerSettings => Model.TimerSettings;
 
     /// <summary>简洁模式下抽奖设置使用的默认值。</summary>
     public static LotterySettingsConfig LotterySettings => Model.LotterySettings;

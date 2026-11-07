@@ -201,9 +201,11 @@ public partial class FloatingWindow : Window
 
     private IEnumerable<string> GetVisibleButtonNames(FloatingWindowSettingsConfig settings, bool isLotteryEnabled)
     {
+        // 简洁模式回归抽取本身：保留点名与闪抽，抽奖与计时器按钮不显示
         if (IsSimpleMode)
         {
             yield return "roll_call";
+            yield return "quick_draw";
             yield break;
         }
 

@@ -621,7 +621,7 @@ public partial class App : Application
         if (_floatingWindow is not { } window)
             return;
 
-        if (!IAppHost.GetService<MainConfigHandler>().Data.FloatingWindowSettings.StartupDisplayFloatingWindow)
+        if (!IAppHost.GetService<MainConfigHandler>().Data.EffectiveFloatingWindowSettings.StartupDisplayFloatingWindow)
             window.SetUserVisibilityIntent(false);
 
         Dispatcher.UIThread.Post(
@@ -2582,9 +2582,6 @@ public partial class App : Application
 
     public static void ShowQuickDrawWindow()
     {
-        // 简洁模式不提供闪抽
-        if (IsSimpleModeEnabled())
-            return;
         ObserveTask(ShowQuickDrawWindowAsync(), "Quick draw window action failed.");
     }
 
@@ -2596,8 +2593,6 @@ public partial class App : Application
         NotificationChannelSettings windowSettings,
         bool showPreview)
     {
-        if (IsSimpleModeEnabled())
-            return;
         Dispatcher.UIThread.Post(() => ObserveTask(
             ShowQuickDrawNotificationWindowAsync(items, autoCloseTime, animate, preserveQuickDrawResult, windowSettings,
                 showPreview),
@@ -2606,9 +2601,6 @@ public partial class App : Application
 
     public static Task ShowQuickDrawNotificationPreviewWindowAsync(NotificationChannelSettings windowSettings)
     {
-        // 简洁模式不提供闪抽与通知窗口预览
-        if (IsSimpleModeEnabled())
-            return Task.CompletedTask;
         return Dispatcher.UIThread.InvokeAsync(() =>
         {
             _quickDrawNotificationSettings = windowSettings;
@@ -2664,10 +2656,6 @@ public partial class App : Application
 
     private static async Task ShowQuickDrawWindowAsync()
     {
-        // 简洁模式不提供闪抽
-        if (IsSimpleModeEnabled())
-            return;
-
         TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
         using var transaction = telemetry?.StartTransaction("ui.quick_draw_window", "ui.navigation");
 

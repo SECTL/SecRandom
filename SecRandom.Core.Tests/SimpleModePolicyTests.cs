@@ -125,4 +125,50 @@ public sealed class SimpleModePolicyTests
         Assert.False(SimpleModeDefaults.Model.General.SimpleMode.Enabled);
         Assert.True(SimpleModeDefaults.MoreSettings.LotteryEnabled);
     }
+
+    [Fact]
+    public void EffectiveSettings_AreTheRealInstancesWhenSimpleModeIsOff()
+    {
+        var config = new SecRandom.Core.Models.MainConfigModel();
+
+        Assert.Same(config.MoreSettings, config.EffectiveMoreSettings);
+        Assert.Same(config.RollCallSettings, config.EffectiveRollCallSettings);
+        Assert.Same(config.DefaultDrawSettings, config.EffectiveDefaultDrawSettings);
+        Assert.Same(config.General.HistoryGroups, config.EffectiveHistoryGroups);
+    }
+
+    [Fact]
+    public void EffectiveSettings_ReadDefaultsWhileSimpleModeKeepsThePersistedValuesUntouched()
+    {
+        var config = new SecRandom.Core.Models.MainConfigModel();
+        config.General.SimpleMode.Enabled = true;
+        config.MoreSettings.EnableShortcut = true;
+        config.MoreSettings.RollCallResetButton = false;
+        config.RollCallSettings.DrawMode = SecRandom.Core.Enums.Configs.DrawMode.Repeat;
+        config.LotterySettings.DrawMode = SecRandom.Core.Enums.Configs.DrawMode.Repeat;
+        config.DefaultDrawSettings.DrawMode = SecRandom.Core.Enums.Configs.DrawMode.Repeat;
+        config.General.HistoryGroups.Enabled = true;
+        config.FloatingWindowSettings.StartupDisplayFloatingWindow = false;
+
+        Assert.False(config.EffectiveMoreSettings.EnableShortcut);
+        Assert.True(config.EffectiveMoreSettings.RollCallResetButton);
+        Assert.Equal(SecRandom.Core.Enums.Configs.DrawMode.NoRepeat, config.EffectiveRollCallSettings.DrawMode);
+        Assert.Equal(SecRandom.Core.Enums.Configs.DrawMode.NoRepeat, config.EffectiveLotterySettings.DrawMode);
+        Assert.Equal(SecRandom.Core.Enums.Configs.DrawMode.NoRepeat, config.EffectiveDefaultDrawSettings.DrawMode);
+        Assert.False(config.EffectiveHistoryGroups.Enabled);
+        Assert.True(config.EffectiveFloatingWindowSettings.StartupDisplayFloatingWindow);
+
+        // 简洁模式只影响读取，用户存下的真实设置原样保留（settings.json 不会被改写）。
+        Assert.True(config.MoreSettings.EnableShortcut);
+        Assert.False(config.MoreSettings.RollCallResetButton);
+        Assert.Equal(SecRandom.Core.Enums.Configs.DrawMode.Repeat, config.RollCallSettings.DrawMode);
+        Assert.True(config.General.HistoryGroups.Enabled);
+        Assert.False(config.FloatingWindowSettings.StartupDisplayFloatingWindow);
+
+        config.General.SimpleMode.Enabled = false;
+
+        Assert.True(config.EffectiveMoreSettings.EnableShortcut);
+        Assert.Equal(SecRandom.Core.Enums.Configs.DrawMode.Repeat, config.EffectiveRollCallSettings.DrawMode);
+        Assert.True(config.EffectiveHistoryGroups.Enabled);
+    }
 }
