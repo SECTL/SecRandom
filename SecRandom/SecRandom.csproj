@@ -517,6 +517,7 @@
 
     <ItemGroup>
         <Compile Include="..\vendors\EdgeTtsSharp\Edge_tts_sharp\Edge_tts.cs" Link="ThirdParty\EdgeTtsSharp\Edge_tts.cs" />
+        <Compile Include="..\vendors\EdgeTtsSharp\Edge_tts_sharp\EdgeTtsGecToken.cs" Link="ThirdParty\EdgeTtsSharp\EdgeTtsGecToken.cs" />
         <Compile Include="..\vendors\EdgeTtsSharp\Edge_tts_sharp\Tools.cs" Link="ThirdParty\EdgeTtsSharp\Tools.cs" />
         <Compile Include="..\vendors\EdgeTtsSharp\Edge_tts_sharp\Model\eVoice.cs" Link="ThirdParty\EdgeTtsSharp\Model\eVoice.cs" />
         <Compile Include="..\vendors\EdgeTtsSharp\Edge_tts_sharp\Model\PlayOption.cs" Link="ThirdParty\EdgeTtsSharp\Model\PlayOption.cs" />

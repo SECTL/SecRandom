@@ -3,12 +3,11 @@ using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using Edge_tts_sharp;
-using SecRandom.Services.Voice;
 
 namespace SecRandom.Core.Tests;
 
 /// <summary>
-///     Edge 合成接口的 <c>Sec-MS-GEC</c> 令牌：形状、参考向量与连接地址重写。
+///     Edge 合成接口的 <c>Sec-MS-GEC</c> 令牌：形状、参考向量与合成地址。
 /// </summary>
 /// <remarks>
 ///     <para>
@@ -17,14 +16,14 @@ namespace SecRandom.Core.Tests;
 ///         所以任何"顺手换成 <see cref="SHA256" />"的重构都会让这些用例失败——那正是要拦住的回归。
 ///     </para>
 ///     <para>
-///         另一个用例覆盖真正的失效点：子模块拼出的 v1 令牌与 <c>1-</c> 版本号必须被连接接缝整体重写成
-///         v2 令牌与 <c>2-</c> 版本号，否则握手一律 403。
+///         令牌算法住在 <c>vendors/EdgeTtsSharp</c> 子模块（SECTL 自己的仓库）里，App 只消费
+///         <see cref="EdgeTts.CreateSynthesisUri" />；这份测试是 App 侧对子模块行为的回归闸门，
+///         子模块升级后若令牌形状、配对版本或参考向量变了，这里会先失败。
 ///     </para>
 /// </remarks>
 public sealed class EdgeTtsGecTokenTests
 {
     private const string TrustedClientToken = "6A5AA1D4EAFF4E9FB37E23D68491D6F4";
-    private const string ExpectedChromiumVersion = "143.0.3650.75";
 
     [Theory]
     [InlineData(0, "52BC7A17B50DFEC9-28C4394775C8751CD2F6859C030C06DB1489ACAB3B3A7651831FC26895177ED6")]
@@ -89,23 +88,39 @@ public sealed class EdgeTtsGecTokenTests
     }
 
     [Fact]
-    public void 连接地址把子模块的v1令牌与版本号重写成v2()
+    public void 版本号与v2令牌配对()
     {
-        const string SubmoduleUrl =
-            "wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1"
-            + "?TrustedClientToken=6A5AA1D4EAFF4E9FB37E23D68491D6F4"
-            + "&Sec-MS-GEC=00&Sec-MS-GEC-Version=1-130.0.2849.68";
+        // "2-" 前缀不是装饰：配 1-、或只给 v1 令牌，握手都会被 403 拒绝。
+        Assert.Equal("2-143.0.3650.75", EdgeTtsGecToken.SecMsGecVersion);
+        Assert.Equal($"2-{EdgeTtsGecToken.ChromiumVersion}", EdgeTtsGecToken.SecMsGecVersion);
+    }
 
-        var wss = new Wss(SubmoduleUrl);
+    [Fact]
+    public void 合成地址携带当前窗口的v2令牌与版本号()
+    {
+        var parameters = ParseQuery(new Uri(EdgeTts.CreateSynthesisUri()).Query);
+
+        Assert.Equal(TrustedClientToken, parameters["TrustedClientToken"]);
+        Assert.Equal(EdgeTtsGecToken.SecMsGecVersion, parameters["Sec-MS-GEC-Version"]);
+        Assert.Matches("^[0-9A-F]{16}-[0-9A-F]{64}$", parameters["Sec-MS-GEC"]);
+        Assert.Equal(EdgeTtsGecToken.Create(DateTimeOffset.UtcNow), parameters["Sec-MS-GEC"]);
+    }
+
+    [Fact]
+    public void 连接接缝只追加连接标识而不改令牌()
+    {
+        var synthesisUri = new Uri(EdgeTts.CreateSynthesisUri());
+        var expected = ParseQuery(synthesisUri.Query);
+
+        var wss = new Wss(synthesisUri.ToString());
         try
         {
-            var query = RequestUri(wss).Query;
-            var parameters = ParseQuery(query);
+            var actual = ParseQuery(RequestUri(wss).Query);
 
-            Assert.Equal(TrustedClientToken, parameters["TrustedClientToken"]);
-            Assert.Equal($"2-{ExpectedChromiumVersion}", parameters["Sec-MS-GEC-Version"]);
-            Assert.Matches("^[0-9A-F]{16}-[0-9A-F]{64}$", parameters["Sec-MS-GEC"]);
-            Assert.Matches("^[0-9a-f]{32}$", parameters["ConnectionId"]);
+            Assert.Equal(expected["TrustedClientToken"], actual["TrustedClientToken"]);
+            Assert.Equal(expected["Sec-MS-GEC"], actual["Sec-MS-GEC"]);
+            Assert.Equal(expected["Sec-MS-GEC-Version"], actual["Sec-MS-GEC-Version"]);
+            Assert.Matches("^[0-9a-f]{32}$", actual["ConnectionId"]);
         }
         finally
         {
@@ -113,7 +128,7 @@ public sealed class EdgeTtsGecTokenTests
         }
     }
 
-    // Wss 把重写后的地址留在私有字段里，且构造过程不触网，这里只读出来核对。
+    // Wss 把连接地址留在私有字段里，且构造过程不触网，这里只读出来核对。
     private static Uri RequestUri(Wss wss) =>
         (Uri)typeof(Wss)
             .GetField("_uri", BindingFlags.NonPublic | BindingFlags.Instance)!

@@ -39,7 +39,7 @@ the upstream notice set.
 
 Source: https://github.com/SECTL/EdgeTtsSharp (fork of https://github.com/ClassIsland/EdgeTtsSharp, itself a fork of https://github.com/Entity-Now/Edge_tts_sharp)
 
-The repository is included as the `vendors/EdgeTtsSharp` Git submodule (pinned at `45dca0e`) for Edge voice metadata and synthesis protocol code. `SecRandom/SecRandom.csproj` compiles `Edge_tts.cs`, `Tools.cs`, `Model/eVoice.cs`, `Model/PlayOption.cs`, and `Model/Log.cs` from that submodule and embeds `Source/VoiceList.json`, while SecRandom replaces the upstream `Wss`/NAudio pieces with its own app-layer implementations (`SecRandom/Services/Voice/EdgeTtsSharpCompatibility.cs`, `EdgeTtsSharpPlaybackStubs.cs`).
+The repository is included as the `vendors/EdgeTtsSharp` Git submodule (pinned at `5dd3b23`) for Edge voice metadata and synthesis protocol code. `SecRandom/SecRandom.csproj` compiles `Edge_tts.cs`, `EdgeTtsGecToken.cs`, `Tools.cs`, `Model/eVoice.cs`, `Model/PlayOption.cs`, and `Model/Log.cs` from that submodule and embeds `Source/VoiceList.json`, while SecRandom replaces the upstream `Wss`/NAudio pieces with its own app-layer implementations (`SecRandom/Services/Voice/EdgeTtsSharpCompatibility.cs`, `EdgeTtsSharpPlaybackStubs.cs`).
 
 License status (checked 2026-10-04):
 
