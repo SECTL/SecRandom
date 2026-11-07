@@ -25,13 +25,13 @@
     <value>允许验证后继续</value>
   </data>
   <data name="S_External_VerificationRequired_D" xml:space="preserve">
-    <value>仅在已启用非上课时段限制时生效；开启后，通过已配置的安全验证可以临时继续抽取或重置；关闭后将直接阻止</value>
+    <value>仅在已启用非上课时段限制时生效；开启后，通过已配置的安全验证可以临时继续抽取或重置；关闭后课间直接阻止并给出提示</value>
   </data>
   <data name="S_External_InstantDrawDisable" xml:space="preserve">
     <value>限制非上课时段操作</value>
   </data>
   <data name="S_External_InstantDrawDisable_D" xml:space="preserve">
-    <value>课程数据源明确显示处于课间或非上课时段时，限制抽取和重置；关闭后不作限制</value>
+    <value>课程数据源确认处于课间或下课期间时，禁止点名、即时抽取与抽奖的抽取和重置；数据源断开或状态未知时不拦截；关闭后不作限制</value>
   </data>
   <data name="S_External_DataSource" xml:space="preserve">
     <value>数据源</value>
@@ -138,6 +138,8 @@
   <data name="S_ClassTime_PreClassEnableTime_D" xml:space="preserve">
     <value>上课前多少秒提前解除课间禁用</value>
   </data>
+  <data name="M_ClassTimeDrawBlocked" xml:space="preserve"><value>当前处于课间或下课期间，暂时不能抽取；下一节“{0}”还有 {1} 分钟</value></data>
+  <data name="M_ClassTimeDrawBlockedGeneric" xml:space="preserve"><value>当前处于课间或下课期间，暂时不能抽取</value></data>
   <data name="M_CsesSummary" xml:space="preserve"><value>共 {0} 节课，最早 {1:HH:mm}，最晚 {2:HH:mm}</value></data>
   <data name="M_CsesErrorEmpty" xml:space="preserve"><value>CSES 课程表文件为空</value></data>
   <data name="M_CsesErrorRoot" xml:space="preserve"><value>CSES 课程表文件的根节点必须是对象</value></data>
