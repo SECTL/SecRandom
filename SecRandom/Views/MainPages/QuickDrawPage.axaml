@@ -72,7 +72,6 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="vm:QuickDrawResultItem">
                                 <Border Classes="result-animation-item" Margin="4" Padding="14 10" MinWidth="128"
-                                        MaxWidth="360"
                                         CornerRadius="8" BorderThickness="1"
                                         BorderBrush="{Binding AccentBrush}"
                                         Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
@@ -85,9 +84,12 @@
                                                         VerticalAlignment="Center"
                                                         IsVisible="{Binding IsImageBeforeText}" />
                                         <StackPanel Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <!-- 折行宽度必须挂在文字上：卡片所在的水平 StackPanel 测量子元素时给出无限宽度，
+                                                 只在 Border 上设 MaxWidth 会让长姓名被裁切而不是换行。 -->
                                             <TextBlock Text="{Binding DisplayText}"
                                                        TextAlignment="Center"
                                                        TextWrapping="Wrap"
+                                                       MaxWidth="360"
                                                        Foreground="{Binding TextBrush}"
                                                        FontSize="{Binding #QuickDraw.ViewModel.ResultFontSize}"
                                                        FontFamily="{Binding #QuickDraw.ViewModel.ResultFontFamily}"

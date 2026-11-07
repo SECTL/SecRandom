@@ -79,6 +79,7 @@ using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Draw;
 using SecRandom.Services.Notification;
+using SecRandom.Services.Platform;
 using SecRandom.Services.Profiles;
 using SecRandom.Services.RosterTransfer;
 using SecRandom.Services.Ipc;
@@ -2581,9 +2582,9 @@ public partial class App : Application
             quickDraw.NotificationOpacity = Math.Clamp(windowSettings.Transparency, 20, 100);
             var window = GetOrCreateQuickDrawWindow();
             window.Opacity = 1;
+            // 不 Activate：闪抽是覆盖在课堂画面之上的提示，抢焦点会把 PPT/播放器顶到后台
             if (!window.IsVisible)
                 window.Show();
-            window.Activate();
             Dispatcher.UIThread.Post(
                 () => PositionQuickDrawNotificationWindow(window, windowSettings),
                 DispatcherPriority.Render);
@@ -2612,9 +2613,9 @@ public partial class App : Application
         quickDraw.NotificationOpacity = Math.Clamp(windowSettings.Transparency, 20, 100);
         var window = GetOrCreateQuickDrawWindow();
         window.Opacity = 1;
+        // 同上：结果窗只做视觉提示，激活它会打断正在演示的前台程序
         if (!window.IsVisible)
             window.Show();
-        window.Activate();
         if (showPreview)
         {
             quickDraw.ShowNotificationPreview(items, preserveQuickDrawResult);
@@ -2656,8 +2657,7 @@ public partial class App : Application
 
             if (!quickDraw.IsDrawing)
                 await quickDraw.StartAuthorizedTriggeredDrawAsync();
-            else if (_quickDrawWindow is { IsVisible: true })
-                _quickDrawWindow.Activate();
+            // 重复触发时只把已有结果窗留在原位，不再 Activate 夺走前台焦点
             transaction?.Finish(SpanStatus.Ok);
         }
         catch (Exception ex)
@@ -2682,6 +2682,9 @@ public partial class App : Application
             MinHeight = 160,
             SizeToContent = SizeToContent.WidthAndHeight,
             Topmost = true,
+            // 闪抽窗是被悬浮窗按钮叫出来的结果提示，绝不能把前台窗口（PPT、播放器）顶下去：
+            // 首次 Show 不激活，窗口特性里再补 NoActivate，连后续 Show/Hide 循环也不抢焦点。
+            ShowActivated = false,
             WindowStartupLocation = WindowStartupLocation.CenterScreen,
             WindowDecorations = WindowDecorations.None,
             CanMinimize = false,
@@ -2697,6 +2700,9 @@ public partial class App : Application
         quickDrawPage.ResultLayoutChanged += resultLayoutChanged;
         _quickDrawWindow.Opened += (_, _) =>
         {
+            // ShowActivated 只作用于首次显示；原生句柄就绪后补上 NoActivate，
+            // 之后每次复用窗口（Hide 再 Show）都不会再夺焦点。
+            _quickDrawWindow.ApplyPlatformFeatures(WindowFeatures.NoActivate, enabled: true);
             ApplyQuickDrawWindowBounds(_quickDrawWindow);
             RequestQuickDrawWindowCentering(_quickDrawWindow);
         };
