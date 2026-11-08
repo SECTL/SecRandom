@@ -126,7 +126,7 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
 
     /// <summary>简洁模式隐藏高级维护入口（日志/诊断/传输/公告/反馈），只保留数据导入导出。</summary>
     public bool IsAdvancedMenuVisible => !IsSimpleMode;
-    public bool IsAccountVisible => _auth is not null && IsDesktop;
+    public bool IsAccountVisible => _auth is not null && IsDesktop && !IsSimpleMode;
     public bool IsAccountSignedIn => _auth?.IsSignedIn == true;
     public string AccountDisplayName
     {
@@ -1073,15 +1073,26 @@ public partial class SettingsView : ViewBase, IFANavigationPageFactory, INotifyP
             ? SimpleModePolicy.FilterSettingsPages(PagesRegistryService.SettingsItems, info => info.Id).ToList()
             : PagesRegistryService.SettingsItems.ToList();
 
+        // 简洁模式不显示分组收纳，白名单页面直接平铺列出。
+        var useFlatItems = IsSimpleMode;
+
         ViewModel.NavigationViewItems
-            .AddRange(settingsPages
-                .Where(info => info.Location == PageLocation.Top)
-                .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
+            .AddRange(useFlatItems
+                ? settingsPages
+                    .Where(info => info.Location == PageLocation.Top)
+                    .ToFlatNavigationViewItems(ViewModel.FlattenNavigationItems)
+                : settingsPages
+                    .Where(info => info.Location == PageLocation.Top)
+                    .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
 
         ViewModel.NavigationViewFooterItems
-            .AddRange(settingsPages
-                .Where(info => info.Location == PageLocation.Bottom)
-                .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
+            .AddRange(useFlatItems
+                ? settingsPages
+                    .Where(info => info.Location == PageLocation.Bottom)
+                    .ToFlatNavigationViewItems(ViewModel.FlattenNavigationItems)
+                : settingsPages
+                    .Where(info => info.Location == PageLocation.Bottom)
+                    .ToNavigationViewItems(ViewModel.FlattenNavigationItems));
     }
 
     private void CoreNavigate(PageInfo info, bool isBack = false, bool updateNavigationSelection = true)

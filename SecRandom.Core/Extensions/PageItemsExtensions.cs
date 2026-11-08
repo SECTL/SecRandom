@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using DynamicData;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Attributes;
@@ -55,6 +55,27 @@ public static class PageItemsExtensions
                 flattenNavigationItems.Add(item);
             }
 
+            navigationViewItems.Add(item);
+        }
+
+        return navigationViewItems;
+    }
+
+    /// <summary>
+    /// 平铺生成导航项：不读取 <see cref="PagesRegistryService.GroupItems"/>，每个页面单独成项。
+    /// 简洁模式下用它替换分组收纳，白名单页面直接列出。
+    /// </summary>
+    public static List<FANavigationViewItemBase> ToFlatNavigationViewItems(this IEnumerable<PageInfo> infosEnumerable,
+        ObservableCollection<FANavigationViewItemBase> flattenNavigationItems)
+    {
+        List<FANavigationViewItemBase> navigationViewItems = [];
+
+        foreach (var info in infosEnumerable)
+        {
+            if (info.IsHide) continue;
+
+            var item = info.ToNavigationViewItemBase();
+            flattenNavigationItems.Add(item);
             navigationViewItems.Add(item);
         }
 

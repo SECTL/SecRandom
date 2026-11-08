@@ -9,6 +9,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Services.Config;
 using SecRandom.Shared;
 
@@ -92,6 +93,14 @@ public sealed class SectlAuthService(
     {
         if (_initialized)
             return;
+
+        // 简洁模式下登录功能整体关闭：本地即使存着上次的登录态也不恢复，避免"自动登录"。
+        // 这里只读开关本身（重启生效），不清除 token 文件，退出简洁模式重启后仍可继续使用原会话。
+        if (IAppHost.TryGetService<IFeatureAvailabilityService>()?.IsSimpleModeEnabled == true)
+        {
+            _initialized = true;
+            return;
+        }
 
         try
         {
