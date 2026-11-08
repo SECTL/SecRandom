@@ -170,8 +170,9 @@ public partial class FloatingWindow : Window
     /// <param name="pinned">是否钉边。</param>
     /// <param name="onLeft">钉在哪一侧；解除钉住时忽略。</param>
     /// <remarks>
-    ///     钉边是"左右两侧显示"的交互约束：开启后主窗固定在左边缘、副窗固定在右边缘，
+    ///     钉边是"左右两侧显示"的交互约束：开启后主窗固定在右边缘、副窗固定在左边缘，
     ///     用户只能纵向移动，不能被拖到屏幕中间或换到另一侧。解除钉住后恢复原来的吸附/自由拖动行为。
+    ///     主窗固定在右侧，是因为关掉"左右两侧同时显示"后要保留的就是右侧那扇主窗。
     /// </remarks>
     public void SetEdgePinned(bool pinned, bool onLeft)
     {

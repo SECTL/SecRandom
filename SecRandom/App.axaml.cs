@@ -672,7 +672,8 @@ public partial class App : Application
     }
 
     /// <summary>
-    ///     按"左右两侧同时显示"设置布置悬浮窗：开启时主窗钉左、副窗钉右；关闭时收起副窗并解除钉边。
+    ///     按"左右两侧同时显示"设置布置悬浮窗：开启时主窗钉右、副窗钉左；关闭时收起副窗并解除钉边，
+    ///     主窗留在右侧（右侧才是主浮窗，关掉两侧显示后不该让窗口跳到另一边）。
     /// </summary>
     private void ApplyFloatingWindowLayout()
     {
@@ -680,7 +681,7 @@ public partial class App : Application
             return;
 
         var showOnBothSides = IAppHost.GetService<MainConfigHandler>().Data.EffectiveFloatingWindowSettings.ShowOnBothSides;
-        primary.SetEdgePinned(showOnBothSides, onLeft: true);
+        primary.SetEdgePinned(showOnBothSides, onLeft: false);
 
         if (!showOnBothSides)
         {
@@ -697,7 +698,7 @@ public partial class App : Application
         {
             secondary = CreateFloatingWindow(isSecondary: true);
             _secondaryFloatingWindow = secondary;
-            secondary.SetEdgePinned(true, onLeft: false);
+            secondary.SetEdgePinned(true, onLeft: true);
 
             // 两侧高度统一时，副窗的纵向锚点跟着主窗走；先在它打开之前把锚点对齐，
             // 副窗自己的启动定位就会落在与主窗相同的高度上。
@@ -718,7 +719,7 @@ public partial class App : Application
             return;
         }
 
-        secondary.SetEdgePinned(true, onLeft: false);
+        secondary.SetEdgePinned(true, onLeft: true);
         Dispatcher.UIThread.Post(AlignFloatingWindowAnchors, DispatcherPriority.Loaded);
     }
 
