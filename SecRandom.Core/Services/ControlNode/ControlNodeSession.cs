@@ -127,6 +127,10 @@ public sealed class ControlNodeSession
             // 握手成功的第一件事是「占班」：接入时若已经分过班，直接告诉服务端我在上课。
             // 不发这一帧的后果很具体：服务端占用表里没有这台设备 ⇒ 网页上班级详情看不到客户端，
             // 控制台的「允许抽取」开关按占用表广播 ⇒ 推不到这台机器 ⇒ 老师点了允许，远程抽取还是被本机拒。
+            //
+            // 每次重连都要重发，哪怕班级没变：占用表只活在 Hub 进程里，Hub 重启/发版后
+            // 服务端那边已经空了，而本机 _announcedClassId 还记着「说过」⇒ 跳过 ⇒ 网页永远显示没人占班。
+            _announcedClassId = null;
             await AnnounceSelectedClassAsync(cancellationToken).ConfigureAwait(false);
 
             // 用户中途改班级（设置页保存）也要跟上：订阅状态库的变化，只在班级真的变了时才发。
