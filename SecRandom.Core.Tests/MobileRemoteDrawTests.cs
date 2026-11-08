@@ -1258,6 +1258,7 @@ public sealed class MobileRemoteDrawTests : IDisposable
         var page = File.ReadAllText(GetRepositoryPath("SecRandom/Views/Mobile/MobileRemoteDrawPage.axaml"));
         Assert.Contains("ViewModel.ShowEnrollmentEntry", page, StringComparison.Ordinal);
         Assert.Contains("ViewModel.ControlPlaneEndpoint", page, StringComparison.Ordinal);
+        Assert.Contains("ViewModel.SiteId", page, StringComparison.Ordinal);
         Assert.Contains("ViewModel.EnrollmentCode", page, StringComparison.Ordinal);
         Assert.Contains("ViewModel.EnrollCommand", page, StringComparison.Ordinal);
         Assert.Contains("ViewModel.ClearEnrollmentCommand", page, StringComparison.Ordinal);
@@ -1275,9 +1276,9 @@ public sealed class MobileRemoteDrawTests : IDisposable
         Assert.False(viewModel.ShowEndpointField);
     }
 
-    /// <summary>填了接入码点"接入"：就地换到节点令牌、清空输入框、并把设备列表拉起来。</summary>
+    /// <summary>填地点 ID + 配对码点"接入"：换成设备凭据、清空两个输入框、并把设备列表拉起来。</summary>
     [Fact]
-    public async Task 接入_填入接入码后换到节点令牌并自己刷新设备列表()
+    public async Task 接入_填入地点ID与配对码后换成设备凭据并自己刷新设备列表()
     {
         var handler = new RecordingEnrollHandler(_ => Json(HttpStatusCode.OK, EnrollOk()));
         var (viewModel, client, store, _) = CreateEnrollingViewModel(handler);
@@ -1292,6 +1293,7 @@ public sealed class MobileRemoteDrawTests : IDisposable
             return Task.FromResult<IReadOnlyList<GroupDto>>([Group("g1")]);
         };
 
+        viewModel.SiteId = " sc-7k3m9q ";
         viewModel.EnrollmentCode = " 7K3M-9QZX ";
         Assert.True(viewModel.CanEnroll);
 
@@ -1299,65 +1301,73 @@ public sealed class MobileRemoteDrawTests : IDisposable
         await refreshed.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 
         Assert.True(viewModel.IsEnrolled);
-        Assert.Equal("高三（2）班", store.Status.GroupName);
-        Assert.True(store.TryGetAccessToken(out var token));
-        Assert.Equal("srn_node_9_secret", token);
+        Assert.Equal("第一实验学校", store.Status.SiteName);
+        Assert.True(store.TryGetCredential(out var credential));
+        Assert.Equal("dev-9", credential!.DeviceId);
+        Assert.Equal("secret_9", credential.Secret);
+        Assert.Equal("SC-7K3M9Q", credential.SiteId);
 
-        // 接入码用完即清，失败提示为空，卡片自己收起来。
+        // 两个输入框用完即清，失败提示为空，卡片自己收起来。
+        Assert.Equal(string.Empty, viewModel.SiteId);
         Assert.Equal(string.Empty, viewModel.EnrollmentCode);
         Assert.Equal(string.Empty, viewModel.EnrollmentMessage);
         Assert.False(viewModel.ShowEnrollmentEntry);
 
-        // 请求形状：匿名、POST 到契约里的那条路径，带上本机真实平台与设备名（手机没有本地节点）。
+        // 请求形状：匿名、POST 到 v4 契约里的那条路径，双因子都被规范化后再发。
         var request = Assert.Single(handler.Requests);
         Assert.Equal(HttpMethod.Post, request.Method);
-        Assert.Equal("/v1/node/enroll", request.Uri.AbsolutePath);
+        Assert.Equal("/control/api/enroll", request.Uri.AbsolutePath);
         Assert.Null(request.Authorization);
 
         using var body = JsonDocument.Parse(request.Body);
-        Assert.Equal("7K3M-9QZX", body.RootElement.GetProperty("code").GetString());
-        Assert.Equal("android", body.RootElement.GetProperty("platform").GetString());
-        Assert.Equal("Pixel 7", body.RootElement.GetProperty("display_name").GetString());
-        Assert.Equal(GlobalConstants.Version, body.RootElement.GetProperty("version").GetString());
-        Assert.False(body.RootElement.TryGetProperty("node_id", out _));
+        Assert.Equal("SC-7K3M9Q", body.RootElement.GetProperty("siteId").GetString());
+        Assert.Equal("7K3M9QZX", body.RootElement.GetProperty("code").GetString());
+        Assert.Equal("Pixel 7", body.RootElement.GetProperty("deviceName").GetString());
     }
 
-    /// <summary>直接粘贴 <c>srn_…</c> 令牌：不走接入码那条一次性通道，一个请求都不该发。</summary>
+    /// <summary>双因子缺一个都不发请求：只填地点 ID、或只填配对码，按钮是灰的，点了也不发。</summary>
     [Fact]
-    public async Task 接入_直接粘贴令牌时不发接入请求()
+    public async Task 接入_双因子缺一个都不发请求()
     {
         var handler = new RecordingEnrollHandler(_ => Json(HttpStatusCode.OK, EnrollOk()));
         var (viewModel, _, store, _) = CreateEnrollingViewModel(handler);
 
-        viewModel.EnrollmentCode = "srn_pasted_token";
+        viewModel.SiteId = "SC-7K3M9Q";
+        Assert.False(viewModel.CanEnroll);
+        await viewModel.EnrollCommand.ExecuteAsync(null);
 
+        viewModel.SiteId = string.Empty;
+        viewModel.EnrollmentCode = "7K3M-9QZX";
+        Assert.False(viewModel.CanEnroll);
         await viewModel.EnrollCommand.ExecuteAsync(null);
 
         Assert.Equal(0, handler.Calls);
-        Assert.True(store.TryGetAccessToken(out var token));
-        Assert.Equal("srn_pasted_token", token);
-        Assert.Equal(string.Empty, viewModel.EnrollmentCode);
+        Assert.False(store.Status.HasCredential);
+        // 用户填的东西不能被"一次注定失败的点按"清掉。
+        Assert.Equal("7K3M-9QZX", viewModel.EnrollmentCode);
     }
 
-    /// <summary>服务端拒绝时只显示错误码，接入码留着让用户改一个字符重试，且**绝不回显**接入码真值。</summary>
+    /// <summary>服务端拒绝时只显示错误码，双因子输入留着让用户改一个字符重试，且**绝不回显**输入真值。</summary>
     [Fact]
-    public async Task 接入_服务端拒绝时只显示错误码并且接入码留着让人改()
+    public async Task 接入_服务端拒绝时只显示错误码并且双因子留着让人改()
     {
         var handler = new RecordingEnrollHandler(_ =>
-            Json(HttpStatusCode.Unauthorized, """{"code":"enrollment_code_invalid"}"""));
+            Json(HttpStatusCode.NotFound, """{"ok":false,"code":"code_not_found"}"""));
         var (viewModel, _, store, _) = CreateEnrollingViewModel(handler);
 
-        viewModel.EnrollmentCode = "ABC-123";
+        viewModel.SiteId = "SC-7K3M9Q";
+        viewModel.EnrollmentCode = "ABCD-7KQ2";
 
         await viewModel.EnrollCommand.ExecuteAsync(null);
 
         Assert.False(viewModel.IsEnrolled);
-        Assert.False(store.Status.HasToken);
-        Assert.Equal(string.Format(LR.RD_EnrollFailed, "enrollment_code_invalid"), viewModel.EnrollmentMessage);
+        Assert.False(store.Status.HasCredential);
+        Assert.Equal(string.Format(LR.RD_EnrollFailed, "code_not_found"), viewModel.EnrollmentMessage);
         Assert.True(viewModel.HasEnrollmentMessage);
         Assert.True(viewModel.ShowEnrollmentEntry); // 卡片留着，用户能直接重填
-        Assert.Equal("ABC-123", viewModel.EnrollmentCode);
-        Assert.DoesNotContain("ABC-123", viewModel.EnrollmentMessage, StringComparison.Ordinal);
+        Assert.Equal("SC-7K3M9Q", viewModel.SiteId);
+        Assert.Equal("ABCD-7KQ2", viewModel.EnrollmentCode);
+        Assert.DoesNotContain("ABCD-7KQ2", viewModel.EnrollmentMessage, StringComparison.Ordinal);
     }
 
     /// <summary>基址只在点"接入"那一刻落盘（绑定的默认触发器是逐字符更新，边打边写盘是另一回事）。</summary>
@@ -1370,6 +1380,7 @@ public sealed class MobileRemoteDrawTests : IDisposable
         viewModel.ControlPlaneEndpoint = "https://console.example";
         Assert.Equal(0, endpoint.UpdateCalls);
 
+        viewModel.SiteId = "SC-7K3M9Q";
         viewModel.EnrollmentCode = "7K3M-9QZX";
         await viewModel.EnrollCommand.ExecuteAsync(null);
 
@@ -1388,6 +1399,7 @@ public sealed class MobileRemoteDrawTests : IDisposable
         endpoint.AcceptUpdate = false;
 
         viewModel.ControlPlaneEndpoint = "这不是一个地址";
+        viewModel.SiteId = "SC-7K3M9Q";
         viewModel.EnrollmentCode = "7K3M-9QZX";
 
         await viewModel.EnrollCommand.ExecuteAsync(null);
@@ -1638,6 +1650,11 @@ public sealed class MobileRemoteDrawTests : IDisposable
                         HasToken = true,
                         IsExpired = _record.ExpiresAt is { } expires && expires <= DateTimeOffset.UtcNow,
                         NodeId = _record.NodeId,
+                        DeviceId = _record.DeviceId,
+                        SiteId = _record.SiteId,
+                        SiteName = _record.SiteName,
+                        ClassId = _record.ClassId,
+                        ClassName = _record.ClassName,
                         GroupId = _record.GroupId,
                         GroupName = _record.GroupName,
                         ExpiresAt = _record.ExpiresAt
@@ -1669,6 +1686,24 @@ public sealed class MobileRemoteDrawTests : IDisposable
             {
                 accessToken = _record?.NodeToken;
                 return _record is not null;
+            }
+        }
+
+        /// <summary>v4 的凭据通道：手机端接入成功后存的是 deviceId/secret/siteId。</summary>
+        public bool TryGetCredential(out NodeDeviceCredential? credential)
+        {
+            lock (_gate)
+            {
+                credential = _record is null
+                    ? null
+                    : new NodeDeviceCredential(
+                        _record.DeviceId,
+                        _record.Secret,
+                        _record.SiteId,
+                        _record.SiteName,
+                        _record.ClassId,
+                        _record.ClassName);
+                return credential is not null;
             }
         }
 
@@ -1712,11 +1747,12 @@ public sealed class MobileRemoteDrawTests : IDisposable
         Content = new StringContent(body, Encoding.UTF8, "application/json")
     };
 
-    /// <summary>契约里的成功回应；接入码换来的节点令牌放在 <c>node_token</c> 里。</summary>
-    private static string EnrollOk(string nodeToken = "srn_node_9_secret") =>
+    /// <summary>v4 契约里的成功回应：统一信封 <c>{ok,data}</c>，设备凭据只出现这一次。</summary>
+    private static string EnrollOk(string secret = "secret_9", string deviceId = "dev-9") =>
         $$"""
-          { "node_id": "node-9", "group_id": "grp_9", "group_name": "高三（2）班",
-            "node_token": "{{nodeToken}}", "expires_at": "2030-01-02T03:04:05Z" }
+          { "ok": true, "data": { "deviceId": "{{deviceId}}", "secret": "{{secret}}",
+            "site": { "id": "site-1", "publicId": "SC-7K3M9Q", "name": "第一实验学校" },
+            "heartbeatSeconds": 25, "offlineAfterSeconds": 75, "wsPath": "/control/ws" } }
           """;
 
     private sealed record SentEnrollRequest(HttpMethod Method, Uri Uri, string Body, string? Authorization);

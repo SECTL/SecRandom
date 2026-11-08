@@ -5,14 +5,16 @@
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.General"
              xmlns:lc="clr-namespace:SecRandom.Langs.SettingsPages.General.Control"
+             xmlns:cn="clr-namespace:SecRandom.Core.Services.ControlNode;assembly=SecRandom.Core"
              xmlns:vm="clr-namespace:SecRandom.ViewModels.SettingsPages"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.General.ControlSettingsPage"
              x:DataType="vm:ControlSettingsPageViewModel">
     <ScrollViewer>
-        <!-- 分类顺序固定为：远程控制 → 集控平台 → 节点信息 → 连接与状态 → 高级连接设置。
-             身份三项（显示名称 / 节点 ID / 所属组 ID）与最后那组地址卡都**永远可见**。 -->
+        <!-- 分类顺序固定为：远程控制 → 集控平台 → 集控接入 → 连接与状态 → 高级连接设置。
+             接入卡按 v4 的双因子拆成三段：未接入（地点 ID + 配对码）、已接入（地点/本机信息）、班级选择。
+             未接入时后两段隐藏，避免用户以为"填个班级就能被控制"。 -->
         <StackPanel Classes="page-container animated-intro settings">
             <sr:IconText x:Name="S_RemoteControl"
                          Text="{x:Static lc:Resources.S_RemoteControl}"
@@ -56,11 +58,6 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <sr:IconText x:Name="S_NodeInfo"
-                         Text="{x:Static lc:Resources.S_NodeInfo}"
-                         Glyph="{sr:Fi TagFilled}"
-                         Margin="0 12 0 4" />
-
             <fa:FASettingsExpander x:Name="S_RemoteControl_DisplayName"
                                    Header="{x:Static lc:Resources.S_RemoteControl_DisplayName}"
                                    Description="{x:Static lc:Resources.S_RemoteControl_DisplayName_D}"
@@ -74,76 +71,123 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander x:Name="S_RemoteControl_NodeId"
-                                   Header="{x:Static lc:Resources.S_RemoteControl_NodeId}"
-                                   Description="{x:Static lc:Resources.S_RemoteControl_NodeId_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi TagFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <SelectableTextBlock Text="{Binding NodeId}" FontFamily="Consolas,monospace" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
+            <sr:IconText x:Name="S_Enrollment"
+                         Text="{x:Static lc:Resources.S_Enrollment}"
+                         Glyph="{sr:Fi ShieldCheckmarkFilled}"
+                         Margin="0 12 0 4" />
 
-            <fa:FASettingsExpander x:Name="S_RemoteControl_GroupId"
-                                   Header="{x:Static lc:Resources.S_RemoteControl_GroupId}"
-                                   Description="{x:Static lc:Resources.S_RemoteControl_GroupId_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <TextBox Text="{Binding GroupId}" MinWidth="260" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <!-- 接入自建集控：用控制台签发的接入码换一份节点令牌。接入后**不登录 SECTL 也能被远程管理**，
-                 远程抽取页同样可用；未接入时这一页与连接行为跟以前一字不差。
-                 **这张卡不是展开器**：不塞任何 item，全部内容（这一行 + 失败提示）都写在 Footer 里，
-                 所以它没有展开箭头、也没有可折叠的正文区，看起来就是一张普通设置卡。
-                 （FluentAvalonia 的 FASettingsExpander 只要有一个 item 就会渲染展开箭头，
-                 卡片立刻变回"展开式下拉框"——提示绝不能放正文区。）
-                 布局与同页 `S_RemoteControl_ServerUrl` 同构：状态 + 定宽输入框 + 一个动作按钮全在 Footer 的一行里。
-                 "接入"与"清除接入"共用同一格、按条件互斥显隐（见 ShowEnroll/ShowClearEnrollment），
-                 这一格永远恰好有一个按钮，行宽不随状态跳。
-                 令牌真值只进加密存储，界面上从头到尾只有一句状态和一句保证语提示，**没有任何回显路径**。 -->
+            <!-- 未接入：地点 ID + 配对码。两个输入框缺一不可(双因子)，按钮只在两个都归一化成功时可点。
+                 "清除接入"在未接入状态下也可能需要（记录损坏要重接），所以它跟"接入"同排常显。 -->
             <fa:FASettingsExpander x:Name="S_NodeEnrollment"
                                    Header="{x:Static lc:Resources.S_NodeEnrollment}"
                                    Description="{x:Static lc:Resources.S_NodeEnrollment_D}"
+                                   IsVisible="{Binding !IsEnrolled}"
                                    IconSource="{sr:FluentIconSource {sr:Fi ShieldCheckmarkFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <StackPanel Spacing="8">
-                        <!-- 状态定宽 140 且**右对齐**：四句状态（未接入 / 已接入：{组名} / 接入已过期 / 需要重新接入）
-                             都在这里，右对齐让状态紧贴输入框；组名过长按字符省略号截断——
-                             这一行**永远不换行**，宽度也不会随状态跳；
-                             "令牌加密保存在本机"那句保证语搬进悬停提示，不占一行。 -->
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBox Text="{Binding SiteIdInput}"
+                                     Width="130"
+                                     MaxLength="{Binding SiteIdMaxLength}"
+                                     PlaceholderText="{x:Static lc:Resources.S_Enrollment_SiteId_Ph}"
+                                     ToolTip.Tip="{x:Static lc:Resources.S_Enrollment_SiteId_D}" />
+                            <TextBox Text="{Binding PairingCodeInput}"
+                                     Width="150"
+                                     MaxLength="{Binding PairingCodeMaxLength}"
+                                     PlaceholderText="{x:Static lc:Resources.S_Enrollment_PairingCode_Ph}"
+                                     ToolTip.Tip="{x:Static lc:Resources.S_Enrollment_PairingCode_D}" />
+                            <Button Content="{x:Static lc:Resources.C_Enroll}"
+                                    Command="{Binding EnrollCommand}"
+                                    IsEnabled="{Binding CanEnroll}" />
+                            <Button Content="{x:Static lc:Resources.C_ClearEnrollment}"
+                                    Command="{Binding ClearEnrollmentCommand}"
+                                    IsEnabled="{Binding CanClearEnrollment}" />
+                        </StackPanel>
+                        <TextBlock Text="{Binding EnrollmentMessage}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                   IsVisible="{Binding ShowEnrollmentMessage}" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <!-- 已接入：地点（名称 + 公开 ID）、本机名、当前班级，一个"断开接入"动作。
+                 重新接入的路径就是先断开再填新码：设备凭据只在接入时签发一次，
+                 不存在"换地点但保留旧凭据"这种半吊子状态。 -->
+            <fa:FASettingsExpander x:Name="S_Enrolled"
+                                   Header="{x:Static lc:Resources.S_Enrolled}"
+                                   Description="{x:Static lc:Resources.S_Enrolled_D}"
+                                   IsVisible="{Binding IsEnrolled}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="{x:Static lc:Resources.S_Enrollment_Site}"
+                                       Opacity="0.7"
+                                       VerticalAlignment="Center" />
+                            <SelectableTextBlock Text="{Binding EnrolledSiteText}"
+                                                 FontFamily="Consolas,monospace" />
+                            <TextBlock Text="{x:Static lc:Resources.S_Enrollment_Device}"
+                                       Opacity="0.7"
+                                       VerticalAlignment="Center"
+                                       Margin="12 0 0 0" />
+                            <SelectableTextBlock Text="{Binding EnrolledDeviceText}" />
+                        </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="{Binding EnrollmentStatusText}"
-                                       Width="140"
                                        TextAlignment="Right"
                                        TextWrapping="NoWrap"
                                        TextTrimming="CharacterEllipsis"
                                        VerticalAlignment="Center"
                                        ToolTip.Tip="{x:Static lc:Resources.M_Enroll_TokenHint}" />
-                            <!-- 加长度上限挡住"整段文本误粘"（用户也可能贴一份 srn_… 令牌，所以上限取得宽），
-                                 数字来自 VM，界面不写死业务常量。 -->
-                            <TextBox Text="{Binding EnrollmentCode}"
-                                     Width="260"
-                                     MaxLength="{Binding EnrollmentCodeMaxLength}"
-                                     PlaceholderText="{x:Static lc:Resources.S_NodeEnrollment_Code_Ph}" />
-                            <!-- 一个动作格：有接入码就是"接入"，否则有可清记录就是"清除接入"（记录损坏要重接时也能清）。
-                                 IsEnabled 仍分别绑 Can*：显隐只说明"这一格现在是哪个动作"，
-                                 能不能点还取决于"正在接入""接入码是不是空的"。 -->
-                            <Button Content="{x:Static lc:Resources.C_Enroll}"
-                                    Command="{Binding EnrollCommand}"
-                                    IsVisible="{Binding ShowEnroll}"
-                                    IsEnabled="{Binding CanEnroll}" />
                             <Button Content="{x:Static lc:Resources.C_ClearEnrollment}"
                                     Command="{Binding ClearEnrollmentCommand}"
-                                    IsVisible="{Binding ShowClearEnrollment}"
                                     IsEnabled="{Binding CanClearEnrollment}" />
                         </StackPanel>
-                        <!-- 失败才出现的提示：卡片没有正文区（见上），提示就放在 Footer 的第二行；
-                             成功路径上它 IsVisible=false、高度为 0，卡片看起来和其他设置卡完全一样。 -->
-                        <TextBlock Text="{Binding EnrollmentMessage}"
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <!-- 年级 → 班级级联：树只在接入后拉一次，切年级不重新请求；允许"不选班级"。 -->
+            <fa:FASettingsExpander x:Name="S_Enrollment_Class"
+                                   Header="{x:Static lc:Resources.S_Enrollment_Class}"
+                                   Description="{x:Static lc:Resources.S_Enrollment_Class_D}"
+                                   IsVisible="{Binding IsEnrolled}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ComboBox ItemsSource="{Binding GradeOptions}"
+                                      SelectedItem="{Binding SelectedGrade}"
+                                      MinWidth="150"
+                                      PlaceholderText="{x:Static lc:Resources.S_Enrollment_Grade}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="cn:ControlGradeNode">
+                                        <TextBlock Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <ComboBox ItemsSource="{Binding ClassOptions}"
+                                      SelectedItem="{Binding SelectedClass}"
+                                      MinWidth="150"
+                                      PlaceholderText="{x:Static lc:Resources.S_Enrollment_Class_Ph}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="cn:ControlClassNode">
+                                        <TextBlock Text="{Binding Name}" />
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <Button Content="{x:Static lc:Resources.C_SaveClass}"
+                                    Command="{Binding SaveClassCommand}"
+                                    IsEnabled="{Binding CanSaveClass}" />
+                        </StackPanel>
+                        <ProgressBar IsIndeterminate="True"
+                                     Height="4"
+                                     IsVisible="{Binding IsTreeLoading}" />
+                        <TextBlock Text="{Binding ClassSaveMessage}"
                                    TextWrapping="Wrap"
-                                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
-                                   IsVisible="{Binding ShowEnrollmentMessage}" />
+                                   Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                   IsVisible="{Binding ClassSaveMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
                     </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
@@ -186,8 +230,6 @@
                                    Description="{x:Static lc:Resources.S_RemoteControl_ServerUrl_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi GlobeFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <!-- 与下面那条控制面地址用同一套结构（定宽输入框 + 同一个"恢复默认"文案），
-                         两行的总宽度才会一致，不会一条长一条短。 -->
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBox Text="{Binding ServerUrl}" Width="260" />
                         <Button Content="{x:Static lc:Resources.C_RestoreDefaultEndpoint}"

@@ -517,6 +517,7 @@ public class Resources
     public static string RD_EnrollTitle => ResourceManager.GetString("RD_EnrollTitle", resourceCulture)!;
     public static string RD_EnrollHint => ResourceManager.GetString("RD_EnrollHint", resourceCulture)!;
     public static string RD_EnrollCode => ResourceManager.GetString("RD_EnrollCode", resourceCulture)!;
+    public static string RD_SiteId => ResourceManager.GetString("RD_SiteId", resourceCulture)!;
     public static string RD_EnrollAction => ResourceManager.GetString("RD_EnrollAction", resourceCulture)!;
     public static string RD_EnrollClear => ResourceManager.GetString("RD_EnrollClear", resourceCulture)!;
     public static string RD_EnrollFailed => ResourceManager.GetString("RD_EnrollFailed", resourceCulture)!;

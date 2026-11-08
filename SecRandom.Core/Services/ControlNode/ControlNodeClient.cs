@@ -1,6 +1,6 @@
-using System.Net;
 using Microsoft.Extensions.Logging;
 using SecRandom.Shared.Models.ControlNode;
+using SecRandom.Shared.Models.ControlNode.V4;
 
 namespace SecRandom.Core.Services.ControlNode;
 
@@ -13,19 +13,22 @@ namespace SecRandom.Core.Services.ControlNode;
 ///         所有远程控制都是"控制台 → 服务端 → 顺着节点自己的连接推下去"。
 ///     </para>
 ///     <para>
-///         <b>重连策略必须区分两类失败</b>：<c>unauthorized</c> 值得刷新凭据后重试；
-///         <c>invalid_request</c> / <c>node_not_found</c> / <c>group_not_found</c> 重试一万次
-///         也不会成功，只会刷日志并打满服务端——它们进入 <see cref="ControlNodeLinkStatus.Blocked" />
-///         并等待用户修正配置（设置页的"重新连接"会重新唤醒）。
+///         <b>v4 的凭据来自接入记录，不再来自 SECTL 账号</b>：<c>device_id</c> + <c>secret</c>
+///         只在本机加密保存，握手时放在第一帧 <c>hello</c> 的载荷里。
 ///     </para>
 ///     <para>
-///         断线退避是 1s → 2s → 4s → …（上限 60s）加抖动：上百台教室机同时重连会把服务端打满。
+///         <b>重连必须区分两类失败</b>：网络抖动值得退避重试；<c>bad_secret</c>/<c>device_revoked</c>
+///         说明凭据已经作废，<c>protocol_too_old</c> 说明客户端版本太旧——重试一万次也不会成功，
+///         只会刷日志并打满服务端，因此进入 <see cref="ControlNodeLinkStatus.Blocked" />，
+///         等用户重新接入或升级。凭据失效时同时清掉本地记录，避免下次启动又拿同一个坏凭据去撞。
+///     </para>
+///     <para>
+///         断线退避是 1s → 2s → 4s → …（上限 60s）加 ±20% 抖动：上百台教室机同时重连会把服务端打满。
 ///     </para>
 /// </remarks>
 public sealed class ControlNodeClient
 {
     private readonly IControlNodeTransportFactory _transportFactory;
-    private readonly IControlNodeCredentialProvider _credentialProvider;
     private readonly INodeEnrollmentStore? _enrollmentStore;
     private readonly IControlNodeStateStore _stateStore;
     private readonly IControlCommandDispatcher _dispatcher;
@@ -36,33 +39,20 @@ public sealed class ControlNodeClient
 
     private ControlNodeLinkState _linkState = new(ControlNodeLinkStatus.Disabled);
 
-    /// <summary>当前活跃会话（没有连接时为 <c>null</c>）：注销只能发给一条已经建好的连接。</summary>
+    /// <summary>当前活跃会话（没有连接时为 <c>null</c>）。</summary>
     private ControlNodeSession? _activeSession;
 
     /// <summary>
-    ///     自我注销（只在**退出登录**与**换组**时调用）。
+    ///     v4 没有"注销节点"帧：离线只体现在心跳消失，服务端按设备记录保持可见。
+    ///     保留这个方法是为了不破坏既有调用点（退出登录路径），但它是空操作。
     /// </summary>
-    /// <remarks>
-    ///     <para>
-    ///         <b>未连接时直接返回 false，不为注销去连一次</b>：注销是"把已经存在的登记撤掉"，
-    ///         专门建连反而会在退出路径上多花时间，还可能把已经停掉的服务又拉起来。
-    ///     </para>
-    ///     <para>
-    ///         退出程序/关窗口/后台驻留结束/崩溃恢复/更新重启**都不调用**：服务端"登记即列出"，
-    ///         离线只显示 <c>online:false</c>；在关闭路径上注销会让教室机一关软件就从控制台消失。
-    ///         一句话：**退出登录 = 注销；退出程序 = 不注销，保持 offline 可见**。
-    ///     </para>
-    /// </remarks>
     public async Task<bool> DeregisterAsync(
         string groupId,
         TimeSpan timeout,
         CancellationToken cancellationToken = default)
     {
-        var session = Volatile.Read(ref _activeSession);
-        if (session is null)
-            return false;
-
-        return await session.DeregisterAsync(groupId, timeout, cancellationToken).ConfigureAwait(false);
+        await Task.CompletedTask.ConfigureAwait(false);
+        return false;
     }
 
     public ControlNodeClient(
@@ -76,7 +66,6 @@ public sealed class ControlNodeClient
         INodeEnrollmentStore? enrollmentStore = null)
     {
         _transportFactory = transportFactory;
-        _credentialProvider = credentialProvider;
         _enrollmentStore = enrollmentStore;
         _stateStore = stateStore;
         _dispatcher = dispatcher;
@@ -108,7 +97,6 @@ public sealed class ControlNodeClient
         _stateStore.Changed += onStateChanged;
 
         var backoff = _options.InitialBackoff;
-        var consecutiveUnauthorized = 0;
 
         try
         {
@@ -131,21 +119,18 @@ public sealed class ControlNodeClient
                     continue;
                 }
 
-                var token = await TryGetTokenAsync(consecutiveUnauthorized > 0, cancellationToken).ConfigureAwait(false);
-                if (string.IsNullOrWhiteSpace(token))
+                if (!TryGetCredential(out var credential))
                 {
-                    // 取不到凭据的原因有两种，界面文案必须分开：一条是"SECTL 账号没登录"（官方云端，本来的样子），
-                    // 另一条是"这台机器还没接入自建集控"——后者登录 SECTL 也解决不了，提示去填接入码才对。
                     SetLinkState(new ControlNodeLinkState(
                         ControlNodeLinkStatus.Idle,
-                        _enrollmentStore?.Status.HasToken == true
-                            ? ControlNodeCredentialDetailCodes.EnrollmentUnavailable
+                        _enrollmentStore?.Status.IsUnreadable == true
+                            ? "enrollment_unreadable"
                             : ControlNodeCredentialDetailCodes.NotSignedIn));
                     await WaitAsync(TimeSpan.FromSeconds(30), cancellationToken).ConfigureAwait(false);
                     continue;
                 }
 
-                // 明文 ws:// 只允许回环：Bearer 凭据会经过这条链路，不能明文出网。
+                // 明文 ws:// 只允许回环：设备凭据会经过这条链路，不能明文出网。
                 if (!ControlEndpointPolicy.TryValidate(state.ServerUrl, out var endpoint, out var endpointError))
                 {
                     _logger.LogWarning("集控节点地址无效（{Error}）：{Endpoint}", endpointError, state.ServerUrl);
@@ -156,7 +141,7 @@ public sealed class ControlNodeClient
 
                 SetLinkState(new ControlNodeLinkState(ControlNodeLinkStatus.Connecting));
 
-                var result = await RunSingleSessionAsync(state, endpoint!, token, cancellationToken).ConfigureAwait(false);
+                var result = await RunSingleSessionAsync(endpoint!, credential, cancellationToken).ConfigureAwait(false);
 
                 if (result.Reason == ControlSessionEndReason.Stopped)
                     break;
@@ -164,38 +149,27 @@ public sealed class ControlNodeClient
                 if (result.HandshakeCompleted)
                     backoff = _options.InitialBackoff;
 
-                switch (result.Reason)
+                if (result.Reason == ControlSessionEndReason.Terminal)
                 {
-                    case ControlSessionEndReason.Terminal:
-                        // 终态：未注册 / 不是组成员 / 请求非法。重试没有意义，等用户修正后唤醒。
-                        SetLinkState(new ControlNodeLinkState(ControlNodeLinkStatus.Blocked, result.Detail));
-                        await WaitAsync(null, cancellationToken).ConfigureAwait(false);
-                        continue;
+                    if (result.Detail is ControlV4Protocol.ErrorCodes.BadSecret or ControlV4Protocol.ErrorCodes.DeviceRevoked)
+                    {
+                        // 坏凭据不能留在磁盘上：留着只会下次启动继续撞。
+                        _logger.LogWarning("集控设备凭据已失效（{Code}），清空本机接入记录。", result.Detail);
+                        _enrollmentStore?.Clear();
+                        _logger.LogInformation("已清空接入记录，等待用户重新接入。");
+                    }
 
-                    case ControlSessionEndReason.Unauthorized:
-                        consecutiveUnauthorized++;
-                        if (consecutiveUnauthorized >= _options.MaxConsecutiveUnauthorized)
-                        {
-                            _logger.LogWarning("集控节点凭据连续被拒 {Count} 次，停止重试，等待重新登录。", consecutiveUnauthorized);
-                            SetLinkState(new ControlNodeLinkState(ControlNodeLinkStatus.Blocked, "unauthorized"));
-                            await WaitAsync(null, cancellationToken).ConfigureAwait(false);
-                            continue;
-                        }
-
-                        break;
-
-                    default:
-                        consecutiveUnauthorized = 0;
-                        break;
+                    SetLinkState(new ControlNodeLinkState(ControlNodeLinkStatus.Blocked, result.Detail));
+                    await WaitAsync(null, cancellationToken).ConfigureAwait(false);
+                    continue;
                 }
 
                 var delay = NextDelay(backoff);
                 SetLinkState(new ControlNodeLinkState(ControlNodeLinkStatus.WaitingToRetry, result.Detail, delay));
 
                 // 退避等待必须可唤醒：用户翻开关、改地址、点"重新连接"都不该干等最长 60 秒。
-                // 所以走 _wakeSignal 而不是不可取消的 Task.Delay；但**先把残留信号清掉**——
-                // 连接过程中到达的那次唤醒与本轮退避无关，留着它会让退避立刻返回，
-                // 把 1s→2s→4s 的节奏打乱成"看着很勤快"的重连风暴。
+                // 但**先把残留信号清掉**——连接过程中到达的那次唤醒与本轮退避无关，
+                // 留着它会让退避立刻返回，把 1s→2s→4s 的节奏打乱成"看着很勤快"的重连风暴。
                 DrainWakeSignal();
                 await WaitAsync(delay, cancellationToken).ConfigureAwait(false);
                 backoff = TimeSpan.FromTicks(Math.Min(backoff.Ticks * 2, _options.MaxBackoff.Ticks));
@@ -213,31 +187,29 @@ public sealed class ControlNodeClient
     }
 
     private async Task<ControlSessionResult> RunSingleSessionAsync(
-        ControlNodeState state,
         Uri endpoint,
-        string token,
+        NodeDeviceCredential credential,
         CancellationToken cancellationToken)
     {
         IControlNodeTransport? transport = null;
         try
         {
             transport = await _transportFactory
-                .ConnectAsync(new ControlNodeConnectRequest(endpoint.ToString(), token, state.NodeId, state.GroupId), cancellationToken)
+                .ConnectAsync(new ControlNodeConnectRequest(endpoint.ToString()), cancellationToken)
                 .ConfigureAwait(false);
 
             // 停止时主动掐断这条连接：只把取消令牌置位的话，卡在握手或接收上的会话要等到底层
-            // 超时才结束（WebSocket 最长几十秒），而重启路径等不起——同一 node 同时存在两条循环
-            // 会被服务端互相 replaced。取消回调与下面的 finally 会各 Dispose 一次，因此
+            // 超时才结束（WebSocket 最长几十秒），而重启路径等不起——同一 device 同时存在两条循环
+            // 会被服务端互相取代。取消回调与下面的 finally 会各 Dispose 一次，因此
             // DisposeAsync 必须可重复调用（WebSocket 实现本来就是幂等的），这是有意为之。
             using var abortOnCancel = cancellationToken.Register(
                 static state => _ = ((IControlNodeTransport)state!).DisposeAsync(),
                 transport);
 
             var session = new ControlNodeSession(
-                transport, _stateStore, _dispatcher, _options, _sessionLogger);
+                transport, _stateStore, _dispatcher, credential, _options, _sessionLogger);
 
-            // 只有**收到 hello.ack 之后**才算连上：从发起到握手之间，凭据可能被拒、
-            // 节点可能未登记、服务端可能不可达。少了这一步，界面上永远看不到"已连接"。
+            // 只有**收到 hello 的 res.ok:true 之后**才算连上。
             void OnHandshaken(object? sender, int heartbeatSeconds) =>
                 SetLinkState(new ControlNodeLinkState(ControlNodeLinkStatus.Connected));
 
@@ -259,20 +231,12 @@ public sealed class ControlNodeClient
         }
         catch (ControlNodeConnectRejectedException exception)
         {
-            // 连接**建立阶段**就被拒（HTTP 401/403）：与握手后收到 unauthorized 错误帧归入同一条路，
-            // 才能让"令牌被撤销/过期"最终变成 Blocked/"unauthorized"（界面提示需要重新接入），
-            // 而不是被当成断网无限重连——那会让界面一直显示"正在重连"，用户永远等不到该做的动作。
-            // Detail 用统一的原因码而不是 "401"/"403"：这一列是给界面看的，HTTP 状态码只留在日志里。
-            _logger.LogWarning("集控节点连接被服务端拒绝（HTTP {StatusCode}），凭据可能已失效。", (int)exception.StatusCode);
-            return new ControlSessionResult(ControlSessionEndReason.Unauthorized, ControlErrorCodes.Unauthorized);
-        }
-        catch (HttpRequestException exception)
-            when (exception.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
-        {
-            // 不走 WebSocket 升级的传输实现可能直接抛 HttpRequestException，同样归类。
-            var statusCode = exception.StatusCode!.Value;
-            _logger.LogWarning(exception, "集控节点连接被服务端拒绝（HTTP {StatusCode}）。", (int)statusCode);
-            return new ControlSessionResult(ControlSessionEndReason.Unauthorized, ControlErrorCodes.Unauthorized);
+            // 连接**建立阶段**就被拒（HTTP 401/403）：服务端已经明确说凭据不行，不要当成断网。
+            _logger.LogWarning("集控节点连接被服务端拒绝（HTTP {StatusCode}），凭据可能已失效。",
+                (int)(exception.StatusCode ?? 0));
+            return exception.IsTerminal
+                ? new ControlSessionResult(ControlSessionEndReason.Terminal, ControlV4Protocol.ErrorCodes.BadSecret)
+                : new ControlSessionResult(ControlSessionEndReason.ConnectionLost, exception.Code);
         }
         catch (Exception exception)
         {
@@ -287,21 +251,14 @@ public sealed class ControlNodeClient
         }
     }
 
-    private async Task<string?> TryGetTokenAsync(bool forceRefresh, CancellationToken cancellationToken)
+    private bool TryGetCredential(out NodeDeviceCredential credential)
     {
-        try
-        {
-            return await _credentialProvider.TryGetAccessTokenAsync(forceRefresh, cancellationToken).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            throw;
-        }
-        catch (Exception exception)
-        {
-            _logger.LogWarning(exception, "读取节点通道凭据失败。");
-            return null;
-        }
+        credential = default!;
+        if (_enrollmentStore is null || !_enrollmentStore.TryGetCredential(out var stored) || stored is null)
+            return false;
+
+        credential = stored;
+        return !string.IsNullOrWhiteSpace(credential.DeviceId) && !string.IsNullOrWhiteSpace(credential.Secret);
     }
 
     /// <summary>
@@ -333,11 +290,12 @@ public sealed class ControlNodeClient
         }
     }
 
+    /// <summary>退避加 ±20% 抖动，避免上百台设备在同一毫秒重连。</summary>
     private TimeSpan NextDelay(TimeSpan backoff)
     {
-        // 抖动：避免上百台设备在同一毫秒重连。
-        var jitter = TimeSpan.FromMilliseconds(Random.Shared.Next(0, 1000));
-        return backoff + jitter;
+        var ratio = _options.BackoffJitterRatio;
+        var factor = 1d + (Random.Shared.NextDouble() * 2d - 1d) * ratio;
+        return TimeSpan.FromMilliseconds(Math.Max(1d, backoff.TotalMilliseconds * factor));
     }
 
     private void SetLinkState(ControlNodeLinkState state)

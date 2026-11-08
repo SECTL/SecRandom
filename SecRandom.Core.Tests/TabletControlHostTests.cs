@@ -522,7 +522,7 @@ public sealed class TabletControlHostTests
     }
 
     [Fact]
-    public void 接线_接入卡不做展开器且两个按钮互斥显隐()
+    public void 接线_接入卡不做展开器且双因子各自带上限()
     {
         var xaml = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/SettingsPages/General/ControlSettingsPage.axaml"));
         var card = SectionOf(xaml, "x:Name=\"S_NodeEnrollment\"", "</fa:FASettingsExpander>", includeStart: true);
@@ -543,31 +543,42 @@ public sealed class TabletControlHostTests
         // 失败提示跟着 Footer 一起走（卡片没有正文区，放正文区就等于把提示塞进展开器里）。
         Assert.Contains("IsVisible=\"{Binding ShowEnrollmentMessage}\"", footer, StringComparison.Ordinal);
 
-        // 状态右对齐，接入码带上限——上限值由 VM 提供，界面不写死业务数字。
-        Assert.Contains("TextAlignment=\"Right\"", card, StringComparison.Ordinal);
-        Assert.Contains("MaxLength=\"{Binding EnrollmentCodeMaxLength}\"", card, StringComparison.Ordinal);
+        // v4 接入是双因子：地点 ID 与配对码是两个输入框，缺一不可。
+        // 上限由 VM 提供、协议长度由 NodeEnrollmentClient 的常量兜底，界面不写死业务数字。
+        Assert.Contains("Text=\"{Binding SiteIdInput}\"", footer, StringComparison.Ordinal);
+        Assert.Contains("Text=\"{Binding PairingCodeInput}\"", footer, StringComparison.Ordinal);
+        Assert.Contains("MaxLength=\"{Binding SiteIdMaxLength}\"", footer, StringComparison.Ordinal);
+        Assert.Contains("MaxLength=\"{Binding PairingCodeMaxLength}\"", footer, StringComparison.Ordinal);
 
-        // 一个动作格：显隐绑互补的两个属性，IsEnabled 仍分别是各自的 Can*。
-        Assert.Contains("IsVisible=\"{Binding ShowEnroll}\"", card, StringComparison.Ordinal);
-        Assert.Contains("IsVisible=\"{Binding ShowClearEnrollment}\"", card, StringComparison.Ordinal);
+        // 两个动作各自只在自己的 Can* 下可点："清除接入"在未接入但记录损坏时也要能点，所以不再互斥显隐。
         Assert.Contains("IsEnabled=\"{Binding CanEnroll}\"", card, StringComparison.Ordinal);
         Assert.Contains("IsEnabled=\"{Binding CanClearEnrollment}\"", card, StringComparison.Ordinal);
 
         var viewModelSource = File.ReadAllText(GetRepositoryPath(@"SecRandom/ViewModels/SettingsPages/ControlSettingsPageViewModel.cs"));
 
-        // 互补是"这一格永远恰好有一个按钮"的唯一保证；上限是一个具名常量，不是散在 XAML 里的魔法数字。
-        Assert.Contains("public bool ShowEnroll => !ShowClearEnrollment;", viewModelSource, StringComparison.Ordinal);
+        // 双因子缺一不可：只有两个输入都能归一化时才允许接入。
         Assert.Contains(
-            "public bool ShowClearEnrollment => CanClearEnrollment && string.IsNullOrWhiteSpace(EnrollmentCode);",
+            "NodeEnrollmentClient.NormalizeSiteId(SiteIdInput) is not null",
             viewModelSource,
             StringComparison.Ordinal);
         Assert.Contains(
-            "public int EnrollmentCodeMaxLength => NodeEnrollmentClient.MaxCodeLength;",
+            "NodeEnrollmentClient.NormalizePairingCode(PairingCodeInput) is not null",
             viewModelSource,
             StringComparison.Ordinal);
 
+        // 输入上限对得上协议形状：地点 ID 是 SC- 加 6 位（9 字符），配对码是 4+4 带连字符（9 字符）。
+        Assert.Contains("public int SiteIdMaxLength => 9;", viewModelSource, StringComparison.Ordinal);
+        Assert.Contains("public int PairingCodeMaxLength => 9;", viewModelSource, StringComparison.Ordinal);
+
         var clientSource = File.ReadAllText(GetRepositoryPath(@"SecRandom/Services/ControlNode/NodeEnrollmentClient.cs"));
-        Assert.Contains("public const int MaxCodeLength", clientSource, StringComparison.Ordinal);
+        Assert.Contains("public const int SiteIdBodyLength = 6;", clientSource, StringComparison.Ordinal);
+        Assert.Contains("public const int PairingCodeLength = 8;", clientSource, StringComparison.Ordinal);
+
+        // 接入之后的状态行在"已接入"卡里右对齐；未接入卡只留双因子输入与失败提示。
+        var enrolled = SectionOf(xaml, "x:Name=\"S_Enrolled\"", "</fa:FASettingsExpander>", includeStart: true);
+        Assert.Contains("Binding EnrollmentStatusText", enrolled, StringComparison.Ordinal);
+        Assert.Contains("TextAlignment=\"Right\"", enrolled, StringComparison.Ordinal);
+        Assert.DoesNotContain("TextAlignment=\"Right\"", card, StringComparison.Ordinal);
     }
 
     [Fact]

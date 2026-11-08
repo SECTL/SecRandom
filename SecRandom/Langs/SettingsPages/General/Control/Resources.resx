@@ -82,7 +82,7 @@
         <value>已关闭</value>
     </data>
     <data name="M_Status_Idle" xml:space="preserve">
-        <value>等待登录或填写组 ID</value>
+        <value>等待接入</value>
     </data>
     <data name="M_Status_Connecting" xml:space="preserve">
         <value>连接中</value>
@@ -100,7 +100,7 @@
         <value>需要重新接入</value>
     </data>
     <data name="M_Detail_NotConfigured" xml:space="preserve">
-        <value>还没有填写所属组 ID</value>
+        <value>还没有接入集控</value>
     </data>
     <data name="M_Detail_NotSignedIn" xml:space="preserve">
         <value>尚未登录 SECTL 账号</value>
@@ -163,10 +163,10 @@
         <value>打开后主界面侧栏出现『远程抽取』页，可向本组其他设备下发抽取；使用前需要登录账号，服务端仍按组成员角色判定权限；关闭后立刻隐藏</value>
     </data>
     <data name="S_NodeEnrollment" xml:space="preserve">
-        <value>接入自建集控</value>
+        <value>集控接入</value>
     </data>
     <data name="S_NodeEnrollment_D" xml:space="preserve">
-        <value>用控制台签发的接入码接入自建集控，免登录 SECTL</value>
+        <value>用管理员提供的地点 ID 与配对码接入集控，不需要登录 SECTL</value>
     </data>
     <data name="S_NodeEnrollment_Code" xml:space="preserve">
         <value>接入码</value>
@@ -198,8 +198,137 @@
     <data name="M_Enroll_Detail" xml:space="preserve">
         <value>接入失败：{0}</value>
     </data>
-<data name="M_Detail_NotEnrolled" xml:space="preserve"><value>尚未接入自建集控，请在上面的「接入自建集控」卡片里填写控制台签发的接入码</value></data>
+<data name="M_Detail_NotEnrolled" xml:space="preserve"><value>本机尚未接入集控，请在「集控接入」中填写地点 ID 与配对码</value></data>
     <data name="M_Detail_EnrollmentRejected" xml:space="preserve">
-        <value>服务端已拒绝本机接入令牌，请在上面的「接入自建集控」卡片里重新接入</value>
+        <value>设备凭据已失效，请断开后重新接入</value>
+    </data>
+<data name="S_Enrollment" xml:space="preserve">
+        <value>集控接入</value>
+    </data>
+    <data name="S_Enrollment_SiteId_Ph" xml:space="preserve">
+        <value>SC-A1B2C3</value>
+    </data>
+    <data name="S_Enrollment_SiteId_D" xml:space="preserve">
+        <value>形如 SC-K7Q2M9 的地点 ID，由管理员在控制台提供</value>
+    </data>
+    <data name="S_Enrollment_PairingCode_Ph" xml:space="preserve">
+        <value>ABCD-7KQ2</value>
+    </data>
+    <data name="S_Enrollment_PairingCode_D" xml:space="preserve">
+        <value>管理员签发的一次性配对码，只在接入时使用</value>
+    </data>
+    <data name="S_Enrolled" xml:space="preserve">
+        <value>已接入</value>
+    </data>
+    <data name="S_Enrolled_D" xml:space="preserve">
+        <value>本机已持有设备凭据；换地点要先断开再接入</value>
+    </data>
+    <data name="S_Enrollment_Site" xml:space="preserve">
+        <value>地点</value>
+    </data>
+    <data name="S_Enrollment_Device" xml:space="preserve">
+        <value>本机</value>
+    </data>
+    <data name="S_Enrollment_Grade" xml:space="preserve">
+        <value>年级</value>
+    </data>
+    <data name="S_Enrollment_Class" xml:space="preserve">
+        <value>班级</value>
+    </data>
+    <data name="S_Enrollment_Class_D" xml:space="preserve">
+        <value>选择本机所属班级，控制台按班级下发指令；也可以暂不选择</value>
+    </data>
+    <data name="S_Enrollment_Class_Ph" xml:space="preserve">
+        <value>不选择班级</value>
+    </data>
+    <data name="C_SaveClass" xml:space="preserve">
+        <value>保存班级</value>
+    </data>
+    <data name="M_Enroll_Success" xml:space="preserve">
+        <value>已接入 {0}</value>
+    </data>
+    <data name="M_Enroll_UnknownSite" xml:space="preserve">
+        <value>未知地点</value>
+    </data>
+    <data name="M_Enroll_Class_Saved" xml:space="preserve">
+        <value>班级已保存</value>
+    </data>
+    <data name="M_Enroll_Class_None" xml:space="preserve">
+        <value>已设为不绑定班级</value>
+    </data>
+    <data name="M_Enroll_Class_NotSelected" xml:space="preserve">
+        <value>未选择班级</value>
+    </data>
+    <data name="M_Enroll_Err_SiteNotFound" xml:space="preserve">
+        <value>地点 ID 不存在，请核对控制台显示的地点编号</value>
+    </data>
+    <data name="M_Enroll_Err_CodeNotFound" xml:space="preserve">
+        <value>配对码不对，请重新输入</value>
+    </data>
+    <data name="M_Enroll_Err_SiteMismatch" xml:space="preserve">
+        <value>这个配对码不属于该地点</value>
+    </data>
+    <data name="M_Enroll_Err_CodeExpired" xml:space="preserve">
+        <value>配对码已过期，请让管理员重新签发</value>
+    </data>
+    <data name="M_Enroll_Err_CodeUsed" xml:space="preserve">
+        <value>配对码次数已用完，请让管理员重新签发</value>
+    </data>
+    <data name="M_Enroll_Err_Revoked" xml:space="preserve">
+        <value>配对码已被撤销，请让管理员重新签发</value>
+    </data>
+    <data name="M_Enroll_Err_Platform" xml:space="preserve">
+        <value>该配对码不允许接入 SecRandom</value>
+    </data>
+    <data name="M_Enroll_Err_Conflict" xml:space="preserve">
+        <value>这台电脑已经接在「{0}」了，请先在那里断开</value>
+    </data>
+    <data name="M_Enroll_Err_TooMany" xml:space="preserve">
+        <value>尝试太频繁，请稍后再试</value>
+    </data>
+    <data name="M_Enroll_Err_Invalid" xml:space="preserve">
+        <value>请求格式错误，请确认输入的地点和配对码</value>
+    </data>
+    <data name="M_Enroll_Err_Network" xml:space="preserve">
+        <value>无法连接集控服务端，请检查网络与控制面地址</value>
+    </data>
+    <data name="M_Enroll_Err_Assign" xml:space="preserve">
+        <value>保存班级失败，请稍后重试</value>
+    </data>
+    <data name="M_Enroll_Err_Tree" xml:space="preserve">
+        <value>读取年级/班级失败，请确认设备仍已接入</value>
+    </data>
+    <data name="M_Enroll_Err_NoCredential" xml:space="preserve">
+        <value>本机没有可用的设备凭据，请重新接入</value>
+    </data>
+    <data name="M_Detail_ProtocolTooOld" xml:space="preserve">
+        <value>服务端协议版本过旧，请升级集控服务端</value>
+    </data>
+    <data name="Broadcast_Title" xml:space="preserve">
+        <value>集控广播</value>
+    </data>
+    <data name="Broadcast_Countdown" xml:space="preserve">
+        <value>{0} 秒后自动关闭</value>
+    </data>
+    <data name="LockScreen_Message_Default" xml:space="preserve">
+        <value>本机已被控制台锁定</value>
+    </data>
+    <data name="LockScreen_AutoUnlock" xml:space="preserve">
+        <value>{0} 秒后自动解锁</value>
+    </data>
+    <data name="LockScreen_LongPress_Hint" xml:space="preserve">
+        <value>长按右下角 5 秒解锁</value>
+    </data>
+    <data name="LockScreen_Hold_Progress" xml:space="preserve">
+        <value>继续按住 {0} 秒</value>
+    </data>
+    <data name="LockScreen_Confirm" xml:space="preserve">
+        <value>确定要解除锁屏吗</value>
+    </data>
+    <data name="C_Unlock" xml:space="preserve">
+        <value>解锁</value>
+    </data>
+    <data name="C_Cancel" xml:space="preserve">
+        <value>取消</value>
     </data>
 </root>

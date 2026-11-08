@@ -587,5 +587,91 @@ namespace SecRandom.Langs.SettingsPages.General.Control {
                 return ResourceManager.GetString("M_Enroll_Detail", resourceCulture);
             }
         }
+
+        public static string S_Enrollment => ResourceManager.GetString("S_Enrollment", resourceCulture);
+
+        public static string S_Enrollment_SiteId_Ph => ResourceManager.GetString("S_Enrollment_SiteId_Ph", resourceCulture);
+
+        public static string S_Enrollment_SiteId_D => ResourceManager.GetString("S_Enrollment_SiteId_D", resourceCulture);
+
+        public static string S_Enrollment_PairingCode_Ph => ResourceManager.GetString("S_Enrollment_PairingCode_Ph", resourceCulture);
+
+        public static string S_Enrollment_PairingCode_D => ResourceManager.GetString("S_Enrollment_PairingCode_D", resourceCulture);
+
+        public static string S_Enrolled => ResourceManager.GetString("S_Enrolled", resourceCulture);
+
+        public static string S_Enrolled_D => ResourceManager.GetString("S_Enrolled_D", resourceCulture);
+
+        public static string S_Enrollment_Site => ResourceManager.GetString("S_Enrollment_Site", resourceCulture);
+
+        public static string S_Enrollment_Device => ResourceManager.GetString("S_Enrollment_Device", resourceCulture);
+
+        public static string S_Enrollment_Grade => ResourceManager.GetString("S_Enrollment_Grade", resourceCulture);
+
+        public static string S_Enrollment_Class => ResourceManager.GetString("S_Enrollment_Class", resourceCulture);
+
+        public static string S_Enrollment_Class_D => ResourceManager.GetString("S_Enrollment_Class_D", resourceCulture);
+
+        public static string S_Enrollment_Class_Ph => ResourceManager.GetString("S_Enrollment_Class_Ph", resourceCulture);
+
+        public static string C_SaveClass => ResourceManager.GetString("C_SaveClass", resourceCulture);
+
+        public static string M_Enroll_Success => ResourceManager.GetString("M_Enroll_Success", resourceCulture);
+
+        public static string M_Enroll_UnknownSite => ResourceManager.GetString("M_Enroll_UnknownSite", resourceCulture);
+
+        public static string M_Enroll_Class_Saved => ResourceManager.GetString("M_Enroll_Class_Saved", resourceCulture);
+
+        public static string M_Enroll_Class_None => ResourceManager.GetString("M_Enroll_Class_None", resourceCulture);
+
+        public static string M_Enroll_Class_NotSelected => ResourceManager.GetString("M_Enroll_Class_NotSelected", resourceCulture);
+
+        public static string M_Enroll_Err_SiteNotFound => ResourceManager.GetString("M_Enroll_Err_SiteNotFound", resourceCulture);
+
+        public static string M_Enroll_Err_CodeNotFound => ResourceManager.GetString("M_Enroll_Err_CodeNotFound", resourceCulture);
+
+        public static string M_Enroll_Err_SiteMismatch => ResourceManager.GetString("M_Enroll_Err_SiteMismatch", resourceCulture);
+
+        public static string M_Enroll_Err_CodeExpired => ResourceManager.GetString("M_Enroll_Err_CodeExpired", resourceCulture);
+
+        public static string M_Enroll_Err_CodeUsed => ResourceManager.GetString("M_Enroll_Err_CodeUsed", resourceCulture);
+
+        public static string M_Enroll_Err_Revoked => ResourceManager.GetString("M_Enroll_Err_Revoked", resourceCulture);
+
+        public static string M_Enroll_Err_Platform => ResourceManager.GetString("M_Enroll_Err_Platform", resourceCulture);
+
+        public static string M_Enroll_Err_Conflict => ResourceManager.GetString("M_Enroll_Err_Conflict", resourceCulture);
+
+        public static string M_Enroll_Err_TooMany => ResourceManager.GetString("M_Enroll_Err_TooMany", resourceCulture);
+
+        public static string M_Enroll_Err_Invalid => ResourceManager.GetString("M_Enroll_Err_Invalid", resourceCulture);
+
+        public static string M_Enroll_Err_Network => ResourceManager.GetString("M_Enroll_Err_Network", resourceCulture);
+
+        public static string M_Enroll_Err_Assign => ResourceManager.GetString("M_Enroll_Err_Assign", resourceCulture);
+
+        public static string M_Enroll_Err_Tree => ResourceManager.GetString("M_Enroll_Err_Tree", resourceCulture);
+
+        public static string M_Enroll_Err_NoCredential => ResourceManager.GetString("M_Enroll_Err_NoCredential", resourceCulture);
+
+        public static string M_Detail_ProtocolTooOld => ResourceManager.GetString("M_Detail_ProtocolTooOld", resourceCulture);
+
+        public static string Broadcast_Title => ResourceManager.GetString("Broadcast_Title", resourceCulture);
+
+        public static string Broadcast_Countdown => ResourceManager.GetString("Broadcast_Countdown", resourceCulture);
+
+        public static string LockScreen_Message_Default => ResourceManager.GetString("LockScreen_Message_Default", resourceCulture);
+
+        public static string LockScreen_AutoUnlock => ResourceManager.GetString("LockScreen_AutoUnlock", resourceCulture);
+
+        public static string LockScreen_LongPress_Hint => ResourceManager.GetString("LockScreen_LongPress_Hint", resourceCulture);
+
+        public static string LockScreen_Hold_Progress => ResourceManager.GetString("LockScreen_Hold_Progress", resourceCulture);
+
+        public static string LockScreen_Confirm => ResourceManager.GetString("LockScreen_Confirm", resourceCulture);
+
+        public static string C_Unlock => ResourceManager.GetString("C_Unlock", resourceCulture);
+
+        public static string C_Cancel => ResourceManager.GetString("C_Cancel", resourceCulture);
     }
 }

@@ -3,120 +3,185 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.ControlNode;
+using SecRandom.Shared.Models.ControlNode.V4;
 
 namespace SecRandom.Core.Tests;
 
 /// <summary>
-///     Contract tests for the <c>control-v1</c> frame shapes, the node endpoint policy, and the persisted
-///     node state (identity, local switch, applied desired-state revision).
+///     v4.1 的帧形状、节点通道地址策略与本机状态的契约测试。
 /// </summary>
 public sealed class ControlNodeContractsTests
 {
     [Fact]
-    public void SerializedFrames_UseProtocolFieldNames_AndOmitAbsentOnes()
+    public void 序列化帧使用协议字段名且省略缺省字段()
     {
-        var json = ControlProtocolJson.Serialize(new ControlFrame
+        var json = ControlV4Json.Serialize(new ControlV4Frame
         {
-            Type = ControlFrameTypes.Hello,
-            NodeId = "node-1",
-            GroupId = "grp-1",
-            Capabilities = [ControlCapabilities.StatusRead],
-            LocalRemoteAllowed = true
+            Type = ControlV4Protocol.FrameTypeRequest,
+            Id = "hello-1",
+            Topic = ControlV4Protocol.Topics.Hello,
+            Payload = ControlV4Json.ToElement(new ControlV4Hello
+            {
+                DeviceId = "dev-1",
+                Secret = "secret-1",
+                DeviceName = "301班讲台机",
+                Version = "1.0.0",
+                Capabilities = [ControlCapabilities.Broadcast]
+            })
         });
 
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
 
-        Assert.Equal("hello", root.GetProperty("type").GetString());
-        Assert.Equal("node-1", root.GetProperty("node_id").GetString());
-        Assert.Equal("grp-1", root.GetProperty("group_id").GetString());
-        Assert.True(root.GetProperty("local_remote_allowed").GetBoolean());
+        Assert.Equal("req", root.GetProperty("type").GetString());
+        Assert.Equal("hello-1", root.GetProperty("id").GetString());
+        Assert.Equal("hello", root.GetProperty("topic").GetString());
 
-        // 字段缺失与 null 等价：没有值的字段不该出现在帧里。
-        Assert.False(root.TryGetProperty("command_id", out _));
-        Assert.False(root.TryGetProperty("desired_state_revision", out _));
+        var payload = root.GetProperty("payload");
+        Assert.Equal(4, payload.GetProperty("protocol").GetInt32());
+        Assert.Equal("secrandom", payload.GetProperty("platform").GetString());
+        Assert.Equal("dev-1", payload.GetProperty("device_id").GetString());
+        Assert.Equal("secret-1", payload.GetProperty("secret").GetString());
+        Assert.Equal("301班讲台机", payload.GetProperty("device_name").GetString());
+        Assert.False(payload.TryGetProperty("class_id", out _));
     }
 
-    /// <summary>
-    ///     显示名用协议的 <c>display_name</c>；**没有名字时整个字段缺席**。
-    /// </summary>
-    /// <remarks>
-    ///     缺席与空串在服务端是两件事：缺席 = 保持原值，空串 = 清除。因此"本机没有名字可报"
-    ///     绝不能序列化成空串，否则会把管理端预置的名字抹掉。
-    /// </remarks>
     [Fact]
-    public void SerializedFrame_CarriesDisplayName_AndOmitsItWhenThereIsNone()
+    public void 应答帧在失败时携带错误码_成功时不携带()
     {
-        var json = ControlProtocolJson.Serialize(new ControlFrame
+        var ok = ControlV4Json.ToElement(new ControlV4Frame
         {
-            Type = ControlFrameTypes.Hello,
-            NodeId = "node-1",
-            GroupId = "grp-1",
-            DisplayName = "301班讲台机"
+            Type = ControlV4Protocol.FrameTypeResponse,
+            Id = "hello-1",
+            Ok = true
         });
+        Assert.True(ok.GetProperty("ok").GetBoolean());
+        Assert.False(ok.TryGetProperty("code", out _));
 
-        using var document = JsonDocument.Parse(json);
-        Assert.Equal("301班讲台机", document.RootElement.GetProperty("display_name").GetString());
-
-        var bare = ControlProtocolJson.Serialize(new ControlFrame { Type = ControlFrameTypes.Hello });
-
-        using var bareDocument = JsonDocument.Parse(bare);
-        Assert.False(bareDocument.RootElement.TryGetProperty("display_name", out _));
+        var failed = ControlV4Json.ToElement(new ControlV4Frame
+        {
+            Type = ControlV4Protocol.FrameTypeResponse,
+            Id = "hello-1",
+            Ok = false,
+            Code = ControlV4Protocol.ErrorCodes.BadSecret
+        });
+        Assert.False(failed.GetProperty("ok").GetBoolean());
+        Assert.Equal("bad_secret", failed.GetProperty("code").GetString());
     }
 
     [Fact]
-    public void TryParse_AcceptsUnknownFields_AndRejectsFramesWithoutType()
+    public void TryParse_接受未知字段_拒绝缺type或非JSON()
     {
-        var withUnknownField = ControlProtocolJson.TryParse(
-            """{"type":"hello.ack","heartbeat_seconds":25,"future_field":{"a":1}}""");
-
-        Assert.NotNull(withUnknownField);
-        Assert.Equal(25, withUnknownField!.HeartbeatSeconds);
-
-        Assert.Null(ControlProtocolJson.TryParse("""{"heartbeat_seconds":25}"""));
-        Assert.Null(ControlProtocolJson.TryParse("not json at all"));
-        Assert.Null(ControlProtocolJson.TryParse(""));
-    }
-
-    [Fact]
-    public void DesiredStateRevision_IsReadAs64Bit()
-    {
-        // 服务端按 max(旧值 + 1, 当前毫秒) 生成，数值约 1.7×10¹²：32 位接收会溢出。
-        var frame = ControlProtocolJson.TryParse("""{"type":"desired_state","desired_state_revision":1759572000123}""");
+        var frame = ControlV4Json.TryParse(
+            """{"type":"res","id":"hello-1","ok":true,"payload":{"heartbeat_seconds":25,"future_field":{"a":1}}}""");
 
         Assert.NotNull(frame);
-        Assert.Equal(1_759_572_000_123L, frame!.DesiredStateRevision);
+        Assert.Equal("hello-1", frame!.Id);
+        Assert.True(frame.Ok);
+
+        // 未知字段不参与解析，但不会让整帧失败：服务端加字段时老客户端要继续能用。
+        var ack = ControlV4HelloAck.Parse(frame.Payload);
+        Assert.Equal(25, ack!.HeartbeatSeconds);
+
+        Assert.Null(ControlV4Json.TryParse("""{"id":"hello-1"}"""));
+        Assert.Null(ControlV4Json.TryParse("not json at all"));
+        Assert.Null(ControlV4Json.TryParse(""));
     }
 
     [Fact]
-    public void ReadDesiredState_ReadsOnlyDrawLocked_AndIgnoresEverythingElse()
+    public void HelloAck_缺少draw_locked时按锁定处理_缺省心跳用25秒()
     {
-        var locked = ControlProtocolJson.ReadDesiredState(JsonSerializer.SerializeToElement(new { draw_locked = true }));
-        Assert.NotNull(locked);
-        Assert.True(locked!.DrawLocked);
+        // fail-closed：服务端没说"允许抽"，就不允许抽。少了一个字段就放开是本项目的红线。
+        var ack = ControlV4HelloAck.Parse(JsonSerializer.SerializeToElement(new { desired_state_revision = 9L }));
+        Assert.NotNull(ack);
+        Assert.True(ack!.DrawLocked);
+        Assert.Equal(25, ack!.HeartbeatSeconds);
+        Assert.Equal(75, ack!.OfflineAfterSeconds);
+        Assert.Equal(9L, ack!.DesiredStateRevision);
 
-        var unlocked = ControlProtocolJson.ReadDesiredState(JsonSerializer.SerializeToElement(new { draw_locked = false }));
+        var unlocked = ControlV4HelloAck.Parse(JsonSerializer.SerializeToElement(new
+        {
+            draw_locked = false,
+            heartbeat_seconds = 10,
+            offline_after_seconds = 30,
+            device = new { id = "dev-1", name = "讲台机" }
+        }));
         Assert.False(unlocked!.DrawLocked);
+        Assert.Equal(10, unlocked!.HeartbeatSeconds);
+        Assert.Equal(30, unlocked!.OfflineAfterSeconds);
+        Assert.Equal("dev-1", unlocked!.DeviceId);
+        Assert.Equal("讲台机", unlocked!.DeviceName);
 
-        Assert.Null(ControlProtocolJson.ReadDesiredState(JsonSerializer.SerializeToElement(new { other = true })));
-        Assert.Null(ControlProtocolJson.ReadDesiredState(JsonSerializer.SerializeToElement(new { draw_locked = "yes" })));
-        Assert.Null(ControlProtocolJson.ReadDesiredState(null));
+        // 没有 payload（老服务端/异常响应）→ 返回 fail-closed 的默认值：锁定 + 兜底心跳，
+// 绝不能因为「没解析出字段」就当成允许抽取。
+        var missing = ControlV4HelloAck.Parse(null);
+        Assert.True(missing.DrawLocked);
+        Assert.Equal(25, missing.HeartbeatSeconds);
+        Assert.Equal(75, missing.OfflineAfterSeconds);
+    }
+
+    [Fact]
+    public void DesiredState_读取64位revision和缺失的draw_locked()
+    {
+        // 服务端按 max(旧值 + 1, 当前毫秒) 生成，数值约 1.7×10¹²：32 位接收会溢出。
+        var parsed = ControlV4DesiredState.TryParse(JsonSerializer.SerializeToElement(new
+        {
+            revision = 1_759_572_000_123L,
+            class_id = "class-1",
+            draw_locked = true
+        }));
+
+        Assert.NotNull(parsed);
+        Assert.Equal(1_759_572_000_123L, parsed!.Revision);
+        Assert.Equal("class-1", parsed!.ClassId);
+        Assert.True(parsed!.DrawLocked);
+
+        var lockedByDefault = ControlV4DesiredState.TryParse(
+            JsonSerializer.SerializeToElement(new { revision = 5L }));
+        Assert.Null(lockedByDefault!.DrawLocked);
+
+        Assert.Null(ControlV4DesiredState.TryParse(
+            JsonSerializer.SerializeToElement(new { class_id = "class-1" })));
+    }
+
+    [Fact]
+    public void Command_读取毫秒expires_at与命令名()
+    {
+        var parsed = ControlV4Command.TryParse(JsonSerializer.SerializeToElement(new
+        {
+            command_id = "cmd-1",
+            cmd = "draw.trigger",
+            args = new { roster_kind = "students" },
+            issuer = "user-1",
+            expires_at = 1_759_572_000_123L
+        }), out var command);
+
+        Assert.True(parsed);
+        Assert.Equal("cmd-1", command!.CommandId);
+        Assert.Equal("draw.trigger", command!.Cmd);
+        Assert.Equal(1_759_572_000_123L, command!.ExpiresAt);
+        Assert.Equal("user-1", command!.Issuer);
+
+        Assert.False(ControlV4Command.TryParse(
+            JsonSerializer.SerializeToElement(new { cmd = "draw.trigger" }), out _));
+        Assert.False(ControlV4Command.TryParse(
+            JsonSerializer.SerializeToElement(new { command_id = "cmd-1" }), out _));
     }
 
     [Theory]
-    [InlineData("wss://secrandom-control.sectl.cn/v1/node/connect", true)]
-    [InlineData("ws://127.0.0.1:8791/v1/node/connect", true)]
-    [InlineData("ws://localhost:8791/v1/node/connect", true)]
-    [InlineData("ws://[::1]:8791/v1/node/connect", true)]
-    [InlineData("ws://example.com/v1/node/connect", false)]
-    [InlineData("http://secrandom-control.sectl.cn/v1/node/connect", false)]
-    [InlineData("wss://user:secret@secrandom-control.sectl.cn/v1/node/connect", false)]
-    [InlineData("wss://secrandom-control.sectl.cn/v1/node/connect?token=abc", false)]
-    [InlineData("wss://secrandom-control.sectl.cn/v1/node/connect#frag", false)]
+    [InlineData("wss://sectl.cn/control/ws", true)]
+    [InlineData("ws://127.0.0.1:8791/control/ws", true)]
+    [InlineData("ws://localhost:8791/control/ws", true)]
+    [InlineData("ws://[::1]:8791/control/ws", true)]
+    [InlineData("ws://example.com/control/ws", false)]
+    [InlineData("http://sectl.cn/control/ws", false)]
+    [InlineData("wss://user:secret@sectl.cn/control/ws", false)]
+    [InlineData("wss://sectl.cn/control/ws?token=abc", false)]
+    [InlineData("wss://sectl.cn/control/ws#frag", false)]
     [InlineData("not a uri", false)]
     [InlineData("", false)]
     [InlineData(null, false)]
-    public void EndpointPolicy_RejectsPlaintextOffLoopback_AndSensitiveUriParts(string? endpoint, bool expected)
+    public void 通道地址策略拒绝明文非回环与敏感URI片段(string? endpoint, bool expected)
     {
         Assert.Equal(expected, ControlEndpointPolicy.TryValidate(endpoint, out var uri, out _));
         if (expected)
@@ -124,7 +189,7 @@ public sealed class ControlNodeContractsTests
     }
 
     [Fact]
-    public void NodeStateStore_KeepsAStableIdentity_AndPersistsTheSwitchAndRevision()
+    public void 本机状态跨重启保留设备身份_地点与班级()
     {
         var path = Utils.GetFilePath("config", "control", "node-state.json");
         var backup = File.Exists(path) ? File.ReadAllText(path) : null;
@@ -143,28 +208,30 @@ public sealed class ControlNodeContractsTests
 
             store.Update(state => state with
             {
-                GroupId = "grp_9f8e7d6c5b4a",
+                SiteId = "SC-K7Q2M9",
+                SiteName = "第一实验学校",
+                ClassId = "class-1",
                 RemoteControlEnabled = true,
                 AppliedDesiredStateRevision = 1_759_572_000_123,
                 DrawLocked = true,
-                // 名字是用户在设置页填的东西，必须跨重启保留——丢了就每重启一次回落到主机名。
                 DisplayName = "301班讲台机"
             });
 
-            // "重启"：新实例必须读回同一个身份与已应用的期望状态。
             var reloaded = new FileControlNodeStateStore(NullLogger<FileControlNodeStateStore>.Instance);
             Assert.Equal(nodeId, reloaded.Current.NodeId);
-            Assert.Equal("grp_9f8e7d6c5b4a", reloaded.Current.GroupId);
+            Assert.Equal("SC-K7Q2M9", reloaded.Current.SiteId);
+            Assert.Equal("第一实验学校", reloaded.Current.SiteName);
+            Assert.Equal("class-1", reloaded.Current.ClassId);
             Assert.True(reloaded.Current.RemoteControlEnabled);
             Assert.Equal(1_759_572_000_123, reloaded.Current.AppliedDesiredStateRevision);
             Assert.True(reloaded.Current.DrawLocked);
             Assert.Equal("301班讲台机", reloaded.Current.DisplayName);
-            Assert.True(reloaded.Current.IsConfigured);
 
             // 全是空白一律当"没填"：否则会带着一串空格去上报，看起来像"这台机器没有名字"。
-            store.Update(state => state with { DisplayName = "   " });
+            store.Update(state => state with { DisplayName = "   ", SiteName = "  " });
             var cleared = new FileControlNodeStateStore(NullLogger<FileControlNodeStateStore>.Instance);
             Assert.Null(cleared.Current.DisplayName);
+            Assert.Null(cleared.Current.SiteName);
         }
         finally
         {
@@ -176,7 +243,7 @@ public sealed class ControlNodeContractsTests
     }
 
     [Fact]
-    public void NodeStateStore_DefaultsTheServerUrlAndNeverTrustsACorruptFile()
+    public void 本机状态默认地址且绝不信任损坏文件()
     {
         var path = Utils.GetFilePath("config", "control", "node-state.json");
         var backup = File.Exists(path) ? File.ReadAllText(path) : null;
@@ -187,8 +254,9 @@ public sealed class ControlNodeContractsTests
 
             var store = new FileControlNodeStateStore(NullLogger<FileControlNodeStateStore>.Instance);
 
-            // 身份会重新生成，但组 ID 与开关回到保守默认：损坏的文件不该被信任。
-            Assert.False(store.Current.IsConfigured);
+            // 身份会重新生成，但接入地点、开关与班级回到保守默认：损坏的文件不该被信任。
+            Assert.Null(store.Current.SiteId);
+            Assert.Null(store.Current.ClassId);
             Assert.Equal(32, store.Current.NodeId.Length);
             Assert.Equal(ControlNodeClientOptions.DefaultEndpoint, store.Current.ServerUrl);
             Assert.False(store.Current.RemoteControlEnabled);

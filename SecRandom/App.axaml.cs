@@ -1283,6 +1283,13 @@ public partial class App : Application
                     // 三个能力执行器各自独立：它们依赖的界面/配置/名单服务互不相同，
                     // 拆开才能在测试里单独替换，也避免分发器变成一个巨大的文件。
                     services.AddSingleton<ControlMediaPlayHandler>();
+                    // v4 新增的四条动作命令：广播、锁屏、切页、重启。
+                    services.AddSingleton<ControlBroadcastPresenter>();
+                    services.AddSingleton<ControlLockScreenService>();
+                    services.AddSingleton<ControlBroadcastHandler>();
+                    services.AddSingleton<ControlLockScreenHandler>();
+                    services.AddSingleton<ControlSwitchPageHandler>();
+                    services.AddSingleton<ControlRestartHandler>();
                     services.AddSingleton<ControlSettingsPatchHandler>();
                     services.AddSingleton<ControlRosterPushHandler>();
                     services.AddSingleton<ControlRosterReadHandler>();

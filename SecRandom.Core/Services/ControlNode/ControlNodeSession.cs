@@ -1,21 +1,26 @@
+using System.Collections.Concurrent;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SecRandom.Shared.Models.ControlNode;
+using SecRandom.Shared.Models.ControlNode.V4;
 
 namespace SecRandom.Core.Services.ControlNode;
 
 /// <summary>
-///     一条已建立的节点连接上的协议状态机。
+///     一条已建立的节点连接上的 v4.1 协议状态机。
 /// </summary>
 /// <remarks>
 ///     <para>
-///         这一层不认识 WebSocket：它只依赖 <see cref="IControlNodeTransport" />，
-///         因此握手、心跳、命令校验顺序、幂等与 <c>desired_state</c> 收敛都能在测试里
-///         用一个内存传输完整驱动。
+///         这一层不认识 WebSocket：它只依赖 <see cref="IControlNodeTransport" />，因此握手、心跳、
+///         命令校验顺序、幂等与 <c>desired_state</c> 收敛都能在测试里用一个内存传输完整驱动。
 ///     </para>
 ///     <para>
 ///         <b>三种东西不能混为一谈</b>：期望状态（"应该是什么样"，不过期、靠 revision 收敛）、
-///         动作命令（"做一次"，必须过期、过期即丢弃）与查询（REST，不在这里）。
-///         用队列模拟状态会重放，用状态模拟动作会永远触发。
+///         动作命令（"做一次"，必须过期、过期即丢弃）。用队列模拟状态会重放，用状态模拟动作会永远触发。
+///     </para>
+///     <para>
+///         回执是**两帧**：先 <c>cmd.ack</c>（愿不愿意执行），再 <c>cmd.result</c>（执行成功没有）。
+///         两帧的 <c>id</c> 都是服务端给的 <c>command_id</c>；合并成一帧会掩盖"设备拒绝"与"设备执行失败"的区别。
 ///     </para>
 /// </remarks>
 public sealed class ControlNodeSession
@@ -23,6 +28,7 @@ public sealed class ControlNodeSession
     private readonly IControlNodeTransport _transport;
     private readonly IControlNodeStateStore _stateStore;
     private readonly IControlCommandDispatcher _dispatcher;
+    private readonly NodeDeviceCredential _credential;
 
     private readonly ControlNodeClientOptions _options;
     private readonly ILogger _logger;
@@ -30,13 +36,15 @@ public sealed class ControlNodeSession
     private readonly ControlCommandLedger _ledger;
 
     private readonly SemaphoreSlim _sendGate = new(1, 1);
-
-    /// <summary>等 <c>node.deregister.ack</c> 的一次性信号；同一时刻最多一个注销在飞。</summary>
-    private volatile TaskCompletionSource<bool>? _deregisterAck;
-    private readonly SemaphoreSlim _stateChangedSignal = new(0, 1);
+    private readonly ConcurrentDictionary<string, TaskCompletionSource<ControlV4Frame>> _pending = new(StringComparer.Ordinal);
     private readonly Queue<DateTimeOffset> _recentCommands = new();
+    private int _requestSequence;
 
-    /// <summary>本机限流窗口与上限：窗口内超过这个条数的命令会被拒绝。</summary>
+    /// <summary>最近一次告诉服务端的班级；<c>null</c> 表示还没说过或已释放。</summary>
+    private string? _announcedClassId;
+
+    private EventHandler<ControlNodeState>? _onStateChanged;
+
     private const int MaxCommandsPerWindow = 20;
 
     private static readonly TimeSpan CommandRateWindow = TimeSpan.FromSeconds(10);
@@ -45,7 +53,7 @@ public sealed class ControlNodeSession
         IControlNodeTransport transport,
         IControlNodeStateStore stateStore,
         IControlCommandDispatcher dispatcher,
-
+        NodeDeviceCredential credential,
         ControlNodeClientOptions options,
         ILogger<ControlNodeSession> logger,
         TimeProvider? timeProvider = null)
@@ -53,145 +61,90 @@ public sealed class ControlNodeSession
         _transport = transport;
         _stateStore = stateStore;
         _dispatcher = dispatcher;
+        _credential = credential;
 
         _options = options;
         _logger = logger;
         _timeProvider = timeProvider ?? TimeProvider.System;
-        // 有界 + 过期：命令 ID 不会长期复用，255 条足以覆盖一次重连补投的窗口。
         _ledger = new ControlCommandLedger(capacity: 512, timeToLive: TimeSpan.FromMinutes(30), _timeProvider);
     }
 
     /// <summary>服务端下发的心跳间隔；握手前为 <c>null</c>。</summary>
     public int? NegotiatedHeartbeatSeconds { get; private set; }
 
-    /// <summary>
-    ///     握手成功（收到 <c>hello.ack</c>）时触发，参数是服务端下发的心跳间隔（秒）。
-    /// </summary>
-    /// <remarks>
-    ///     连接状态必须由这条事件驱动，而不是"发起连接时就算连上了"：
-    ///     从发起连接到握手完成之间，凭据可能被拒、节点可能未登记、服务端可能不可达。
-    ///     没有它，上层只能一直显示"连接中"——连上了也看不出来。
-    /// </remarks>
+    /// <summary>服务端下发的离线判定阈值（秒）。</summary>
+    public int? OfflineAfterSeconds { get; private set; }
+
+    /// <summary>握手成功（收到 <c>res.ok:true</c>）时触发，参数是服务端下发的心跳间隔（秒）。</summary>
     public event EventHandler<int>? Handshaken;
+
+    /// <summary>是否已完成 v4 握手；供设置页与测试观察。</summary>
+    public bool IsHandshaken { get; private set; }
 
     public async Task<ControlSessionResult> RunAsync(CancellationToken cancellationToken)
     {
-        EventHandler<ControlNodeState> onStateChanged = (_, _) => SignalStateChanged();
-        _stateStore.Changed += onStateChanged;
-
-        try
-        {
-            return await RunCoreAsync(cancellationToken).ConfigureAwait(false);
-        }
-        finally
-        {
-            _stateStore.Changed -= onStateChanged;
-        }
-    }
-
-    private async Task<ControlSessionResult> RunCoreAsync(CancellationToken cancellationToken)
-    {
-        if (!await SendFrameAsync(BuildHelloFrame(), cancellationToken).ConfigureAwait(false))
-            return new ControlSessionResult(ControlSessionEndReason.ConnectionLost, "hello_send_failed");
-
-        ControlFrame? first;
-        try
-        {
-            first = await ReceiveWithTimeoutAsync(_options.HandshakeTimeout, cancellationToken).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            return new ControlSessionResult(ControlSessionEndReason.Stopped);
-        }
-        catch (Exception exception)
-        {
-            return new ControlSessionResult(ControlSessionEndReason.ConnectionLost, exception.GetType().Name);
-        }
-
-        if (first is null)
-        {
-            _logger.LogWarning("集控节点握手未收到 hello.ack（等待 {Seconds:0.#} 秒），断开重连。",
-                _options.HandshakeTimeout.TotalSeconds);
-            return new ControlSessionResult(ControlSessionEndReason.ConnectionLost, "handshake_timeout");
-        }
-
-        if (string.Equals(first.Type, ControlFrameTypes.Error, StringComparison.Ordinal))
-            return ClassifyHandshakeError(first.Code);
-
-        if (!string.Equals(first.Type, ControlFrameTypes.HelloAck, StringComparison.Ordinal))
-        {
-            // 协议要求第一帧是 hello.ack。收到别的类型说明对面不是我们认识的实现（或版本过新）：
-            // 断开重连，让问题可见，而不是"连上了但一直没握手"地挂着。
-            _logger.LogWarning("集控节点握手首帧不是 hello.ack：{Type}", first.Type);
-            return new ControlSessionResult(ControlSessionEndReason.ConnectionLost, "unexpected_first_frame");
-        }
-
-        // 服务端下发的心跳间隔是它与反向代理 proxy_read_timeout 之间的唯一约定，必须照着用。
-        NegotiatedHeartbeatSeconds = first.HeartbeatSeconds is > 0 and <= 3600
-            ? first.HeartbeatSeconds.Value
-            : _options.FallbackHeartbeatSeconds;
-
-        _logger.LogInformation(
-            "集控节点已握手：{NodeId}（组 {GroupId}，心跳 {Seconds} 秒，本地已应用 revision {Revision}）",
-            _stateStore.Current.NodeId, _stateStore.Current.GroupId, NegotiatedHeartbeatSeconds,
-            _stateStore.Current.AppliedDesiredStateRevision);
-
-        // 通知上层"真的连上了"。订阅方抛异常不能带走连接循环。
-        try
-        {
-            Handshaken?.Invoke(this, NegotiatedHeartbeatSeconds.Value);
-        }
-        catch (Exception exception)
-        {
-            _logger.LogDebug(exception, "集控握手事件订阅方抛出异常。");
-        }
-
         using var sessionSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        var heartbeatTask = RunHeartbeatAsync(NegotiatedHeartbeatSeconds.Value, sessionSource);
-
-        var reason = ControlSessionEndReason.ConnectionLost;
-        string? detail = null;
+        var receiveTask = ReceiveLoopAsync(sessionSource.Token);
 
         try
         {
-            while (!sessionSource.IsCancellationRequested)
+            var hello = BuildHelloFrame();
+            var response = await RequestAsync(hello, "hello-1", _options.HandshakeTimeout, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (response is null)
             {
-                ControlFrame? frame;
-                try
-                {
-                    frame = await _transport.ReceiveAsync(sessionSource.Token).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-                {
-                    // 心跳发送失败会取消会话：连接已经不健康。
-                    detail = "heartbeat_failed";
-                    break;
-                }
-                catch (OperationCanceledException)
-                {
-                    reason = ControlSessionEndReason.Stopped;
-                    break;
-                }
-                catch (Exception exception)
-                {
-                    detail = exception.GetType().Name;
-                    break;
-                }
+                if (cancellationToken.IsCancellationRequested)
+                    return new ControlSessionResult(ControlSessionEndReason.Stopped);
 
-                if (frame is null)
-                {
-                    // 对端关闭时的原因（例如同一 node_id 被新连接接管 = replaced）要带出去：
-                    // 协议里多数断开是静默的，"莫名掉线"和"有另一台机器用同一个 node_id"
-                    // 必须能分辨，否则排查只能靠猜。
-                    detail = _transport.CloseReason is { Length: > 0 } closeReason ? closeReason : "peer_closed";
-                    break;
-                }
-
-                await DispatchAsync(frame, sessionSource.Token).ConfigureAwait(false);
+                _logger.LogWarning("集控节点握手未收到应答（等待 {Seconds:0.#} 秒），断开重连。",
+                    _options.HandshakeTimeout.TotalSeconds);
+                return new ControlSessionResult(ControlSessionEndReason.ConnectionLost, "handshake_timeout");
             }
-        }
-        finally
-        {
+
+            if (response.Ok == false)
+                return ClassifyHandshakeError(response.Code);
+
+            var ack = ControlV4HelloAck.Parse(response.Payload);
+            NegotiatedHeartbeatSeconds = ack.HeartbeatSeconds;
+            OfflineAfterSeconds = ack.OfflineAfterSeconds;
+
+            // 握手应答里的期望状态是"服务端当前认为的状态"，按同一套 revision 规则应用。
+            if (ack.DesiredStateRevision > 0)
+                ApplyDesiredState(new ControlV4DesiredState
+                {
+                    Revision = ack.DesiredStateRevision,
+                    DrawLocked = ack.DrawLocked
+                });
+
+            _logger.LogInformation(
+                "集控节点已握手：{DeviceId}（地点 {SiteId}，心跳 {Seconds} 秒，draw_locked={Locked}，revision {Revision}）",
+                _credential.DeviceId, _credential.SiteId, NegotiatedHeartbeatSeconds,
+                ack.DrawLocked, _stateStore.Current.AppliedDesiredStateRevision);
+
+            IsHandshaken = true;
+
+            // 握手成功的第一件事是「占班」：接入时若已经分过班，直接告诉服务端我在上课。
+            // 不发这一帧的后果很具体：服务端占用表里没有这台设备 ⇒ 网页上班级详情看不到客户端，
+            // 控制台的「允许抽取」开关按占用表广播 ⇒ 推不到这台机器 ⇒ 老师点了允许，远程抽取还是被本机拒。
+            await AnnounceSelectedClassAsync(cancellationToken).ConfigureAwait(false);
+
+            // 用户中途改班级（设置页保存）也要跟上：订阅状态库的变化，只在班级真的变了时才发。
+            _onStateChanged = (_, _) => _ = AnnounceSelectedClassAsync(CancellationToken.None);
+            _stateStore.Changed += _onStateChanged;
+
+            try
+            {
+                Handshaken?.Invoke(this, NegotiatedHeartbeatSeconds.Value);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogDebug(exception, "集控握手事件订阅方抛出异常。");
+            }
+
+            var heartbeatTask = RunHeartbeatAsync(NegotiatedHeartbeatSeconds.Value, sessionSource);
+
+            var ended = await receiveTask.ConfigureAwait(false);
             await sessionSource.CancelAsync().ConfigureAwait(false);
             try
             {
@@ -201,239 +154,293 @@ public sealed class ControlNodeSession
             {
                 // 会话结束时的正常路径。
             }
+
+            if (cancellationToken.IsCancellationRequested)
+                return new ControlSessionResult(ControlSessionEndReason.Stopped, ended.Detail);
+
+            // 关闭码 4003/4006 是"不要重连"的终态。
+            var terminal = ended.TerminalCode ?? (_transport.CloseCode is 4003 or 4006
+                ? _transport.CloseReason ?? (_transport.CloseCode == 4006 ? ControlV4Protocol.ErrorCodes.ProtocolTooOld : ControlV4Protocol.ErrorCodes.BadSecret)
+                : null);
+            if (terminal is not null)
+                return new ControlSessionResult(ControlSessionEndReason.Terminal, terminal, HandshakeCompleted: true);
+
+            return new ControlSessionResult(ControlSessionEndReason.ConnectionLost, ended.Detail, HandshakeCompleted: true);
         }
-
-        if (cancellationToken.IsCancellationRequested)
-            reason = ControlSessionEndReason.Stopped;
-
-        _logger.LogInformation("集控节点连接结束：{Reason}（{Detail}）", reason, detail ?? "-");
-        return new ControlSessionResult(reason, detail, HandshakeCompleted: true);
-    }
-
-    // ------------------------------------------------------------------ 心跳
-
-    private async Task RunHeartbeatAsync(int heartbeatSeconds, CancellationTokenSource sessionSource)
-    {
-        var interval = TimeSpan.FromSeconds(heartbeatSeconds);
-
-        while (!sessionSource.IsCancellationRequested)
+        finally
         {
-            // 先等一个心跳周期；期间本机状态有变化（开关、班级、已应用 revision）就立刻上报，
-            // 不必等下一个周期——老师刚关掉本机开关时，控制台必须马上看到。
-            await WaitForIntervalOrStateChangeAsync(interval, sessionSource.Token).ConfigureAwait(false);
+            await sessionSource.CancelAsync().ConfigureAwait(false);
+            CancelPending("session_closed");
 
-            if (sessionSource.IsCancellationRequested)
-                return;
-
-            if (!await SendFrameAsync(BuildHeartbeatFrame(), sessionSource.Token).ConfigureAwait(false))
+            if (_onStateChanged is not null)
             {
-                _logger.LogWarning("集控节点心跳发送失败，结束当前连接等待重连。");
-                await sessionSource.CancelAsync().ConfigureAwait(false);
-                return;
+                _stateStore.Changed -= _onStateChanged;
+                _onStateChanged = null;
             }
 
-            DrainStateSignal();
-        }
-    }
-
-    private async Task WaitForIntervalOrStateChangeAsync(TimeSpan interval, CancellationToken cancellationToken)
-    {
-        using var waitSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        var delay = Task.Delay(interval, waitSource.Token);
-        var signal = _stateChangedSignal.WaitAsync(waitSource.Token);
-
-        var completed = await Task.WhenAny(delay, signal).ConfigureAwait(false);
-
-        // 取消落败的一方；已完成的那个不会被取消影响。
-        await waitSource.CancelAsync().ConfigureAwait(false);
-
-        try
-        {
-            await completed.ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-            // 会话已结束。
-        }
-    }
-
-    private void SignalStateChanged()
-    {
-        try
-        {
-            _stateChangedSignal.Release();
-        }
-        catch (SemaphoreFullException)
-        {
-            // 已经有一个待处理的信号，够了。
-        }
-    }
-
-    private void DrainStateSignal()
-    {
-        while (_stateChangedSignal.Wait(0))
-        {
-            // 清空积压的信号：状态已经随刚才那一帧上报。
+            try
+            {
+                await receiveTask.ConfigureAwait(false);
+            }
+            catch (Exception)
+            {
+                // receiveTask 的异常已经在上面的返回值里体现。
+            }
         }
     }
 
     // ------------------------------------------------------------------ 收帧
 
-    private async Task DispatchAsync(ControlFrame frame, CancellationToken cancellationToken)
+    /// <summary>
+    ///     告诉服务端「这台设备现在在哪个班上课」（占班 / 释放）。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         占班（<c>class.select</c>）= 上课 = 服务端把 <c>draw_locked=false</c> 推下来；
+    ///         释放（<c>class.release</c>）= 下课 = 推 <c>draw_locked=true</c>。
+    ///         所以这一帧不只是"上报"：它也是抽取锁的开关来源之一——不占班，控制台的
+    ///         「允许抽取」开关按占用表广播，就推不到这台机器。
+    ///     </para>
+    ///     <para>
+    ///         占班失败不影响连接：可能是别的设备刚占了这个班（服务端回 <c>busy</c>），
+    ///         也可能是网络抖动。下一次状态变化或重连会再发一次。
+    ///     </para>
+    /// </remarks>
+    private async Task AnnounceSelectedClassAsync(CancellationToken cancellationToken)
     {
-        switch (frame.Type)
-        {
-            case ControlFrameTypes.Command:
-                await HandleCommandAsync(frame, cancellationToken).ConfigureAwait(false);
-                break;
-
-            case ControlFrameTypes.DesiredState:
-                ApplyDesiredState(frame);
-                break;
-
-            case ControlFrameTypes.DeregisterAck:
-                // `deregistered:false` 也算成功（幂等：本来就没登记）。收到任何 ack 即成功，
-                // 未知字段一律忽略——协议允许服务端在后面加字段。
-                _deregisterAck?.TrySetResult(true);
-                break;
-
-            case ControlFrameTypes.Error:
-                // 握手之后服务端仍可能发错误帧：记录下来继续跑，不因为一帧就断。
-                _logger.LogWarning("集控节点收到服务端错误帧：{Code}", frame.Code);
-                break;
-
-            default:
-                // 协议允许新增帧类型：未知帧一律忽略，不能崩。
-                _logger.LogDebug("忽略未知集控帧类型：{Type}", frame.Type);
-                break;
-        }
-    }
-
-    // ------------------------------------------------------------------ 命令
-
-    private async Task HandleCommandAsync(ControlFrame frame, CancellationToken cancellationToken)
-    {
-        var commandId = frame.CommandId;
-        if (string.IsNullOrWhiteSpace(commandId))
-        {
-            // 没有 command_id 就无法回执，只能丢弃。
-            _logger.LogWarning("集控命令缺少 command_id，已丢弃。");
+        var classId = _stateStore.Current.ClassId;
+        if (string.Equals(classId, _announcedClassId, StringComparison.Ordinal))
             return;
-        }
 
-        // ① 过期检查必须最先，且必须在执行之前。
-        //    网络乱序与重连补投都可能让一条过期命令到达；补执行三小时前的"立即抽取"
-        //    在课间生效是完全不可接受的，所以这里**不依赖服务端已经拦过**。
-        //    **缺失或解析不出来同样拒绝**：无法证明"还没过期"就不能执行（协议 §11 自查清单）；
-        //    这一帧仍要回 ack，让控制台看到"设备拒绝了"而不是"设备掉线了"。
-        if (frame.ExpiresAt is not { } expiresAt || _timeProvider.GetUtcNow() >= expiresAt)
+        _announcedClassId = classId;
+        var id = "select-" + Interlocked.Increment(ref _requestSequence);
+        var payload = new Dictionary<string, object?> { ["platform"] = ControlV4Protocol.Platform };
+        if (!string.IsNullOrWhiteSpace(classId))
+            payload["class_id"] = classId;
+
+        var json = ControlV4Json.Serialize(new ControlV4Frame
         {
-            _logger.LogInformation(
-                "集控命令 {CommandId} 已过期或缺少可用的 expires_at（{ExpiresAt}），丢弃且不执行。",
-                commandId, frame.ExpiresAt?.ToString("O") ?? "缺失/无法解析");
-            await AckAsync(
-                    commandId,
-                    new ControlCommandAck(
-                        false,
-                        ControlRejectReasons.Expired,
-                        // 缺 expires_at 与"确实过期"是两件事：前者是控制端没带，
-                        // 后者是路上耽搁了。管理员看到的原因不应该一样。
-                        ControlCommandOutcome.ToDetail(new
-                        {
-                            has_expires_at = frame.ExpiresAt is not null,
-                            expires_at = frame.ExpiresAt?.ToString("O")
-                        })),
-                    cancellationToken)
-                .ConfigureAwait(false);
-            return;
-        }
+            Type = ControlV4Protocol.FrameTypeRequest,
+            Id = id,
+            Topic = string.IsNullOrWhiteSpace(classId)
+                ? ControlV4Protocol.Topics.ClassRelease
+                : ControlV4Protocol.Topics.ClassSelect,
+            Payload = ControlV4Json.ToElement(payload)
+        });
 
-        // ② 本机开关：这是设备自己的闸，与服务端判定无关。关闭时拒绝一切动作命令。
-        if (!_stateStore.Current.RemoteControlEnabled)
-        {
-            await AckAsync(
-                    commandId,
-                    new ControlCommandAck(
-                        false,
-                        ControlRejectReasons.LocalRemoteDisabled,
-                        ControlCommandOutcome.ToDetail(new { remote_control_enabled = false })),
-                    cancellationToken)
-                .ConfigureAwait(false);
-            return;
-        }
-
-        // ③ 能力自检：本机不真的支持就不接受，绝不"先收下再说"。
-        var capability = frame.Capability ?? string.Empty;
-        if (!_dispatcher.CanExecute(capability))
-        {
-            _logger.LogInformation("集控命令 {CommandId} 的能力不受支持：{Capability}", commandId, capability);
-            await AckAsync(
-                    commandId,
-                    new ControlCommandAck(
-                        false,
-                        ControlRejectReasons.CapabilityUnsupported,
-                        // 把本机能力清单带回去：控制台能直接说"这台机器不支持 X，它支持 Y Z"，
-                        // 而不是让管理员去猜是不是权限问题。
-                        ControlCommandOutcome.ToDetail(new
-                        {
-                            capability,
-                            supported = _dispatcher.DeclaredCapabilities
-                        })),
-                    cancellationToken)
-                .ConfigureAwait(false);
-            return;
-        }
-
-        // ④ 幂等：同一条命令重复到达不重复执行，直接回上次的结果。
-        if (_ledger.TryGet(commandId, out var recorded))
-        {
-            await SendRecordAsync(commandId, recorded, cancellationToken).ConfigureAwait(false);
-            return;
-        }
-
-        // ⑤ 自行限流：服务端没有命令级限流（协议 §12 明确建议客户端防御），
-        //    一条失控的连接不该把"立即抽取"变成连续触发。限流放在幂等之后，
-        //    这样重复投递仍然只回放旧结果，不会被误判成洪峰。
-        if (!TryAcceptWithinRateLimit())
-        {
-            _logger.LogWarning("集控命令 {CommandId} 超过本机限流窗口，已拒绝。", commandId);
-            await AckAsync(
-                    commandId,
-                    new ControlCommandAck(
-                        false,
-                        ControlRejectReasons.RateLimited,
-                        ControlCommandOutcome.ToDetail(new
-                        {
-                            max_commands = MaxCommandsPerWindow,
-                            window_seconds = CommandRateWindow.TotalSeconds
-                        })),
-                    cancellationToken)
-                .ConfigureAwait(false);
-            return;
-        }
-
-        // 先 ack 再执行：在 ack 里做重活会让服务端以为命令丢了。
-        var ack = new ControlCommandAck(true, null);
-        await AckAsync(commandId, ack, cancellationToken).ConfigureAwait(false);
-
-        ControlCommandResult result;
         try
         {
-            var outcome = await _dispatcher
-                .ExecuteAsync(new ControlCommandInvocation(commandId, capability, frame.Kind, frame.Payload), cancellationToken)
+            var response = await RequestAsync(json, id, TimeSpan.FromSeconds(5), cancellationToken)
                 .ConfigureAwait(false);
-            result = new ControlCommandResult(outcome.Ok, outcome.Reason, outcome.Detail, outcome.Payload);
+            if (response is null)
+            {
+                _logger.LogDebug("占班请求没有应答（班级 {ClassId}），等下次状态变化或重连再试。",
+                    classId ?? "未分班");
+                return;
+            }
+
+            if (response.Ok == false)
+            {
+                _logger.LogInformation("占班未成功（班级 {ClassId}，原因 {Code}）：网页上这个班可能仍显示为无人。",
+                    classId ?? "未分班", response.Code);
+            }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException)
         {
             throw;
         }
         catch (Exception exception)
         {
+            _logger.LogDebug(exception, "占班请求发送失败，不影响连接本身。");
+        }
+    }
+
+    private async Task<SessionEnd> ReceiveLoopAsync(CancellationToken cancellationToken)
+    {
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            string? json;
+            try
+            {
+                json = await _transport.ReceiveAsync(cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                return new SessionEnd("canceled", null);
+            }
+            catch (Exception exception)
+            {
+                return new SessionEnd(exception.GetType().Name, null);
+            }
+
+            if (json is null)
+            {
+                return new SessionEnd(
+                    _transport.CloseReason is { Length: > 0 } reason ? reason : "peer_closed",
+                    _transport.CloseCode is 4003 or 4006 ? _transport.CloseReason : null);
+            }
+
+            var frame = ControlV4Json.TryParse(json);
+            if (frame is null)
+            {
+                _logger.LogDebug("集控节点收到无法解析的帧，已忽略。");
+                continue;
+            }
+
+            switch (frame.Type)
+            {
+                case ControlV4Protocol.FrameTypeResponse:
+                    if (!string.IsNullOrWhiteSpace(frame.Id)
+                        && _pending.TryRemove(frame.Id, out var pending))
+                    {
+                        pending.TrySetResult(frame);
+                    }
+
+                    break;
+
+                case ControlV4Protocol.FrameTypeEvent:
+                    await DispatchEventAsync(frame, cancellationToken).ConfigureAwait(false);
+                    break;
+
+                default:
+                    _logger.LogDebug("忽略未知集控帧类型：{Type}", frame.Type);
+                    break;
+            }
+        }
+
+        return new SessionEnd("canceled", null);
+    }
+
+    private Task DispatchEventAsync(ControlV4Frame frame, CancellationToken cancellationToken)
+    {
+        switch (frame.Topic)
+        {
+            case ControlV4Protocol.Topics.Command:
+                if (ControlV4Command.TryParse(frame.Payload, out var command))
+                {
+                    // 命令执行可能很慢（抽取、锁屏），绝不能在收帧循环里等它：
+                    // 否则心跳应答与后续命令都会被堵住。
+                    _ = Task.Run(() => HandleCommandAsync(command, cancellationToken), CancellationToken.None);
+                }
+                else
+                {
+                    _logger.LogWarning("集控命令载荷无效，已丢弃。");
+                }
+
+                break;
+
+            case ControlV4Protocol.Topics.DesiredState:
+                if (ControlV4DesiredState.TryParse(frame.Payload) is { } desired)
+                    ApplyDesiredState(desired);
+                else
+                    _logger.LogWarning("集控期望状态载荷无效，已忽略。");
+                break;
+
+            case ControlV4Protocol.Topics.Evicted:
+                var evicted = ReadEvicted(frame.Payload);
+                _logger.LogWarning(
+                    "集控节点被服务端驱逐：班级={ClassId} 原因={Reason} 操作者={By}。本机将清空班级并按锁定处理。",
+                    evicted.ClassId ?? "-", evicted.Reason ?? "-", evicted.By ?? "-");
+
+                // 被接管/替换/撤销后，本机不再持有那个班级。按 fail-closed 处理：
+                // 清空班级并锁上抽取闸，绝不因为一条迟到的期望状态又把控制权抢回来。
+                _stateStore.Update(state => state with { ClassId = null, DrawLocked = true });
+                break;
+
+            case ControlV4Protocol.Topics.Error:
+                _logger.LogWarning("集控节点收到服务端错误帧：{Code}", frame.Code);
+                break;
+
+            default:
+                _logger.LogDebug("忽略未知集控事件：{Topic}", frame.Topic);
+                break;
+        }
+
+        return Task.CompletedTask;
+    }
+
+    // ------------------------------------------------------------------ 命令
+
+    private async Task HandleCommandAsync(ControlV4Command command, CancellationToken cancellationToken)
+    {
+        var commandId = command.CommandId;
+
+        // ① 过期检查必须最先，且必须在执行之前；缺失 expires_at 同样拒绝。
+        //    v4 的 expires_at 是毫秒时间戳，不是 ISO 字符串。
+        if (command.ExpiresAt is not { } expiresAtMs
+            || _timeProvider.GetUtcNow().ToUnixTimeMilliseconds() >= expiresAtMs)
+        {
+            _logger.LogInformation(
+                "集控命令 {CommandId} 已过期或缺少可用的 expires_at（{ExpiresAt}），丢弃且不执行。",
+                commandId, command.ExpiresAt?.ToString() ?? "缺失/无法解析");
+            await AckAsync(commandId, false, ControlV4Protocol.ErrorCodes.Expired, new
+            {
+                has_expires_at = command.ExpiresAt is not null,
+                expires_at = command.ExpiresAt
+            }, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        // ② 本机开关：设备自己的闸，关闭时拒绝一切动作命令。
+        if (!_stateStore.Current.RemoteControlEnabled)
+        {
+            await AckAsync(commandId, false, ControlV4Protocol.ErrorCodes.LocalRemoteDisabled,
+                new { remote_control_enabled = false }, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        var capability = command.Cmd;
+
+        // ③ 能力自检：本机不真的支持就不接受。
+        if (!_dispatcher.CanExecute(capability))
+        {
+            _logger.LogInformation("集控命令 {CommandId} 的能力不受支持：{Capability}", commandId, capability);
+            await AckAsync(commandId, false, ControlV4Protocol.ErrorCodes.CapabilityUnsupported, new
+            {
+                capability,
+                supported = _dispatcher.DeclaredCapabilities
+            }, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        // ④ 幂等：重复到达不重复执行，直接回上次的回执。
+        if (_ledger.TryGet(commandId, out var recorded))
+        {
+            await SendAckAndResultAsync(commandId, recorded, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        // ⑤ 自行限流：服务端没有命令级限流。
+        if (!TryAcceptWithinRateLimit())
+        {
+            _logger.LogWarning("集控命令 {CommandId} 超过本机限流窗口，已拒绝。", commandId);
+            await AckAsync(commandId, false, ControlV4Protocol.ErrorCodes.RateLimited, new
+            {
+                max_commands = MaxCommandsPerWindow,
+                window_seconds = CommandRateWindow.TotalSeconds
+            }, cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        var ack = new ControlCommandAck(true, null);
+        await AckAsync(commandId, true, null, null, cancellationToken).ConfigureAwait(false);
+
+        ControlCommandResult result;
+        try
+        {
+            var outcome = await _dispatcher
+                .ExecuteAsync(new ControlCommandInvocation(commandId, capability, null, command.Args), cancellationToken)
+                .ConfigureAwait(false);
+            result = new ControlCommandResult(outcome.Ok, outcome.Reason, outcome.Detail, outcome.Payload);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
+        catch (Exception exception)
+        {
             _logger.LogWarning(exception, "集控命令 {CommandId} 执行失败。", commandId);
-            result = new ControlCommandResult(
-                false,
-                ControlRejectReasons.ExecutionFailed,
+            result = new ControlCommandResult(false, ControlV4Protocol.ErrorCodes.ExecutionFailed,
                 ControlCommandOutcome.ToDetail(new { exception = exception.GetType().Name }));
         }
 
@@ -441,13 +448,6 @@ public sealed class ControlNodeSession
         await ResultAsync(commandId, result, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>
-    ///     本机命令限流：滑动窗口内最多接受 <see cref="MaxCommandsPerWindow" /> 条动作命令。
-    /// </summary>
-    /// <remarks>
-    ///     服务端不限制"同一节点每秒多少条命令"（协议 §12），因此客户端必须自己防一手：
-    ///     一条被攻破或写错的控制台连接否则可以无限触发抽取。
-    /// </remarks>
     private bool TryAcceptWithinRateLimit()
     {
         var now = _timeProvider.GetUtcNow();
@@ -462,189 +462,227 @@ public sealed class ControlNodeSession
         return true;
     }
 
-    private Task SendRecordAsync(string commandId, ControlCommandRecord record, CancellationToken cancellationToken)
-    {
-        // 回放上次的回执：重复的 action 命令既不能重复执行，也不该把服务端的状态往回改。
-        return SendAckAndResultAsync(commandId, record.Ack, record.Result, cancellationToken);
-    }
-
-    private Task AckAsync(string commandId, ControlCommandAck ack, CancellationToken cancellationToken) =>
-        SendFrameAsync(new ControlFrame
-        {
-            Type = ControlFrameTypes.Ack,
-            CommandId = commandId,
-            Accepted = ack.Accepted,
-            Reason = ack.Reason,
-            Detail = ack.Detail
-        }, cancellationToken);
-
-    private Task ResultAsync(string commandId, ControlCommandResult result, CancellationToken cancellationToken) =>
-        SendFrameAsync(new ControlFrame
-        {
-            Type = ControlFrameTypes.Result,
-            CommandId = commandId,
-            Ok = result.Ok,
-            Reason = result.Reason,
-            Detail = result.Detail,
-            Payload = result.Payload
-        }, cancellationToken);
-
-    private async Task SendAckAndResultAsync(
-        string commandId,
-        ControlCommandAck ack,
-        ControlCommandResult result,
-        CancellationToken cancellationToken)
-    {
-        await AckAsync(commandId, ack, cancellationToken).ConfigureAwait(false);
-        await ResultAsync(commandId, result, cancellationToken).ConfigureAwait(false);
-    }
-
     // ------------------------------------------------------------------ 期望状态
 
-    /// <summary>
-    ///     应用期望状态。规则只有一条：<c>incoming.revision &lt;= appliedRevision</c> 就丢弃。
-    /// </summary>
+    /// <summary>应用期望状态。规则只有一条：<c>incoming.revision &lt;= appliedRevision</c> 就丢弃。</summary>
     /// <remarks>
-    ///     拒绝更小的 revision（即使它后到）让期望状态天然幂等、抗乱序、抗离线：
-    ///     重连后服务端补投最新状态，据 revision 判断是否需要应用即可。
-    ///     <c>appliedRevision</c> 会落盘——否则重启后归零，旧状态会被当成新状态应用。
+    ///     拒绝更小的 revision（即使它后到）让期望状态天然幂等、抗乱序、抗离线。
+    ///     <c>appliedRevision</c> 必须落盘，否则重启后归零，旧状态会被当成新状态应用。
+    ///     无法证明服务端允许抽取时（<c>draw_locked</c> 缺失）必须按锁定处理。
     /// </remarks>
-    private void ApplyDesiredState(ControlFrame frame)
+    private void ApplyDesiredState(ControlV4DesiredState desired)
     {
-        var revision = frame.DesiredStateRevision ?? ControlDesiredState.NeverSetRevision;
         var applied = _stateStore.Current.AppliedDesiredStateRevision;
-
-        if (revision <= applied)
+        if (desired.Revision <= applied)
         {
-            _logger.LogDebug("忽略过期的期望状态：revision {Revision} ≤ 已应用 {Applied}", revision, applied);
+            _logger.LogDebug("忽略过期的期望状态：revision {Revision} ≤ 已应用 {Applied}", desired.Revision, applied);
             return;
         }
 
-        // 载荷里只有 draw_locked 是当前协议定义的字段，其它字段一律忽略。
-        // 即使这一帧没带可识别字段，也要记录 revision：revision 表达的是顺序，不是字段集合。
-        var desired = ControlProtocolJson.ReadDesiredState(frame.Payload);
         _stateStore.Update(state => state with
         {
-            AppliedDesiredStateRevision = revision,
-            DrawLocked = desired?.DrawLocked ?? state.DrawLocked
+            AppliedDesiredStateRevision = desired.Revision,
+            DrawLocked = desired.DrawLocked ?? true,
+            ClassId = desired.ClassId
         });
 
         _logger.LogInformation(
-            "已应用期望状态 revision {Revision}：draw_locked={Locked}", revision, _stateStore.Current.DrawLocked);
+            "已应用期望状态 revision {Revision}：draw_locked={Locked}，class_id={ClassId}",
+            desired.Revision, _stateStore.Current.DrawLocked, desired.ClassId ?? "未分班");
     }
 
     // ------------------------------------------------------------------ 发送
 
-    private ControlFrame BuildHelloFrame()
+    /// <summary>驱逐帧的字段名在协议里是 camelCase，但容忍 snake_case 的旧写法。</summary>
+    private static (string? ClassId, string? Reason, string? By) ReadEvicted(JsonElement? payload)
+    {
+        if (payload is not { ValueKind: JsonValueKind.Object } element)
+            return (null, null, null);
+
+        string? Read(params string[] names)
+        {
+            foreach (var name in names)
+                if (element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String)
+                    return value.GetString();
+            return null;
+        }
+
+        return (Read("class_id", "classId"), Read("reason"), Read("by"));
+    }
+
+    private string BuildHelloFrame()
     {
         var state = _stateStore.Current;
-        return new ControlFrame
+        var hello = new ControlV4Hello
         {
-            Type = ControlFrameTypes.Hello,
-            NodeId = state.NodeId,
-            GroupId = state.GroupId,
-            Platform = _options.Platform,
+            DeviceId = _credential.DeviceId,
+            Secret = _credential.Secret,
+            // 用户填的名字优先，留空则上报主机名（见 ControlNodeDisplayName）。
+            DeviceName = ControlNodeDisplayName.Resolve(state.DisplayName, _options.HostName)
+                         ?? Environment.MachineName,
             Version = _options.Version,
             Capabilities = _dispatcher.DeclaredCapabilities,
-            LocalRemoteAllowed = state.RemoteControlEnabled,
-            // 用户填的名字优先，留空则上报主机名（见 ControlNodeDisplayName）。
-            DisplayName = ControlNodeDisplayName.Resolve(state.DisplayName, _options.HostName),
-
-            DesiredStateRevision = state.AppliedDesiredStateRevision
+            AppliedStateRevision = state.AppliedDesiredStateRevision
         };
-    }
 
-    private ControlFrame BuildHeartbeatFrame()
-    {
-        var state = _stateStore.Current;
-        return new ControlFrame
+        return ControlV4Json.Serialize(new ControlV4Frame
         {
-            Type = ControlFrameTypes.Heartbeat,
-            Capabilities = _dispatcher.DeclaredCapabilities,
-            LocalRemoteAllowed = state.RemoteControlEnabled,
-            // 改了名字要随下一次心跳生效；状态变化本身会立刻唤醒一次心跳，不必等满间隔。
-            DisplayName = ControlNodeDisplayName.Resolve(state.DisplayName, _options.HostName),
-            DesiredStateRevision = state.AppliedDesiredStateRevision
-        };
+            Type = ControlV4Protocol.FrameTypeRequest,
+            Id = "hello-1",
+            Topic = ControlV4Protocol.Topics.Hello,
+            Payload = ControlV4Json.ToElement(hello)
+        });
     }
 
-    /// <summary>
-    ///     自我注销：发一帧 <c>node.deregister</c> 并等 <c>node.deregister.ack</c>。
-    /// </summary>
-    /// <remarks>
-    ///     <para>
-    ///         <b>只在退出登录与换组时由上层调用</b>；退出程序/关窗口/崩溃恢复/更新重启**都不调用**——
-    ///         服务端是"登记即列出"，关掉软件就注销会让这台教室机从控制台消失。
-    ///     </para>
-    ///     <para>
-    ///         走 <see cref="SendFrameAsync" />（因此排队在 <c>_sendGate</c> 后面）：直接写传输会插到
-    ///         <c>hello</c>/心跳中间，把帧泵的顺序打乱。超时或发送失败都**只返回 false**，
-    ///         绝不把异常抛给调用方——注销是尽力而为，退出流程不能因为它卡住。
-    ///     </para>
-    /// </remarks>
-    public async Task<bool> DeregisterAsync(string groupId, TimeSpan timeout, CancellationToken cancellationToken)
+    private async Task RunHeartbeatAsync(int heartbeatSeconds, CancellationTokenSource sessionSource)
     {
-        if (string.IsNullOrWhiteSpace(groupId))
-            return false;
+        var interval = TimeSpan.FromSeconds(heartbeatSeconds);
 
-        var ack = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        _deregisterAck = ack;
+        while (!sessionSource.IsCancellationRequested)
+        {
+            try
+            {
+                await Task.Delay(interval, sessionSource.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            var id = "ping-" + Interlocked.Increment(ref _requestSequence);
+            var response = await RequestAsync(
+                    ControlV4Json.Serialize(new ControlV4Frame
+                    {
+                        Type = ControlV4Protocol.FrameTypeRequest,
+                        Id = id,
+                        Topic = ControlV4Protocol.Topics.Ping
+                    }),
+                    id,
+                    interval,
+                    sessionSource.Token)
+                .ConfigureAwait(false);
+
+            if (response is not null)
+                continue;
+
+            if (sessionSource.IsCancellationRequested)
+                return;
+
+            // 一次心跳没答还可以是网络抖动；连续两次没答（2 × heartbeat_seconds）才判定连接不健康。
+            _logger.LogWarning("集控心跳无应答，再等一个周期。");
+            try
+            {
+                await Task.Delay(interval, sessionSource.Token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            if (sessionSource.IsCancellationRequested)
+                return;
+
+            _logger.LogWarning("集控心跳连续两次无应答，结束当前连接等待重连。");
+            await sessionSource.CancelAsync().ConfigureAwait(false);
+            return;
+        }
+    }
+
+    private async Task<ControlV4Frame?> RequestAsync(
+        string frameJson,
+        string id,
+        TimeSpan timeout,
+        CancellationToken cancellationToken)
+    {
+        var completion = new TaskCompletionSource<ControlV4Frame>(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!_pending.TryAdd(id, completion))
+            return null;
 
         try
         {
-            var sent = await SendFrameAsync(
-                new ControlFrame { Type = ControlFrameTypes.Deregister, GroupId = groupId },
-                cancellationToken).ConfigureAwait(false);
-
-            if (!sent)
-                return false;
+            if (!await SendFrameAsync(frameJson, cancellationToken).ConfigureAwait(false))
+                return null;
 
             using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeoutSource.CancelAfter(timeout);
 
-            var completed = await Task.WhenAny(ack.Task, Task.Delay(Timeout.Infinite, timeoutSource.Token))
+            var completed = await Task.WhenAny(
+                    completion.Task,
+                    Task.Delay(Timeout.Infinite, timeoutSource.Token))
                 .ConfigureAwait(false);
-            return completed == ack.Task;
+
+            if (completed != completion.Task)
+                return null;
+
+            return await completion.Task.ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            return false;
-        }
-        catch (Exception exception)
-        {
-            _logger.LogDebug(exception, "发送集控注销帧失败（不影响退出流程）。");
-            return false;
+            return null;
         }
         finally
         {
-            _deregisterAck = null;
+            _pending.TryRemove(id, out _);
         }
     }
 
-    private async Task<bool> SendFrameAsync(ControlFrame frame, CancellationToken cancellationToken)
+    private Task AckAsync(
+        string commandId,
+        bool accepted,
+        string? code,
+        object? detail,
+        CancellationToken cancellationToken)
+    {
+        var payload = new Dictionary<string, object?> { ["accepted"] = accepted };
+        if (code is not null)
+            payload["code"] = code;
+        if (detail is not null)
+            payload["detail"] = ControlCommandOutcome.ToDetail(detail);
+
+        return SendFrameAsync(ControlV4Json.Serialize(new ControlV4Frame
+        {
+            Type = ControlV4Protocol.FrameTypeRequest,
+            Id = commandId,
+            Topic = ControlV4Protocol.Topics.CommandAck,
+            Payload = ControlV4Json.ToElement(payload)
+        }), cancellationToken);
+    }
+
+    private Task ResultAsync(string commandId, ControlCommandResult result, CancellationToken cancellationToken)
+    {
+        var payload = new Dictionary<string, object?> { ["ok"] = result.Ok };
+        if (!result.Ok && result.Reason is not null)
+            payload["code"] = result.Reason;
+        if (result.Detail is not null)
+            payload["detail"] = result.Detail.Value;
+        if (result.Payload is not null)
+            payload["data"] = result.Payload.Value;
+
+        return SendFrameAsync(ControlV4Json.Serialize(new ControlV4Frame
+        {
+            Type = ControlV4Protocol.FrameTypeRequest,
+            Id = commandId,
+            Topic = ControlV4Protocol.Topics.CommandResult,
+            Payload = ControlV4Json.ToElement(payload)
+        }), cancellationToken);
+    }
+
+    private async Task SendAckAndResultAsync(
+        string commandId,
+        ControlCommandRecord record,
+        CancellationToken cancellationToken)
+    {
+        await AckAsync(commandId, record.Ack.Accepted, record.Ack.Reason, record.Ack.Detail, cancellationToken)
+            .ConfigureAwait(false);
+        await ResultAsync(commandId, record.Result, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<bool> SendFrameAsync(string frameJson, CancellationToken cancellationToken)
     {
         await _sendGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            return await SendOnceAsync(frame, cancellationToken).ConfigureAwait(false);
-        }
-        finally
-        {
-            _sendGate.Release();
-        }
-    }
-
-    /// <summary>发一帧；**超限的回执**要改回一条最小的失败结果，而不是让它无声消失。</summary>
-    /// <remarks>
-    ///     丢帧的代价不对等：设备侧只是少发一帧，控制台侧是"查询永远没有结果"，最后只能靠命令
-    ///     过期收场，而日志里那条记录还是 <c>debug</c> 级别（真实故障就是这么被埋掉的）。
-    ///     回一条最小的失败结果既装得下，也让对端立刻知道"答案太大，没能给你"。
-    /// </remarks>
-    private async Task<bool> SendOnceAsync(ControlFrame frame, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await _transport.SendAsync(frame, cancellationToken).ConfigureAwait(false);
+            await _transport.SendAsync(frameJson, cancellationToken).ConfigureAwait(false);
             return true;
         }
         catch (OperationCanceledException)
@@ -653,93 +691,50 @@ public sealed class ControlNodeSession
         }
         catch (ControlFrameTooLargeException exception)
         {
-            if (frame.Type == ControlFrameTypes.Result)
-            {
-                _logger.LogWarning(
-                    exception, "集控回执超过帧上限，改回最小失败结果：{CommandId}", frame.CommandId);
-
-                return await TrySendOversizedResultNoticeAsync(frame, exception, cancellationToken)
-                    .ConfigureAwait(false);
-            }
-
-            _logger.LogWarning(exception, "集控帧超过帧上限，无法发送：{Type}", frame.Type);
+            _logger.LogWarning(exception, "集控帧超过帧上限，无法发送。");
             return false;
         }
         catch (Exception exception)
         {
-            _logger.LogWarning(exception, "集控帧发送失败：{Type}", frame.Type);
+            _logger.LogWarning(exception, "集控帧发送失败。");
             return false;
+        }
+        finally
+        {
+            _sendGate.Release();
         }
     }
 
-    /// <summary>把一个超限回执替换成最小的失败结果。连它都发不出去，就只能记日志了。</summary>
-    private async Task<bool> TrySendOversizedResultNoticeAsync(
-        ControlFrame frame,
-        ControlFrameTooLargeException exception,
-        CancellationToken cancellationToken)
+    private void CancelPending(string reason)
     {
-        var notice = new ControlFrame
+        foreach (var key in _pending.Keys)
         {
-            Type = ControlFrameTypes.Result,
-            CommandId = frame.CommandId,
-            Ok = false,
-            Reason = "payload_too_large",
-            Detail = ControlCommandOutcome.ToDetail(new
-            {
-                limit = exception.Limit,
-                bytes = exception.Bytes
-            })
-        };
-
-        try
-        {
-            await _transport.SendAsync(notice, cancellationToken).ConfigureAwait(false);
-            return true;
-        }
-        catch (OperationCanceledException)
-        {
-            throw;
-        }
-        catch (Exception noticeException)
-        {
-            _logger.LogError(noticeException, "集控超限回执的兜底帧也发不出去：{CommandId}", frame.CommandId);
-            return false;
-        }
-    }
-
-    private async Task<ControlFrame?> ReceiveWithTimeoutAsync(TimeSpan timeout, CancellationToken cancellationToken)
-    {
-        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        timeoutSource.CancelAfter(timeout);
-
-        try
-        {
-            return await _transport.ReceiveAsync(timeoutSource.Token).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            return null;
+            if (_pending.TryRemove(key, out var pending))
+                pending.TrySetCanceled(new CancellationToken(canceled: true));
         }
     }
 
     private ControlSessionResult ClassifyHandshakeError(string? code)
     {
-        // 服务端会先发一帧可读错误再关闭连接——这不是网络故障，不能当成抖动来重试。
         switch (code)
         {
-            case ControlErrorCodes.Unauthorized:
-                return new ControlSessionResult(ControlSessionEndReason.Unauthorized, code);
-
-            case ControlErrorCodes.InvalidRequest:
-            case ControlErrorCodes.NodeNotFound:
-            case ControlErrorCodes.GroupNotFound:
+            case ControlV4Protocol.ErrorCodes.BadSecret:
+            case ControlV4Protocol.ErrorCodes.DeviceRevoked:
+            case ControlV4Protocol.ErrorCodes.ProtocolTooOld:
+            case ControlV4Protocol.ErrorCodes.NotAuthed:
                 _logger.LogWarning("集控节点握手被拒绝：{Code}。重试没有意义。", code);
                 return new ControlSessionResult(ControlSessionEndReason.Terminal, code);
 
+            case ControlV4Protocol.ErrorCodes.BadRequest:
+                _logger.LogWarning("集控节点握手请求无效：{Code}。重试没有意义。", code);
+                return new ControlSessionResult(ControlSessionEndReason.Terminal, code);
+
             default:
-                // 未知错误码按"值得退避重试"处理：协议允许新增错误码，直接放弃会更糟。
+                // 未知错误码按"值得退避重试"处理：协议允许新增错误码。
                 _logger.LogWarning("集控节点握手收到未知错误码：{Code}", code);
                 return new ControlSessionResult(ControlSessionEndReason.ConnectionLost, code ?? "unknown_error");
         }
     }
+
+    private readonly record struct SessionEnd(string? Detail, string? TerminalCode);
 }

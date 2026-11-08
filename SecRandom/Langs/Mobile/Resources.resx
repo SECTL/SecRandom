@@ -760,8 +760,9 @@
     <data name="RD_Reenroll" xml:space="preserve"><value>重新接入</value></data>
     <data name="RD_SignInInstead" xml:space="preserve"><value>现在登录</value></data>
     <data name="RD_EnrollTitle" xml:space="preserve"><value>接入自建集控</value></data>
-    <data name="RD_EnrollHint" xml:space="preserve"><value>填入控制台签发的接入码，令牌加密保存在本机</value></data>
-    <data name="RD_EnrollCode" xml:space="preserve"><value>接入码</value></data>
+    <data name="RD_EnrollHint" xml:space="preserve"><value>填入地点 ID 与配对码。凭据加密保存在本机</value></data>
+    <data name="RD_EnrollCode" xml:space="preserve"><value>配对码</value></data>
+    <data name="RD_SiteId" xml:space="preserve"><value>地点 ID（SC-XXXXXX）</value></data>
     <data name="RD_EnrollAction" xml:space="preserve"><value>接入</value></data>
     <data name="RD_EnrollClear" xml:space="preserve"><value>清除接入</value></data>
     <data name="RD_EnrollFailed" xml:space="preserve"><value>接入失败：{0}</value></data>

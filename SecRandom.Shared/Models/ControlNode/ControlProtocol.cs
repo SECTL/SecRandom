@@ -1,3 +1,5 @@
+using SecRandom.Shared.Models.ControlNode.V4;
+
 namespace SecRandom.Shared.Models.ControlNode;
 
 /// <summary>
@@ -15,14 +17,26 @@ namespace SecRandom.Shared.Models.ControlNode;
 /// </remarks>
 public static class ControlCapabilities
 {
-    /// <summary>读版本 / 在线 / 当前班级等非敏感状态。**所有平台的默认能力。**</summary>
-    public const string StatusRead = "node.status.read";
+    /// <summary>v1 的读状态能力。v4 不再有这条命令；保留常量只为旧测试与旧控制台的源码兼容。</summary>
+    public const string StatusRead = "status.read";
 
     /// <summary>读本地证明列表。</summary>
     public const string ProofList = "proof.list";
 
-    /// <summary>设置"是否允许当前抽取"（期望状态字段 <c>draw_locked</c>）。</summary>
+    /// <summary>v1 的抽取锁能力。v4 里抽取锁走 <c>desired_state.draw_locked</c>，不再是命令。</summary>
     public const string DrawLock = "draw.lock";
+
+    /// <summary>显示一条全屏通知（v4 新增）。</summary>
+    public const string Broadcast = ControlV4Protocol.Commands.Broadcast;
+
+    /// <summary>锁屏（v4 新增）。</summary>
+    public const string LockScreen = ControlV4Protocol.Commands.LockScreen;
+
+    /// <summary>重启客户端（v4 新增）。</summary>
+    public const string RestartClient = ControlV4Protocol.Commands.RestartClient;
+
+    /// <summary>切换主界面页面（v4 新增）。</summary>
+    public const string SwitchPage = ControlV4Protocol.Commands.SwitchPage;
 
     /// <summary>立即触发一次抽取（动作命令）。</summary>
     public const string DrawTrigger = "draw.trigger";
@@ -91,11 +105,12 @@ public static class ControlCapabilities
     /// </remarks>
     public static IReadOnlyList<string> Known { get; } =
     [
-        StatusRead,
-        ProofList,
-        DrawLock,
+        Broadcast,
+        LockScreen,
+        RestartClient,
+        SwitchPage,
         DrawTrigger,
-        DrawTriggerConditions,
+        DrawReset,
         MediaPlay,
         RosterRead,
         RosterWrite,

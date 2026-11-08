@@ -210,6 +210,7 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     // ------------------------------------------------------------ 内联接入（未接入 / 令牌失效时就地填接入码）
 
     /// <summary>接入码输入框的内容；只在点"接入"时读一次，**绝不回显进日志或诊断**。</summary>
+    [ObservableProperty] private string _siteId = string.Empty;
     [ObservableProperty] private string _enrollmentCode = string.Empty;
 
     /// <summary>集控基址输入框（留空＝用内置默认地址，水印就是默认地址）。</summary>
@@ -399,7 +400,9 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     public bool ShowReenrollNavigation => NeedsEnrollment && !ShowEnrollmentEntry;
 
     /// <summary>能不能点"接入"：填了东西、且没有正在接入。</summary>
-    public bool CanEnroll => !IsEnrolling && !string.IsNullOrWhiteSpace(EnrollmentCode);
+    public bool CanEnroll => !IsEnrolling
+        && !string.IsNullOrWhiteSpace(SiteId)
+        && !string.IsNullOrWhiteSpace(EnrollmentCode);
 
     /// <summary>能不能"清除接入"：有记录可清（已接入，或记录坏了要重新接入）。</summary>
     public bool CanClearEnrollment => _enrollmentStore is not null && (IsEnrolled || _requiresEnrollment);
@@ -587,8 +590,9 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         if (_enrollmentStore is null || IsEnrolling)
             return;
 
+        var siteId = SiteId.Trim();
         var code = EnrollmentCode.Trim();
-        if (code.Length == 0)
+        if (siteId.Length == 0 || code.Length == 0)
             return;
 
         // 基址先落地（点"接入"才写盘，免得边打字边写）；地址不合法就只提示，不拿它去发请求。
@@ -599,23 +603,20 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
         EnrollmentMessage = string.Empty;
         try
         {
-            var record = NodeEnrollmentClient.LooksLikeNodeToken(code)
-                // 用户直接粘贴了令牌：它自带节点身份，不经过接入码那条一次性通道。
-                ? new NodeEnrollmentRecord
-                {
-                    NodeId = _nodeStateStore?.Current.NodeId ?? string.Empty,
-                    GroupId = _nodeStateStore?.Current.GroupId ?? string.Empty,
-                    NodeToken = code
-                }
-                : await EnrollWithCodeAsync(code).ConfigureAwait(true);
+            var record = await EnrollWithCodeAsync(siteId, code).ConfigureAwait(true);
 
             if (record is null)
                 return;
 
             if (_enrollmentStore.Save(record))
+            {
                 EnrollmentCode = string.Empty;
+                SiteId = string.Empty;
+            }
             else
+            {
                 EnrollmentMessage = string.Format(LR.RD_EnrollFailed, "save_failed");
+            }
         }
         catch (NodeEnrollmentException exception)
         {
@@ -639,7 +640,7 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     /// <remarks>
     ///     没有接入客户端时给出明确失败而不是假装成功（真实宿主一定会注入，这里只为测试与降级）。
     /// </remarks>
-    private async Task<NodeEnrollmentRecord?> EnrollWithCodeAsync(string code)
+    private async Task<NodeEnrollmentRecord?> EnrollWithCodeAsync(string siteId, string code)
     {
         if (_enrollmentClient is null)
         {
@@ -647,12 +648,12 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
             return null;
         }
 
+        // v4 是双因子：地点 ID 决定「进哪个地点」，配对码决定「准不准进」。两个缺一个都不发请求。
         return await _enrollmentClient.EnrollAsync(
+                siteId,
                 code,
-                nodeId: _nodeStateStore?.Current.NodeId,
-                platform: _hostPlatform,
-                version: GlobalConstants.Version,
-                displayName: ControlNodeDisplayName.Resolve(null, _hostDeviceName ?? Environment.MachineName))
+                deviceName: _hostDeviceName ?? Environment.MachineName,
+                CancellationToken.None)
             .ConfigureAwait(true);
     }
 
@@ -1435,6 +1436,7 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     partial void OnIsBusyChanged(bool value) => RefreshDerived();
 
     // 按钮可用性、以及"基址非法"提示的消失，都跟着这几项走。
+    partial void OnSiteIdChanged(string value) => RefreshDerived();
     partial void OnEnrollmentCodeChanged(string value) => RefreshDerived();
 
     partial void OnIsEnrollingChanged(bool value) => RefreshDerived();

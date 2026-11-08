@@ -19,8 +19,8 @@ namespace SecRandom.Core.Services.ControlNode;
 /// </remarks>
 public static class ControlNodeEndpointResolver
 {
-    /// <summary>节点通道在集控平台上的固定路径。</summary>
-    public const string NodeChannelPath = "/v1/node/connect";
+    /// <summary>节点通道在集控平台上的固定路径（v4.1）。</summary>
+    public const string NodeChannelPath = "/control/ws";
 
     /// <summary>把控制面基址映射成节点通道地址；基址不是绝对的 http/https 时返回 <c>null</c>。</summary>
     public static string? TryDeriveFromControlPlane(string? controlPlaneBaseUrl)

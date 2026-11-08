@@ -1,0 +1,37 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="SecRandom.Views.ControlNode.ControlBroadcastWindow"
+        WindowDecorations="None"
+        CanResize="False"
+        ShowInTaskbar="False"
+        ShowActivated="False"
+        Topmost="True"
+        WindowState="FullScreen"
+        Background="#B3000000">
+    <!-- 集控广播：只承担"把一句话显示给全班"，不参与抽取结果动画。 -->
+    <Border Margin="96,72" Background="#F21E1E1E" CornerRadius="18" Padding="56,40">
+        <StackPanel VerticalAlignment="Center" Spacing="28">
+            <TextBlock x:Name="TitleText"
+                       FontSize="26"
+                       Foreground="#CCFFFFFF"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center" />
+
+            <TextBlock x:Name="MessageText"
+                       FontSize="52"
+                       FontWeight="SemiBold"
+                       Foreground="#FFFFFFFF"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       HorizontalAlignment="Center"
+                       MaxWidth="1400" />
+
+            <TextBlock x:Name="CountdownText"
+                       FontSize="20"
+                       FontFeatures="+tnum"
+                       Foreground="#99FFFFFF"
+                       HorizontalAlignment="Center"
+                       TextAlignment="Center" />
+        </StackPanel>
+    </Border>
+</Window>

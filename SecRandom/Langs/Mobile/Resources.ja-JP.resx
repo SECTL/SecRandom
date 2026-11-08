@@ -760,8 +760,9 @@
     <data name="RD_Reenroll" xml:space="preserve"><value>再接続</value></data>
     <data name="RD_SignInInstead" xml:space="preserve"><value>ログインする</value></data>
     <data name="RD_EnrollTitle" xml:space="preserve"><value>自建集控に接続</value></data>
-    <data name="RD_EnrollHint" xml:space="preserve"><value>コンソールが発行した接続コードを入力します。トークンは本機の暗号化ストアに保存されます</value></data>
-    <data name="RD_EnrollCode" xml:space="preserve"><value>接続コード</value></data>
+    <data name="RD_EnrollHint" xml:space="preserve"><value>サイト ID とペアリングコードを入力します。資格情報は本機の暗号化ストアに保存されます</value></data>
+    <data name="RD_EnrollCode" xml:space="preserve"><value>ペアリングコード</value></data>
+    <data name="RD_SiteId" xml:space="preserve"><value>サイト ID（SC-XXXXXX）</value></data>
     <data name="RD_EnrollAction" xml:space="preserve"><value>接続</value></data>
     <data name="RD_EnrollClear" xml:space="preserve"><value>接続を解除</value></data>
     <data name="RD_EnrollFailed" xml:space="preserve"><value>接続に失敗しました：{0}</value></data>

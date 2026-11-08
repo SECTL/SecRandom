@@ -95,6 +95,9 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
         {
             NodeId = stored?.NodeId?.Trim() is { Length: > 0 } nodeId ? nodeId : NewNodeId(),
             GroupId = stored?.GroupId?.Trim() ?? string.Empty,
+            SiteId = stored?.SiteId?.Trim() is { Length: > 0 } siteId ? siteId : null,
+            SiteName = stored?.SiteName?.Trim(),
+            ClassId = stored?.ClassId?.Trim(),
             ServerUrl = stored?.ServerUrl?.Trim() is { Length: > 0 } serverUrl ? serverUrl : ControlNodeClientOptions.DefaultEndpoint,
             // 名字保留用户输入的原样（只把"全是空白"统一成"没填"），Trim 交给上报时的解析。
             DisplayName = string.IsNullOrWhiteSpace(stored?.DisplayName) ? null : stored!.DisplayName,
@@ -124,6 +127,9 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
                 FormatVersion = FormatVersion,
                 NodeId = state.NodeId,
                 GroupId = string.IsNullOrWhiteSpace(state.GroupId) ? null : state.GroupId,
+                SiteId = string.IsNullOrWhiteSpace(state.SiteId) ? null : state.SiteId,
+                SiteName = string.IsNullOrWhiteSpace(state.SiteName) ? null : state.SiteName,
+                ClassId = string.IsNullOrWhiteSpace(state.ClassId) ? null : state.ClassId,
                 ServerUrl = state.ServerUrl,
                 DisplayName = string.IsNullOrWhiteSpace(state.DisplayName) ? null : state.DisplayName,
                 RemoteControlEnabled = state.RemoteControlEnabled,
@@ -153,6 +159,13 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
         public string? NodeId { get; set; }
 
         public string? GroupId { get; set; }
+
+        /// <summary>v4：接入地点 ID/显示名与当前分班，只用于设置页展示。</summary>
+        public string? SiteId { get; set; }
+
+        public string? SiteName { get; set; }
+
+        public string? ClassId { get; set; }
 
         public string? ServerUrl { get; set; }
 

@@ -3,38 +3,38 @@ using System.Net.WebSockets;
 using System.Text;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Services.ControlNode;
-using SecRandom.Shared.Models.ControlNode;
+using SecRandom.Shared.Models.ControlNode.V4;
 
 namespace SecRandom.Services.ControlNode;
 
 /// <summary>
-///     <see cref="IControlNodeTransport" /> 的 WebSocket 实现。
+///     <see cref="IControlNodeTransport" /> 的 WebSocket 实现（v4：纯文本信封，不带任何凭据）。
 /// </summary>
 /// <remarks>
-///     协议帧都是 UTF-8 文本帧，单帧上限 64 KiB。超出上限或无法解析的帧**结束连接**
-///     而不是被忽略：合法节点不会发出这种帧，继续保持连接只会让故障无限刷日志，
-///     断开重连能让问题可见且可恢复。
+///     协议帧都是 UTF-8 文本帧，单帧上限 64 KiB。超限或非文本帧结束连接：合法节点不会发出这种帧，
+///     继续保持连接只会让故障无限刷日志。
 /// </remarks>
 public sealed class WebSocketControlNodeTransport(ClientWebSocket socket, ILogger<WebSocketControlNodeTransport> logger)
     : IControlNodeTransport
 {
-    private const int MaxFrameBytes = ControlProtocolJson.MaxFrameBytes;
+    private const int MaxFrameBytes = ControlV4Protocol.MaxFrameBytes;
     private const int ReceiveBufferSize = 4096;
 
-    /// <inheritdoc />
     public string? CloseReason { get; private set; }
 
-    public async Task SendAsync(ControlFrame frame, CancellationToken cancellationToken)
+    public int? CloseCode { get; private set; }
+
+    public async Task SendAsync(string frameJson, CancellationToken cancellationToken)
     {
-        var payload = Encoding.UTF8.GetBytes(ControlProtocolJson.Serialize(frame));
+        var payload = Encoding.UTF8.GetBytes(frameJson);
         if (payload.Length > MaxFrameBytes)
-            throw new ControlFrameTooLargeException(frame.Type ?? "unknown", payload.Length, MaxFrameBytes);
+            throw new ControlFrameTooLargeException("frame", payload.Length, MaxFrameBytes);
 
         await socket.SendAsync(payload, WebSocketMessageType.Text, endOfMessage: true, cancellationToken)
             .ConfigureAwait(false);
     }
 
-    public async Task<ControlFrame?> ReceiveAsync(CancellationToken cancellationToken)
+    public async Task<string?> ReceiveAsync(CancellationToken cancellationToken)
     {
         var buffer = new byte[ReceiveBufferSize];
         using var accumulated = new MemoryStream();
@@ -47,13 +47,13 @@ public sealed class WebSocketControlNodeTransport(ClientWebSocket socket, ILogge
 
             if (result.MessageType == WebSocketMessageType.Close)
             {
-                // 关闭码与原因要留下来：服务端接管同一 node_id 时会用 CloseStatusDescription="replaced"。
+                CloseCode = result.CloseStatus is { } status ? (int)status : null;
                 CloseReason = string.IsNullOrWhiteSpace(result.CloseStatusDescription)
                     ? result.CloseStatus?.ToString()
                     : result.CloseStatusDescription;
 
                 if (!string.IsNullOrWhiteSpace(CloseReason))
-                    logger.LogInformation("集控节点连接被对端关闭：{Reason}", CloseReason);
+                    logger.LogInformation("集控节点连接被对端关闭：{Code} {Reason}", CloseCode, CloseReason);
 
                 return null;
             }
@@ -76,14 +76,7 @@ public sealed class WebSocketControlNodeTransport(ClientWebSocket socket, ILogge
                 break;
         }
 
-        if (accumulated.Length == 0)
-            return null;
-
-        var frame = ControlProtocolJson.TryParse(Encoding.UTF8.GetString(accumulated.ToArray()));
-        if (frame is null)
-            logger.LogWarning("集控帧无法解析，结束连接。");
-
-        return frame;
+        return accumulated.Length == 0 ? null : Encoding.UTF8.GetString(accumulated.ToArray());
     }
 
     public async ValueTask DisposeAsync()
@@ -105,7 +98,7 @@ public sealed class WebSocketControlNodeTransport(ClientWebSocket socket, ILogge
     }
 }
 
-/// <summary>建立节点 WebSocket 连接，凭据放在 <c>Authorization</c> 头而不是 URL。</summary>
+/// <summary>建立节点 WebSocket 连接。v4 不在 URL 或请求头里放任何凭据。</summary>
 public sealed class WebSocketControlNodeTransportFactory(ILogger<WebSocketControlNodeTransport> logger)
     : IControlNodeTransportFactory
 {
@@ -117,10 +110,6 @@ public sealed class WebSocketControlNodeTransportFactory(ILogger<WebSocketContro
             throw new InvalidOperationException($"集控节点地址无效：{error}");
 
         var socket = new ClientWebSocket();
-        // 查询参数会进访问日志，所以凭据只走请求头。
-        socket.Options.SetRequestHeader("Authorization", $"Bearer {request.BearerToken}");
-        // 升级失败时才能读回 HTTP 状态码：401/403（凭据被拒）与断网/DNS/超时
-        // 必须走完全不同的处理，见 ControlNodeConnectRejectedException。
         socket.Options.CollectHttpResponseDetails = true;
 
         try
@@ -129,7 +118,6 @@ public sealed class WebSocketControlNodeTransportFactory(ILogger<WebSocketContro
         }
         catch (Exception exception)
         {
-            // 状态码必须在 Dispose 之前读。
             var statusCode = ReadUpgradeStatusCode(socket);
             socket.Dispose();
 
@@ -142,9 +130,6 @@ public sealed class WebSocketControlNodeTransportFactory(ILogger<WebSocketContro
         return new WebSocketControlNodeTransport(socket, logger);
     }
 
-    /// <summary>
-    ///     读回升级响应的状态码；没有 HTTP 响应（DNS 失败、连接被拒、超时）时为 <c>null</c>。
-    /// </summary>
     private static HttpStatusCode? ReadUpgradeStatusCode(ClientWebSocket socket)
     {
         try
@@ -153,8 +138,6 @@ public sealed class WebSocketControlNodeTransportFactory(ILogger<WebSocketContro
         }
         catch (InvalidOperationException)
         {
-            // 没有打开 CollectHttpResponseDetails 时这个属性会抛异常。这里绝不能让
-            // "读不到状态码"把原本的连接失败替换成另一种异常：读不到就按网络故障处理。
             return null;
         }
     }

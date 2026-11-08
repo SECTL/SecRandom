@@ -508,14 +508,20 @@ public sealed class ControlDrawTriggerPayloadTests
     }
 
     [Fact]
-    public void 设备声明了条件能力()
+    public void 抽取条件随draw_trigger自带_不再是独立能力()
     {
-        // 控制台据此决定要不要发 conditions——没有它就只能拒绝或明说"这台设备不支持条件"。
-        Assert.Contains(ControlCapabilities.DrawTriggerConditions, ControlCapabilities.Known);
+        // v4 的能力表里没有 draw.trigger.conditions：条件参数是 draw.trigger 载荷的一部分，
+        // 由同一张能力声明覆盖，控制台不需要再单独探测一条能力。
+        Assert.Contains(ControlCapabilities.DrawTrigger, ControlCapabilities.Known);
+        Assert.DoesNotContain(ControlCapabilities.DrawTriggerConditions, ControlCapabilities.Known);
 
         var dispatcher = File.ReadAllText(GetRepositoryPath(
             @"SecRandom/Services/ControlNode/ControlCommandDispatcher.cs"));
-        Assert.Contains("ControlCapabilities.DrawTriggerConditions,", dispatcher, StringComparison.Ordinal);
+        Assert.Contains("ControlCapabilities.DrawTrigger,", dispatcher, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "ControlCapabilities.DrawTriggerConditions",
+            dispatcher,
+            StringComparison.Ordinal);
     }
 
     private static ControlDrawTriggerRequest Lottery(

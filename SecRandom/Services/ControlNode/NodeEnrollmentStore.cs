@@ -41,7 +41,7 @@ namespace SecRandom.Services.ControlNode;
 /// </remarks>
 public sealed class FileNodeEnrollmentStore : INodeEnrollmentStore
 {
-    private const int FormatVersion = 1;
+    private const int FormatVersion = 2;
     private const int KeyFormatVersion = 1;
     private const int EncryptionKeyLength = 32;
     private const int NonceLength = 12;
@@ -55,7 +55,7 @@ public sealed class FileNodeEnrollmentStore : INodeEnrollmentStore
     /// <summary>
     ///     认证附加数据把信封绑死在"接入令牌"这一用途上：同一把密钥换个用途或换一版格式都通不过校验。
     /// </summary>
-    private static readonly byte[] AssociatedData = Encoding.ASCII.GetBytes("SecRandom/NodeEnrollment/v1");
+    private static readonly byte[] AssociatedData = Encoding.ASCII.GetBytes("SecRandom/NodeEnrollment/v2");
 
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
@@ -102,23 +102,54 @@ public sealed class FileNodeEnrollmentStore : INodeEnrollmentStore
 
     public event EventHandler<NodeEnrollmentStatus>? Changed;
 
-    public bool TryGetAccessToken(out string? accessToken)
+    public bool TryGetCredential(out NodeDeviceCredential? credential)
     {
-        accessToken = null;
+        credential = null;
 
         NodeEnrollmentRecord? record;
         lock (_gate)
         {
-            // 只读内存里的那一份：令牌在启动时已经解密过一次，这里再走一遍磁盘解密既浪费，
-            // 又可能在看盘失败时顺手把记录清掉（读操作**绝不能有副作用**）。
+            // 只读内存里的那一份：凭据在启动时已经解密过一次，读操作绝不能有副作用。
+            record = _record;
+        }
+
+        if (record is null
+            || string.IsNullOrWhiteSpace(record.DeviceId)
+            || string.IsNullOrWhiteSpace(record.Secret)
+            || string.IsNullOrWhiteSpace(record.SiteId))
+        {
+            return false;
+        }
+
+        credential = new NodeDeviceCredential(
+            record.DeviceId,
+            record.Secret,
+            record.SiteId,
+            record.SiteName,
+            record.ClassId,
+            record.ClassName);
+        return true;
+    }
+
+    /// <summary>v4 没有 Bearer 令牌：恒为 <see langword="false" />，让控制面 REST 回落到账号令牌。</summary>
+    public bool TryGetAccessToken(out string? accessToken)
+    {
+        accessToken = null;
+        return false;
+    }
+
+    public bool UpdateClass(string? classId, string? className)
+    {
+        NodeEnrollmentRecord? record;
+        lock (_gate)
+        {
             record = _record;
         }
 
         if (record is null)
             return false;
 
-        accessToken = record.NodeToken;
-        return true;
+        return Save(record with { ClassId = classId, ClassName = className });
     }
 
     public bool Save(NodeEnrollmentRecord record)
@@ -139,11 +170,12 @@ public sealed class FileNodeEnrollmentStore : INodeEnrollmentStore
             var payload = JsonSerializer.SerializeToUtf8Bytes(
                 new EnrollmentPayload
                 {
-                    NodeId = record.NodeId,
-                    GroupId = record.GroupId,
-                    GroupName = record.GroupName,
-                    NodeToken = record.NodeToken,
-                    ExpiresAt = record.ExpiresAt,
+                    DeviceId = record.DeviceId,
+                    Secret = record.Secret,
+                    SiteId = record.SiteId,
+                    SiteName = record.SiteName,
+                    ClassId = record.ClassId,
+                    ClassName = record.ClassName,
                     EnrolledAt = record.EnrolledAt
                 },
                 JsonOptions);
@@ -191,8 +223,8 @@ public sealed class FileNodeEnrollmentStore : INodeEnrollmentStore
         Changed?.Invoke(this, status);
         // 只记身份与到期时间，**永远不记令牌**。
         _logger.LogInformation(
-            "接入信息已保存：节点={NodeId}，组={GroupId}，到期={ExpiresAt}",
-            record.NodeId, record.GroupId, record.ExpiresAt?.ToString("O") ?? "未提供");
+            "接入信息已保存：设备={DeviceId}，地点={SiteId}，班级={ClassId}",
+            record.DeviceId, record.SiteId, record.ClassId ?? "未分班");
         return true;
     }
 
@@ -201,7 +233,7 @@ public sealed class FileNodeEnrollmentStore : INodeEnrollmentStore
         var had = false;
         lock (_gate)
         {
-            had = _record is not null || _status.HasToken || _status.IsUnreadable;
+            had = _record is not null || _status.HasCredential || _status.IsUnreadable;
             _record = null;
             _status = NodeEnrollmentStatus.NotEnrolled;
             Generation++;
@@ -250,19 +282,21 @@ public sealed class FileNodeEnrollmentStore : INodeEnrollmentStore
 
             var stored = JsonSerializer.Deserialize<EnrollmentPayload>(payload, JsonOptions);
             if (stored is null
-                || string.IsNullOrWhiteSpace(stored.NodeId)
-                || string.IsNullOrWhiteSpace(stored.NodeToken))
+                || string.IsNullOrWhiteSpace(stored.DeviceId)
+                || string.IsNullOrWhiteSpace(stored.Secret)
+                || string.IsNullOrWhiteSpace(stored.SiteId))
             {
                 return DiscardCorrupt("接入记录内容不完整");
             }
 
             return new NodeEnrollmentRecord
             {
-                NodeId = stored.NodeId!,
-                GroupId = stored.GroupId ?? string.Empty,
-                GroupName = stored.GroupName,
-                NodeToken = stored.NodeToken!,
-                ExpiresAt = stored.ExpiresAt,
+                DeviceId = stored.DeviceId!,
+                Secret = stored.Secret!,
+                SiteId = stored.SiteId!,
+                SiteName = stored.SiteName,
+                ClassId = stored.ClassId,
+                ClassName = stored.ClassName,
                 EnrolledAt = stored.EnrolledAt
             };
         }
@@ -298,12 +332,12 @@ public sealed class FileNodeEnrollmentStore : INodeEnrollmentStore
 
     private NodeEnrollmentStatus ToStatus(NodeEnrollmentRecord record) => new()
     {
-        HasToken = true,
-        IsExpired = record.ExpiresAt is { } expiresAt && expiresAt <= DateTimeOffset.UtcNow,
-        NodeId = record.NodeId,
-        GroupId = record.GroupId,
-        GroupName = record.GroupName,
-        ExpiresAt = record.ExpiresAt
+        HasCredential = true,
+        DeviceId = record.DeviceId,
+        SiteId = record.SiteId,
+        SiteName = record.SiteName,
+        ClassId = record.ClassId,
+        ClassName = record.ClassName
     };
 
     /// <summary>启动时读一次：成功就是已接入，失败就是"需要重新接入"。</summary>
@@ -484,11 +518,12 @@ public sealed class FileNodeEnrollmentStore : INodeEnrollmentStore
     /// <summary>明文载荷（只以密文形式落盘）。</summary>
     private sealed class EnrollmentPayload
     {
-        public string? NodeId { get; set; }
-        public string? GroupId { get; set; }
-        public string? GroupName { get; set; }
-        public string? NodeToken { get; set; }
-        public DateTimeOffset? ExpiresAt { get; set; }
+        public string? DeviceId { get; set; }
+        public string? Secret { get; set; }
+        public string? SiteId { get; set; }
+        public string? SiteName { get; set; }
+        public string? ClassId { get; set; }
+        public string? ClassName { get; set; }
         public DateTimeOffset EnrolledAt { get; set; }
     }
 }

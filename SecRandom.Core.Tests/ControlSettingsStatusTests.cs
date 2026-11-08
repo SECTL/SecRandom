@@ -105,7 +105,7 @@ public sealed class ControlSettingsStatusTests
     {
         var client = new ControlNodeClient(
             new RejectingTransportFactory(),
-            new StaticCredentialProvider("srn_test_token"),
+            new UnusedCredentialProvider(),
             new InMemoryStateStore(State()),
             new NoopDispatcher(),
             new ControlNodeClientOptions
@@ -115,7 +115,8 @@ public sealed class ControlSettingsStatusTests
                 MaxConsecutiveUnauthorized = 1
             },
             NullLogger<ControlNodeClient>.Instance,
-            NullLogger<ControlNodeSession>.Instance);
+            NullLogger<ControlNodeSession>.Instance,
+            new FakeEnrollmentStore(true));
 
         var source = new CancellationTokenSource(TimeSpan.FromSeconds(10));
         return (client, source, client.RunAsync(source.Token));
@@ -180,10 +181,14 @@ public sealed class ControlSettingsStatusTests
             Task.FromException<IControlNodeTransport>(new ControlNodeConnectRejectedException(HttpStatusCode.Unauthorized));
     }
 
-    private sealed class StaticCredentialProvider(string token) : IControlNodeCredentialProvider
+    /// <summary>
+    ///     v4 的设备凭据只从接入记录取（<see cref="FakeEnrollmentStore" />），
+    ///     这个 provider 只是构造参数，故意不提供任何账号令牌。
+    /// </summary>
+    private sealed class UnusedCredentialProvider : IControlNodeCredentialProvider
     {
         public Task<string?> TryGetAccessTokenAsync(bool forceRefresh, CancellationToken cancellationToken) =>
-            Task.FromResult<string?>(token);
+            Task.FromResult<string?>(null);
     }
 
     private sealed class NoopDispatcher : IControlCommandDispatcher
@@ -257,11 +262,10 @@ public sealed class ControlSettingsStatusTests
             Status = enrolled
                 ? new NodeEnrollmentStatus
                 {
-                    HasToken = true,
-                    NodeId = "node-1",
-                    GroupId = "grp_1",
-                    GroupName = "高一（3）班",
-                    ExpiresAt = DateTimeOffset.UtcNow.AddDays(30)
+                    HasCredential = true,
+                    DeviceId = "dev-1",
+                    SiteId = "SC-000001",
+                    SiteName = "高一（3）班"
                 }
                 : NodeEnrollmentStatus.NotEnrolled;
         }
@@ -272,9 +276,12 @@ public sealed class ControlSettingsStatusTests
 
         public event EventHandler<NodeEnrollmentStatus>? Changed;
 
-        public bool TryGetAccessToken(out string? accessToken)
+        /// <summary>v4 的节点通道凭据（device_id + secret），由接入记录提供。</summary>
+        public bool TryGetCredential(out NodeDeviceCredential? credential)
         {
-            accessToken = _enrolled ? "srn_test_token" : null;
+            credential = _enrolled
+                ? new NodeDeviceCredential("dev-1", "secret-test-value", "SC-000001", "高一（3）班")
+                : null;
             return _enrolled;
         }
 

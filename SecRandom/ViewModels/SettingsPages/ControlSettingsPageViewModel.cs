@@ -1,4 +1,5 @@
-using System;
+using System.Collections.ObjectModel;
+using System.Linq;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -9,22 +10,25 @@ using SecRandom.Services.ControlNode;
 using SecRandom.Services.ControlPlane;
 using SecRandom.Services.Desktop;
 using SecRandom.Shared.Models.ControlNode;
+using SecRandom.Shared.Models.ControlNode.V4;
 using LR = SecRandom.Langs.SettingsPages.General.Control.Resources;
 
 namespace SecRandom.ViewModels.SettingsPages;
 
 /// <summary>
-///     集控设置页：本机开关、节点身份与连接状态。
+///     集控设置页：本机开关、集控接入、班级绑定与连接状态。
 /// </summary>
 /// <remarks>
 ///     <para>
-///         这里**不经过 <c>settings.json</c>**：本机开关与已应用的期望状态都在
-///         <c>data/config/control/node-state.json</c>。理由是安全边界——一次设置导入或备份恢复
-///         不该能把"这台机器允许被远控"悄悄打开。
+///         这里**不经过 <c>settings.json</c>**：本机开关、已应用的期望状态都在
+///         <c>data/config/control/node-state.json</c>；设备凭据在独立的加密记录里。
+///         理由是安全边界——一次设置导入或备份恢复不该能把"这台机器允许被远控"悄悄打开，
+///         也不该能把设备凭据搬到另一台机器上。
 ///     </para>
 ///     <para>
-///         每次修改立刻原子落盘，所以页面不需要"保存"按钮；连接状态由 <see cref="ControlNodeClient" />
-///         推送，订阅回调会切回 UI 线程再改属性。
+///         v4 接入是**双因子**：地点 ID 说明"接进哪个学校"，配对码说明"谁允许你接"。
+///         两者缺一不可，所以页面上分成接入卡与班级卡：没有接入就不显示年级/班级，
+///         避免用户在未接入时以为选个班级就能被控制。
 ///     </para>
 /// </remarks>
 public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDisposable
@@ -38,6 +42,7 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     private readonly INodeEnrollmentStore? _enrollmentStore;
     private readonly NodeEnrollmentClient? _enrollmentClient;
     private bool _suppressPersist;
+    private bool _suppressPairingFormat;
 
     public ControlSettingsPageViewModel(
         MainConfigHandler configHandler,
@@ -71,6 +76,11 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
 
         if (_enrollmentStore is not null)
             _enrollmentStore.Changed += OnEnrollmentStoreChanged;
+
+        // 已接入就直接把年级/班级读回来：用户打开设置页时应当看到当前绑定的班级，
+        // 而不是先点一下"刷新"才出现。失败只提示，不影响其它卡片。
+        if (IsEnrolled)
+            _ = LoadTreeAsync();
     }
 
     /// <summary>本机是否允许被集控。**这是设备自己的闸，服务端只读它。**</summary>
@@ -79,18 +89,9 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     /// <summary>
     ///     本机主界面是否显示"远程抽取"页。**默认关闭**，打开后侧栏立刻出现，关掉立刻消失（不需要重启）。
     /// </summary>
-    /// <remarks>
-    ///     它决定的是**看得见看不见**，不是能不能抽：真的能不能下发抽取仍由服务端按组成员角色判定。
-    ///     之所以不放进 <c>settings.json</c>、而和"允许被远程控制"共用 <c>node-state.json</c>：
-    ///     这个入口会把本机账号令牌发往控制面，因此一次设置导入不该能替用户打开它。
-    /// </remarks>
     [ObservableProperty] private bool _remoteDrawPageEnabled;
 
-    [ObservableProperty] private string _groupId = string.Empty;
-
     [ObservableProperty] private string _serverUrl = string.Empty;
-
-    [ObservableProperty] private string _nodeId = string.Empty;
 
     /// <summary>
     ///     控制台里显示的名称。**由用户在这台机器上填写**；留空则上报 <see cref="HostName" />。
@@ -100,7 +101,7 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     /// <summary>留空时上报的回落值（主机名）。同时作为输入框水印，省得用户去猜。</summary>
     public string HostName { get; }
 
-    /// <summary>输入框的上限，直接取协议上限，避免这里再写一个字面量 64。</summary>
+    /// <summary>输入框的上限，直接取协议上限。</summary>
     public int DisplayNameMaxLength => ControlNodeDisplayName.MaxLength;
 
     [ObservableProperty] private string _statusText = string.Empty;
@@ -116,101 +117,109 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     /// <summary>节点通道地址当前是否不是默认值（"恢复默认"按钮据此启用）。</summary>
     [ObservableProperty] private bool _isServerUrlCustom;
 
-    /// <summary>控制台（手机/平板）访问集控平台所用的基址。留空即回到线上默认。</summary>
+    /// <summary>控制台访问集控平台所用的基址。留空即回到线上默认。</summary>
     [ObservableProperty] private string _controlPlaneEndpoint = string.Empty;
 
-    /// <summary>控制面地址无效：仅提示，**无效地址绝不落盘**。</summary>
     [ObservableProperty] private bool _hasControlPlaneEndpointError;
 
-    /// <summary>当前是否用的是自定义地址（"恢复默认"按钮据此启用）。</summary>
     [ObservableProperty] private bool _isControlPlaneEndpointCustom;
 
-    /// <summary>
-    ///     "打开集控平台"按钮的文案。
-    /// </summary>
-    /// <remarks>
-    ///     配了第三方地址就**明说**打开的是哪一家：让按钮写着"SecRandom 集控平台"却跳到别人的服务器，
-    ///     是这页面上最容易被误点的一处。
-    /// </remarks>
     [ObservableProperty] private string _openControlPlaneLabel = string.Empty;
 
-    /// <summary>线上默认地址，作为输入框水印：用户一眼能看到"不填会连哪"。</summary>
     public string ControlPlaneEndpointDefault => ControlPlaneClient.DefaultBaseUrl;
 
-    /// <summary>
-    ///     是否已经接入自建集控（接入码换来的节点令牌）。已接入时**不登录 SECTL 也能用**。
-    /// </summary>
+    // ── 集控接入 ────────────────────────────────────────────────────────────────
+
+    /// <summary>是否已经持有本机设备凭据。</summary>
     [ObservableProperty] private bool _isEnrolled;
 
-    /// <summary>
-    ///     接入码输入框。用户手输或粘贴的一次性接入码，也可以是直接粘贴的 <c>srn_…</c> 令牌。
-    /// </summary>
-    /// <remarks>
-    ///     它是普通输入框内容（用户自己贴进来的），**不是已保存的令牌**：保存后的令牌只存在于加密存储里，
-    ///     这里永远不回填、不显示，因此不可能被截图或设置导出带出去。
-    /// </remarks>
-    [ObservableProperty] private string _enrollmentCode = string.Empty;
+    /// <summary>地点 ID 输入框（形如 <c>SC-K7Q2M9</c>）。</summary>
+    [ObservableProperty] private string _siteIdInput = string.Empty;
 
-    /// <summary>接入状态一句话（未接入 / 已接入到哪个组 / 已过期 / 记录读不出来）。</summary>
+    /// <summary>配对码输入框（形如 <c>ABCD-7KQ2</c>）。</summary>
+    [ObservableProperty] private string _pairingCodeInput = string.Empty;
+
+    /// <summary>接入状态一句话（未接入 / 已接入到哪个地点 / 记录读不出来）。</summary>
     [ObservableProperty] private string _enrollmentStatusText = string.Empty;
 
-    /// <summary>接入失败的提示；成功或未操作时为空。</summary>
+    /// <summary>接入或班级保存的提示；成功或未操作时为空。</summary>
     [ObservableProperty] private string _enrollmentMessage = string.Empty;
 
-    /// <summary>
-    ///     接入记录存在却读不出来（被改过、换了机器）。此时已按"未接入"处理，界面提示重新接入。
-    /// </summary>
+    /// <summary>接入记录存在却读不出来（被改过、换了机器）。</summary>
     [ObservableProperty] private bool _isEnrollmentUnreadable;
 
-    /// <summary>正在接入（按钮转圈/禁用，避免连点换出多份令牌）。</summary>
+    /// <summary>正在接入（按钮转圈/禁用，避免连点换出多份凭据）。</summary>
     [ObservableProperty] private bool _isEnrolling;
 
-    /// <summary>"接入"按钮是否可点：填了接入码、且当前没有正在进行的接入。</summary>
-    public bool CanEnroll => !IsEnrolling && !string.IsNullOrWhiteSpace(EnrollmentCode);
+    /// <summary>已接入地点的一行"名称（公开 ID）"。</summary>
+    [ObservableProperty] private string _enrolledSiteText = string.Empty;
 
-    /// <summary>"清除接入"按钮是否可点（有记录、或记录已损坏需要清掉）。</summary>
+    /// <summary>本机在集控里的名称。</summary>
+    [ObservableProperty] private string _enrolledDeviceText = string.Empty;
+
+    /// <summary>已绑定班级的一行文字。</summary>
+    [ObservableProperty] private string _enrolledClassText = string.Empty;
+
+    /// <summary>年级列表。来自 <c>/control/api/device/tree</c>，与班级级联共用同一份树。</summary>
+    public ObservableCollection<ControlGradeNode> GradeOptions { get; } = [];
+
+    /// <summary>当前年级下的班级列表。</summary>
+    public ObservableCollection<ControlClassNode> ClassOptions { get; } = [];
+
+    [ObservableProperty] private ControlGradeNode? _selectedGrade;
+
+    [ObservableProperty] private ControlClassNode? _selectedClass;
+
+    /// <summary>正在读取年级/班级。</summary>
+    [ObservableProperty] private bool _isTreeLoading;
+
+    /// <summary>是否已经拿到可选的年级/班级（没接入或读取失败时为 false）。</summary>
+    [ObservableProperty] private bool _hasTree;
+
+    /// <summary>班级保存提示（与接入错误共用同一行，但文案分开）。</summary>
+    [ObservableProperty] private string _classSaveMessage = string.Empty;
+
+    public bool CanEnroll => !IsEnrolling
+                             && NodeEnrollmentClient.NormalizeSiteId(SiteIdInput) is not null
+                             && NodeEnrollmentClient.NormalizePairingCode(PairingCodeInput) is not null;
+
     public bool CanClearEnrollment => _enrollmentStore is not null && (IsEnrolled || IsEnrollmentUnreadable);
 
-    /// <summary>
-    ///     接入码输入框的长度上限。
-    /// </summary>
-    /// <remarks>
-    ///     数字留在 <see cref="NodeEnrollmentClient.MaxCodeLength" />，XAML 只绑这个属性：
-    ///     跟设备显示名（<see cref="DisplayNameMaxLength" />）同一个写法，界面不写死业务数字。
-    /// </remarks>
-    public int EnrollmentCodeMaxLength => NodeEnrollmentClient.MaxCodeLength;
+    public bool CanSaveClass => IsEnrolled && !IsTreeLoading && HasTree;
 
-    /// <summary>
-    ///     "接入"与"清除接入"共用 Footer 右侧同一格，这里是"接入"是否显示。
-    /// </summary>
-    /// <remarks>
-    ///     与 <see cref="ShowClearEnrollment" /> **互补**：这一格永远恰好有一个按钮，
-    ///     否则两个都显示会挤、两个都藏起来会让那一格空着、整行宽度跟着跳。
-    /// </remarks>
-    public bool ShowEnroll => !ShowClearEnrollment;
+    /// <summary>地点 ID 输入上限：<c>SC-</c> 加 6 位。</summary>
+    public int SiteIdMaxLength => 9;
 
-    /// <summary>
-    ///     "清除接入"按钮是否显示：**有可清的记录、且输入框是空的**。
-    /// </summary>
-    /// <remarks>
-    ///     输入框里有内容时用户要做的是"接入"（换组、换控制台），此时把清除藏起来——
-    ///     同一格里两个动作会互相打断；想清除就先清空输入框。
-    /// </remarks>
-    public bool ShowClearEnrollment => CanClearEnrollment && string.IsNullOrWhiteSpace(EnrollmentCode);
+    /// <summary>配对码输入上限：展示为 <c>ABCD-7KQ2</c>。</summary>
+    public int PairingCodeMaxLength => 9;
 
-    /// <summary>
-    ///     失败提示出现时卡片自动展开。
-    /// </summary>
-    /// <remarks>
-    ///     卡片默认收起（用户要求：这一页不要一进来就摊开接入卡），但提示只写在正文区，
-    ///     收起的卡片会把唯一的错误信息一起藏掉；所以"有提示"是唯一的自动展开条件。
-    /// </remarks>
     public bool ShowEnrollmentMessage => !string.IsNullOrEmpty(EnrollmentMessage);
 
-    partial void OnEnrollmentCodeChanged(string value)
+    partial void OnSiteIdInputChanged(string value)
+    {
+        _suppressPairingFormat = true;
+        OnPropertyChanged(nameof(CanEnroll));
+        // 边输边归一：用户贴进来的 "sc k7q2m9" 与手输的格式应当得到同一个值，不必让他自己排版。
+        var normalized = NodeEnrollmentClient.NormalizeSiteId(value);
+        if (normalized is not null && !string.Equals(normalized, value, StringComparison.Ordinal))
+            SiteIdInput = normalized;
+        _suppressPairingFormat = false;
+    }
+
+    partial void OnPairingCodeInputChanged(string value)
     {
         OnPropertyChanged(nameof(CanEnroll));
-        NotifyEnrollmentButtonVisibility();
+        if (_suppressPairingFormat)
+            return;
+
+        var normalized = NodeEnrollmentClient.NormalizePairingCode(value);
+        var formatted = normalized is null ? value : NodeEnrollmentClient.FormatPairingCode(normalized);
+        if (string.Equals(formatted, value, StringComparison.Ordinal))
+            return;
+
+        _suppressPairingFormat = true;
+        PairingCodeInput = formatted;
+        _suppressPairingFormat = false;
     }
 
     partial void OnIsEnrollingChanged(bool value) => OnPropertyChanged(nameof(CanEnroll));
@@ -218,24 +227,33 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     partial void OnIsEnrolledChanged(bool value)
     {
         OnPropertyChanged(nameof(CanClearEnrollment));
-        NotifyEnrollmentButtonVisibility();
+        OnPropertyChanged(nameof(CanSaveClass));
     }
 
-    partial void OnIsEnrollmentUnreadableChanged(bool value)
-    {
+    partial void OnIsEnrollmentUnreadableChanged(bool value) =>
         OnPropertyChanged(nameof(CanClearEnrollment));
-        NotifyEnrollmentButtonVisibility();
-    }
+
+    partial void OnIsTreeLoadingChanged(bool value) => OnPropertyChanged(nameof(CanSaveClass));
+
+    partial void OnHasTreeChanged(bool value) => OnPropertyChanged(nameof(CanSaveClass));
 
     partial void OnEnrollmentMessageChanged(string value) => OnPropertyChanged(nameof(ShowEnrollmentMessage));
 
-    /// <summary>
-    ///     显隐必须**成对翻转**：只通知其中一个会出现"两个都在"或"一个都不在"的中间帧。
-    /// </summary>
-    private void NotifyEnrollmentButtonVisibility()
+    /// <summary>切换年级：班级列表换成这一年级的班，不重新请求服务端。</summary>
+    partial void OnSelectedGradeChanged(ControlGradeNode? value)
     {
-        OnPropertyChanged(nameof(ShowClearEnrollment));
-        OnPropertyChanged(nameof(ShowEnroll));
+        ClassOptions.Clear();
+        if (value is null)
+            return;
+
+        foreach (var item in value.Classes)
+            ClassOptions.Add(item);
+
+        // 已绑定班级落在当前年级下时选中它；切到别的年级则不预选，让用户明确选一个。
+        var currentClassId = _enrollmentStore?.Status.ClassId;
+        SelectedClass = value.Classes.FirstOrDefault(c =>
+                            string.Equals(c.Id, currentClassId, StringComparison.Ordinal))
+                        ?? (value.Classes.Count == 1 ? value.Classes[0] : null);
     }
 
     public void Dispose()
@@ -248,13 +266,8 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     }
 
     [RelayCommand]
-    private void Reconnect()
-    {
-        // 终态（未注册 / 不是组成员 / 地址错误）会一直等着，这个按钮让用户修正后立刻重试。
-        _client.Wake();
-    }
+    private void Reconnect() => _client.Wake();
 
-    /// <summary>丢弃自定义控制面地址，回到线上默认。</summary>
     [RelayCommand]
     private void ResetControlPlaneEndpoint()
     {
@@ -262,16 +275,13 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         RefreshControlPlaneEndpoint();
     }
 
-    /// <summary>丢弃自定义节点通道地址，回到线上默认。</summary>
     [RelayCommand]
     private void ResetServerUrl()
     {
-        // 只走状态存储这一条写路径：它原子落盘并触发 Changed，界面从同一个事件刷新。
         _stateStore.Update(state => state with { ServerUrl = ControlNodeClientOptions.DefaultEndpoint });
         _client.Wake();
     }
 
-    /// <summary>在浏览器里打开集控平台网页控制台（配了第三方地址就打开那一家）。</summary>
     [RelayCommand]
     private void OpenControlPlane()
     {
@@ -281,16 +291,11 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     }
 
     /// <summary>
-    ///     用控制台签发的接入码把本机接入自建集控。输入已经是 <c>srn_…</c> 时**不调接入接口**，直接存。
+    ///     用"地点 ID + 配对码"接入。成功后立刻把年级/班级树拉回来。
     /// </summary>
     /// <remarks>
-    ///     <para>
-    ///         成功后写入两处：加密的接入记录（令牌真值）与节点状态里的组 ID/节点 ID——
-    ///         组 ID 是节点连接配置的一部分，不写进去会出现"接入成功了却还报未配置"。
-    ///     </para>
-    ///     <para>
-    ///         失败只把**错误码**显示出来：接入码本身绝不回显、绝不写日志。
-    ///     </para>
+    ///     失败只显示 **可操作的中文原因**，不回显配对码、不写日志：配对码是一次性凭据，
+    ///     进了日志就等于泄漏。
     /// </remarks>
     [RelayCommand]
     private async Task EnrollAsync()
@@ -298,49 +303,43 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         if (_enrollmentStore is null || _enrollmentClient is null || IsEnrolling)
             return;
 
-        var code = EnrollmentCode?.Trim() ?? string.Empty;
-        if (code.Length == 0)
+        var siteId = NodeEnrollmentClient.NormalizeSiteId(SiteIdInput);
+        var pairingCode = NodeEnrollmentClient.NormalizePairingCode(PairingCodeInput);
+        if (siteId is null || pairingCode is null)
             return;
 
         IsEnrolling = true;
         EnrollmentMessage = string.Empty;
+        ClassSaveMessage = string.Empty;
         try
         {
-            var record = NodeEnrollmentClient.LooksLikeNodeToken(code)
-                // 用户直接粘贴了令牌：它自带节点身份，不经过接入码那条一次性通道。
-                ? new NodeEnrollmentRecord
-                {
-                    NodeId = _stateStore.Current.NodeId,
-                    GroupId = _stateStore.Current.GroupId,
-                    NodeToken = code
-                }
-                : await _enrollmentClient.EnrollAsync(
-                        code,
-                        nodeId: _stateStore.Current.NodeId,
-                        platform: _options.Platform,
-                        version: _options.Version,
-                        displayName: ControlNodeDisplayName.Resolve(_stateStore.Current.DisplayName, _options.HostName))
-                    .ConfigureAwait(true);
+            // 重新接入同一地点时保留原来的显示名；跨地点时仍然用本机设置里的名字。
+            var record = await _enrollmentClient.EnrollAsync(
+                siteId,
+                pairingCode,
+                ControlNodeDisplayName.Resolve(_stateStore.Current.DisplayName, _options.HostName),
+                CancellationToken.None).ConfigureAwait(true);
 
-            if (record is null || !_enrollmentStore.Save(record))
+            if (!_enrollmentStore.Save(record))
             {
                 EnrollmentMessage = string.Format(LR.M_Enroll_Detail, "save_failed");
                 return;
             }
 
             ApplyEnrollmentIdentity(record);
-            EnrollmentCode = string.Empty;
-            EnrollmentMessage = string.Empty;
+            PairingCodeInput = string.Empty;
+            EnrollmentMessage = string.Format(LR.M_Enroll_Success, record.SiteName);
+            await LoadTreeAsync().ConfigureAwait(true);
         }
         catch (NodeEnrollmentException exception)
         {
-            // 界面只显示服务端错误码：它足以区分"码错了/过期了/被用过了/被限流了"。
-            EnrollmentMessage = string.Format(LR.M_Enroll_Detail, exception.ServerCode ?? exception.Failure.ToString());
+            EnrollmentMessage = DescribeEnrollmentFailure(exception);
+            _logger.LogWarning("接入集控失败：{Code}", exception.ServerCode ?? exception.Failure.ToString());
         }
         catch (Exception exception)
         {
-            _logger.LogWarning(exception, "接入自建集控失败。");
-            EnrollmentMessage = string.Format(LR.M_Enroll_Detail, exception.GetType().Name);
+            _logger.LogWarning(exception, "接入集控失败。");
+            EnrollmentMessage = LR.M_Enroll_Err_Network;
         }
         finally
         {
@@ -348,7 +347,7 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         }
     }
 
-    /// <summary>清除本机接入记录（令牌立即失效）并立刻断开节点连接。</summary>
+    /// <summary>清除本机设备凭据并立刻断开节点连接。</summary>
     [RelayCommand]
     private void ClearEnrollment()
     {
@@ -357,59 +356,189 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
 
         _enrollmentStore.Clear();
         EnrollmentMessage = string.Empty;
+        ClassSaveMessage = string.Empty;
         IsEnrollmentUnreadable = false;
-        // 唤醒连接循环：它下一轮取不到凭据，会按"未接入"处理而不是继续拿着旧令牌重连。
+        HasTree = false;
+        GradeOptions.Clear();
+        ClassOptions.Clear();
         _client.Wake();
     }
 
-    /// <summary>把接入结果里的身份写进节点状态：组 ID/节点 ID 是连接配置的一部分。</summary>
+    /// <summary>把当前选中的班级保存到控制面；允许"不选班级"。</summary>
+    [RelayCommand]
+    private async Task SaveClassAsync()
+    {
+        if (_enrollmentStore is null || _enrollmentClient is null || !IsEnrolled)
+            return;
+
+        if (!_enrollmentStore.TryGetCredential(out var credential) || credential is null)
+        {
+            ClassSaveMessage = LR.M_Enroll_Err_NoCredential;
+            return;
+        }
+
+        IsEnrolling = true;
+        ClassSaveMessage = string.Empty;
+        try
+        {
+            var classId = SelectedClass?.Id;
+            await _enrollmentClient.AssignClassAsync(credential, classId, CancellationToken.None)
+                .ConfigureAwait(true);
+
+            _enrollmentStore.UpdateClass(classId, SelectedClass?.Name);
+            _stateStore.Update(state => state with
+            {
+                ClassId = classId,
+                SiteId = credential.SiteId,
+                SiteName = credential.SiteName
+            });
+
+            ClassSaveMessage = classId is null ? LR.M_Enroll_Class_None : LR.M_Enroll_Class_Saved;
+        }
+        catch (NodeEnrollmentException exception)
+        {
+            ClassSaveMessage = exception.Failure == NodeEnrollmentFailure.CodeRevoked
+                ? LR.M_Enroll_Err_Revoked
+                : LR.M_Enroll_Err_Assign;
+            _logger.LogWarning("保存集控班级失败：{Code}", exception.ServerCode ?? exception.Failure.ToString());
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "保存集控班级失败。");
+            ClassSaveMessage = LR.M_Enroll_Err_Network;
+        }
+        finally
+        {
+            IsEnrolling = false;
+        }
+    }
+
     private void ApplyEnrollmentIdentity(NodeEnrollmentRecord record)
     {
-        var nodeId = string.IsNullOrWhiteSpace(record.NodeId) ? _stateStore.Current.NodeId : record.NodeId;
-        var groupId = string.IsNullOrWhiteSpace(record.GroupId) ? _stateStore.Current.GroupId : record.GroupId;
-
         _suppressPersist = true;
         try
         {
-            // 令牌是直接粘贴进来的那种，服务端身份要等下一次连接才会被纠正，这里只补已知的部分。
-            _stateStore.Update(state => state with { NodeId = nodeId, GroupId = groupId });
+            _stateStore.Update(state => state with
+            {
+                NodeId = string.IsNullOrWhiteSpace(record.DeviceId) ? state.NodeId : record.DeviceId,
+                SiteId = record.SiteId,
+                SiteName = record.SiteName,
+                ClassId = record.ClassId
+            });
         }
         finally
         {
             _suppressPersist = false;
         }
 
-        // 接入成功就是"这台机器属于这台集控"的判定点：通道地址在这里对齐一次，
-        // 之后即使基址没变过，冷启动读到的也是能连上的地址。
         NormalizeNodeEndpoint();
         _client.Wake();
+        RefreshEnrollment();
     }
 
     private void OnEnrollmentStoreChanged(object? sender, NodeEnrollmentStatus status) =>
         RunOnUiThread(RefreshEnrollment);
 
-    /// <summary>把接入状态翻译成一句话；**这里读不到令牌真值，所以不可能回显**。</summary>
+    /// <summary>把接入状态翻译成一句话；**这里读不到凭据真值，所以不可能回显**。</summary>
     private void RefreshEnrollment()
     {
         var status = _enrollmentStore?.Status ?? NodeEnrollmentStatus.NotEnrolled;
 
-        IsEnrolled = status.HasToken;
+        IsEnrolled = status.HasCredential;
         IsEnrollmentUnreadable = status.IsUnreadable;
-        EnrollmentStatusText = !status.HasToken
+        EnrollmentStatusText = !status.HasCredential
             ? status.IsUnreadable ? LR.M_Enroll_Unreadable : LR.M_Enroll_None
-            : status.IsExpired
-                ? string.Format(LR.M_Enroll_Expired, FormatExpiry(status.ExpiresAt))
-                : string.Format(LR.M_Enroll_Active, DescribeEnrollmentTarget(status));
+            : string.Format(LR.M_Enroll_Active, status.SiteName ?? status.SiteId ?? status.DeviceId ?? string.Empty);
+
+        EnrolledSiteText = status.HasCredential
+            ? $"{status.SiteName ?? LR.M_Enroll_UnknownSite}（{status.SiteId ?? "-"}）"
+            : string.Empty;
+        EnrolledDeviceText = status.DeviceName ?? status.DeviceId ?? string.Empty;
+        EnrolledClassText = status.HasCredential
+            ? string.IsNullOrWhiteSpace(status.ClassName) && string.IsNullOrWhiteSpace(status.ClassId)
+                ? LR.M_Enroll_Class_NotSelected
+                : status.ClassName ?? status.ClassId ?? string.Empty
+            : string.Empty;
+
+        if (!status.HasCredential)
+        {
+            HasTree = false;
+            GradeOptions.Clear();
+            ClassOptions.Clear();
+        }
     }
 
-    private string DescribeEnrollmentTarget(NodeEnrollmentStatus status)
+    /// <summary>读取年级/班级树，并把当前绑定的班级预选出来。</summary>
+    private async Task LoadTreeAsync()
     {
-        var group = string.IsNullOrWhiteSpace(status.GroupName) ? status.GroupId : status.GroupName;
-        return string.IsNullOrWhiteSpace(group) ? status.NodeId ?? string.Empty : group!;
+        if (_enrollmentClient is null || _enrollmentStore is null
+            || !_enrollmentStore.TryGetCredential(out var credential) || credential is null)
+            return;
+
+        IsTreeLoading = true;
+        try
+        {
+            var tree = await _enrollmentClient.GetDeviceTreeAsync(credential, CancellationToken.None)
+                .ConfigureAwait(true);
+
+            GradeOptions.Clear();
+            foreach (var grade in tree.Grades)
+                GradeOptions.Add(grade);
+
+            HasTree = tree.Grades.Count > 0;
+            EnrolledDeviceText = tree.DeviceName ?? EnrolledDeviceText;
+
+            var classId = tree.ClassId ?? credential.ClassId;
+            SelectedGrade = tree.Grades.FirstOrDefault(g =>
+                                classId is not null && g.Classes.Any(c => c.Id == classId))
+                            ?? tree.Grades.FirstOrDefault();
+            if (SelectedGrade is not null)
+            {
+                SelectedClass = SelectedGrade.Classes.FirstOrDefault(c => c.Id == classId)
+                                ?? (SelectedGrade.Classes.Count == 1 ? SelectedGrade.Classes[0] : null);
+            }
+
+            // 控制面的树是权威：把它同步回本机状态，重连时不必再拉一次。
+            _stateStore.Update(state => state with
+            {
+                SiteId = tree.SiteId,
+                SiteName = tree.SiteName,
+                ClassId = classId
+            });
+        }
+        catch (NodeEnrollmentException exception)
+        {
+            ClassSaveMessage = DescribeEnrollmentFailure(exception);
+            _logger.LogWarning("读取集控年级/班级失败：{Code}", exception.ServerCode ?? exception.Failure.ToString());
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "读取集控年级/班级失败。");
+            ClassSaveMessage = LR.M_Enroll_Err_Tree;
+        }
+        finally
+        {
+            IsTreeLoading = false;
+        }
     }
 
-    private static string FormatExpiry(DateTimeOffset? expiresAt) =>
-        expiresAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "-";
+    /// <summary>把服务端错误码翻译成中文。**每个码对应一个用户能采取的动作**，不只是"失败了"。</summary>
+    private static string DescribeEnrollmentFailure(NodeEnrollmentException exception) => exception.Failure switch
+    {
+        NodeEnrollmentFailure.SiteNotFound => LR.M_Enroll_Err_SiteNotFound,
+        NodeEnrollmentFailure.CodeNotFound => LR.M_Enroll_Err_CodeNotFound,
+        NodeEnrollmentFailure.CodeSiteMismatch => LR.M_Enroll_Err_SiteMismatch,
+        NodeEnrollmentFailure.CodeExpired => LR.M_Enroll_Err_CodeExpired,
+        NodeEnrollmentFailure.CodeUsed => LR.M_Enroll_Err_CodeUsed,
+        NodeEnrollmentFailure.CodeRevoked => LR.M_Enroll_Err_Revoked,
+        NodeEnrollmentFailure.PlatformNotAllowed => LR.M_Enroll_Err_Platform,
+        NodeEnrollmentFailure.DeviceConflict => string.Format(
+            LR.M_Enroll_Err_Conflict, exception.ConflictSiteName ?? LR.M_Enroll_UnknownSite),
+        NodeEnrollmentFailure.TooManyAttempts => LR.M_Enroll_Err_TooMany,
+        NodeEnrollmentFailure.InvalidRequest => LR.M_Enroll_Err_Invalid,
+        NodeEnrollmentFailure.Network => LR.M_Enroll_Err_Network,
+        _ => string.Format(LR.M_Enroll_Detail, exception.ServerCode ?? exception.Failure.ToString())
+    };
 
     partial void OnControlPlaneEndpointChanged(string value)
     {
@@ -417,8 +546,6 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
             return;
 
         var endpoint = value?.Trim() ?? string.Empty;
-
-        // 清空输入框 = 回到默认：这条比"空值是非法输入"更好用，也让水印（默认地址）名副其实。
         if (endpoint.Length == 0)
         {
             _controlPlaneEndpointStore.ResetToDefault();
@@ -429,7 +556,6 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
 
         if (!_controlPlaneEndpointStore.TryUpdate(endpoint, out _))
         {
-            // 无效地址绝不落盘：否则控制台会带着一个连不上的基址，每次请求都失败。
             HasControlPlaneEndpointError = true;
             return;
         }
@@ -447,7 +573,6 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         _client.Wake();
     }
 
-    /// <summary>远程抽取页的显隐开关：只写本机状态，界面从 <c>Changed</c> 事件即时刷新。</summary>
     partial void OnRemoteDrawPageEnabledChanged(bool value)
     {
         if (_suppressPersist)
@@ -456,61 +581,18 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         _stateStore.Update(state => state with { RemoteDrawPageEnabled = value });
     }
 
-    partial void OnGroupIdChanged(string value)
-    {
-        if (_suppressPersist)
-            return;
-
-        var groupId = value?.Trim() ?? string.Empty;
-        var previousGroup = _stateStore.Current.GroupId;
-
-        // **换组要先注销旧组**：不注销的话，这台设备会同时挂在新旧两个组的列表里。
-        // 只在确实换了组时发；注销是尽力而为（超时/失败只记日志），绝不能挡住按新组重连。
-        // 与另一半的区别：**退出程序不注销**（服务端"登记即列出"，关掉软件应保持 offline 可见）。
-        if (!string.IsNullOrWhiteSpace(previousGroup)
-            && !string.Equals(previousGroup, groupId, StringComparison.Ordinal))
-        {
-            _ = DeregisterAsync(previousGroup);
-        }
-
-        _stateStore.Update(state => state with { GroupId = groupId });
-        _client.Wake();
-    }
-
-    /// <summary>注销的等待上限：换组/退出都不能被它拖住。</summary>
-    private static readonly TimeSpan DeregisterTimeout = TimeSpan.FromSeconds(3);
-
-    /// <summary>尽力而为地注销某个组里的登记；失败只记日志。</summary>
-    private async Task DeregisterAsync(string groupId)
-    {
-        try
-        {
-            var deregistered = await _client.DeregisterAsync(groupId, DeregisterTimeout).ConfigureAwait(true);
-
-            if (!deregistered)
-                _logger.LogInformation("集控注销未得到确认（可能未连接或超时）：{Group}", groupId);
-        }
-        catch (Exception exception)
-        {
-            // 注销失败不能影响换组/退出：残留登记由服务端超时或管理员清理兜底。
-            _logger.LogWarning(exception, "集控注销失败：{Group}", groupId);
-        }
-    }
-
     partial void OnDisplayNameChanged(string value)
     {
         if (_suppressPersist)
             return;
 
-        // 名字保留用户输入的原样（含首尾空白），规范化只发生在落盘与上报两个边界：
-        // 每次按键都 Trim 会跟输入光标打架——想在词中间打空格都做不到。
         _stateStore.Update(state => state with { DisplayName = value });
         _client.Wake();
     }
 
     /// <summary>
-    ///     把节点通道地址对齐到自建集控的基址：<c>http://…</c> 的实例绝不能配 <c>wss://…</c> 的通道，
-    ///     否则 WebSocket 会拿明文端口做 TLS 握手，永远连不上（日志里只有"集控节点连接失败"）。
+    ///     把节点通道地址对齐到控制面的实际协议（<c>http</c> → <c>ws</c>，<c>https</c> → <c>wss</c>）：
+    ///     自建实例的明文端口绝不能配 <c>wss://</c>，否则 WebSocket 会拿明文端口做 TLS 握手，永远连不上。
     /// </summary>
     private void NormalizeNodeEndpoint()
     {
@@ -534,7 +616,6 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         var endpoint = value?.Trim() ?? string.Empty;
         if (!ControlEndpointPolicy.TryValidate(endpoint, out _, out _))
         {
-            // 无效地址绝不落盘：否则节点会带着一个连不上的地址进入"已停止重试"。
             HasEndpointError = true;
             RefreshServerUrlCustomFlag();
             return;
@@ -546,7 +627,6 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         RefreshServerUrlCustomFlag();
     }
 
-    /// <summary>节点通道地址是否偏离默认值（"恢复默认"按钮据此启用）。</summary>
     private void RefreshServerUrlCustomFlag() =>
         IsServerUrlCustom = !string.Equals(
             (ServerUrl ?? string.Empty).Trim(),
@@ -559,7 +639,6 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     private void OnLinkStateChanged(object? sender, ControlNodeLinkState state) =>
         RunOnUiThread(() => ApplyLinkState(state));
 
-    /// <summary>把存储里的控制面地址投影到界面（写入过程要被抑制，否则会回环写一遍）。</summary>
     private void RefreshControlPlaneEndpoint()
     {
         _suppressPersist = true;
@@ -577,7 +656,6 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
             _suppressPersist = false;
         }
 
-        // 控制面基址变了，节点通道地址要跟着走（自建实例的 http/https 决定通道的 ws/wss）。
         NormalizeNodeEndpoint();
     }
 
@@ -588,13 +666,10 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         {
             RemoteControlEnabled = state.RemoteControlEnabled;
             RemoteDrawPageEnabled = state.RemoteDrawPageEnabled;
-            GroupId = state.GroupId;
             ServerUrl = state.ServerUrl;
             RefreshServerUrlCustomFlag();
-            NodeId = state.NodeId;
             DisplayName = state.DisplayName ?? string.Empty;
             DrawLocked = state.DrawLocked;
-            // 接入状态也要跟着刷新：本页是"显示状态"的地方，接入记录可能在别处（比如手机端）被改掉。
             RefreshEnrollment();
         }
         finally
@@ -609,10 +684,6 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         StatusDetail = DescribeDetail(state.Detail);
     }
 
-    /// <summary>
-    ///     连接状态文案。<c>Blocked</c> 还要再分一层：<b>已接入</b>却被连续拒绝时令牌多半已被服务端撤销，
-    ///     唯一的出路是重新接入，只说"连接被阻断"会让老师以为集控坏了。
-    /// </summary>
     private string DescribeStatus(ControlNodeLinkState state) => state.Status switch
     {
         ControlNodeLinkStatus.Disabled => LR.M_Status_Disabled,
@@ -620,31 +691,28 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         ControlNodeLinkStatus.Connecting => LR.M_Status_Connecting,
         ControlNodeLinkStatus.Connected => LR.M_Status_Connected,
         ControlNodeLinkStatus.WaitingToRetry => LR.M_Status_WaitingToRetry,
-        ControlNodeLinkStatus.Blocked => state.Detail == ControlErrorCodes.Unauthorized && IsEnrolled
+        ControlNodeLinkStatus.Blocked => IsBlockedForCredential(state.Detail) && IsEnrolled
             ? LR.M_Status_ReenrollRequired
             : LR.M_Status_Blocked,
         _ => state.Status.ToString()
     };
 
-    /// <summary>
-    ///     把协议错误码翻译成用户能看懂的原因。
-    /// </summary>
-    /// <remarks>
-    ///     界面上必须区分"本机不接受远控"与"服务端没权限"：两者原因完全不同，
-    ///     混在一起会让老师以为是集控坏了。
-    /// </remarks>
+    private static bool IsBlockedForCredential(string? detail) =>
+        string.Equals(detail, ControlV4Protocol.ErrorCodes.BadSecret, StringComparison.Ordinal)
+        || string.Equals(detail, ControlV4Protocol.ErrorCodes.DeviceRevoked, StringComparison.Ordinal)
+        || string.Equals(detail, ControlErrorCodes.Unauthorized, StringComparison.Ordinal);
+
+    /// <summary>把连接层错误码翻译成用户能看懂的原因。</summary>
     private string DescribeDetail(string? detail) => detail switch
     {
         null or "" or "stopped" => string.Empty,
         "not_configured" => LR.M_Detail_NotConfigured,
-        "not_signed_in" => LR.M_Detail_NotSignedIn,
-        // 已接入自建集控却取不到令牌（记录被清掉/读不出来）：这时让人"登录 SECTL"是死路，必须指向接入码。
-        "not_enrolled" => LR.M_Detail_NotEnrolled,
-        ControlErrorCodes.NodeNotFound => LR.M_Detail_NodeNotFound,
-        ControlErrorCodes.GroupNotFound => LR.M_Detail_GroupNotFound,
-        ControlErrorCodes.InvalidRequest => LR.M_Detail_InvalidRequest,
-        // 已接入时服务端拒绝节点令牌：凭据是控制台签发的，本地无法自救，只能回接入卡重新接入。
-        // 这句和"未登录"的区别在于用户要做的动作完全不同，所以不能复用 M_Detail_Unauthorized。
+        "not_signed_in" => LR.M_Detail_NotEnrolled,
+        "not_enrolled" or "enrollment_unreadable" => LR.M_Detail_NotEnrolled,
+        ControlV4Protocol.ErrorCodes.BadSecret or ControlV4Protocol.ErrorCodes.DeviceRevoked =>
+            LR.M_Detail_EnrollmentRejected,
+        ControlV4Protocol.ErrorCodes.ProtocolTooOld => LR.M_Detail_ProtocolTooOld,
+        ControlV4Protocol.ErrorCodes.BadRequest => LR.M_Detail_InvalidRequest,
         ControlErrorCodes.Unauthorized when IsEnrolled => LR.M_Detail_EnrollmentRejected,
         ControlErrorCodes.Unauthorized => LR.M_Detail_Unauthorized,
         "empty_endpoint" or "invalid_endpoint" or "endpoint_must_not_carry_credentials"
@@ -663,7 +731,6 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         }
         catch (Exception exception)
         {
-            // 订阅回调抛异常不能带走连接循环。
             _logger.LogDebug(exception, "刷新集控设置页状态失败。");
         }
     }

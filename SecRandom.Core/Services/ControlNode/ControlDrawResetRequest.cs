@@ -104,7 +104,9 @@ public static class ControlDrawBusyGuard
     public static bool IsRefusedWhileDrawing(string capability) =>
         capability is ControlCapabilities.SettingsWrite
             or ControlCapabilities.RosterWrite
-            or ControlCapabilities.DrawReset;
+            or ControlCapabilities.DrawReset
+            or ControlCapabilities.RestartClient
+            or ControlCapabilities.SwitchPage;
 }
 
 /// <summary><c>draw.reset</c> 成功回执的 detail。</summary>
