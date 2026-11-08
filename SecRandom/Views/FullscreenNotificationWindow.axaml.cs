@@ -194,7 +194,7 @@ public partial class FullscreenNotificationWindow : Window
             ApplyAppearance(settings);
             UpdateHeader(
                 seed.ScopeName,
-                BuildKindLabel(seed.Kind, seed.TotalCount, null),
+                BuildKindLabel(seed.Kind),
                 BuildRemainingText(seed.Kind, seed.RemainingCount, seed.TotalCount, settings.ShowRemainingCount));
 
             IdleTitle.Text = FullscreenResources.Fullscreen_IdleTitle;
@@ -264,7 +264,7 @@ public partial class FullscreenNotificationWindow : Window
             ApplyAppearance(settings);
             UpdateHeader(
                 snapshot.ScopeName ?? snapshot.CourseName,
-                BuildKindLabel(snapshot.Kind, snapshot.TotalCount, snapshot.DrawnAt),
+                BuildKindLabel(snapshot.Kind),
                 BuildRemainingText(snapshot.Kind, snapshot.RemainingCount, snapshot.TotalCount, settings.ShowRemainingCount));
 
             switch (style)
@@ -320,7 +320,7 @@ public partial class FullscreenNotificationWindow : Window
                         return;
 
                     if (snapshot is { ShowResultAvatar: true })
-                        TryInsertAvatars(snapshot);
+                        ApplyInlineAvatars(snapshot);
                     break;
 
                 case FullscreenAnimationStyle.Direct:
@@ -1062,21 +1062,18 @@ public partial class FullscreenNotificationWindow : Window
         RemainingText.Text = remainingText;
     }
 
-    private static string BuildKindLabel(NotificationSettingsType kind, int totalCount, DateTimeOffset? drawnAt)
+    /// <summary>
+    /// 左上角只写抽取类型（点名结果 / 闪抽结果 / 抽奖结果）。
+    /// 总条数与抽中时刻都不在这里重复：左下角的"剩余 x · 共 y"已经有总数，多写一遍只会互相打架。
+    /// </summary>
+    private static string BuildKindLabel(NotificationSettingsType kind)
     {
-        var label = kind switch
+        return kind switch
         {
             NotificationSettingsType.RollCall => FullscreenResources.Fullscreen_KindRollCall,
             NotificationSettingsType.Lottery => FullscreenResources.Fullscreen_KindLottery,
             _ => FullscreenResources.Fullscreen_KindQuickDraw
         };
-
-        var countText = totalCount > 0
-            ? string.Format(CultureInfo.CurrentCulture, FullscreenResources.Fullscreen_TotalCount, totalCount)
-            : string.Empty;
-        var timeText = drawnAt is { } time ? time.ToLocalTime().ToString("HH:mm:ss", CultureInfo.CurrentCulture) : string.Empty;
-        var suffix = string.Join(" · ", new[] { countText, timeText }.Where(part => !string.IsNullOrEmpty(part)));
-        return string.IsNullOrEmpty(suffix) ? label : $"{label} · {suffix}";
     }
 
     private static string BuildRemainingText(
@@ -1125,90 +1122,109 @@ public partial class FullscreenNotificationWindow : Window
         // 头像只出现在"结果画面"里（直接显示/打字机/网格提前退出的兜底）：
         // 网格卡片本身就是纯文字的排布，往里塞头像会挤掉辨识度。
         if (snapshot is { ShowResultAvatar: true })
-            TryInsertAvatars(snapshot);
+            ApplyInlineAvatars(snapshot);
     }
 
     /// <summary>
-    ///     在结果正文上方插入一行头像；配了图片的成员显示照片，没配图片的成员显示姓名首字的圆形占位，
-    ///     这样"勾了头像却什么都没有"不会发生（班级里通常只有少数学生配了照片）。
+    ///     把头像放到姓名左侧（用户 m03502）：配了图片的成员显示照片，没配图片的成员显示姓名首字的圆形占位，
+    ///     这样"勾了头像却什么都没有"不会发生。结果行本身仍是 <see cref="TextBlock"/>，
+    ///     这里只把它套进一个水平容器，动画器（打字机每帧重写 ResultHost）结束后再调用即可。
     /// </summary>
-    private void TryInsertAvatars(FullscreenResultSnapshot snapshot)
+    private void ApplyInlineAvatars(FullscreenResultSnapshot snapshot)
     {
         try
         {
-            var avatars = new List<Control>();
-            var size = Math.Clamp(_bodyFontSize * 1.35, 96, 220);
-            foreach (var item in snapshot.Results.Take(MaxAvatars))
-            {
-                Bitmap? bitmap = null;
-                if (!string.IsNullOrWhiteSpace(item.ImagePath) && File.Exists(item.ImagePath))
-                {
-                    try
-                    {
-                        bitmap = new Bitmap(item.ImagePath);
-                    }
-                    catch (Exception)
-                    {
-                        bitmap = null;
-                    }
-                }
-
-                var border = new Border
-                {
-                    Width = size,
-                    Height = size,
-                    CornerRadius = new CornerRadius(size / 2),
-                    BorderThickness = new Thickness(3),
-                    BorderBrush = new SolidColorBrush(_accentColor),
-                    ClipToBounds = true
-                };
-
-                if (bitmap is not null)
-                {
-                    border.Child = new Image { Source = bitmap, Stretch = Stretch.UniformToFill };
-                }
-                else
-                {
-                    // 没有照片时用首字占位：省一次解码，也让这一行在空图片的名单下依然有意义。
-                    border.Background = new SolidColorBrush(Color.FromArgb(
-                        _lightBackground ? (byte)0x1A : (byte)0x33,
-                        _accentColor.R,
-                        _accentColor.G,
-                        _accentColor.B));
-                    border.Child = new TextBlock
-                    {
-                        Text = TakeInitial(item.DisplayText),
-                        FontSize = size * 0.42,
-                        FontWeight = FontWeight.SemiBold,
-                        Foreground = new SolidColorBrush(_accentColor),
-                        HorizontalAlignment = HorizontalAlignment.Center,
-                        VerticalAlignment = VerticalAlignment.Center,
-                        TextAlignment = TextAlignment.Center
-                    };
-                }
-
-                avatars.Add(border);
-            }
-
-            if (avatars.Count == 0)
+            if (snapshot.Results.Count == 0 || ResultHost.Children.Count == 0)
                 return;
 
-            var panel = new StackPanel
+            var size = Math.Clamp(_bodyFontSize * 1.15, 64, 160);
+            var spacing = Math.Clamp(_bodyFontSize * 0.28, 12, 40);
+            var lineIndex = 0;
+            var rebuilt = new List<Control>(ResultHost.Children.Count);
+            foreach (var child in ResultHost.Children.ToList())
             {
-                Orientation = Orientation.Horizontal,
-                Spacing = 24,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 28)
-            };
-            foreach (var avatar in avatars)
-                panel.Children.Add(avatar);
+                if (child is not TextBlock block || lineIndex >= snapshot.Results.Count || lineIndex >= MaxAvatars)
+                {
+                    rebuilt.Add(child);
+                    continue;
+                }
 
-            ResultHost.Children.Insert(0, panel);
+                var avatar = CreateAvatar(snapshot.Results[lineIndex], size);
+                lineIndex++;
+
+                rebuilt.Add(new StackPanel
+                {
+                    Orientation = Orientation.Horizontal,
+                    Spacing = spacing,
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                    Children =
+                    {
+                        avatar,
+                        block
+                    }
+                });
+            }
+
+            ResultHost.Children.Clear();
+            foreach (var child in rebuilt)
+                ResultHost.Children.Add(child);
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "全屏通知窗口：头像渲染失败，已跳过。");
         }
+    }
+
+    /// <summary>单条结果的圆形头像：有照片用照片，没照片用姓名首字。</summary>
+    private Border CreateAvatar(FullscreenResultItem item, double size)
+    {
+        Bitmap? bitmap = null;
+        if (!string.IsNullOrWhiteSpace(item.ImagePath) && File.Exists(item.ImagePath))
+        {
+            try
+            {
+                bitmap = new Bitmap(item.ImagePath);
+            }
+            catch (Exception)
+            {
+                bitmap = null;
+            }
+        }
+
+        var border = new Border
+        {
+            Width = size,
+            Height = size,
+            CornerRadius = new CornerRadius(size / 2),
+            BorderThickness = new Thickness(3),
+            BorderBrush = new SolidColorBrush(_accentColor),
+            ClipToBounds = true,
+            VerticalAlignment = VerticalAlignment.Center
+        };
+
+        if (bitmap is not null)
+        {
+            border.Child = new Image { Source = bitmap, Stretch = Stretch.UniformToFill };
+            return border;
+        }
+
+        border.Background = new SolidColorBrush(Color.FromArgb(
+            _lightBackground ? (byte)0x1A : (byte)0x33,
+            _accentColor.R,
+            _accentColor.G,
+            _accentColor.B));
+        border.Child = new TextBlock
+        {
+            Text = TakeInitial(item.DisplayText),
+            FontSize = size * 0.42,
+            FontWeight = FontWeight.SemiBold,
+            Foreground = new SolidColorBrush(_accentColor),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Center,
+            TextAlignment = TextAlignment.Center
+        };
+        return border;
     }
 
     /// <summary>取展示文本的首字（"01  张三" 这类带序号的文本要跳过序号）。</summary>

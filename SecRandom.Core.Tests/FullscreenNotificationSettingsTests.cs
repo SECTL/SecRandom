@@ -31,7 +31,7 @@ public class FullscreenNotificationSettingsTests
         Assert.Equal(100, settings.BackgroundOpacity);
         Assert.True(settings.UseThemeAccentColor);
         Assert.Equal(string.Empty, settings.AccentColor);
-        Assert.True(settings.ShowResultNumber);
+        Assert.False(settings.ShowResultNumber);
         Assert.True(settings.ShowResultName);
         Assert.False(settings.ShowResultAvatar);
         Assert.Equal(FullscreenNotificationSettings.DefaultResultFontSize, settings.ResultFontSize);

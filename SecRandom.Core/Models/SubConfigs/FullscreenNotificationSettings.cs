@@ -125,8 +125,8 @@ public partial class FullscreenNotificationSettings : ObservableObject
     /// <summary>背景层不透明度（百分比）。</summary>
     [ObservableProperty] private int _backgroundOpacity = 100;
 
-    /// <summary>结果里是否包含序号。</summary>
-    [ObservableProperty] private bool _showResultNumber = true;
+    /// <summary>结果里是否包含序号。默认只要名称（用户 m03502）。</summary>
+    [ObservableProperty] private bool _showResultNumber;
 
     /// <summary>结果里是否包含名称。</summary>
     [ObservableProperty] private bool _showResultName = true;

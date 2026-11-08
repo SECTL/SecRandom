@@ -304,7 +304,7 @@
     <value>通知服务类型</value>
   </data>
   <data name="S_Common_NotificationServiceType_D" xml:space="preserve">
-    <value>SecRandom 内置通知为浮窗，SecRandom 全屏通知为独立整屏画面；同时使用仅指 ClassIsland 与内置浮窗，不含全屏通知</value>
+    <value>选择抽取结果的展示方式</value>
   </data>
   <data name="S_Common_NotificationServiceFailureFallback" xml:space="preserve">
     <value>当前选择通知服务发送失败后，自动回退内置通知服务</value>

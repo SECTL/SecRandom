@@ -13,7 +13,6 @@
   <data name="Fullscreen_KindLottery" xml:space="preserve"><value>抽選の結果</value></data>
   <data name="Fullscreen_KindQuickDraw" xml:space="preserve"><value>クイック抽選の結果</value></data>
   <data name="Fullscreen_RemainingCountdown" xml:space="preserve"><value>残り {0} 秒</value></data>
-  <data name="Fullscreen_TotalCount" xml:space="preserve"><value>全 {0} 件</value></data>
   <data name="Fullscreen_RemainingPeople" xml:space="preserve"><value>残り {0} 人</value></data>
   <data name="Fullscreen_RemainingPrizes" xml:space="preserve"><value>残り {0} 件</value></data>
   <data name="Fullscreen_RemainingPeopleWithTotal" xml:space="preserve"><value>残り {0} / {1} 人</value></data>

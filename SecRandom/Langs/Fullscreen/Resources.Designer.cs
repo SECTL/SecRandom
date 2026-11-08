@@ -40,9 +40,6 @@ internal static class Resources
     /// <summary>倒计时读秒，<c>{0}</c> 是剩余秒数。</summary>
     internal static string Fullscreen_RemainingCountdown => Text(nameof(Fullscreen_RemainingCountdown));
 
-    /// <summary>结果条数，<c>{0}</c> 是总条数。</summary>
-    internal static string Fullscreen_TotalCount => Text(nameof(Fullscreen_TotalCount));
-
     /// <summary>剩余人数，<c>{0}</c> 是剩余人数。</summary>
     internal static string Fullscreen_RemainingPeople => Text(nameof(Fullscreen_RemainingPeople));
 
