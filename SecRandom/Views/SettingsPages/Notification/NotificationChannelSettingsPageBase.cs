@@ -1,8 +1,11 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
+using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
@@ -14,9 +17,18 @@ namespace SecRandom.Views.SettingsPages.Notification;
 
 public abstract class NotificationChannelSettingsPageBase : UserControl, INotifyPropertyChanged
 {
+    // Stored value of the fullscreen channel; must match NotificationChannelSettings.NotificationServiceType's
+    // persisted encoding (0 built-in, 1 ClassIsland, 2 both, 3 fullscreen). The dropdown displays them in a
+    // different order, which is why it binds a mapped option object instead of SelectedIndex.
+    public const int FullscreenNotificationServiceType = 3;
+
+    private static readonly TimeSpan FullscreenConfirmUnlockDelay = TimeSpan.FromSeconds(3);
+    private bool _fullscreenQuickDrawConfirmed;
+
     protected NotificationChannelSettingsPageBase()
     {
         ChannelSettings = SelectChannelSettings(ViewModel.Config.NotificationSettings);
+        NotificationServiceOptions = BuildNotificationServiceOptions();
         MonitorOptions = [new MonitorOption("", Text("Not specified", "O_Monitor_Unspecified"))];
         if (!string.IsNullOrWhiteSpace(ChannelSettings.EnabledMonitor))
             MonitorOptions.Add(new MonitorOption(ChannelSettings.EnabledMonitor, ChannelSettings.EnabledMonitor));
@@ -37,6 +49,27 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
                 return;
 
             ChannelSettings.EnabledMonitor = value.Value;
+        }
+    }
+    public IReadOnlyList<NotificationServiceOption> NotificationServiceOptions { get; private set; }
+    public NotificationServiceOption SelectedNotificationServiceOption
+    {
+        get => NotificationServiceOptions.FirstOrDefault(option => option.Value == ChannelSettings.NotificationServiceType)
+               ?? NotificationServiceOptions[0];
+        set
+        {
+            if (value is null || value.Value == ChannelSettings.NotificationServiceType)
+                return;
+
+            if (value.Value == FullscreenNotificationServiceType
+                && NeedsFullscreenQuickDrawConfirmation
+                && !_fullscreenQuickDrawConfirmed)
+            {
+                _ = ConfirmFullscreenQuickDrawAsync();
+                return;
+            }
+
+            ApplyNotificationServiceType(value.Value);
         }
     }
     public OverridableNotificationChannelSettings? OverrideSettings => ChannelSettings as OverridableNotificationChannelSettings;
@@ -109,6 +142,101 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
 
     protected abstract NotificationChannelSettings SelectChannelSettings(NotificationSettingsConfig settings);
 
+    private static IReadOnlyList<NotificationServiceOption> BuildNotificationServiceOptions()
+    {
+        // Display order is built-in / fullscreen / ClassIsland / both while the persisted values stay 0/3/1/2.
+        return
+        [
+            new NotificationServiceOption(0, Text("SecRandom (built-in)", "O_NotificationService_SecRandom")),
+            new NotificationServiceOption(
+                FullscreenNotificationServiceType,
+                Text("Fullscreen", "O_NotificationService_Fullscreen")),
+            new NotificationServiceOption(1, Text("ClassIsland", "O_NotificationService_ClassIsland")),
+            new NotificationServiceOption(2, Text("Use both", "O_NotificationService_Both"))
+        ];
+    }
+
+    /// <summary>
+    /// A fullscreen result window animates through its own stage, so switching the channel to fullscreen while it
+    /// applies to quick draw makes that draw visibly slower. The confirmation is deliberately not persisted: it
+    /// only guards the switch inside this page instance.
+    /// </summary>
+    private bool NeedsFullscreenQuickDrawConfirmation
+    {
+        get
+        {
+            var notificationSettings = ViewModel.Config.NotificationSettings;
+            if (ReferenceEquals(ChannelSettings, notificationSettings.QuickDraw))
+                return OverrideSettings?.OverrideServiceSettings ?? true;
+
+            return ReferenceEquals(ChannelSettings, notificationSettings.Default)
+                   && !notificationSettings.QuickDraw.OverrideServiceSettings;
+        }
+    }
+
+    private void ApplyNotificationServiceType(int value)
+    {
+        if (ChannelSettings.NotificationServiceType == value)
+            return;
+
+        // The base page's PropertyChanged handler persists the config, so a single write is all that is needed here.
+        ChannelSettings.NotificationServiceType = value;
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedNotificationServiceOption)));
+    }
+
+    private async Task ConfirmFullscreenQuickDrawAsync()
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel is null)
+        {
+            ApplyNotificationServiceType(FullscreenNotificationServiceType);
+            return;
+        }
+
+        var dialog = new FAContentDialog
+        {
+            Title = Text("Switch to fullscreen notification", "M_FullscreenQuickDrawConfirmTitle"),
+            Content = Text(
+                "Fullscreen animation is slower than the floating window, quick draw will be noticeably slower",
+                "M_FullscreenQuickDrawConfirmContent"),
+            PrimaryButtonText = Text("Use fullscreen anyway", "C_FullscreenQuickDrawConfirm"),
+            CloseButtonText = Text("Cancel", "C_Cancel"),
+            DefaultButton = FAContentDialogButton.Close,
+            IsPrimaryButtonEnabled = false
+        };
+
+        var unlockTimer = new DispatcherTimer { Interval = FullscreenConfirmUnlockDelay };
+        unlockTimer.Tick += (_, _) =>
+        {
+            unlockTimer.Stop();
+            dialog.IsPrimaryButtonEnabled = true;
+        };
+        unlockTimer.Start();
+
+        FAContentDialogResult result;
+        try
+        {
+            result = await dialog.ShowAsync(topLevel);
+        }
+        catch (Exception)
+        {
+            unlockTimer.Stop();
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedNotificationServiceOption)));
+            return;
+        }
+
+        unlockTimer.Stop();
+        if (result == FAContentDialogResult.Primary)
+        {
+            _fullscreenQuickDrawConfirmed = true;
+            ApplyNotificationServiceType(FullscreenNotificationServiceType);
+            return;
+        }
+
+        // Cancelling rolls the dropdown back to the persisted value.
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedNotificationServiceOption)));
+    }
+
     private static string Text(string fallback, string key)
     {
         return LR.ResourceManager.GetString(key, LR.Culture) ?? fallback;
@@ -123,6 +251,15 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
     {
         ChannelSettings.PropertyChanged -= SettingsOnPropertyChanged;
         ChannelSettings.PropertyChanged += SettingsOnPropertyChanged;
+
+        // The language can change without the page being rebuilt, so the dropdown labels are re-read on every load.
+        var refreshedOptions = BuildNotificationServiceOptions();
+        if (!NotificationServiceOptions.SequenceEqual(refreshedOptions))
+        {
+            NotificationServiceOptions = refreshedOptions;
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NotificationServiceOptions)));
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedNotificationServiceOption)));
+        }
 
         var selectedMonitor = ChannelSettings.EnabledMonitor;
         var topLevel = TopLevel.GetTopLevel(this);
@@ -164,9 +301,14 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
         if (e.PropertyName == nameof(NotificationChannelSettings.EnabledMonitor))
             NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedMonitor)));
         if (e.PropertyName == nameof(NotificationChannelSettings.NotificationServiceType))
+        {
             NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UsesExternalNotificationServiceOnly)));
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedNotificationServiceOption)));
+        }
         ConfigHandler.Save();
     }
 }
 
 public sealed record MonitorOption(string Value, string Label);
+
+public sealed record NotificationServiceOption(int Value, string Label);

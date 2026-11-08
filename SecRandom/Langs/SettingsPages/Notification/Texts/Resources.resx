@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true" />
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Page_Title" xml:space="preserve">
+    <value>文案库</value>
+  </data>
+  <data name="S_TextLibrary" xml:space="preserve">
+    <value>文案库</value>
+  </data>
+  <data name="S_TextLibrary_D" xml:space="preserve">
+    <value>维护全屏结果页的文案模板与使用记录</value>
+  </data>
+  <data name="S_TextLibrary_Statistics" xml:space="preserve">
+    <value>统计</value>
+  </data>
+  <data name="S_TextLibrary_Statistics_D" xml:space="preserve">
+    <value>文案总数、启用数量与轮换情况</value>
+  </data>
+  <data name="S_TextLibrary_Entries" xml:space="preserve">
+    <value>文案列表</value>
+  </data>
+  <data name="S_TextLibrary_Entries_D" xml:space="preserve">
+    <value>编辑、启用或删除单条文案</value>
+  </data>
+  <data name="C_TotalCount" xml:space="preserve">
+    <value>总条数</value>
+  </data>
+  <data name="C_EnabledCount" xml:space="preserve">
+    <value>启用条数</value>
+  </data>
+  <data name="C_TotalUseCount" xml:space="preserve">
+    <value>总使用次数</value>
+  </data>
+  <data name="C_AverageUseCount" xml:space="preserve">
+    <value>平均使用次数</value>
+  </data>
+  <data name="C_EligibleCount" xml:space="preserve">
+    <value>可轮换条数</value>
+  </data>
+  <data name="C_Text" xml:space="preserve">
+    <value>文案</value>
+  </data>
+  <data name="C_UseCount" xml:space="preserve">
+    <value>使用次数</value>
+  </data>
+  <data name="C_Share" xml:space="preserve">
+    <value>占比</value>
+  </data>
+  <data name="C_Enabled" xml:space="preserve">
+    <value>启用</value>
+  </data>
+  <data name="C_Operations" xml:space="preserve">
+    <value>操作</value>
+  </data>
+  <data name="C_Edit" xml:space="preserve">
+    <value>编辑</value>
+  </data>
+  <data name="C_Delete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="C_Save" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="C_Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="C_Import" xml:space="preserve">
+    <value>导入</value>
+  </data>
+  <data name="C_RestoreDefaults" xml:space="preserve">
+    <value>恢复默认</value>
+  </data>
+  <data name="C_ResetCounts" xml:space="preserve">
+    <value>清空统计</value>
+  </data>
+  <data name="C_SelectFile" xml:space="preserve">
+    <value>选择文件</value>
+  </data>
+  <data name="C_ImportSource" xml:space="preserve">
+    <value>导入来源</value>
+  </data>
+  <data name="C_TransferMode" xml:space="preserve">
+    <value>传输方式</value>
+  </data>
+  <data name="C_StartScan" xml:space="preserve">
+    <value>开始扫描</value>
+  </data>
+  <data name="C_StopScan" xml:space="preserve">
+    <value>停止扫描</value>
+  </data>
+  <data name="C_JsonCountFormat" xml:space="preserve">
+    <value>{0}/{1} 字符</value>
+  </data>
+  <data name="C_QrImportReady" xml:space="preserve">
+    <value>准备接收二维码</value>
+  </data>
+  <data name="C_QrImporting" xml:space="preserve">
+    <value>正在接收…</value>
+  </data>
+  <data name="C_ReplaceImport" xml:space="preserve">
+    <value>替换并导入</value>
+  </data>
+  <data name="M_SearchPlaceholder" xml:space="preserve">
+    <value>搜索文案</value>
+  </data>
+  <data name="M_Empty" xml:space="preserve">
+    <value>文案库还是空的，导入或恢复默认文案后即可开始轮换</value>
+  </data>
+  <data name="M_NoMatch" xml:space="preserve">
+    <value>没有匹配的文案</value>
+  </data>
+  <data name="M_RestoreDefaultsTitle" xml:space="preserve">
+    <value>恢复默认文案</value>
+  </data>
+  <data name="M_RestoreDefaultsContent" xml:space="preserve">
+    <value>当前的文案与使用记录将被默认文案替换</value>
+  </data>
+  <data name="M_RestoreDefaultsDone" xml:space="preserve">
+    <value>已恢复默认文案</value>
+  </data>
+  <data name="M_ResetCountsTitle" xml:space="preserve">
+    <value>清空使用统计</value>
+  </data>
+  <data name="M_ResetCountsContent" xml:space="preserve">
+    <value>所有文案的使用次数将归零，文案本身保留</value>
+  </data>
+  <data name="M_ResetCountsDone" xml:space="preserve">
+    <value>使用统计已清空</value>
+  </data>
+  <data name="M_DeleteTitle" xml:space="preserve">
+    <value>删除文案</value>
+  </data>
+  <data name="M_DeleteContent" xml:space="preserve">
+    <value>确定删除“{0}”吗</value>
+  </data>
+  <data name="M_DeleteDone" xml:space="preserve">
+    <value>文案已删除</value>
+  </data>
+  <data name="M_EditTitle" xml:space="preserve">
+    <value>编辑文案</value>
+  </data>
+  <data name="M_EditHint" xml:space="preserve">
+    <value>最多 {0} 个字符，可使用 {{result}} 占位符</value>
+  </data>
+  <data name="M_EditEmpty" xml:space="preserve">
+    <value>文案不能为空</value>
+  </data>
+  <data name="M_EditTooLong" xml:space="preserve">
+    <value>文案超过 {0} 个字符上限</value>
+  </data>
+  <data name="M_EditMissing" xml:space="preserve">
+    <value>找不到要编辑的文案“{0}”</value>
+  </data>
+  <data name="M_EditPlaceholderAppended" xml:space="preserve">
+    <value>已自动补充 {result} 占位符</value>
+  </data>
+  <data name="M_OperationFailed" xml:space="preserve">
+    <value>操作失败</value>
+  </data>
+  <data name="M_ImportTitle" xml:space="preserve">
+    <value>导入文案</value>
+  </data>
+  <data name="M_ImportHint" xml:space="preserve">
+    <value>导入会整库替换现有文案并清空使用记录</value>
+  </data>
+  <data name="M_SourceTable" xml:space="preserve">
+    <value>表格文件</value>
+  </data>
+  <data name="M_SourceJson" xml:space="preserve">
+    <value>JSON 粘贴</value>
+  </data>
+  <data name="M_SourceTransfer" xml:space="preserve">
+    <value>扫码传输</value>
+  </data>
+  <data name="M_TableHint" xml:space="preserve">
+    <value>支持 xlsx、xls 与 csv，读取第一列；首列为表头时会自动跳过</value>
+  </data>
+  <data name="M_TableReading" xml:space="preserve">
+    <value>正在读取表格…</value>
+  </data>
+  <data name="M_TableReadFailed" xml:space="preserve">
+    <value>表格读取失败</value>
+  </data>
+  <data name="M_TableLoaded" xml:space="preserve">
+    <value>{0}：已读取 {1} 条文案</value>
+  </data>
+  <data name="M_ImportEmptySelection" xml:space="preserve">
+    <value>没有可导入的文案</value>
+  </data>
+  <data name="M_ImportFailed" xml:space="preserve">
+    <value>导入失败</value>
+  </data>
+  <data name="M_ImportDone" xml:space="preserve">
+    <value>已导入 {0} 条文案</value>
+  </data>
+  <data name="M_JsonHint" xml:space="preserve">
+    <value>粘贴 JSON 字符串数组，或 {"texts":[...]} 形式的对象</value>
+  </data>
+  <data name="M_JsonEmpty" xml:space="preserve">
+    <value>等待粘贴 JSON</value>
+  </data>
+  <data name="M_JsonTooLong" xml:space="preserve">
+    <value>内容超过 {0} 个字符上限</value>
+  </data>
+  <data name="M_JsonInvalid" xml:space="preserve">
+    <value>JSON 无法解析</value>
+  </data>
+  <data name="M_JsonValid" xml:space="preserve">
+    <value>可导入 {0} 条文案</value>
+  </data>
+  <data name="M_PreviewCount" xml:space="preserve">
+    <value>预览前 {0} 条文案</value>
+  </data>
+  <data name="M_TransferQuickQr" xml:space="preserve">
+    <value>扫码快速导入</value>
+  </data>
+  <data name="M_TransferOfflineQr" xml:space="preserve">
+    <value>无网扫码导入</value>
+  </data>
+  <data name="M_TransferSessionCode" xml:space="preserve">
+    <value>会话码导入</value>
+  </data>
+  <data name="M_QuickQrHint" xml:space="preserve">
+    <value>扫描另一台设备上的快速二维码，或输入配对链接</value>
+  </data>
+  <data name="M_OfflineQrHint" xml:space="preserve">
+    <value>对准离线二维码持续扫描；帧数过多时建议改用文件或会话码</value>
+  </data>
+  <data name="M_OfflineFrameStats" xml:space="preserve">
+    <value>已接收 {0}/{1} 帧</value>
+  </data>
+  <data name="M_SessionCodeHint" xml:space="preserve">
+    <value>输入 12 位会话码，输入完成后自动读取</value>
+  </data>
+  <data name="M_SessionCodePlaceholder" xml:space="preserve">
+    <value>会话码</value>
+  </data>
+  <data name="M_SessionCodeWait" xml:space="preserve">
+    <value>正在读取会话码…</value>
+  </data>
+  <data name="M_SessionCodeInvalid" xml:space="preserve">
+    <value>会话码读取失败：{0}</value>
+  </data>
+  <data name="M_QuickQrInvalid" xml:space="preserve">
+    <value>快速二维码无效：{0}</value>
+  </data>
+  <data name="M_QrTransferFailed" xml:space="preserve">
+    <value>二维码传输失败：{0}</value>
+  </data>
+  <data name="M_QrWrongType" xml:space="preserve">
+    <value>该二维码不包含文案库</value>
+  </data>
+  <data name="M_QrLoaded" xml:space="preserve">
+    <value>已读取 {0} 条文案</value>
+  </data>
+  <data name="M_ScanUnsupported" xml:space="preserve">
+    <value>当前设备不支持摄像头扫描，请改用文件导入</value>
+  </data>
+  <data name="M_CameraPermissionDenied" xml:space="preserve">
+    <value>相机权限被拒绝</value>
+  </data>
+  <data name="M_CameraStartFailed" xml:space="preserve">
+    <value>相机启动失败：{0}</value>
+  </data>
+  <data name="M_ReplaceConfirmTitle" xml:space="preserve">
+    <value>替换文案库</value>
+  </data>
+  <data name="M_ReplaceConfirmContent" xml:space="preserve">
+    <value>将替换现有 {0} 条文案并清空使用记录</value>
+  </data>
+  <data name="C_Export" xml:space="preserve">
+    <value>导出</value>
+  </data>
+  <data name="M_StatisticsFormat" xml:space="preserve">
+    <value>共 {0} 条 · 启用 {1} · 已用 {2} 次 · 平均 {3} · 可轮换 {4}</value>
+  </data>
+  <data name="C_Refresh" xml:space="preserve">
+    <value>刷新</value>
+  </data>
+  <data name="M_ExportTitle" xml:space="preserve">
+    <value>导出文案库</value>
+  </data>
+  <data name="M_ExportHint" xml:space="preserve">
+    <value>当前共 {0} 条文案，导出内容可被另一台设备导入</value>
+  </data>
+  <data name="C_ExportMode" xml:space="preserve">
+    <value>导出方式</value>
+  </data>
+  <data name="M_ExportFile" xml:space="preserve">
+    <value>导出为文件</value>
+  </data>
+  <data name="M_ExportQuickQr" xml:space="preserve">
+    <value>扫码快速导出至其它设备</value>
+  </data>
+  <data name="M_ExportOfflineQr" xml:space="preserve">
+    <value>无网扫码导出至其它设备</value>
+  </data>
+  <data name="M_ExportSessionCode" xml:space="preserve">
+    <value>会话码导出至其它设备</value>
+  </data>
+  <data name="C_ExportToFile" xml:space="preserve">
+    <value>导出文件</value>
+  </data>
+  <data name="M_ExportFileHint" xml:space="preserve">
+    <value>支持 .xlsx 与 .json，xlsx 为单列文案表，json 可直接导入</value>
+  </data>
+  <data name="M_ExportFileTypeExcel" xml:space="preserve">
+    <value>Excel 工作簿</value>
+  </data>
+  <data name="M_ExportFileTypeJson" xml:space="preserve">
+    <value>JSON 文件</value>
+  </data>
+  <data name="M_ExportFileName" xml:space="preserve">
+    <value>文案库</value>
+  </data>
+  <data name="C_StartExport" xml:space="preserve">
+    <value>生成导出二维码</value>
+  </data>
+  <data name="C_StopExport" xml:space="preserve">
+    <value>停止导出</value>
+  </data>
+  <data name="M_ExportGenerating" xml:space="preserve">
+    <value>正在生成导出内容…</value>
+  </data>
+  <data name="M_QuickQrExportHint" xml:space="preserve">
+    <value>在另一台设备的文案库导入中选择“扫码快速导入”，再扫描此二维码</value>
+  </data>
+  <data name="M_OfflineQrExportHint" xml:space="preserve">
+    <value>无网时由另一台设备逐帧扫描；帧数较多时建议改用导出为文件</value>
+  </data>
+  <data name="M_SessionCodeExportHint" xml:space="preserve">
+    <value>在另一台设备的文案库导入中选择“会话码导入”，再输入下方会话码</value>
+  </data>
+  <data name="C_ExportSessionCode" xml:space="preserve">
+    <value>会话码</value>
+  </data>
+  <data name="C_ExportCopySessionCode" xml:space="preserve">
+    <value>复制会话码</value>
+  </data>
+  <data name="M_ExportFrameStats" xml:space="preserve">
+    <value>帧 {0} / {1}</value>
+  </data>
+  <data name="M_ExportDoneFile" xml:space="preserve">
+    <value>已导出 {0} 条文案</value>
+  </data>
+  <data name="M_ExportEmpty" xml:space="preserve">
+    <value>文案库为空，没有可导出的文案</value>
+  </data>
+  <data name="M_ExportFailed" xml:space="preserve">
+    <value>导出失败：{0}</value>
+  </data>
+  <data name="M_ExportFailedTitle" xml:space="preserve">
+    <value>导出失败</value>
+  </data>
+  <data name="M_ExportQrStopped" xml:space="preserve">
+    <value>已停止导出</value>
+  </data>
+  <data name="M_ExportHintIdle" xml:space="preserve">
+    <value>选择导出方式后开始导出</value>
+  </data>
+  <data name="C_ExportClose" xml:space="preserve">
+    <value>关闭</value>
+  </data>
+  <data name="M_QuickQrReady" xml:space="preserve">
+    <value>二维码已生成，请用另一台设备扫描</value>
+  </data>
+  <data name="M_SessionCodeReady" xml:space="preserve">
+    <value>会话码已生成，请在另一台设备输入</value>
+  </data>
+  <data name="M_OfflineQrExporting" xml:space="preserve">
+    <value>正在播放无网二维码</value>
+  </data>
+</root>

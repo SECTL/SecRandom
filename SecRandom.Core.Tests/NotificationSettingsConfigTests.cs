@@ -102,13 +102,40 @@ public class NotificationSettingsConfigTests
 
     [Theory]
     [InlineData(-1)]
-    [InlineData(3)]
+    [InlineData(4)]
     [InlineData(99)]
     public void NotificationChannelSettings_InvalidServiceTypeUsesBuiltIn(int value)
     {
         NotificationChannelSettings settings = new() { NotificationServiceType = value };
 
         Assert.Equal(0, settings.NotificationServiceType);
+    }
+
+    /// <summary>
+    ///     渠道值 3 是后加的全屏渠道：0/1/2 的既有语义（内置浮窗 / ClassIsland / 同时使用）绝不能位移，
+    ///     否则升级读旧配置会把用户的渠道静默换成另一个。
+    /// </summary>
+    [Fact]
+    public void NotificationChannelSettings_FullscreenServiceTypeKeepsLegacyValues()
+    {
+        NotificationChannelSettings fullscreen = new() { NotificationServiceType = 3 };
+
+        Assert.Equal(3, fullscreen.NotificationServiceType);
+        Assert.True(fullscreen.UsesFullscreenNotificationService);
+        Assert.False(fullscreen.UsesBuiltInNotificationService);
+        Assert.False(fullscreen.UsesExternalNotificationService);
+
+        NotificationChannelSettings builtIn = new() { NotificationServiceType = 0 };
+        Assert.False(builtIn.UsesFullscreenNotificationService);
+
+        NotificationChannelSettings classIsland = new() { NotificationServiceType = 1 };
+        Assert.False(classIsland.UsesFullscreenNotificationService);
+        Assert.True(classIsland.UsesExternalNotificationService);
+
+        NotificationChannelSettings both = new() { NotificationServiceType = 2 };
+        Assert.False(both.UsesFullscreenNotificationService);
+        Assert.True(both.UsesBuiltInNotificationService);
+        Assert.True(both.UsesExternalNotificationService);
     }
 
     [Fact]

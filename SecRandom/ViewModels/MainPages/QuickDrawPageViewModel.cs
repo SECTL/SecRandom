@@ -17,6 +17,7 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.AttachedSettings;
+using SecRandom.Core.Models.Notification;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
@@ -235,11 +236,6 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (!TryLoadDefaultStudentList())
             return;
 
-        // 记录组与候选池在同一刻冻结（和点名页一致）：候选过滤与"已抽过几次"必须读同一个组，
-        // 抽取中途改设置也不会让这一轮读到另一个组的历史。
-        RefreshHistoryGroupScope();
-        var historyGroup = _historyGroupScope.Group;
-
         ResetForNewRoundIfExhausted();
 
         var candidates = GetEligibleCandidates().ToList();
@@ -255,8 +251,27 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         StatusText = QuickDrawResources.M_Drawing;
         _notificationAutoCloseTime = null;
         SetDrawCommandRunning(true);
+        IReadOnlyList<FullscreenResultItem> fullscreenPool = [];
+        // 全屏渠道要显示"还剩几人/共几人"，闪抽没有像点名页那样的 TotalCount/RemainingCount 属性，
+        // 所以在这里按抽前的候选快照算一次：总数=名单里可抽的人，剩余=当前这次能抽到的人。
+        var fullscreenTotalCount = (_profileService.CurrentStudentList?.Students ?? []).Count(student => student.IsCandidate);
+        var fullscreenRemainingCount = candidates.Count;
         try
         {
+            if (_notificationService is not null
+                && _notificationService.UsesFullscreenNotificationService(NotificationSettingsType.QuickDraw))
+            {
+                fullscreenPool = FullscreenNotificationComposer.MapStudents(candidates);
+                _notificationService.BeginFullscreenPresentation(
+                    NotificationSettingsType.QuickDraw,
+                    FullscreenNotificationComposer.CreateSeed(
+                        NotificationSettingsType.QuickDraw,
+                        fullscreenPool,
+                        fullscreenTotalCount,
+                        fullscreenRemainingCount,
+                        SelectedStudentListName));
+            }
+
             if (showBuiltInNotificationAnimation)
             {
                 showBuiltInNotificationAnimation = await (_notificationService?.BeginBuiltInNotificationPresentationAsync(
@@ -274,6 +289,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             var courseName = _linkageDrawCoordinator.GetCourseName();
 
             // 记录组与候选池在同一刻冻结（和点名页一致）：抽取中途改设置不会让这一轮读到另一个组的历史。
+            var historyGroup = ResolveQuickDrawHistoryGroup();
             var verificationDrawTask = _verificationDrawCoordinator.DrawStudentsAsync(
                 count,
                 candidates,
@@ -298,6 +314,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                     StopPreview();
                     if (showBuiltInNotificationAnimation)
                         _notificationService?.CancelBuiltInNotificationPresentation(NotificationSettingsType.QuickDraw);
+                    _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.QuickDraw);
                     ResultItems.Clear();
                     LastDrawnStudent = null;
                     IsResultVisible = false;
@@ -322,6 +339,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                 StopPreview();
                 if (showBuiltInNotificationAnimation)
                     _notificationService?.CancelBuiltInNotificationPresentation(NotificationSettingsType.QuickDraw);
+                _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.QuickDraw);
                 ResultItems.Clear();
                 LastDrawnStudent = null;
                 IsResultVisible = false;
@@ -356,16 +374,35 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             ReplaceResults(drawn);
             IsResultVisible = true;
             StatusText = string.Format(QuickDrawResources.M_DrawnCountFormat, ResultItems.Count);
-            if (_notificationService is not null)
-                _notificationService.QueueStudents(
-                    NotificationSettingsType.QuickDraw,
-                    SelectedStudentListName,
-                    drawn);
             await _drawAudioService.TransitionToResultMusicAsync(
                 DrawMusicAttachedSettingsResolver.GetResultMusic(drawn.FirstOrDefault(), MusicSettings.ResultMusic),
                 MusicSettings.ResultMusicVolume, MusicSettings.ResultMusicFadeIn, MusicSettings.ResultMusicFadeOut,
                 MusicSettings.AnimationMusicFadeOut).ConfigureAwait(false);
-            if (_voiceAnnouncementService is not null && VoiceAnnouncementSettings.VoiceAnnouncementEnabled)
+            if (_notificationService is not null)
+            {
+                _notificationService.QueueStudents(
+                    NotificationSettingsType.QuickDraw,
+                    SelectedStudentListName,
+                    drawn);
+
+                // 闪抽用全屏渠道时不再借用浮窗的自动关闭时间：全屏窗口有自己的倒计时。
+                if (_notificationService.UsesFullscreenNotificationService(NotificationSettingsType.QuickDraw))
+                    _notificationService.CompleteFullscreenPresentation(
+                        NotificationSettingsType.QuickDraw,
+                        FullscreenNotificationComposer.CreateSnapshot(
+                            NotificationSettingsType.QuickDraw,
+                            FullscreenNotificationComposer.MapStudents(drawn),
+                            fullscreenPool,
+                            fullscreenTotalCount,
+                            fullscreenRemainingCount,
+                            courseName,
+                            historyGroup,
+                            SelectedStudentListName));
+            }
+
+            var fullscreenVoiceActive = _notificationService?.UsesFullscreenNotificationService(NotificationSettingsType.QuickDraw) == true
+                                        && Config.NotificationSettings.Fullscreen.ShowVoiceAnnouncement;
+            if (!fullscreenVoiceActive && _voiceAnnouncementService is not null && VoiceAnnouncementSettings.VoiceAnnouncementEnabled)
                 await _voiceAnnouncementService.SpeakStudentsAsync(drawn).ConfigureAwait(false);
 
             StartCooldown();
@@ -402,7 +439,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private void ClearHistoryCore()
     {
         _notificationAutoCloseTime = null;
-        _temporaryRecordService.ClearStudentScope(SelectedStudentListName, _historyGroupScope.Group);
+        _temporaryRecordService.ClearStudentScope(SelectedStudentListName, string.Empty, string.Empty);
         ResultItems.Clear();
         LastDrawnStudent = null;
         IsResultVisible = false;
@@ -535,7 +572,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private IEnumerable<Student> GetEligibleCandidates()
     {
         var threshold = DrawRepeatPolicy.ResolveThreshold(Config.EffectiveQuickDrawSettings.DrawMode, Config.EffectiveQuickDrawSettings.HalfRepeat);
-        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, _historyGroupScope.Group);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, string.Empty, string.Empty);
         return DrawCandidateFilter.FilterEligibleStudents(
             _profileService.CurrentStudentList?.Students ?? [],
             string.Empty,
@@ -557,12 +594,11 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             return false;
 
         var threshold = DrawRepeatPolicy.ResolveThreshold(Config.EffectiveQuickDrawSettings.DrawMode, Config.EffectiveQuickDrawSettings.HalfRepeat);
-        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, _historyGroupScope.Group);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, string.Empty, string.Empty);
         if (DrawCandidateFilter.FilterEligibleStudents(students, string.Empty, string.Empty, counts, threshold).Any())
             return false;
 
-        // 只重置当前记录组的一轮：别的组是别的课堂进度。
-        _temporaryRecordService.ClearStudentScope(SelectedStudentListName, _historyGroupScope.Group);
+        _temporaryRecordService.ResetStudentList(SelectedStudentListName);
         return true;
     }
 
@@ -828,9 +864,21 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     }
 
     /// <summary>
+    ///     解析本次闪抽要锁定的历史记录组；<see langword="null" /> 表示不做组隔离（看全部历史）。
+    /// </summary>
+    /// <remarks>
+    ///     空串不是「不分组」而是「默认记录组」（未分组记录），所以功能关闭时必须返回
+    ///     <see langword="null" />——那时选择器不显示，没人能看出范围，只能按全部历史。
+    /// </remarks>
+    private string? ResolveQuickDrawHistoryGroup()
+    {
+        RefreshHistoryGroupScope();
+        return _historyGroupScope.Group;
+    }
+
+    /// <summary>
     ///     重新解析「默认记录组」配置：组已被删除或改名时回落到默认记录组（删除组会把记录移回默认组），
-    ///     目录读不到时不做组隔离（不拿一个未知清单去判断组名是否失效）。空串不是「不分组」而是
-    ///     「默认记录组」（未分组记录），所以功能关闭时解析结果是 <see langword="null" />、按全部历史。
+    ///     目录读不到时不做组隔离（不拿一个未知清单去判断组名是否失效）。
     /// </summary>
     private void RefreshHistoryGroupScope()
     {

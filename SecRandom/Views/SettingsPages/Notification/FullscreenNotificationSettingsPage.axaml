@@ -1,0 +1,315 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Notification"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:notification="clr-namespace:SecRandom.Views.SettingsPages.Notification"
+             x:Class="SecRandom.Views.SettingsPages.Notification.FullscreenNotificationSettingsPage"
+             x:DataType="notification:FullscreenNotificationSettingsPage">
+    <ScrollViewer>
+        <StackPanel Classes="page-container animated-intro settings">
+            <sr:IconText x:Name="S_Fullscreen_Appearance" Text="{x:Static lsp:Resources.S_Fullscreen_Appearance}"
+                         Glyph="{sr:Fi PaintBrushFilled}" Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_Fullscreen_BackgroundMode"
+                                   Header="{x:Static lsp:Resources.S_Fullscreen_BackgroundMode}"
+                                   Description="{x:Static lsp:Resources.S_Fullscreen_BackgroundMode_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ImageFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox ItemsSource="{Binding BackgroundModeOptions}"
+                              SelectedItem="{Binding SelectedBackgroundMode, Mode=TwoWay}"
+                              MinWidth="180">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="notification:BackgroundModeOption">
+                                <TextBlock Text="{Binding Label}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <StackPanel Spacing="4" IsVisible="{Binding IsSolidBackgroundMode}">
+                <fa:FASettingsExpander x:Name="S_Fullscreen_BackgroundColor"
+                                       Header="{x:Static lsp:Resources.S_Fullscreen_BackgroundColor}"
+                                       Description="{x:Static lsp:Resources.S_Fullscreen_BackgroundColor_D}"
+                                       IconSource="{sr:FluentIconSource {sr:Fi PaintBrushFilled}}">
+                    <fa:FASettingsExpander.Footer>
+                        <ColorPicker Color="{Binding Settings.BackgroundColor, Mode=TwoWay}"
+                                     Width="240" />
+                    </fa:FASettingsExpander.Footer>
+                </fa:FASettingsExpander>
+            </StackPanel>
+
+            <StackPanel Spacing="4" IsVisible="{Binding IsGradientBackgroundMode}">
+                <fa:FASettingsExpander x:Name="S_Fullscreen_BackgroundGradient"
+                                       Header="{x:Static lsp:Resources.S_Fullscreen_BackgroundGradient}"
+                                       Description="{x:Static lsp:Resources.S_Fullscreen_BackgroundGradient_D}"
+                                       IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
+                    <fa:FASettingsExpander.Footer>
+                        <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                            <ColorPicker Color="{Binding Settings.BackgroundGradientStart, Mode=TwoWay}"
+                                         Width="200" />
+                            <TextBlock Text="→" VerticalAlignment="Center" />
+                            <ColorPicker Color="{Binding Settings.BackgroundGradientEnd, Mode=TwoWay}"
+                                         Width="200" />
+                        </StackPanel>
+                    </fa:FASettingsExpander.Footer>
+                </fa:FASettingsExpander>
+
+                <fa:FASettingsExpander x:Name="S_Fullscreen_BackgroundGradientAngle"
+                                       Header="{x:Static lsp:Resources.S_Fullscreen_BackgroundGradientAngle}"
+                                       Description="{x:Static lsp:Resources.S_Fullscreen_BackgroundGradientAngle_D}"
+                                       IconSource="{sr:FluentIconSource {sr:Fi RotateRightFilled}}">
+                    <fa:FASettingsExpander.Footer>
+                        <Grid Width="280" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <Slider Minimum="0" Maximum="360" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding Settings.BackgroundGradientAngle, Mode=TwoWay}" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                                <TextBlock Width="32" TextAlignment="Right"
+                                           Text="{Binding Settings.BackgroundGradientAngle}" />
+                                <TextBlock Text="°" />
+                            </StackPanel>
+                        </Grid>
+                    </fa:FASettingsExpander.Footer>
+                </fa:FASettingsExpander>
+            </StackPanel>
+
+            <StackPanel Spacing="4" IsVisible="{Binding IsBackgroundImageMode}">
+                <fa:FASettingsExpander x:Name="S_Fullscreen_BackgroundImage"
+                                       Header="{x:Static lsp:Resources.S_Fullscreen_BackgroundImage}"
+                                       Description="{x:Static lsp:Resources.S_Fullscreen_BackgroundImage_D}"
+                                       IconSource="{sr:FluentIconSource {sr:Fi ImageFilled}}">
+                    <fa:FASettingsExpander.Footer>
+                        <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                            <Border Width="96" Height="54" CornerRadius="4" ClipToBounds="True"
+                                    IsVisible="{Binding HasBackgroundImage}"
+                                    Background="{DynamicResource ControlFillColorDefaultBrush}">
+                                <Image Source="{Binding BackgroundImagePreview}" Stretch="UniformToFill" />
+                            </Border>
+                            <Button Classes="accent" Click="ImportBackgroundImage_OnClick">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <sr:FluentIcon Glyph="{sr:Fi ImageAddFilled}" />
+                                    <TextBlock Text="{x:Static lsp:Resources.C_FullscreenImportImage}" />
+                                </StackPanel>
+                            </Button>
+                            <Button Click="ClearBackgroundImage_OnClick"
+                                    IsEnabled="{Binding HasBackgroundImage}"
+                                    Content="{x:Static lsp:Resources.C_FullscreenClearImage}" />
+                        </StackPanel>
+                    </fa:FASettingsExpander.Footer>
+                </fa:FASettingsExpander>
+
+                <fa:FASettingsExpander x:Name="S_Fullscreen_BackgroundBlur"
+                                       Header="{x:Static lsp:Resources.S_Fullscreen_BackgroundBlur}"
+                                       Description="{x:Static lsp:Resources.S_Fullscreen_BackgroundBlur_D}"
+                                       IconSource="{sr:FluentIconSource {sr:Fi BlurFilled}}">
+                    <fa:FASettingsExpander.Footer>
+                        <Grid Width="280" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <Slider Minimum="0" Maximum="64" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding Settings.BackgroundBlurRadius, Mode=TwoWay}" />
+                            <TextBlock Grid.Column="1" Width="32" TextAlignment="Right"
+                                       Text="{Binding Settings.BackgroundBlurRadius}" />
+                        </Grid>
+                    </fa:FASettingsExpander.Footer>
+                </fa:FASettingsExpander>
+
+                <fa:FASettingsExpander x:Name="S_Fullscreen_BackgroundOpacity"
+                                       Header="{x:Static lsp:Resources.S_Fullscreen_BackgroundOpacity}"
+                                       Description="{x:Static lsp:Resources.S_Fullscreen_BackgroundOpacity_D}"
+                                       IconSource="{sr:FluentIconSource {sr:Fi LayerFilled}}">
+                    <fa:FASettingsExpander.Footer>
+                        <Grid Width="280" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                            <Slider Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True"
+                                    Value="{Binding Settings.BackgroundOpacity, Mode=TwoWay}" />
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                                <TextBlock Width="32" TextAlignment="Right" Text="{Binding Settings.BackgroundOpacity}" />
+                                <TextBlock Text="%" />
+                            </StackPanel>
+                        </Grid>
+                    </fa:FASettingsExpander.Footer>
+                </fa:FASettingsExpander>
+            </StackPanel>
+
+            <!-- 强调色只保留一张卡：右侧下拉在「跟随主题色 / 自定义颜色」之间切换，
+                 左侧随之在主题色色块与取色器之间切换，避免两张卡表达同一件事。 -->
+            <fa:FASettingsExpander x:Name="S_Fullscreen_AccentColor"
+                                   Header="{x:Static lsp:Resources.S_Fullscreen_AccentColor}"
+                                   Description="{x:Static lsp:Resources.S_Fullscreen_AccentColor_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <Grid ColumnDefinitions="Auto,Auto,Auto" ColumnSpacing="12" VerticalAlignment="Center">
+                        <Border Width="24" Height="24" CornerRadius="4"
+                                Background="{Binding ThemeAccentColorBrush}"
+                                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                                BorderThickness="1"
+                                IsVisible="{Binding IsThemeAccentColorVisible}"
+                                VerticalAlignment="Center" />
+                        <ColorPicker Grid.Column="1"
+                                     IsVisible="{Binding IsCustomAccentColorVisible}"
+                                     Color="{Binding AccentColorValue, Mode=TwoWay}" />
+                        <ComboBox Grid.Column="2" x:Name="S_Fullscreen_AccentFollowTheme"
+                                  MinWidth="180"
+                                  ItemsSource="{Binding AccentColorModeOptions}"
+                                  SelectedItem="{Binding SelectedAccentColorMode, Mode=TwoWay}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="notification:AccentColorModeOption">
+                                    <TextBlock Text="{Binding Label}" />
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </Grid>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <sr:IconText x:Name="S_Fullscreen_Playback" Text="{x:Static lsp:Resources.S_Fullscreen_Playback}"
+                         Glyph="{sr:Fi PlayFilled}" Margin="0 12 0 4" />
+
+            <fa:FASettingsExpander x:Name="S_Fullscreen_ShowVoiceAnnouncement"
+                                   Header="{x:Static lsp:Resources.S_Fullscreen_ShowVoiceAnnouncement}"
+                                   Description="{x:Static lsp:Resources.S_Fullscreen_ShowVoiceAnnouncement_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PersonFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.ShowVoiceAnnouncement, Mode=TwoWay}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <!--
+                显示内容：序号/名称/头像三项勾选（复用浮窗的多选下拉框），并在同一张卡里给结果字号。
+                卡内是普通行，不嵌套 FASettingsExpander —— FA 卡套卡展开时会抛 NRE。
+            -->
+            <fa:FASettingsExpander x:Name="S_Fullscreen_DisplayContent"
+                                   Header="{x:Static lsp:Resources.S_Fullscreen_DisplayContent}"
+                                   Description="{x:Static lsp:Resources.S_Fullscreen_DisplayContent_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextBulletListSquareFilled}}">
+                <StackPanel Spacing="16">
+                    <Grid x:Name="S_Fullscreen_DisplayContent_Elements"
+                          ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Static lsp:Resources.S_Fullscreen_DisplayContent_Elements}" />
+                            <TextBlock Text="{x:Static lsp:Resources.S_Fullscreen_DisplayContent_Elements_D}"
+                                       FontSize="12" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <sr:MultiComboBox Grid.Column="1" MinWidth="260" VerticalAlignment="Center"
+                                          ItemsSource="{Binding ContentOptions}"
+                                          SelectedItems="{Binding SelectedContentOptions}" />
+                    </Grid>
+
+                    <Grid x:Name="S_Fullscreen_ResultFontSize"
+                          ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Static lsp:Resources.S_Fullscreen_ResultFontSize}" />
+                            <TextBlock Text="{x:Static lsp:Resources.S_Fullscreen_ResultFontSize_D}"
+                                       FontSize="12" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12"
+                                    VerticalAlignment="Center">
+                            <Slider Width="220" Minimum="32" Maximum="240" TickFrequency="4"
+                                    IsSnapToTickEnabled="True"
+                                    Value="{Binding Settings.ResultFontSize, Mode=TwoWay}" />
+                            <TextBlock MinWidth="72" TextAlignment="Right" VerticalAlignment="Center"
+                                       Text="{Binding ResultFontSizeText}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Fullscreen_AnimationStyle"
+                                   Header="{x:Static lsp:Resources.S_Fullscreen_AnimationStyle}"
+                                   Description="{x:Static lsp:Resources.S_Fullscreen_AnimationStyle_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi SlideTextFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox ItemsSource="{Binding AnimationStyleOptions}"
+                              SelectedItem="{Binding SelectedAnimationStyleOption, Mode=TwoWay}"
+                              MinWidth="180">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Label}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <!--
+                文案只属于打字机：这张卡就贴在动画样式下方，选其它样式时整张收起，
+                用户不会在网格模式下看到一堆用不上的文案选项。
+                卡内是普通行，不再嵌套 FASettingsExpander —— FA 卡套卡展开时会抛 NRE。
+            -->
+            <fa:FASettingsExpander x:Name="S_Fullscreen_Content"
+                                   Header="{x:Static lsp:Resources.S_Fullscreen_Content}"
+                                   Description="{x:Static lsp:Resources.S_Fullscreen_Content_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}"
+                                   IsVisible="{Binding IsTypewriterStyle}">
+                <StackPanel Spacing="16">
+                    <Grid x:Name="S_Fullscreen_ShowText" ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Static lsp:Resources.S_Fullscreen_ShowText}" />
+                            <TextBlock Text="{x:Static lsp:Resources.S_Fullscreen_ShowText_D}"
+                                       FontSize="12" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="1" VerticalAlignment="Center"
+                                      IsChecked="{Binding Settings.ShowText, Mode=TwoWay}" />
+                    </Grid>
+
+                    <Grid x:Name="S_Fullscreen_TextLibrary" ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Static lsp:Resources.S_Fullscreen_TextLibrary}" />
+                            <TextBlock Text="{Binding TextLibrarySummary}"
+                                       FontSize="12" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <Button Grid.Column="1" VerticalAlignment="Center" Click="OpenTextLibrary_OnClick">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <sr:FluentIcon Glyph="{sr:Fi TextBulletListSquareFilled}" />
+                                <TextBlock Text="{x:Static lsp:Resources.C_FullscreenOpenTextLibrary}" />
+                            </StackPanel>
+                        </Button>
+                    </Grid>
+
+                    <Grid x:Name="S_Fullscreen_TypewriterSpeed" ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Static lsp:Resources.S_Fullscreen_TypewriterSpeed}" />
+                            <TextBlock Text="{x:Static lsp:Resources.S_Fullscreen_TypewriterSpeed_D}"
+                                       FontSize="12" TextWrapping="Wrap"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12"
+                                    VerticalAlignment="Center">
+                            <Slider Width="220" Minimum="4" Maximum="40" TickFrequency="1"
+                                    IsSnapToTickEnabled="True"
+                                    Value="{Binding Settings.TypewriterCharactersPerSecond, Mode=TwoWay}" />
+                            <TextBlock MinWidth="72" TextAlignment="Right" VerticalAlignment="Center"
+                                       Text="{Binding TypewriterSpeedText}" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Fullscreen_ShowRemainingCount"
+                                   Header="{x:Static lsp:Resources.S_Fullscreen_ShowRemainingCount}"
+                                   Description="{x:Static lsp:Resources.S_Fullscreen_ShowRemainingCount_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.ShowRemainingCount, Mode=TwoWay}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Fullscreen_Preview"
+                                   Header="{x:Static lsp:Resources.S_Fullscreen_Preview}"
+                                   Description="{x:Static lsp:Resources.S_Fullscreen_Preview_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ZoomFitFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <Button Classes="accent" Click="Preview_OnClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <sr:FluentIcon Glyph="{sr:Fi PlayFilled}" />
+                            <TextBlock Text="{x:Static lsp:Resources.C_FullscreenPreview}" />
+                        </StackPanel>
+                    </Button>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

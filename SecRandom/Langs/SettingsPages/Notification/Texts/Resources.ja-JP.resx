@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns=""><xsd:element name="root" msdata:IsDataSet="true" /></xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader><resheader name="version"><value>1.3</value></resheader><resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader><resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page_Title"><value>テキストライブラリ</value></data>
+  <data name="S_TextLibrary"><value>テキストライブラリ</value></data>
+  <data name="S_TextLibrary_D"><value>全画面結果ページのテキストテンプレートと使用記録を管理します</value></data>
+  <data name="S_TextLibrary_Statistics"><value>統計</value></data>
+  <data name="S_TextLibrary_Statistics_D"><value>総数・有効数・ローテーション状況</value></data>
+  <data name="S_TextLibrary_Entries"><value>テキスト一覧</value></data>
+  <data name="S_TextLibrary_Entries_D"><value>個々のテキストを編集・有効化・削除します</value></data>
+  <data name="C_TotalCount"><value>総数</value></data>
+  <data name="C_EnabledCount"><value>有効</value></data>
+  <data name="C_TotalUseCount"><value>総使用回数</value></data>
+  <data name="C_AverageUseCount"><value>平均使用回数</value></data>
+  <data name="C_EligibleCount"><value>ローテーション対象</value></data>
+  <data name="C_Text"><value>テキスト</value></data>
+  <data name="C_UseCount"><value>使用回数</value></data>
+  <data name="C_Share"><value>割合</value></data>
+  <data name="C_Enabled"><value>有効</value></data>
+  <data name="C_Operations"><value>操作</value></data>
+  <data name="C_Edit"><value>編集</value></data>
+  <data name="C_Delete"><value>削除</value></data>
+  <data name="C_Save"><value>保存</value></data>
+  <data name="C_Cancel"><value>キャンセル</value></data>
+  <data name="C_Import"><value>インポート</value></data>
+  <data name="C_RestoreDefaults"><value>既定に戻す</value></data>
+  <data name="C_ResetCounts"><value>統計をリセット</value></data>
+  <data name="C_SelectFile"><value>ファイルを選択</value></data>
+  <data name="C_ImportSource"><value>インポート元</value></data>
+  <data name="C_TransferMode"><value>転送方式</value></data>
+  <data name="C_StartScan"><value>スキャン開始</value></data>
+  <data name="C_StopScan"><value>スキャン停止</value></data>
+  <data name="C_JsonCountFormat"><value>{0}/{1} 文字</value></data>
+  <data name="C_QrImportReady"><value>QR コードを受信できます</value></data>
+  <data name="C_QrImporting"><value>受信中…</value></data>
+  <data name="C_ReplaceImport"><value>置き換えてインポート</value></data>
+  <data name="M_SearchPlaceholder"><value>テキストを検索</value></data>
+  <data name="M_Empty"><value>ライブラリは空です。インポートするか既定に戻すとローテーションを開始できます</value></data>
+  <data name="M_NoMatch"><value>一致するテキストがありません</value></data>
+  <data name="M_RestoreDefaultsTitle"><value>既定のテキストに戻す</value></data>
+  <data name="M_RestoreDefaultsContent"><value>現在のテキストと使用記録は既定の内容に置き換わります</value></data>
+  <data name="M_RestoreDefaultsDone"><value>既定のテキストに戻しました</value></data>
+  <data name="M_ResetCountsTitle"><value>使用統計をリセット</value></data>
+  <data name="M_ResetCountsContent"><value>テキストは残り、使用回数だけが 0 になります</value></data>
+  <data name="M_ResetCountsDone"><value>使用統計をリセットしました</value></data>
+  <data name="M_DeleteTitle"><value>テキストを削除</value></data>
+  <data name="M_DeleteContent"><value>「{0}」を削除しますか</value></data>
+  <data name="M_DeleteDone"><value>テキストを削除しました</value></data>
+  <data name="M_EditTitle"><value>テキストを編集</value></data>
+  <data name="M_EditHint"><value>最大 {0} 文字、{{result}} プレースホルダーを使用できます</value></data>
+  <data name="M_EditEmpty"><value>テキストを入力してください</value></data>
+  <data name="M_EditTooLong"><value>テキストが {0} 文字の上限を超えています</value></data>
+  <data name="M_EditMissing"><value>編集対象のテキスト「{0}」が見つかりません</value></data>
+  <data name="M_EditPlaceholderAppended"><value>{result} プレースホルダーを自動で追加しました</value></data>
+  <data name="M_OperationFailed"><value>操作に失敗しました</value></data>
+  <data name="M_ImportTitle"><value>テキストをインポート</value></data>
+  <data name="M_ImportHint"><value>インポートはライブラリ全体を置き換え、使用記録を消去します</value></data>
+  <data name="M_SourceTable"><value>表ファイル</value></data>
+  <data name="M_SourceJson"><value>JSON 貼り付け</value></data>
+  <data name="M_SourceTransfer"><value>QR 転送</value></data>
+  <data name="M_TableHint"><value>xlsx・xls・csv に対応し、1 列目を読み取ります。見出し行は自動で飛ばします</value></data>
+  <data name="M_TableReading"><value>表を読み込み中…</value></data>
+  <data name="M_TableReadFailed"><value>表を読み込めませんでした</value></data>
+  <data name="M_TableLoaded"><value>{0}：テキスト {1} 件を読み取りました</value></data>
+  <data name="M_ImportEmptySelection"><value>インポートできるテキストがありません</value></data>
+  <data name="M_ImportFailed"><value>インポートに失敗しました</value></data>
+  <data name="M_ImportDone"><value>テキスト {0} 件をインポートしました</value></data>
+  <data name="M_JsonHint"><value>JSON の文字列配列、または {"texts":[...]} 形式のオブジェクトを貼り付けてください</value></data>
+  <data name="M_JsonEmpty"><value>JSON の貼り付けを待っています</value></data>
+  <data name="M_JsonTooLong"><value>内容が {0} 文字の上限を超えています</value></data>
+  <data name="M_JsonInvalid"><value>JSON を解析できません</value></data>
+  <data name="M_JsonValid"><value>テキスト {0} 件をインポートできます</value></data>
+  <data name="M_PreviewCount"><value>先頭 {0} 件をプレビュー</value></data>
+  <data name="M_TransferQuickQr"><value>スキャンで高速インポート</value></data>
+  <data name="M_TransferOfflineQr"><value>オフライン QR インポート</value></data>
+  <data name="M_TransferSessionCode"><value>セッションコードでインポート</value></data>
+  <data name="M_QuickQrHint"><value>もう一方の端末のクイック QR をスキャンするか、ペアリングリンクを入力します</value></data>
+  <data name="M_OfflineQrHint"><value>オフライン QR を連続してスキャンします。フレームが多い場合はファイルかセッションコードを使用してください</value></data>
+  <data name="M_OfflineFrameStats"><value>{0}/{1} フレームを受信</value></data>
+  <data name="M_SessionCodeHint"><value>12 桁のセッションコードを入力すると自動で読み取ります</value></data>
+  <data name="M_SessionCodePlaceholder"><value>セッションコード</value></data>
+  <data name="M_SessionCodeWait"><value>セッションコードを読み取り中…</value></data>
+  <data name="M_SessionCodeInvalid"><value>セッションコードの読み取りに失敗しました：{0}</value></data>
+  <data name="M_QuickQrInvalid"><value>クイック QR が無効です：{0}</value></data>
+  <data name="M_QrTransferFailed"><value>QR 転送に失敗しました：{0}</value></data>
+  <data name="M_QrWrongType"><value>この QR コードにはテキストライブラリが含まれていません</value></data>
+  <data name="M_QrLoaded"><value>テキスト {0} 件を読み取りました</value></data>
+  <data name="M_ScanUnsupported"><value>この端末ではカメラスキャンを使用できません。ファイルインポートを使用してください</value></data>
+  <data name="M_CameraPermissionDenied"><value>カメラの権限が拒否されました</value></data>
+  <data name="M_CameraStartFailed"><value>カメラを起動できませんでした：{0}</value></data>
+  <data name="M_ReplaceConfirmTitle"><value>テキストライブラリを置き換える</value></data>
+  <data name="M_ReplaceConfirmContent"><value>既存のテキスト {0} 件を置き換え、使用記録を消去します</value></data>
+  <data name="C_Export" xml:space="preserve">
+    <value>エクスポート</value>
+  </data>
+  <data name="M_StatisticsFormat" xml:space="preserve">
+    <value>全 {0} 件 · 有効 {1} · 使用 {2} 回 · 平均 {3} · ローテーション可 {4}</value>
+  </data>
+  <data name="C_Refresh" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="M_ExportTitle"><value>テキストライブラリのエクスポート</value></data>
+  <data name="M_ExportHint"><value>現在 {0} 件のテキストがあり、書き出した内容は別の端末でインポートできます</value></data>
+  <data name="C_ExportMode"><value>エクスポート方法</value></data>
+  <data name="M_ExportFile"><value>ファイルにエクスポート</value></data>
+  <data name="M_ExportQuickQr"><value>別の端末へ QR でクイックエクスポート</value></data>
+  <data name="M_ExportOfflineQr"><value>別の端末へオフライン QR でエクスポート</value></data>
+  <data name="M_ExportSessionCode"><value>別の端末へセッションコードでエクスポート</value></data>
+  <data name="C_ExportToFile"><value>ファイルを書き出す</value></data>
+  <data name="M_ExportFileHint"><value>xlsx はテキスト 1 列、json はそのままインポートできます</value></data>
+  <data name="M_ExportFileTypeExcel"><value>Excel ブック</value></data>
+  <data name="M_ExportFileTypeJson"><value>JSON ファイル</value></data>
+  <data name="M_ExportFileName"><value>テキストライブラリ</value></data>
+  <data name="C_StartExport"><value>エクスポート用 QR を生成</value></data>
+  <data name="C_StopExport"><value>エクスポートを停止</value></data>
+  <data name="M_ExportGenerating"><value>エクスポート内容を生成しています…</value></data>
+  <data name="M_QuickQrExportHint"><value>別の端末のテキストライブラリのインポートで「スキャンで高速インポート」を選び、この QR をスキャンします</value></data>
+  <data name="M_OfflineQrExportHint"><value>ネットワークがないときは別の端末でフレームを順にスキャンします。フレームが多い場合はファイルへのエクスポートをおすすめします</value></data>
+  <data name="M_SessionCodeExportHint"><value>別の端末のテキストライブラリのインポートで「セッションコードでインポート」を選び、下のコードを入力します</value></data>
+  <data name="C_ExportSessionCode"><value>セッションコード</value></data>
+  <data name="C_ExportCopySessionCode"><value>セッションコードをコピー</value></data>
+  <data name="M_ExportFrameStats"><value>フレーム {0} / {1}</value></data>
+  <data name="M_ExportDoneFile"><value>テキスト {0} 件を書き出しました</value></data>
+  <data name="M_ExportEmpty"><value>テキストライブラリが空のため、書き出せるテキストがありません</value></data>
+  <data name="M_ExportFailed"><value>エクスポートに失敗しました：{0}</value></data>
+  <data name="M_ExportFailedTitle"><value>エクスポートに失敗しました</value></data>
+  <data name="M_ExportQrStopped"><value>エクスポートを停止しました</value></data>
+  <data name="M_ExportHintIdle"><value>エクスポート方法を選んで開始します</value></data>
+  <data name="C_ExportClose"><value>閉じる</value></data>
+  <data name="M_QuickQrReady"><value>QR を生成しました。別の端末でスキャンしてください</value></data>
+  <data name="M_SessionCodeReady"><value>セッションコードを生成しました。別の端末で入力してください</value></data>
+  <data name="M_OfflineQrExporting"><value>オフライン QR を再生しています</value></data>
+</root>

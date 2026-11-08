@@ -126,9 +126,11 @@ using SecRandom.Views.SettingsPages.Update;
 using SecRandom.Views.SettingsPages.Plugins;
 using DefaultNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.DefaultNotificationSettingsPage;
 using FloatingWindowSettingsPage = SecRandom.Views.SettingsPages.Personalized.FloatingWindowSettingsPage;
+using FullscreenNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.FullscreenNotificationSettingsPage;
 using LotteryNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.LotteryNotificationSettingsPage;
 using QuickDrawNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.QuickDrawNotificationSettingsPage;
 using RollCallNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.RollCallNotificationSettingsPage;
+using TextLibrarySettingsPage = SecRandom.Views.SettingsPages.Notification.TextLibrarySettingsPage;
 using SecuritySettingsPage = SecRandom.Views.SettingsPages.General.SecuritySettingsPage;
 using VoiceSettingsPage = SecRandom.Views.SettingsPages.Notification.VoiceSettingsPage;
 using CR = SecRandom.Langs.Common.Resources;
@@ -1241,6 +1243,10 @@ public partial class App : Application
                 services.AddSingleton<IVoiceAnnouncementService>(serviceProvider =>
                     serviceProvider.GetRequiredService<VoiceAnnouncementService>());
                 services.AddSingleton<NotificationService>();
+                // 全屏结果渠道的展示服务。窗口本身是桌面专属能力，注册在共享块里但只有桌面会真正开窗
+                // （NotificationService 在移动端把渠道值 3 降级成内置浮窗）。
+                services.AddSingleton<TextLibraryService>();
+                services.AddSingleton<FullscreenNotificationPresenter>();
                 services.AddSingleton(serviceProvider => new MusicLibraryService(
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
                     serviceProvider.GetRequiredService<ILogger<MusicLibraryService>>(),
@@ -1546,6 +1552,12 @@ public partial class App : Application
                         .Settings_QuickDrawNotification);
                     services.AddSettingsPage<LotteryNotificationSettingsPage>(Langs.Common.Resources
                         .Settings_LotteryNotification);
+                    // 全屏渠道的两页：外观/动画设置 + 文案库管理。分开放是因为文案库是一张会一直在长的
+                    // 清单（导入、编辑、统计），而设置页只该放"外观与行为"。
+                    services.AddSettingsPage<FullscreenNotificationSettingsPage>(
+                        Langs.SettingsPages.Notification.Resources.Page_Fullscreen);
+                    services.AddSettingsPage<TextLibrarySettingsPage>(
+                        Langs.SettingsPages.Notification.Texts.Resources.Page_Title);
                 }
 
                 services.AddGroup(new PageGroupInfo(

@@ -1,0 +1,89 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="SecRandom.Views.FullscreenNotificationWindow"
+        WindowDecorations="None"
+        CanResize="False"
+        ShowInTaskbar="False"
+        Topmost="True"
+        SizeToContent="Manual"
+        Background="Transparent">
+    <!-- 根 Border：整窗不透明度只改这里（QuickDrawPage 先例），绝不改 Window.Opacity。 -->
+    <Border x:Name="RootBorder" Background="Transparent" Opacity="0">
+        <Panel x:Name="RootPanel">
+            <!-- 背景层 1：颜色/渐变兜底。背景图缺失或解码失败时保持这一层，绝不抛异常。 -->
+            <!-- 背景层 1：主题底色。构造后由 ApplyAppearance 按设置重铺（纯色/渐变/图片），
+                 这里先用主题纯色，避免窗口出现到第一次应用外观之间闪一帧有色渐变。 -->
+            <Border x:Name="FallbackBackground"
+                    Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" />
+
+            <!-- 背景层 2：用户背景图（Stretch=UniformToFill，铺满整窗）。 -->
+            <Image x:Name="BackgroundImage" Stretch="UniformToFill" IsVisible="False" Opacity="0" />
+
+            <!-- 背景层 3：可调的黑色遮罩，保证前景文字始终可读。 -->
+            <Border x:Name="OverlayBorder" Background="#FF000000" Opacity="0.35" IsHitTestVisible="False" />
+
+            <!-- 背景层 4：上下渐变，压暗顶部/底部边缘。 -->
+            <Border x:Name="VignetteBorder" IsHitTestVisible="False">
+                <Border.Background>
+                    <LinearGradientBrush StartPoint="0%, 0%" EndPoint="0%, 100%">
+                        <GradientStop Color="#CC000000" Offset="0" />
+                        <GradientStop Color="#00000000" Offset="0.28" />
+                        <GradientStop Color="#00000000" Offset="0.72" />
+                        <GradientStop Color="#DD000000" Offset="1" />
+                    </LinearGradientBrush>
+                </Border.Background>
+            </Border>
+
+            <!-- 四边倒计时进度：随剩余时间收缩（缩放由后台代码逐帧驱动）。 -->
+            <Border x:Name="EdgeTop" Height="6" VerticalAlignment="Top" IsVisible="False" IsHitTestVisible="False" />
+            <Border x:Name="EdgeBottom" Height="6" VerticalAlignment="Bottom" IsVisible="False" IsHitTestVisible="False" />
+            <Border x:Name="EdgeLeft" Width="6" HorizontalAlignment="Left" IsVisible="False" IsHitTestVisible="False" />
+            <Border x:Name="EdgeRight" Width="6" HorizontalAlignment="Right" IsVisible="False" IsHitTestVisible="False" />
+
+            <!-- 内容层 -->
+            <Grid Margin="56,40,56,36" RowDefinitions="Auto,*,Auto">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Spacing="6" VerticalAlignment="Center">
+                        <TextBlock x:Name="ScopeText" FontSize="22" Foreground="#CCFFFFFF" />
+                        <TextBlock x:Name="KindText" FontSize="16" Foreground="#99FFFFFF" />
+                    </StackPanel>
+
+                    <!-- 倒计时读秒："剩余 N 秒"整句来自资源，数字用 tnum 等宽数字避免跳动。 -->
+                    <Border x:Name="CountdownBadge" Grid.Column="1" IsVisible="False"
+                            Background="#66000000" CornerRadius="18" Padding="18,8"
+                            VerticalAlignment="Top">
+                        <TextBlock x:Name="CountdownText" Text="" FontSize="26" FontFeatures="+tnum"
+                                   FontWeight="SemiBold" Foreground="#FFFFFFFF" VerticalAlignment="Center" />
+                    </Border>
+                </Grid>
+
+                <Grid Grid.Row="1">
+                    <!-- 待揭晓/滚动态：网格动画需要的候选池在开窗时已经冻结。 -->
+                    <Panel x:Name="IdlePanel" IsVisible="False" HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <StackPanel Spacing="18" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock x:Name="IdleTitle" FontSize="64" FontWeight="Bold"
+                                       Foreground="#FFFFFFFF" HorizontalAlignment="Center" TextAlignment="Center" />
+                            <TextBlock x:Name="IdleRollingText" FontSize="48" Foreground="#FFFFD166"
+                                       HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                                       MaxWidth="1200" />
+                            <TextBlock x:Name="IdleHint" FontSize="20"
+                                       Foreground="#B3FFFFFF" HorizontalAlignment="Center" TextAlignment="Center" />
+                        </StackPanel>
+                    </Panel>
+
+                    <!-- 动画层：网格由动画器在后台代码里构建。 -->
+                    <Panel x:Name="AnimationHost" IsVisible="False" />
+
+                    <!-- 结果层：Direct/打字机结果，以及网格落定后的结果文案。 -->
+                    <StackPanel x:Name="ResultHost" IsVisible="False" Spacing="18"
+                                HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="1600" />
+                </Grid>
+
+                <TextBlock x:Name="RemainingText" Grid.Row="2" FontSize="20" Foreground="#B3FFFFFF"
+                           HorizontalAlignment="Left" VerticalAlignment="Bottom" />
+                <TextBlock Grid.Row="2" x:Name="CloseHintText" FontSize="16" Foreground="#66FFFFFF"
+                           HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+            </Grid>
+        </Panel>
+    </Border>
+</Window>

@@ -1,10 +1,14 @@
 using Avalonia.Threading;
 using ClassIsland.Shared.IPC;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Abstraction;
 using SecRandom.Core.Enums;
+using SecRandom.Core.Models.Notification;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Mobile;
+using SecRandom.Platforms;
 using SecRandom.Services.Linkage;
 using SecRandom.Shared.Models.Profile;
 using SecRandom4Ci.Interface.Enums;
@@ -165,9 +169,107 @@ public sealed class NotificationService : IDisposable
 
         var config = _configHandler.Data;
         var basicSettings = config.GetOverrideNotificationSettings(type, OverridableNotificationSettingsType.Basic);
+        if (!basicSettings.Enabled)
+            return false;
+
+        var serviceSettings = config.GetOverrideNotificationSettings(
+            type,
+            OverridableNotificationSettingsType.Service);
+        // 选中"全屏"但当前宿主没有全屏能力（移动端）时退化为既有内置浮窗渠道：
+        // 不能因为选了一个桌面专属渠道就静默丢通知。
+        return serviceSettings.UsesBuiltInNotificationService
+               || serviceSettings.UsesFullscreenNotificationService && !IsFullscreenPresentationAvailable;
+    }
+
+    /// <summary>
+    ///     当前宿主是否具备全屏结果渠道。全屏窗口是桌面专属能力，移动端读到渠道值 3 时按内置渠道降级。
+    /// </summary>
+    public static bool IsFullscreenPresentationAvailable
+        => PlatformStartupContext.Current is not MobilePlatformServiceRoot;
+
+    /// <summary>
+    ///     点名/抽奖/闪抽的渠道是否指向全屏结果渠道（且当前可用）。
+    /// </summary>
+    public bool UsesFullscreenNotificationService(NotificationSettingsType type)
+    {
+        if (_isDisposed || !IsFullscreenPresentationAvailable)
+            return false;
+
+        var config = _configHandler.Data;
+        var basicSettings = config.GetOverrideNotificationSettings(type, OverridableNotificationSettingsType.Basic);
         return basicSettings.Enabled
-            && config.GetOverrideNotificationSettings(type, OverridableNotificationSettingsType.Service)
-                .UsesBuiltInNotificationService;
+               && config.GetOverrideNotificationSettings(type, OverridableNotificationSettingsType.Service)
+                   .UsesFullscreenNotificationService;
+    }
+
+    /// <summary>
+    ///     在抽取开始前打开全屏舞台并冻结展示素材。非全屏渠道/宿主不支持时是 no-op。
+    /// </summary>
+    public void BeginFullscreenPresentation(NotificationSettingsType type, FullscreenPresentationSeed seed)
+    {
+        var presenter = TryGetFullscreenPresenter();
+        if (presenter is null || !UsesFullscreenNotificationService(type))
+            return;
+
+        try
+        {
+            presenter.Begin(type, seed);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "打开全屏结果窗口失败，本次按无通知处理");
+        }
+    }
+
+    /// <summary>
+    ///     成功提交后把结果快照交给全屏渠道。暂停/取消的抽取不应调用本方法。
+    /// </summary>
+    public void CompleteFullscreenPresentation(NotificationSettingsType type, FullscreenResultSnapshot snapshot)
+    {
+        var presenter = TryGetFullscreenPresenter();
+        if (presenter is null)
+            return;
+
+        try
+        {
+            presenter.Complete(type, snapshot);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "呈现全屏结果失败");
+        }
+    }
+
+    /// <summary>
+    ///     抽取失败/取消时收掉全屏舞台。
+    /// </summary>
+    public void CancelFullscreenPresentation(NotificationSettingsType type)
+    {
+        var presenter = TryGetFullscreenPresenter();
+        if (presenter is null)
+            return;
+
+        try
+        {
+            presenter.Cancel(type);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "取消全屏结果窗口失败");
+        }
+    }
+
+    private static FullscreenNotificationPresenter? TryGetFullscreenPresenter()
+    {
+        try
+        {
+            return IAppHost.TryGetService<FullscreenNotificationPresenter>();
+        }
+        catch (Exception)
+        {
+            // 宿主没有注册全屏展示服务时按"渠道不可用"处理，绝不能影响抽取本身。
+            return null;
+        }
     }
 
     public void CancelBuiltInNotificationPresentation(NotificationSettingsType type)
@@ -212,7 +314,10 @@ public sealed class NotificationService : IDisposable
             return;
         }
 
-        if (serviceSettings.UsesBuiltInNotificationService)
+        // 全屏渠道在不可用宿主（移动端）上按内置浮窗渠道交付，避免选中桌面专属渠道后静默无通知。
+        var fullscreenFallbackToBuiltIn = serviceSettings.UsesFullscreenNotificationService
+                                          && !IsFullscreenPresentationAvailable;
+        if (serviceSettings.UsesBuiltInNotificationService || fullscreenFallbackToBuiltIn)
         {
             var showPreview = type != NotificationSettingsType.QuickDraw || !_quickDrawBuiltInPreviewActive;
             _quickDrawBuiltInPreviewActive = false;

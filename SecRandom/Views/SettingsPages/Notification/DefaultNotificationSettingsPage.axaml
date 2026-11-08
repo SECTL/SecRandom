@@ -77,10 +77,13 @@
                                    Description="{Binding NotificationServiceTypeDescription}"
                                    IconSource="{sr:FluentIconSource {sr:Fi CommentNoteFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <ComboBox SelectedIndex="{Binding ChannelSettings.NotificationServiceType}">
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_NotificationService_SecRandom}" />
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_NotificationService_ClassIsland}" />
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_NotificationService_Both}" />
+                    <ComboBox ItemsSource="{Binding NotificationServiceOptions}"
+                              SelectedItem="{Binding SelectedNotificationServiceOption, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Label}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>

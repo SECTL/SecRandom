@@ -28,6 +28,7 @@ public class SettingsMarkupTests
     [InlineData("SecRandom/Views/SettingsPages/Picking/RollCallDrawSettingsPage.axaml", "S_ReminderText")]
     [InlineData("SecRandom/Views/SettingsPages/Picking/LotteryDrawSettingsPage.axaml", "S_LotteryImage")]
     [InlineData("SecRandom/Views/SettingsPages/Notification/DefaultNotificationSettingsPage.axaml", "S_Default_DisplayDuration")]
+    [InlineData("SecRandom/Views/SettingsPages/Personalized/FloatingWindowSettingsPage.axaml", "S_Interaction_DoNotStealFocus")]
     public void SearchableSettingsUseStableControlNames(string relativePath, string controlId)
     {
         string markup = File.ReadAllText(GetRepositoryPath(relativePath));
@@ -239,7 +240,7 @@ public class SettingsMarkupTests
         string source = File.ReadAllText(GetRepositoryPath(
             "SecRandom/Services/Notification/NotificationService.cs"));
         int fallbackStart = source.IndexOf("if (useMainWindow)", StringComparison.Ordinal);
-        int backendDeliveryStart = source.IndexOf("if (serviceSettings.UsesBuiltInNotificationService)", fallbackStart, StringComparison.Ordinal);
+        int backendDeliveryStart = source.IndexOf("if (serviceSettings.UsesBuiltInNotificationService || fullscreenFallbackToBuiltIn)", fallbackStart, StringComparison.Ordinal);
 
         Assert.True(fallbackStart >= 0 && backendDeliveryStart > fallbackStart);
         Assert.Contains("return;", source[fallbackStart..backendDeliveryStart], StringComparison.Ordinal);
@@ -472,6 +473,21 @@ public class SettingsMarkupTests
     {
         return GetRepositoryPath(
             "SecRandom/Views/SettingsPages/Notification/NotificationChannelSettingsContent.axaml");
+    }
+
+    /// <summary>
+    /// A settings page whose code-behind forgets InitializeComponent() compiles and constructs fine,
+    /// but its visual tree stays empty – the page simply renders as blank, which is easy to miss.
+    /// </summary>
+    [Theory]
+    [InlineData("FullscreenNotificationSettingsPage")]
+    [InlineData("TextLibrarySettingsPage")]
+    public void SettingsPageCodeBehindLoadsItsMarkup(string pageName)
+    {
+        string source = File.ReadAllText(GetRepositoryPath(
+            $"SecRandom/Views/SettingsPages/Notification/{pageName}.axaml.cs"));
+
+        Assert.Contains("InitializeComponent();", source, StringComparison.Ordinal);
     }
 
     private static string GetDefaultNotificationMarkupPath()

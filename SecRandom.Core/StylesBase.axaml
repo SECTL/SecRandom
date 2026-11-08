@@ -1,4 +1,4 @@
-﻿<Styles xmlns="https://github.com/avaloniaui"
+<Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
         xmlns:asyncImageLoader="clr-namespace:AsyncImageLoader;assembly=AsyncImageLoader.Avalonia"
@@ -199,5 +199,18 @@
         <Style Selector="^ md|MarkdownListGrid.ListBlock TextBlock.ListBlockBullet">
             <Setter Property="FontFamily" Value="{DynamicResource AppFontFamily}" />
         </Style>
+    </Style>
+
+    <!--
+        等宽数字（OpenType tnum）：名单、表格、结果、时钟、计时器里的数字宽度一致，
+        数字滚动或倒计时变化时整行不会左右抖动。MiSans 自带 tnum 特性，无需换字体。
+        局部显式设置的 FontFeatures 优先级更高，因此单独需要 pnum 的地方仍可覆盖。
+    -->
+    <Style Selector="TextBlock">
+        <Setter Property="FontFeatures" Value="+tnum" />
+    </Style>
+
+    <Style Selector="TextBox">
+        <Setter Property="FontFeatures" Value="+tnum" />
     </Style>
 </Styles>

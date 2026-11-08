@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns=""><xsd:element name="root" msdata:IsDataSet="true" /></xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader><resheader name="version"><value>1.3</value></resheader><resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader><resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <data name="Page_Title"><value>Text library</value></data>
+  <data name="S_TextLibrary"><value>Text library</value></data>
+  <data name="S_TextLibrary_D"><value>Manage fullscreen result templates and their usage records</value></data>
+  <data name="S_TextLibrary_Statistics"><value>Statistics</value></data>
+  <data name="S_TextLibrary_Statistics_D"><value>Totals, enabled count and rotation status</value></data>
+  <data name="S_TextLibrary_Entries"><value>Templates</value></data>
+  <data name="S_TextLibrary_Entries_D"><value>Edit, enable or delete individual templates</value></data>
+  <data name="C_TotalCount"><value>Total</value></data>
+  <data name="C_EnabledCount"><value>Enabled</value></data>
+  <data name="C_TotalUseCount"><value>Total uses</value></data>
+  <data name="C_AverageUseCount"><value>Average uses</value></data>
+  <data name="C_EligibleCount"><value>Eligible</value></data>
+  <data name="C_Text"><value>Template</value></data>
+  <data name="C_UseCount"><value>Uses</value></data>
+  <data name="C_Share"><value>Share</value></data>
+  <data name="C_Enabled"><value>Enabled</value></data>
+  <data name="C_Operations"><value>Actions</value></data>
+  <data name="C_Edit"><value>Edit</value></data>
+  <data name="C_Delete"><value>Delete</value></data>
+  <data name="C_Save"><value>Save</value></data>
+  <data name="C_Cancel"><value>Cancel</value></data>
+  <data name="C_Import"><value>Import</value></data>
+  <data name="C_RestoreDefaults"><value>Restore defaults</value></data>
+  <data name="C_ResetCounts"><value>Reset counts</value></data>
+  <data name="C_SelectFile"><value>Choose file</value></data>
+  <data name="C_ImportSource"><value>Import source</value></data>
+  <data name="C_TransferMode"><value>Transfer mode</value></data>
+  <data name="C_StartScan"><value>Start scanning</value></data>
+  <data name="C_StopScan"><value>Stop scanning</value></data>
+  <data name="C_JsonCountFormat"><value>{0}/{1} characters</value></data>
+  <data name="C_QrImportReady"><value>Ready to receive a QR code</value></data>
+  <data name="C_QrImporting"><value>Receiving…</value></data>
+  <data name="C_ReplaceImport"><value>Replace and import</value></data>
+  <data name="M_SearchPlaceholder"><value>Search templates</value></data>
+  <data name="M_Empty"><value>The library is empty; import templates or restore the defaults to start rotating</value></data>
+  <data name="M_NoMatch"><value>No templates match the search</value></data>
+  <data name="M_RestoreDefaultsTitle"><value>Restore default templates</value></data>
+  <data name="M_RestoreDefaultsContent"><value>The current templates and usage records will be replaced by the defaults</value></data>
+  <data name="M_RestoreDefaultsDone"><value>Default templates restored</value></data>
+  <data name="M_ResetCountsTitle"><value>Reset usage counts</value></data>
+  <data name="M_ResetCountsContent"><value>Every template keeps its text but its usage count becomes zero</value></data>
+  <data name="M_ResetCountsDone"><value>Usage counts reset</value></data>
+  <data name="M_DeleteTitle"><value>Delete template</value></data>
+  <data name="M_DeleteContent"><value>Delete "{0}"</value></data>
+  <data name="M_DeleteDone"><value>Template deleted</value></data>
+  <data name="M_EditTitle"><value>Edit template</value></data>
+  <data name="M_EditHint"><value>Up to {0} characters; the {{result}} placeholder is supported</value></data>
+  <data name="M_EditEmpty"><value>The template cannot be empty</value></data>
+  <data name="M_EditTooLong"><value>The template exceeds the {0} character limit</value></data>
+  <data name="M_EditMissing"><value>The template "{0}" no longer exists</value></data>
+  <data name="M_EditPlaceholderAppended"><value>The {result} placeholder was appended automatically</value></data>
+  <data name="M_OperationFailed"><value>Operation failed</value></data>
+  <data name="M_ImportTitle"><value>Import templates</value></data>
+  <data name="M_ImportHint"><value>Importing replaces the whole library and clears usage records</value></data>
+  <data name="M_SourceTable"><value>Spreadsheet</value></data>
+  <data name="M_SourceJson"><value>Paste JSON</value></data>
+  <data name="M_SourceTransfer"><value>QR transfer</value></data>
+  <data name="M_TableHint"><value>Supports xlsx, xls and csv; the first column is read and a header row is skipped automatically</value></data>
+  <data name="M_TableReading"><value>Reading the spreadsheet…</value></data>
+  <data name="M_TableReadFailed"><value>Could not read the spreadsheet</value></data>
+  <data name="M_TableLoaded"><value>{0}: {1} templates read</value></data>
+  <data name="M_ImportEmptySelection"><value>No templates to import</value></data>
+  <data name="M_ImportFailed"><value>Import failed</value></data>
+  <data name="M_ImportDone"><value>Imported {0} templates</value></data>
+  <data name="M_JsonHint"><value>Paste a JSON string array, or an object shaped like {"texts":[...]}</value></data>
+  <data name="M_JsonEmpty"><value>Waiting for JSON</value></data>
+  <data name="M_JsonTooLong"><value>The content exceeds the {0} character limit</value></data>
+  <data name="M_JsonInvalid"><value>The JSON could not be parsed</value></data>
+  <data name="M_JsonValid"><value>{0} templates are ready to import</value></data>
+  <data name="M_PreviewCount"><value>Previewing {0} templates</value></data>
+  <data name="M_TransferQuickQr"><value>Scan to import</value></data>
+  <data name="M_TransferOfflineQr"><value>Offline QR import</value></data>
+  <data name="M_TransferSessionCode"><value>Session code import</value></data>
+  <data name="M_QuickQrHint"><value>Scan the quick QR code on the other device, or enter its pairing link</value></data>
+  <data name="M_OfflineQrHint"><value>Keep scanning the offline QR code; switch to a file or session code when it needs too many frames</value></data>
+  <data name="M_OfflineFrameStats"><value>Received {0}/{1} frames</value></data>
+  <data name="M_SessionCodeHint"><value>Enter the 12-character session code; the transfer starts once it is complete</value></data>
+  <data name="M_SessionCodePlaceholder"><value>Session code</value></data>
+  <data name="M_SessionCodeWait"><value>Reading the session code…</value></data>
+  <data name="M_SessionCodeInvalid"><value>Session code failed: {0}</value></data>
+  <data name="M_QuickQrInvalid"><value>Invalid quick QR code: {0}</value></data>
+  <data name="M_QrTransferFailed"><value>QR transfer failed: {0}</value></data>
+  <data name="M_QrWrongType"><value>This QR code does not contain a text library</value></data>
+  <data name="M_QrLoaded"><value>{0} templates read</value></data>
+  <data name="M_ScanUnsupported"><value>Camera scanning is unavailable on this device; use file import instead</value></data>
+  <data name="M_CameraPermissionDenied"><value>Camera permission was denied</value></data>
+  <data name="M_CameraStartFailed"><value>Could not start the camera: {0}</value></data>
+  <data name="M_ReplaceConfirmTitle"><value>Replace the text library</value></data>
+  <data name="M_ReplaceConfirmContent"><value>This replaces the existing {0} templates and clears their usage records</value></data>
+  <data name="C_Export" xml:space="preserve">
+    <value>Export</value>
+  </data>
+  <data name="M_StatisticsFormat" xml:space="preserve">
+    <value>{0} total · {1} enabled · used {2} times · average {3} · rotatable {4}</value>
+  </data>
+  <data name="C_Refresh" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="M_ExportTitle"><value>Export text library</value></data>
+  <data name="M_ExportHint"><value>Currently {0} templates; the exported content can be imported on another device</value></data>
+  <data name="C_ExportMode"><value>Export method</value></data>
+  <data name="M_ExportFile"><value>Export to a file</value></data>
+  <data name="M_ExportQuickQr"><value>Quick QR export to another device</value></data>
+  <data name="M_ExportOfflineQr"><value>Offline QR export to another device</value></data>
+  <data name="M_ExportSessionCode"><value>Session code export to another device</value></data>
+  <data name="C_ExportToFile"><value>Export file</value></data>
+  <data name="M_ExportFileHint"><value>Supports .xlsx with one template column and .json, which can be imported directly</value></data>
+  <data name="M_ExportFileTypeExcel"><value>Excel workbook</value></data>
+  <data name="M_ExportFileTypeJson"><value>JSON file</value></data>
+  <data name="M_ExportFileName"><value>Text library</value></data>
+  <data name="C_StartExport"><value>Generate export QR code</value></data>
+  <data name="C_StopExport"><value>Stop export</value></data>
+  <data name="M_ExportGenerating"><value>Generating the export…</value></data>
+  <data name="M_QuickQrExportHint"><value>On the other device, choose “Scan to import” in the text library import drawer, then scan this QR code</value></data>
+  <data name="M_OfflineQrExportHint"><value>Without a network, scan the frames with the other device; if there are many frames, export to a file instead</value></data>
+  <data name="M_SessionCodeExportHint"><value>On the other device, choose “Session code import” in the text library import drawer, then enter the code below</value></data>
+  <data name="C_ExportSessionCode"><value>Session code</value></data>
+  <data name="C_ExportCopySessionCode"><value>Copy session code</value></data>
+  <data name="M_ExportFrameStats"><value>Frame {0} / {1}</value></data>
+  <data name="M_ExportDoneFile"><value>Exported {0} templates</value></data>
+  <data name="M_ExportEmpty"><value>The text library is empty, so there is nothing to export</value></data>
+  <data name="M_ExportFailed"><value>Export failed: {0}</value></data>
+  <data name="M_ExportFailedTitle"><value>Export failed</value></data>
+  <data name="M_ExportQrStopped"><value>Export stopped</value></data>
+  <data name="M_ExportHintIdle"><value>Choose an export method to start</value></data>
+  <data name="C_ExportClose"><value>Close</value></data>
+  <data name="M_QuickQrReady"><value>QR code ready, scan it with the other device</value></data>
+  <data name="M_SessionCodeReady"><value>Session code ready, enter it on the other device</value></data>
+  <data name="M_OfflineQrExporting"><value>Playing the offline QR frames</value></data>
+</root>

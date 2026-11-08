@@ -25,7 +25,14 @@ public enum SyncTransferContentType
 {
     Roster,
     Settings,
-    AllData
+    AllData,
+
+    /// <summary>
+    /// The fullscreen result text library, transferred as a small JSON document. It is deliberately a separate
+    /// type from Settings/AllData so a receiving device can never mistake a text library for a settings file
+    /// (or the other way round) when the payload is applied.
+    /// </summary>
+    TextLibrary
 }
 
 public sealed record SyncTransferPackage(SyncTransferContentType ContentType, string FileName, byte[] Content);

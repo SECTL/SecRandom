@@ -15,6 +15,7 @@ public partial class NotificationSettingsConfig : ObservableObject, IJsonOnDeser
     private OverridableNotificationChannelSettings _rollCall = new();
     private OverridableNotificationChannelSettings _quickDraw = CreateQuickDraw();
     private OverridableNotificationChannelSettings _lottery = new();
+    private FullscreenNotificationSettings _fullscreen = new();
 
     [AllowNull]
     public NotificationChannelSettings Default
@@ -46,6 +47,21 @@ public partial class NotificationSettingsConfig : ObservableObject, IJsonOnDeser
     {
         get => _lottery;
         set => SetProperty(ref _lottery, value ?? new OverridableNotificationChannelSettings());
+    }
+
+    /// <summary>
+    ///     全屏结果通知渠道的外观、文案、动画与倒计时设置。
+    /// </summary>
+    /// <remarks>
+    ///     全屏渠道是**独立的第四种渠道值**（<c>NotificationServiceType == 3</c>），
+    ///     与内置浮窗、ClassIsland 平级且互斥；这里的设置只服务全屏窗口自己，
+    ///     不会改变 QuickDraw 浮窗的任何行为。
+    /// </remarks>
+    [AllowNull]
+    public FullscreenNotificationSettings Fullscreen
+    {
+        get => _fullscreen;
+        set => SetProperty(ref _fullscreen, value ?? new FullscreenNotificationSettings());
     }
 
     [JsonInclude]
@@ -185,11 +201,14 @@ public partial class NotificationChannelSettings : ObservableObject, IJsonOnDese
         get => _notificationServiceType;
         set
         {
-            if (!SetProperty(ref _notificationServiceType, value is >= 0 and <= 2 ? value : 0))
+            // 0=内置浮窗、1=ClassIsland、2=同时使用（内置+ClassIsland）、3=全屏。
+            // 值 3 是追加值，0/1/2 的含义逐字节不变；越界值仍回落 0。
+            if (!SetProperty(ref _notificationServiceType, value is >= 0 and <= 3 ? value : 0))
                 return;
 
             OnPropertyChanged(nameof(UsesBuiltInNotificationService));
             OnPropertyChanged(nameof(UsesExternalNotificationService));
+            OnPropertyChanged(nameof(UsesFullscreenNotificationService));
         }
     }
 
@@ -198,6 +217,12 @@ public partial class NotificationChannelSettings : ObservableObject, IJsonOnDese
 
     [JsonIgnore]
     public bool UsesExternalNotificationService => NotificationServiceType is 1 or 2;
+
+    /// <summary>
+    ///     是否使用全屏结果通知渠道。与另外两条渠道属性互斥："同时使用"永远只含内置 + ClassIsland。
+    /// </summary>
+    [JsonIgnore]
+    public bool UsesFullscreenNotificationService => NotificationServiceType == 3;
 
     public bool Enabled
     {

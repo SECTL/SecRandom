@@ -22,7 +22,9 @@ public sealed class SettingsTransferQrService
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(package);
-        if (package.ContentType is not (SyncTransferContentType.Settings or SyncTransferContentType.AllData))
+        if (package.ContentType is not (SyncTransferContentType.Settings
+                or SyncTransferContentType.AllData
+                or SyncTransferContentType.TextLibrary))
             throw new InvalidDataException("Offline QR transfer content type is not supported.");
         SyncTransferLimits.EnsureOfflineQrPayloadSize(package.Content.LongLength, "source file");
 
@@ -193,6 +195,7 @@ public sealed class SettingsTransferQrService
             {
                 "settings" => SyncTransferContentType.Settings,
                 "all-data" => SyncTransferContentType.AllData,
+                "text-library" => SyncTransferContentType.TextLibrary,
                 _ => throw new InvalidDataException("Offline QR transfer content type is not supported.")
             };
             return new SyncTransferPackage(contentType, envelope.FileName, envelope.Content);

@@ -1,0 +1,116 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Notification"
+             xmlns:lm="clr-namespace:SecRandom.Langs.SettingsPages.Notification.Texts"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="720"
+             x:Class="SecRandom.Views.SettingsPages.Notification.TextLibraryExportDrawer"
+             x:DataType="local:TextLibraryExportDrawer">
+    <Grid Width="400" RowDefinitions="*,Auto">
+        <ScrollViewer Grid.Row="0">
+            <StackPanel Margin="16,16,16,8" Spacing="8">
+                <TextBlock Text="{x:Static lm:Resources.M_ExportTitle}"
+                           Theme="{StaticResource TitleTextBlockStyle}" />
+
+                <TextBlock Text="{Binding TargetDescription}"
+                           TextWrapping="Wrap"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+
+                <GroupBox Header="{x:Static lm:Resources.C_ExportMode}">
+                    <ComboBox HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding ExportModes}"
+                              SelectedItem="{Binding SelectedExportMode, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="local:TextLibraryExportModeOption">
+                                <TextBlock Text="{Binding Label}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </GroupBox>
+
+                <StackPanel Spacing="8" IsVisible="{Binding IsFileExportMode}">
+                    <Button Classes="accent"
+                            HorizontalAlignment="Left"
+                            IsEnabled="{Binding CanExport}"
+                            Click="ExportFileButton_OnClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <sr:FluentIcon Glyph="{sr:Fi ArrowDownloadFilled}" />
+                            <TextBlock Text="{x:Static lm:Resources.C_ExportToFile}" />
+                        </StackPanel>
+                    </Button>
+                    <TextBlock Text="{x:Static lm:Resources.M_ExportFileHint}"
+                               TextWrapping="Wrap"
+                               Opacity="0.7" />
+                </StackPanel>
+
+                <StackPanel Spacing="8" IsVisible="{Binding IsDeviceExportMode}">
+                    <Button Classes="accent"
+                            HorizontalAlignment="Left"
+                            IsEnabled="{Binding CanToggleExport}"
+                            Click="ToggleQrExportButton_OnClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <sr:FluentIcon Glyph="{sr:Fi QrCodeFilled}" />
+                            <TextBlock Text="{Binding QrExportButtonText}" />
+                        </StackPanel>
+                    </Button>
+
+                    <TextBlock Text="{Binding TransferHintText}"
+                               TextWrapping="Wrap"
+                               Opacity="0.7" />
+
+                    <Border IsVisible="{Binding IsQrImageVisible}"
+                            HorizontalAlignment="Center" Width="256" Height="256"
+                            CornerRadius="6" ClipToBounds="True">
+                        <Grid>
+                            <Image IsVisible="{Binding !IsQrExporting}"
+                                   Source="{Binding ExampleQrImage}"
+                                   Stretch="Uniform" Opacity="0.58">
+                                <Image.Effect>
+                                    <BlurEffect Radius="9" />
+                                </Image.Effect>
+                            </Image>
+                            <Border IsVisible="{Binding !IsQrExporting}"
+                                    Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                    Opacity="0.56" />
+                            <Image Source="{Binding CurrentQrImage}"
+                                   Stretch="Uniform" />
+                        </Grid>
+                    </Border>
+
+                    <StackPanel IsVisible="{Binding IsSessionCodeVisible}"
+                                HorizontalAlignment="Center" Spacing="10">
+                        <TextBlock Text="{x:Static lm:Resources.C_ExportSessionCode}"
+                                   Classes="caption" HorizontalAlignment="Center" />
+                        <TextBlock Text="{Binding SessionCodeValue}" FontSize="26" FontWeight="Bold"
+                                   HorizontalAlignment="Center" TextWrapping="Wrap" />
+                        <Button HorizontalAlignment="Center" Click="CopySessionCode_OnClick">
+                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                <sr:FluentIcon Glyph="{sr:Fi ClipboardFilled}" />
+                                <TextBlock Text="{x:Static lm:Resources.C_ExportCopySessionCode}" />
+                            </StackPanel>
+                        </Button>
+                    </StackPanel>
+
+                    <ProgressBar IsVisible="{Binding IsOfflineQrExportVisible}"
+                                 Minimum="0" Maximum="1" Value="{Binding ExportProgress}" />
+                    <TextBlock Text="{Binding FramesValue}"
+                               IsVisible="{Binding IsOfflineQrExportVisible}"
+                               FontSize="18" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Grid Grid.Row="1" Margin="16,8,16,16" ColumnDefinitions="* Auto">
+            <TextBlock Grid.Column="0"
+                       VerticalAlignment="Center"
+                       Text="{Binding StatusText}"
+                       TextWrapping="Wrap"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Button Grid.Column="1"
+                    Content="{x:Static lm:Resources.C_ExportClose}"
+                    Click="CloseButton_OnClick" />
+        </Grid>
+    </Grid>
+</UserControl>

@@ -255,7 +255,12 @@ public class SettingsSearchService
 
     private static string GetControlId(string resourcePageId, string settingId, bool category)
     {
+        if (resourcePageId == @"Notification.Texts") return settingId;
+
         if (resourcePageId != @"Notification") return settingId;
+
+        // 全屏结果渠道的设置与文案库在各自页面上，控件名与资源键同名，不能再改写成浮窗的 S_Default_*。
+        if (settingId.StartsWith(@"S_Fullscreen", StringComparison.Ordinal)) return settingId;
 
         if (category || settingId == @"S_Default") return settingId;
         return @"S_Default_" + settingId[(settingId.IndexOf('_') + 1)..];
@@ -263,7 +268,11 @@ public class SettingsSearchService
 
     private static string GetCategoryControlId(string resourcePageId, string settingId)
     {
+        if (resourcePageId == @"Notification.Texts") return settingId;
+
         if (resourcePageId != @"Notification") return settingId;
+
+        if (settingId.StartsWith(@"S_Fullscreen", StringComparison.Ordinal)) return settingId;
 
         return settingId.EndsWith("_WindowPosition", StringComparison.Ordinal)
                || settingId.EndsWith("_EnabledMonitor", StringComparison.Ordinal)
@@ -301,6 +310,13 @@ public class SettingsSearchService
 
     private static IEnumerable<string> BuildPageClassNameCandidates(string settingsPageResourceId, string? rootSettingId)
     {
+        if (settingsPageResourceId == @"Notification.Texts")
+        {
+            // 文案库是隐藏页：条目仍要能搜到并跳到该页，导航里则看不到它。
+            yield return @"SecRandom.Views.SettingsPages.Notification.TextLibrarySettingsPage";
+            yield break;
+        }
+
         if (settingsPageResourceId == @"Notification" && rootSettingId != null)
         {
             var notificationPageName = rootSettingId switch
@@ -308,6 +324,8 @@ public class SettingsSearchService
                 @"S_RollCall" => @"RollCallNotificationSettingsPage",
                 @"S_QuickDraw" => @"QuickDrawNotificationSettingsPage",
                 @"S_Lottery" => @"LotteryNotificationSettingsPage",
+                _ when rootSettingId.StartsWith(@"S_Fullscreen", StringComparison.Ordinal) =>
+                    @"FullscreenNotificationSettingsPage",
                 _ => @"DefaultNotificationSettingsPage"
             };
 
