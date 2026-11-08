@@ -37,6 +37,10 @@ public sealed class DrawProofAttestationService(
     private static readonly TimeSpan MaximumRetryDelay = TimeSpan.FromMinutes(15);
     private static readonly TimeSpan DisabledModePollInterval = TimeSpan.FromSeconds(30);
 
+    // SemaphoreSlim.WaitAsync(TimeSpan) only accepts -1ms, 0, or up to int.MaxValue milliseconds.
+    // A terminal queue item parks on DateTimeOffset.MaxValue, so the loop's own delay must be capped.
+    private static readonly TimeSpan MaximumWaitDelay = TimeSpan.FromDays(1);
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true,
@@ -145,7 +149,7 @@ public sealed class DrawProofAttestationService(
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var delay = GetNextDelay();
+            var delay = ClampWaitDelay(GetNextDelay());
             try
             {
                 await _wake.WaitAsync(delay, stoppingToken).ConfigureAwait(false);
@@ -172,9 +176,30 @@ public sealed class DrawProofAttestationService(
             if (!IsEnabled)
                 return DisabledModePollInterval;
 
-            var delay = _pending.Values.Min(item => item.NextAttemptUtc) - DateTimeOffset.UtcNow;
+            // Terminal items (retry exhausted / conflict) park on DateTimeOffset.MaxValue to mean
+            // "never retry automatically". Taking the minimum over them would otherwise ask the
+            // loop for a wait of roughly eight thousand years and take the whole host down.
+            var next = DateTimeOffset.MaxValue;
+            foreach (var item in _pending.Values)
+            {
+                if (item.NextAttemptUtc < next)
+                    next = item.NextAttemptUtc;
+            }
+
+            if (next == DateTimeOffset.MaxValue)
+                return Timeout.InfiniteTimeSpan;
+
+            var delay = next - DateTimeOffset.UtcNow;
             return delay <= TimeSpan.Zero ? TimeSpan.Zero : delay;
         }
+    }
+
+    private static TimeSpan ClampWaitDelay(TimeSpan delay)
+    {
+        if (delay == Timeout.InfiniteTimeSpan || delay <= MaximumWaitDelay)
+            return delay;
+
+        return MaximumWaitDelay;
     }
 
     private async Task ProcessDueAsync(bool force, CancellationToken stoppingToken)

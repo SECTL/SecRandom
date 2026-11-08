@@ -13,6 +13,17 @@ public partial class QuickDrawSettingsConfig : OverridableDrawSettings
     [ObservableProperty] private int _disableAfterClick = 1;
 
     /// <summary>
+    ///     Whether the take-over window shows the "drawing" status line while a draw is running.
+    /// </summary>
+    /// <remarks>
+    ///     The animation itself already tells the class that a draw is in progress, so a text line on top of it
+    ///     costs a re-layout in the middle of a lesson. Turning it off keeps the overlay steady from the moment
+    ///     the button is pressed until the result lands; every other status (no members, draw failed, result
+    ///     count) stays as it is, because those carry information the animation cannot.
+    /// </remarks>
+    [ObservableProperty] private bool _showDrawingStatus = true;
+
+    /// <summary>
     ///     闪抽默认锁定的历史记录组（空串 = 默认记录组，即只算未分组的记录）。
     /// </summary>
     /// <remarks>

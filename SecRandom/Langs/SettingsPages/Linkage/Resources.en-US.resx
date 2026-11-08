@@ -10,7 +10,7 @@
     <value>Allow verified continuation</value>
   </data>
   <data name="S_External_VerificationRequired_D">
-    <value>When off-class restrictions are enabled, allow temporary drawing or reset after configured security verification; otherwise block directly</value>
+    <value>When off-class restrictions are enabled, allow temporary drawing or reset after configured security verification; when disabled, breaks are blocked outright with a notice</value>
   </data>
   <data name="S_External_RestrictWhenUnavailable">
     <value>Keep restricting when data is unavailable</value>
@@ -22,7 +22,13 @@
     <value>Restrict off-class operations</value>
   </data>
   <data name="S_External_InstantDrawDisable_D">
-    <value>Restrict drawing and reset when course data confirms a break or non-class period; disable for no restriction</value>
+    <value>Block drawing and reset in roll-call, quick draw and lottery while the course source confirms a break or after-class period; an unavailable or unknown source is not blocked; turn off for no restriction</value>
+  </data>
+  <data name="S_External_OutdoorCourse">
+    <value>Disable draws during outdoor courses</value>
+  </data>
+  <data name="S_External_OutdoorCourse_D">
+    <value>Reads each subject's outdoor-course flag from the ClassIsland timetable: while the current course is marked outdoor, drawing and resetting stay limited even during class; shares the verification exception with the non-class-time restriction</value>
   </data>
   <data name="S_External_DataSource">
     <value>Data source</value>
@@ -81,6 +87,12 @@
   <data name="S_ClassTime_HideFloatingWindow_D">
     <value>Automatically hide the floating window when class ends</value>
   </data>
+  <data name="S_ClassTime_HideFloatingWindowOnOutdoorCourse">
+    <value>Hide floating window on outdoor courses</value>
+  </data>
+  <data name="S_ClassTime_HideFloatingWindowOnOutdoorCourse_D">
+    <value>Automatically hide the floating window when the current course is marked as an outdoor course</value>
+  </data>
   <data name="S_ClassTime_PreClassReset">
     <value>Reset before class</value>
   </data>
@@ -129,6 +141,8 @@
   <data name="S_ClassTime_PreClassEnableTime_D">
     <value>Enable operations this many seconds before class</value>
   </data>
+  <data name="M_ClassTimeDrawBlocked"><value>Drawing is blocked during breaks and after class; the next class “{0}” starts in {1} minutes</value></data>
+  <data name="M_ClassTimeDrawBlockedGeneric"><value>Drawing is blocked during breaks and after class</value></data>
   <data name="M_CsesSummary"><value>{0} classes, from {1:HH:mm} to {2:HH:mm}</value></data>
   <data name="M_CsesErrorEmpty"><value>The CSES timetable file is empty</value></data>
   <data name="M_CsesErrorRoot"><value>The CSES timetable file root must be an object</value></data>

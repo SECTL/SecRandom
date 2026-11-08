@@ -56,11 +56,13 @@
                 <ScrollViewer IsVisible="{Binding IsResultVisible}"
                               HorizontalScrollBarVisibility="Disabled"
                               VerticalScrollBarVisibility="Auto"
-                              HorizontalContentAlignment="Center"
+                              HorizontalContentAlignment="Stretch"
                               VerticalContentAlignment="Center">
+                    <!-- 结果区必须一直占满窗口宽度：名字长短只影响单个卡片的宽度，
+                         整组由 WrapPanel 的 Center 居中，短名字不会缩到左边、长名字也不会把整组顶偏。 -->
                     <ItemsControl x:Name="ResultPresenter"
                                   ItemsSource="{Binding ResultItems}"
-                                  HorizontalAlignment="Center"
+                                  HorizontalAlignment="Stretch"
                                   VerticalAlignment="Center">
                         <ItemsControl.ItemsPanel>
                             <ItemsPanelTemplate>
@@ -82,8 +84,12 @@
                                                         VerticalAlignment="Center"
                                                         IsVisible="{Binding IsImageBeforeText}" />
                                         <StackPanel Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                            <!-- 折行宽度必须挂在文字上：卡片所在的水平 StackPanel 测量子元素时给出无限宽度，
+                                                 只在 Border 上设 MaxWidth 会让长姓名被裁切而不是换行。 -->
                                             <TextBlock Text="{Binding DisplayText}"
                                                        TextAlignment="Center"
+                                                       TextWrapping="Wrap"
+                                                       MaxWidth="360"
                                                        Foreground="{Binding TextBrush}"
                                                        FontSize="{Binding #QuickDraw.ViewModel.ResultFontSize}"
                                                        FontFamily="{Binding #QuickDraw.ViewModel.ResultFontFamily}"

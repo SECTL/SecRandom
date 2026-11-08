@@ -44,6 +44,12 @@ public partial class QuickDrawPage : UserControl
 
     public QuickDrawPageViewModel ViewModel { get; }
 
+    /// <summary>
+    /// 结果区完成一次排版（预览/揭晓/通知）后触发，宿主窗口据此按最新尺寸重新居中。
+    /// 事件本身不含尺寸：窗口尺寸由宿主读取，避免页面耦合窗口实现。
+    /// </summary>
+    public event EventHandler? ResultLayoutChanged;
+
     public void StartDraw()
     {
         if (ViewModel.StartDrawCommand.CanExecute(null))
@@ -201,6 +207,15 @@ public partial class QuickDrawPage : UserControl
         catch
         {
         }
+        finally
+        {
+            RaiseResultLayoutChanged();
+        }
+    }
+
+    private void RaiseResultLayoutChanged()
+    {
+        ResultLayoutChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private Task<bool> TryPresentAsync(DrawPresentationPhase phase)

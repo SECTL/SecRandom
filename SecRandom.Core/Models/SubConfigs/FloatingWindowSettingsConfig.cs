@@ -56,6 +56,11 @@ public partial class FloatingWindowSettingsConfig : ObservableObject
     [ObservableProperty] private int _dockedWindowSize = 32;
     [ObservableProperty] private bool _draggable = true;
     [ObservableProperty] private int _floatingWindowSize = 56;
+    // 悬浮窗自定义文字：默认关闭；空字符串等于不显示，旧配置缺字段时按默认值加载
+    [ObservableProperty] private bool _enableFloatingWindowText;
+    [ObservableProperty] private string _floatingWindowText = string.Empty;
+    // 自定义文字字号（像素）：0 表示跟随悬浮窗尺寸自动缩放，与按钮字号保持同一比例
+    [ObservableProperty] private int _floatingWindowTextFontSize;
     [ObservableProperty] private int _longPressDuration = 500;
     [ObservableProperty] private bool _doNotStealFocus = true;
     [ObservableProperty] private bool _hideOnForeground = false;

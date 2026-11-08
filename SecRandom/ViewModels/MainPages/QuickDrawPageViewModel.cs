@@ -248,7 +248,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         const int count = 1;
         ResultItems.Clear();
         IsResultVisible = false;
-        StatusText = QuickDrawResources.M_Drawing;
+        // 关闭后抽取期间不显示"正在抽取"：动画已经在动，多一行字反而会在结果落定前跳一次版
+        StatusText = Config.QuickDrawSettings.ShowDrawingStatus ? QuickDrawResources.M_Drawing : string.Empty;
         _notificationAutoCloseTime = null;
         SetDrawCommandRunning(true);
         IReadOnlyList<FullscreenResultItem> fullscreenPool = [];

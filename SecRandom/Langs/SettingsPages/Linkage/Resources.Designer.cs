@@ -240,6 +240,24 @@ namespace SecRandom.Langs.SettingsPages.Linkage {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 户外课程隐藏悬浮窗.
+        /// </summary>
+        public static string S_ClassTime_HideFloatingWindowOnOutdoorCourse {
+            get {
+                return ResourceManager.GetString("S_ClassTime_HideFloatingWindowOnOutdoorCourse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 上课时段当前课程为户外课程时自动隐藏悬浮窗.
+        /// </summary>
+        public static string S_ClassTime_HideFloatingWindowOnOutdoorCourse_D {
+            get {
+                return ResourceManager.GetString("S_ClassTime_HideFloatingWindowOnOutdoorCourse_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 课后禁用延迟.
         /// </summary>
         public static string S_ClassTime_PostClassDisableDelay {
@@ -362,6 +380,24 @@ namespace SecRandom.Langs.SettingsPages.Linkage {
         public static string S_External_InstantDrawDisable_D {
             get {
                 return ResourceManager.GetString("S_External_InstantDrawDisable_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 户外课程上课时段禁用.
+        /// </summary>
+        public static string S_External_OutdoorCourse {
+            get {
+                return ResourceManager.GetString("S_External_OutdoorCourse", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 读取 ClassIsland 课表科目的户外课程标记，当前课程被标记为户外课程时，即使处于上课时段也限制抽取和重置.
+        /// </summary>
+        public static string S_External_OutdoorCourse_D {
+            get {
+                return ResourceManager.GetString("S_External_OutdoorCourse_D", resourceCulture);
             }
         }
         

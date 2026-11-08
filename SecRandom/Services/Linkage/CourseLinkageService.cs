@@ -103,6 +103,7 @@ public sealed class CourseLinkageService
             && a.State == b.State
             && a.Source == b.Source
             && a.Version == b.Version
+            && a.IsOutdoorCourse == b.IsOutdoorCourse
             && a.CurrentCourse?.Name == b.CurrentCourse?.Name
             && a.PreviousCourse?.Name == b.PreviousCourse?.Name
             && a.NextCourse?.Name == b.NextCourse?.Name
@@ -136,6 +137,22 @@ public sealed class CourseLinkageService
     /// </remarks>
     public bool IsClassTimeRestrictionActive => Settings.InstantDrawDisable
         && (IsConfirmedBreakTime || (Settings.RestrictWhenUnavailable && IsSourceUnavailable));
+
+    /// <summary>
+    ///     户外课程上课时段禁用：只有 ClassIsland 数据源携带科目的户外课程标记。开启后当前
+    ///     课程被标记为户外课程时，即使处于上课时段也限制抽取和重置，验证例外与
+    ///     <see cref="IsConfirmedNonClassTime" /> 共用。
+    /// </summary>
+    public bool IsConfirmedOutdoorCourse => Settings.DisableOnOutdoorCourse
+        && IsOutdoorCourseOnClass;
+
+    /// <summary>
+    ///     当前处于上课时段且课程被标记为户外课程的纯状态判断，不依赖任何开关；
+    ///     抽取限制看 <see cref="IsConfirmedOutdoorCourse" />，悬浮窗隐藏由调用方结合自己的开关判断。
+    /// </summary>
+    public bool IsOutdoorCourseOnClass => _snapshot.IsAvailable
+        && _snapshot.State == CourseTimeState.OnClass
+        && _snapshot.IsOutdoorCourse;
 
     public string GetSubjectFilter()
     {

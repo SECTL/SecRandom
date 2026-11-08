@@ -5,10 +5,14 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Controls;
+using Avalonia.Controls.Platform;
 using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
+using Avalonia.Controls.Utils;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.VisualTree;
 
 namespace SecRandom.Core.Controls;
 
@@ -18,6 +22,7 @@ public class MultiComboBox : ItemsControl
     public const string PART_SelectionBox = "PART_SelectionBox";
     public const string PC_DropDownOpen = ":dropdownopen";
     public const string PC_Empty = ":selection-empty";
+    public const string PC_Pressed = ":pressed";
 
     private static readonly ITemplate<Panel?> _defaultPanel =
         new FuncTemplate<Panel?>(() => new VirtualizingStackPanel());
@@ -43,6 +48,7 @@ public class MultiComboBox : ItemsControl
     private INotifyCollectionChanged? _subscribedSelection;
     private bool _selectionViewDirty;
     private bool _syncingSelectionView;
+    private Popup? _popup;
 
     public static readonly StyledProperty<bool> IsDropDownOpenProperty =
         ComboBox.IsDropDownOpenProperty.AddOwner<MultiComboBox>();
@@ -69,6 +75,7 @@ public class MultiComboBox : ItemsControl
     {
         FocusableProperty.OverrideDefaultValue<MultiComboBox>(true);
         ItemsPanelProperty.OverrideDefaultValue<MultiComboBox>(_defaultPanel);
+        PlatformFeedback.FeedbackTypeProperty.OverrideDefaultValue<MultiComboBox>(FeedbackType.Auto);
         SelectedItemsProperty.Changed.AddClassHandler<MultiComboBox, IList?>((box, args) =>
             box.OnSelectedItemsChanged(args));
     }
@@ -77,7 +84,6 @@ public class MultiComboBox : ItemsControl
     {
         SetCurrentValue(SelectedItemsProperty, new AvaloniaList<object>());
         RemoveCommand = new MultiComboBoxRemoveCommand(this);
-        AddHandler(PointerPressedEvent, OnBackgroundPointerPressed);
     }
 
     public bool IsDropDownOpen
@@ -174,6 +180,7 @@ public class MultiComboBox : ItemsControl
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
     {
         base.OnApplyTemplate(e);
+        _popup = e.NameScope.Find<Popup>("PART_Popup");
 
         var selectionBox = e.NameScope.Find<ItemsControl>(PART_SelectionBox);
         if (selectionBox is null)
@@ -190,9 +197,49 @@ public class MultiComboBox : ItemsControl
             PseudoClasses.Set(PC_DropDownOpen, IsDropDownOpen);
     }
 
-    private void OnBackgroundPointerPressed(object? sender, PointerPressedEventArgs e)
+    /// <summary>
+    ///     与 Avalonia <see cref="ComboBox" /> 相同的指针节奏：按下只进入按压态（:pressed），
+    ///     抬起才切换下拉。按下瞬间展开下拉时，同一次触摸的抬起仍会落在刚出现的下拉层上，
+    ///     轻触关闭把这次手势当作下拉框之外的按压，下拉框随即收起，用户点不到里面的复选框；
+    ///     改为抬起展开后，打开手势已经结束，这条收起路径不存在。
+    /// </summary>
+    protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
-        SetCurrentValue(IsDropDownOpenProperty, !IsDropDownOpen);
+        base.OnPointerPressed(e);
+        if (!e.Handled && e.Source is Visual source)
+        {
+            if (_popup?.IsInsidePopup(source) == true)
+            {
+                e.Handled = true;
+                return;
+            }
+        }
+
+        if (IsDropDownOpen)
+        {
+            // 下拉展开时按下控件视为关闭，而不是再切回打开
+            SetCurrentValue(IsDropDownOpenProperty, false);
+            e.Handled = true;
+        }
+        else
+        {
+            PseudoClasses.Set(PC_Pressed, true);
+        }
+    }
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        if (!e.Handled && e.Source is Visual source
+            && _popup?.IsInsidePopup(source) != true
+            && PseudoClasses.Contains(PC_Pressed))
+        {
+            SetCurrentValue(IsDropDownOpenProperty, !IsDropDownOpen);
+            this.PerformFeedback(FeedbackAction.Click);
+            e.Handled = true;
+        }
+
+        PseudoClasses.Set(PC_Pressed, false);
+        base.OnPointerReleased(e);
     }
 
     protected override void OnKeyDown(KeyEventArgs e)

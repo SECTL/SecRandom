@@ -345,6 +345,7 @@ public static class ControlSettingsLabels
         ["default_class"] = R(Picking, "S_DefaultClass"),
         ["default_pool"] = R(Picking, "S_DefaultPool"),
         ["disable_after_click"] = R(Picking, "S_DisableAfterClick"),
+        ["show_drawing_status"] = R(Picking, "S_ShowDrawingStatus"),
         ["use_global_font"] = R(Picking, "S_FontSource"),
         ["custom_font"] = R(Picking, "S_CustomFont"),
         ["font_size"] = R(Picking, "S_FontSize"),
@@ -443,12 +444,21 @@ public static class ControlSettingsLabels
         ["hide_on_foreground"] = R(FloatingWindow, "S_Interaction_HideOnForeground"),
         ["hide_on_foreground_window_titles"] = R(FloatingWindow, "S_Interaction_HideOnForegroundWindowTitles"),
         ["hide_on_foreground_process_names"] = R(FloatingWindow, "S_Interaction_HideOnForegroundProcessNames"),
+        // 自定义文字：内容没有设置页标题可借，故就地三语；开关与字号复用设置页资源。
+        ["enable_floating_window_text"] = R(FloatingWindow, "S_Display_CustomText"),
+        ["floating_window_text"] = L(
+            "悬浮窗自定义文字", "Floating window custom text", "フローティングウィンドウのカスタムテキスト",
+            "显示在悬浮窗上的自定义文字内容", "Custom text shown on the floating window",
+            "フローティングウィンドウに表示するカスタムテキスト"),
+        ["floating_window_text_font_size"] = R(FloatingWindow, "S_Display_CustomTextSize"),
 
         // ---------------- 联动
         ["data_source"] = R(Linkage, "S_External_DataSource"),
         ["instant_draw_disable"] = R(Linkage, "S_External_InstantDrawDisable"),
         ["verification_required"] = R(Linkage, "S_External_VerificationRequired"),
         ["hide_floating_window_on_class_end"] = R(Linkage, "S_ClassTime_HideFloatingWindow"),
+        ["hide_floating_window_on_outdoor_course"] = R(Linkage, "S_ClassTime_HideFloatingWindowOnOutdoorCourse"),
+        ["disable_on_outdoor_course"] = R(Linkage, "S_External_OutdoorCourse"),
         ["pre_class_reset_enabled"] = R(Linkage, "S_ClassTime_PreClassReset"),
         ["pre_class_reset_time"] = R(Linkage, "S_ClassTime_PreClassResetTime"),
         ["post_class_disable_delay"] = R(Linkage, "S_ClassTime_PostClassDisableDelay"),

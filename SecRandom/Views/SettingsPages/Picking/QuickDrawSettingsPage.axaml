@@ -72,6 +72,16 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <!-- 抽取期间的状态行会在结果落定前跳一次版，关掉后画面从按下按钮到出结果保持稳定 -->
+            <fa:FASettingsExpander x:Name="S_ShowDrawingStatus"
+                                   Header="{x:Static lp:Resources.S_ShowDrawingStatus}"
+                                   Description="{x:Static lp:Resources.S_ShowDrawingStatus_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.ShowDrawingStatus}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <!-- 闪抽没有自己的记录组选择器，所以这里选定的组就是它的默认值：锁定后权重只读该组历史，
                  写出的记录也只进该组。选「默认记录组」表示只算未分组的记录；总开关关闭时不显示选择器，
                  改为说明为什么不可用。 -->

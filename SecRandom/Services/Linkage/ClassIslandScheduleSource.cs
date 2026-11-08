@@ -53,6 +53,10 @@ public sealed class ClassIslandScheduleSource : ICourseScheduleSource
             var currentName = state == CourseTimeState.OnClass
                 ? NormalizeSubjectName(lessons.CurrentSubject?.Name)
                 : string.Empty;
+            // 户外课程标记只在真实科目上有效；课间（CurrentSubject 是课间标签）与后备科目都不算
+            var isOutdoorCourse = state == CourseTimeState.OnClass
+                && !string.IsNullOrEmpty(currentName)
+                && lessons.CurrentSubject?.IsOutDoor == true;
             var nextName = NormalizeSubjectName(lessons.NextClassSubject?.Name);
             var now = DateTime.Now;
             if (!string.IsNullOrEmpty(currentName))
@@ -101,7 +105,8 @@ public sealed class ClassIslandScheduleSource : ICourseScheduleSource
                 nextCourseIn,
                 sincePreviousEnd,
                 SourceName,
-                $"{lessons.CurrentSelectedIndex}:{lessons.CurrentState}");
+                $"{lessons.CurrentSelectedIndex}:{lessons.CurrentState}",
+                isOutdoorCourse);
         }
         catch (Exception exception)
         {
