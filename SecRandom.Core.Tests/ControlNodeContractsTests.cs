@@ -243,6 +243,46 @@ public sealed class ControlNodeContractsTests
     }
 
     [Fact]
+    public void 旧版节点通道地址会被迁移到新默认并落盘()
+    {
+        var path = Utils.GetFilePath("config", "control", "node-state.json");
+        var backup = File.Exists(path) ? File.ReadAllText(path) : null;
+
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            File.WriteAllText(
+                path,
+                """
+                {
+                  "node_id": "0123456789abcdef0123456789abcdef",
+                  "server_url": "wss://secrandom-control.sectl.cn/v1/node/connect"
+                }
+                """);
+
+            var store = new FileControlNodeStateStore(NullLogger<FileControlNodeStateStore>.Instance);
+
+            // 旧域名在新集控上没有服务：读回来就换成新出厂默认。
+            Assert.Equal(ControlNodeClientOptions.DefaultEndpoint, store.Current.ServerUrl);
+
+            // 迁移必须落盘：否则每次启动都会把死地址再读回来一次。
+            var reloaded = new FileControlNodeStateStore(NullLogger<FileControlNodeStateStore>.Instance);
+            Assert.Equal(ControlNodeClientOptions.DefaultEndpoint, reloaded.Current.ServerUrl);
+            Assert.DoesNotContain(
+                "secrandom-control",
+                File.ReadAllText(path),
+                StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            if (backup is null)
+                File.Delete(path);
+            else
+                File.WriteAllText(path, backup);
+        }
+    }
+
+    [Fact]
     public void 本机状态默认地址且绝不信任损坏文件()
     {
         var path = Utils.GetFilePath("config", "control", "node-state.json");

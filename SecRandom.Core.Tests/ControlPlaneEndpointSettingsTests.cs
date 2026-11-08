@@ -42,8 +42,8 @@ public sealed class ControlPlaneEndpointSettingsTests : IDisposable
     // ---------------------------------------------------------------- 校验与规范化
 
     [Theory]
-    [InlineData("https://secrandom-control.sectl.cn", true, "https://secrandom-control.sectl.cn")]
-    [InlineData("https://secrandom-control.sectl.cn/", true, "https://secrandom-control.sectl.cn")]
+    [InlineData("https://sectl.cn", true, "https://sectl.cn")]
+    [InlineData("https://sectl.cn/", true, "https://sectl.cn")]
     // 自建部署常挂在反向代理的子路径下：路径要保留，结尾多余的斜杠要去掉（否则会打出 //v1/groups）。
     [InlineData("  https://cp.example.com/panel/  ", true, "https://cp.example.com/panel")]
     [InlineData("https://cp.example.com:8443", true, "https://cp.example.com:8443")]
@@ -140,6 +140,36 @@ public sealed class ControlPlaneEndpointSettingsTests : IDisposable
     }
 
     [Fact]
+    public void 文件里的旧默认地址会自动迁移到新默认地址()
+    {
+        // 老机器里留下的 endpoint.json 还写着旧域名：读到就迁移，且必须落盘，
+        // 否则下次启动又读回旧地址，"迁移"只对本次运行生效。
+        Directory.CreateDirectory(_directory);
+        var path = Path.Combine(_directory, "endpoint.json");
+        File.WriteAllText(path, """{ "format_version": 1, "base_url": "https://secrandom-control.sectl.cn" }""");
+
+        var store = CreateStore();
+
+        Assert.Equal(ControlPlaneClient.DefaultBaseUrl, store.Current);
+        Assert.False(store.IsCustom);
+        if (File.Exists(path))
+            Assert.DoesNotContain("secrandom-control", File.ReadAllText(path), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void 手输旧默认域名等于恢复默认()
+    {
+        var store = CreateStore();
+        Assert.True(store.TryUpdate("https://cp.example.com", out _));
+
+        Assert.True(store.TryUpdate("https://secrandom-control.sectl.cn/", out var error));
+
+        Assert.Null(error);
+        Assert.False(store.IsCustom);
+        Assert.Equal(ControlPlaneClient.DefaultBaseUrl, CreateStore().Current);
+    }
+
+    [Fact]
     public void 地址没变时不重复触发变化事件()
     {
         var store = CreateStore();
@@ -208,7 +238,7 @@ public sealed class ControlPlaneEndpointSettingsTests : IDisposable
 
         await client.GetGroupsAsync();
 
-        Assert.Equal("https://secrandom-control.sectl.cn/v1/groups", Assert.Single(sender.Requests).AbsoluteUri);
+        Assert.Equal("https://sectl.cn/v1/groups", Assert.Single(sender.Requests).AbsoluteUri);
     }
 
     [Fact]

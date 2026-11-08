@@ -111,6 +111,14 @@ public sealed class FileControlPlaneEndpointStore : IControlPlaneEndpointStore
             return true;
         }
 
+        // 旧默认域名同样是"恢复默认"：新集控在旧域名上没有服务，留着它只会让这台机器永远连不上，
+        // 界面上还会把旧地址当成用户自定义的好地址一直显示。
+        if (ControlPlaneClient.IsLegacyDefaultBaseUrl(target))
+        {
+            ResetToDefault();
+            return true;
+        }
+
         var effective = Current;
         lock (_gate)
         {
@@ -154,10 +162,25 @@ public sealed class FileControlPlaneEndpointStore : IControlPlaneEndpointStore
                 File.ReadAllText(_filePath), JsonOptions);
 
             // 文件里存的是**已经规范化过**的地址，但文件可以被手改：读回来照样重新校验一次。
-            return ControlPlaneEndpointPolicy.TryValidate(stored?.BaseUrl, out var normalized, out _)
-                   && !string.Equals(normalized, ControlPlaneClient.DefaultBaseUrl, StringComparison.OrdinalIgnoreCase)
-                ? normalized
-                : null;
+            if (!ControlPlaneEndpointPolicy.TryValidate(stored?.BaseUrl, out var normalized, out _)
+                || string.IsNullOrWhiteSpace(normalized))
+                return null;
+
+            // 旧默认域名 = 没配置过：迁移到新默认地址，并且立刻把文件改写掉。
+            // 不落盘的话下次启动又会读回旧地址，"迁移"就只对本次运行生效。
+            if (ControlPlaneClient.IsLegacyDefaultBaseUrl(normalized))
+            {
+                _logger.LogInformation(
+                    "控制面地址是旧默认域名，迁移到 {Default}：{Path}",
+                    ControlPlaneClient.DefaultBaseUrl,
+                    _filePath);
+                DeleteOrRewriteAsDefault();
+                return null;
+            }
+
+            return string.Equals(normalized, ControlPlaneClient.DefaultBaseUrl, StringComparison.OrdinalIgnoreCase)
+                ? null
+                : normalized;
         }
         catch (Exception exception) when (exception is JsonException or IOException
                                               or UnauthorizedAccessException or NotSupportedException)

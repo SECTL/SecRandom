@@ -89,7 +89,7 @@ public sealed class ControlPlaneClientTests
     {
         // 线上故障就是这一条：集控控制面是**独立域名**，打到账号/云存储那套接口会拿 404，
         // 页面再把它显示成"没有组/没有设备"，于是看起来像账号不在任何组里。
-        Assert.Equal("https://secrandom-control.sectl.cn", ControlPlaneClient.DefaultBaseUrl);
+        Assert.Equal("https://sectl.cn", ControlPlaneClient.DefaultBaseUrl);
         Assert.DoesNotContain("appwrite", ControlPlaneClient.DefaultBaseUrl, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("localhost", ControlPlaneClient.DefaultBaseUrl, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("127.0.0.1", ControlPlaneClient.DefaultBaseUrl, StringComparison.Ordinal);
@@ -100,7 +100,30 @@ public sealed class ControlPlaneClientTests
 
         var request = Assert.Single(sender.Requests);
         Assert.Equal(HttpMethod.Get, request.Method);
-        Assert.Equal("https://secrandom-control.sectl.cn/v1/groups", request.Uri.AbsoluteUri);
+        Assert.Equal("https://sectl.cn/v1/groups", request.Uri.AbsoluteUri);
+    }
+
+    [Fact]
+    public void 网页控制台地址由基址拼上控制台路由()
+    {
+        // v4.1 起控制台是主站 SPA 的一个页面：只打开基址会落到官网首页。
+        Assert.Equal("https://sectl.cn/dashboard/control", ControlPlaneClient.ConsoleUrl(null));
+        Assert.Equal("https://sectl.cn/dashboard/control", ControlPlaneClient.ConsoleUrl(ControlPlaneClient.DefaultBaseUrl));
+        Assert.Equal("https://sectl.cn/dashboard/control", ControlPlaneClient.ConsoleUrl("https://sectl.cn/"));
+        Assert.Equal(
+            "https://cp.example.com/panel/dashboard/control",
+            ControlPlaneClient.ConsoleUrl("https://cp.example.com/panel/"));
+    }
+
+    [Fact]
+    public void 旧默认域名只按主机名判定()
+    {
+        Assert.True(ControlPlaneClient.IsLegacyDefaultBaseUrl("https://secrandom-control.sectl.cn"));
+        Assert.True(ControlPlaneClient.IsLegacyDefaultBaseUrl("https://SECRANDOM-CONTROL.sectl.cn/panel/"));
+        Assert.True(ControlPlaneClient.IsLegacyDefaultBaseUrl("http://secrandom-control.sectl.cn"));
+        Assert.False(ControlPlaneClient.IsLegacyDefaultBaseUrl("https://sectl.cn"));
+        Assert.False(ControlPlaneClient.IsLegacyDefaultBaseUrl("not a url"));
+        Assert.False(ControlPlaneClient.IsLegacyDefaultBaseUrl(null));
     }
 
     [Fact]
@@ -113,7 +136,7 @@ public sealed class ControlPlaneClientTests
 
         var request = Assert.Single(sender.Requests);
         Assert.Equal(
-            "https://secrandom-control.sectl.cn/v1/groups/grp_01ab30b332e6/nodes",
+            "https://sectl.cn/v1/groups/grp_01ab30b332e6/nodes",
             request.Uri.AbsoluteUri);
     }
 

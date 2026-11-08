@@ -91,6 +91,11 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
             }
         }
 
+        var storedServerUrl = stored?.ServerUrl?.Trim();
+        // 旧版节点通道地址（wss://secrandom-control.sectl.cn/v1/node/connect …）在新集控上不存在：
+        // 读回来就换成新出厂默认，并立刻落盘，否则每次启动都会把死地址再读回来一次。
+        var legacyServerUrl = ControlNodeEndpointResolver.IsLegacyNodeChannel(storedServerUrl);
+
         var state = new ControlNodeState
         {
             NodeId = stored?.NodeId?.Trim() is { Length: > 0 } nodeId ? nodeId : NewNodeId(),
@@ -98,7 +103,9 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
             SiteId = stored?.SiteId?.Trim() is { Length: > 0 } siteId ? siteId : null,
             SiteName = stored?.SiteName?.Trim(),
             ClassId = stored?.ClassId?.Trim(),
-            ServerUrl = stored?.ServerUrl?.Trim() is { Length: > 0 } serverUrl ? serverUrl : ControlNodeClientOptions.DefaultEndpoint,
+            ServerUrl = legacyServerUrl || string.IsNullOrEmpty(storedServerUrl)
+                ? ControlNodeClientOptions.DefaultEndpoint
+                : storedServerUrl,
             // 名字保留用户输入的原样（只把"全是空白"统一成"没填"），Trim 交给上报时的解析。
             DisplayName = string.IsNullOrWhiteSpace(stored?.DisplayName) ? null : stored!.DisplayName,
             RemoteControlEnabled = stored?.RemoteControlEnabled ?? false,
@@ -109,7 +116,10 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
         };
 
         // 首次运行（或身份丢失）时立刻落盘：node_id 必须在任何一次 hello 之前稳定下来。
-        if (stored is null || !string.Equals(stored.NodeId, state.NodeId, StringComparison.Ordinal))
+        // 地址迁移也要落盘，否则迁移只对本次运行生效。
+        if (stored is null
+            || !string.Equals(stored.NodeId, state.NodeId, StringComparison.Ordinal)
+            || legacyServerUrl)
             Save(state);
 
         return state;

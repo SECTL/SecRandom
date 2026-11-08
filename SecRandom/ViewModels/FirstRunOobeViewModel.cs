@@ -242,7 +242,8 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     [RelayCommand]
     private void OpenControlPlane()
     {
-        if (_externalLauncher.TryOpenUri(_controlPlaneEndpointStore.Current))
+        // v4.1 起控制台是主站 SPA 的 /dashboard/control；直接打开基址会落到官网首页。
+        if (_externalLauncher.TryOpenUri(ControlPlaneClient.ConsoleUrl(_controlPlaneEndpointStore.Current)))
             return;
 
         StatusMessage = LR.M_ControlPlatformOpenFailed;

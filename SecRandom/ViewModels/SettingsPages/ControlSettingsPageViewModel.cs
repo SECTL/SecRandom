@@ -285,7 +285,8 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     [RelayCommand]
     private void OpenControlPlane()
     {
-        var url = _controlPlaneEndpointStore.Current;
+        // v4.1 起控制台是主站 SPA 的 /dashboard/control，直接打开基址会落到官网首页。
+        var url = ControlPlaneClient.ConsoleUrl(_controlPlaneEndpointStore.Current);
         if (!_externalLauncher.TryOpenUri(url))
             _logger.LogWarning("打开集控平台失败：{Url}", url);
     }

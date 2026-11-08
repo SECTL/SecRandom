@@ -125,4 +125,44 @@ public sealed class ControlNodeEndpointResolverTests
         Assert.True(ControlEndpointPolicy.TryValidate(derived, out _, out var error));
         Assert.Null(error);
     }
+
+    /// <summary>旧版节点通道（v1 的 /v1/node/connect）在新集控上不存在 ⇒ 迁到新出厂默认。</summary>
+    [Fact]
+    public void LegacyNodeChannel_IsMigratedToTheNewDefault()
+    {
+        var resolved = ControlNodeEndpointResolver.Resolve(
+            "https://sectl.cn",
+            "wss://secrandom-control.sectl.cn/v1/node/connect",
+            out var corrected);
+
+        Assert.True(corrected);
+        Assert.Equal(ControlNodeClientOptions.DefaultEndpoint, resolved);
+    }
+
+    /// <summary>旧地址但控制面基址也丢了（手工清过 base）⇒ 仍然迁到新默认，不是留在死地址上。</summary>
+    [Fact]
+    public void LegacyNodeChannel_WithoutControlPlaneBase_StillMigratesToTheNewDefault()
+    {
+        var resolved = ControlNodeEndpointResolver.Resolve(
+            null,
+            "wss://secrandom-control.sectl.cn/v1/node/connect",
+            out var corrected);
+
+        Assert.True(corrected);
+        Assert.Equal(ControlNodeClientOptions.DefaultEndpoint, resolved);
+    }
+
+    /// <summary>旧版域名也要能被识别：只认主机名，协议与路径不该影响判断。</summary>
+    [Theory]
+    [InlineData("wss://secrandom-control.sectl.cn/v1/node/connect", true)]
+    [InlineData("wss://SECRANDOM-control.sectl.cn/v1/node/connect", true)]
+    [InlineData("https://secrandom-control.sectl.cn/", true)]
+    [InlineData("wss://sectl.cn/control/ws", false)]
+    [InlineData("wss://node.example.com/control/ws", false)]
+    [InlineData("not a url", false)]
+    [InlineData(null, false)]
+    public void IsLegacyNodeChannel_OnlyLooksAtTheHost(string? endpoint, bool expected)
+    {
+        Assert.Equal(expected, ControlNodeEndpointResolver.IsLegacyNodeChannel(endpoint));
+    }
 }
