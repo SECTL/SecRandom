@@ -171,6 +171,13 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     public bool IsControlPanelOnRight => !IsControlPanelOnLeft;
 
     /// <summary>
+    ///     面板内容列（固定 144）朝哪一侧对齐：靠左的面板左对齐、靠右的面板右对齐，
+    ///     使上方的按钮/下拉框与数字范围输入框共用同一条外边，起止标签落在旁边 36px 的留白里。
+    /// </summary>
+    public HorizontalAlignment ControlPanelContentAlignment =>
+        IsControlPanelOnLeft ? HorizontalAlignment.Left : HorizontalAlignment.Right;
+
+    /// <summary>
     ///     记录组选择器是否出现：既要功能开关打开，也要这一页的显隐开关打开。
     /// </summary>
     /// <remarks>
@@ -1053,6 +1060,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         {
             OnPropertyChanged(nameof(IsControlPanelOnLeft));
             OnPropertyChanged(nameof(IsControlPanelOnRight));
+            OnPropertyChanged(nameof(ControlPanelContentAlignment));
             // 三个选择器（分组/性别/剩余名单）的显隐开关与数字模式是"与"的关系，开关变化要重算。
             OnPropertyChanged(nameof(IsGenderSelectorVisible));
             OnPropertyChanged(nameof(IsGroupSelectorVisible));

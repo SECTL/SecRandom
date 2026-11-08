@@ -58,8 +58,8 @@
                                    Description="{x:Static lp:Resources.S_DefaultPool_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi LotteryFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <ComboBox ItemsSource="{Binding PrizeListNames}"
-                              SelectedItem="{Binding Settings.DefaultPool, Mode=TwoWay}"
+                    <ComboBox x:Name="DefaultPoolSelector" ItemsSource="{Binding DefaultPoolOptions}"
+                              SelectionChanged="DefaultPoolSelectorOnSelectionChanged"
                               MinWidth="220" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>

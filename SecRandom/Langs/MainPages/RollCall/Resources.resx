@@ -96,4 +96,10 @@
   <data name="M_NumberCountSummary" xml:space="preserve">
     <value>剩余 {0}/{1}</value>
   </data>
+  <data name="M_NumberRangeStart" xml:space="preserve">
+    <value>起始</value>
+  </data>
+  <data name="M_NumberRangeEnd" xml:space="preserve">
+    <value>终止</value>
+  </data>
 </root>

@@ -1480,6 +1480,13 @@ public partial class App : Application
                             : mobilePlatform!.DeviceName!
                     });
                     services.AddSingleton<IControlNodeStateStore, FileControlNodeStateStore>();
+                    // v4.2：hello 携带的设置 schema。取当前配置现算，revision/哈希回写节点状态文件，
+                    // 因此同一份 schema 重连/重启复用同一个 revision（服务端按设备记录最高值）。
+                    services.AddSingleton<IControlSettingsReportSource>(provider =>
+                        new ControlSettingsReportSource(
+                            () => provider.GetRequiredService<MainConfigHandler>().Data,
+                            provider.GetRequiredService<IControlNodeStateStore>(),
+                            provider.GetRequiredService<ILogger<ControlSettingsReportSource>>()));
                     services.AddSingleton<IControlDrawGate, ControlDrawGateService>();
                     services.AddSingleton<IControlNodeCredentialProvider>(provider => new ControlNodeCredentialProvider(
                         provider.GetRequiredService<SectlAuthService>(),
@@ -1515,7 +1522,8 @@ public partial class App : Application
                         provider.GetRequiredService<ControlNodeClientOptions>(),
                         provider.GetRequiredService<ILogger<ControlNodeClient>>(),
                         provider.GetRequiredService<ILogger<ControlNodeSession>>(),
-                        provider.GetRequiredService<INodeEnrollmentStore>()));
+                        provider.GetRequiredService<INodeEnrollmentStore>(),
+                        provider.GetRequiredService<IControlSettingsReportSource>()));
                     // 显式泛型注册：构造函数里的 SectlAuthService / INodeEnrollmentStore 是可选参数，
                     // 容器两者都能解析，所以这里不需要（也不该）写工厂——守卫测试会盯住这一行。
                     services.AddHostedService<ControlNodeHostedService>();

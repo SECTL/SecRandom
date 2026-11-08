@@ -31,4 +31,6 @@
   <data name="O_HistoryGroupDefault" xml:space="preserve"><value>既定の記録グループ</value></data>
   <data name="O_NoList" xml:space="preserve"><value>名簿なし</value></data>
   <data name="M_NumberCountSummary" xml:space="preserve"><value>残り {0}/{1}</value></data>
+  <data name="M_NumberRangeStart" xml:space="preserve"><value>開始</value></data>
+  <data name="M_NumberRangeEnd" xml:space="preserve"><value>終了</value></data>
 </root>

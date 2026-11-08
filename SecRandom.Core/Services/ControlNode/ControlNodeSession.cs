@@ -28,6 +28,7 @@ public sealed class ControlNodeSession
     private readonly IControlNodeTransport _transport;
     private readonly IControlNodeStateStore _stateStore;
     private readonly IControlCommandDispatcher _dispatcher;
+    private readonly IControlSettingsReportSource? _settingsReportSource;
     private readonly NodeDeviceCredential _credential;
 
     private readonly ControlNodeClientOptions _options;
@@ -56,11 +57,13 @@ public sealed class ControlNodeSession
         NodeDeviceCredential credential,
         ControlNodeClientOptions options,
         ILogger<ControlNodeSession> logger,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        IControlSettingsReportSource? settingsReportSource = null)
     {
         _transport = transport;
         _stateStore = stateStore;
         _dispatcher = dispatcher;
+        _settingsReportSource = settingsReportSource;
         _credential = credential;
 
         _options = options;
@@ -526,7 +529,9 @@ public sealed class ControlNodeSession
                          ?? Environment.MachineName,
             Version = _options.Version,
             Capabilities = _dispatcher.DeclaredCapabilities,
-            AppliedStateRevision = state.AppliedDesiredStateRevision
+            AppliedStateRevision = state.AppliedDesiredStateRevision,
+            // v4.2：设置 schema 随 hello 上报。生成失败只让这一帧缺 settings，不影响握手。
+            Settings = _settingsReportSource?.Build()
         };
 
         return ControlV4Json.Serialize(new ControlV4Frame

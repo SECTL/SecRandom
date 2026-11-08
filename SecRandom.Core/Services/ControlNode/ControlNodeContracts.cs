@@ -181,6 +181,19 @@ public sealed record ControlNodeState
     /// <summary>最近一次应用的期望状态字段，离线期间也据此保持一致。</summary>
     public bool DrawLocked { get; init; }
 
+    /// <summary>
+    ///     最近一次上报给服务端的设置 schema revision。v4.2 要求它单调递增：
+    ///     只有序列化后的 schema 内容变化时才 +1，重连/重启复用同一个值。
+    ///     <c>0</c> 表示还没上报过（旧状态文件读回来也是 0）。
+    /// </summary>
+    public int SettingsSchemaRevision { get; init; }
+
+    /// <summary>
+    ///     最近一次上报的 schema 内容哈希（SHA-256 小写十六进制）。
+    ///     与 revision 一起落盘，重启后才能判断"内容没变就复用 revision"。
+    /// </summary>
+    public string? SettingsSchemaHash { get; init; }
+
     /// <summary>通道地址是否有效。v4 的"已接入"以接入记录（<see cref="NodeDeviceCredential" />）为准。</summary>
     public bool IsConfigured => !string.IsNullOrWhiteSpace(ServerUrl);
 }

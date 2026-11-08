@@ -32,6 +32,12 @@ public partial class LotteryDrawSettingsPage : UserControl
     public LotteryDrawSettingsPage()
     {
         Settings = ViewModel.Config.LotterySettings;
+        DefaultPoolSource = new DefaultRosterSettingSource(
+            "lottery_list",
+            PickingResources.O_NoList,
+            () => Settings.DefaultPool,
+            value => Settings.DefaultPool = value,
+            () => SettingsView.Current?.IsPreviewMode == true);
         HistoryGroup = new DrawHistoryGroupSetting(
             PickingResources.O_HistoryGroupDefault,
             HistoryGroupKind.RollCall,
@@ -42,16 +48,17 @@ public partial class LotteryDrawSettingsPage : UserControl
             value => Settings.HistoryGroup = value);
         HistoryGroup.Refresh();
         MusicLibrary.Refresh();
-        RefreshPrizeLists();
         DataContext = this;
         InitializeComponent();
         SubscribeSettings();
+        RefreshPrizeLists();
         NormalizeDrawSettings();
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public LotterySettingsConfig Settings { get; }
-    public ObservableCollection<string> PrizeListNames { get; } = [];
+    public DefaultRosterSettingSource DefaultPoolSource { get; }
+    public ObservableCollection<string> DefaultPoolOptions => DefaultPoolSource.Options;
     public IReadOnlyList<LotteryAlgorithmOption> Algorithms { get; } =
         LotteryAlgorithmRegistryService.RegisteredAlgorithms
             .Select(x => new LotteryAlgorithmOption(x.Id, x.Name)).ToArray();
@@ -168,6 +175,9 @@ public partial class LotteryDrawSettingsPage : UserControl
             SyncHistoryGroupSelection();
         }
 
+        if (e.PropertyName == nameof(LotterySettingsConfig.DefaultPool))
+            DefaultPoolSource.Sync(DefaultPoolSelector);
+
         NormalizeDrawSettings();
         ConfigHandler.Save();
     }
@@ -182,21 +192,11 @@ public partial class LotteryDrawSettingsPage : UserControl
         _isSubscribed = true;
     }
 
-    private void RefreshPrizeLists()
-    {
-        PrizeListNames.Clear();
-        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "lottery_list"), "*.json")
-                     .OrderBy(Path.GetFileName))
-            PrizeListNames.Add(Path.GetFileNameWithoutExtension(file));
+    /// <summary>重建默认奖池候选值，并把选中项落回配置（未配置过时落到第一份并写回）。</summary>
+    private void RefreshPrizeLists() => DefaultPoolSource.Refresh(DefaultPoolSelector);
 
-        if (PrizeListNames.Count > 0
-            && string.IsNullOrWhiteSpace(Settings.DefaultPool)
-            && SettingsView.Current?.IsPreviewMode != true)
-        {
-            Settings.DefaultPool = PrizeListNames[0];
-            ConfigHandler.Save();
-        }
-    }
+    private void DefaultPoolSelectorOnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        => DefaultPoolSource.OnSelectionChanged(sender, e);
 
     private void NormalizeDrawSettings()
     {

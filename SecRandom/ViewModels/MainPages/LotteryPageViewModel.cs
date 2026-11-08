@@ -172,6 +172,13 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     public MoreSettingsConfig MoreSettings => Config.EffectiveMoreSettings;
     public bool IsControlPanelOnLeft => MoreSettings.LotteryControlPanelPosition == RollCallControlPanelPosition.Left;
     public bool IsControlPanelOnRight => !IsControlPanelOnLeft;
+
+    /// <summary>
+    ///     面板内容列（固定 144）朝哪一侧对齐：靠左的面板左对齐、靠右的面板右对齐，
+    ///     使上方的按钮/下拉框与数字范围输入框共用同一条外边，起止标签落在旁边 36px 的留白里。
+    /// </summary>
+    public HorizontalAlignment ControlPanelContentAlignment =>
+        IsControlPanelOnLeft ? HorizontalAlignment.Left : HorizontalAlignment.Right;
     public bool IsStudentAssignmentEnabled => SelectedStudentListName != NoStudentOption;
 
     /// <summary>奖池下拉框选中「不使用名单」时，本次抽奖抽的是数字范围而不是奖池里的奖品。</summary>
@@ -1640,6 +1647,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         {
             OnPropertyChanged(nameof(IsControlPanelOnLeft));
             OnPropertyChanged(nameof(IsControlPanelOnRight));
+            OnPropertyChanged(nameof(ControlPanelContentAlignment));
             OnPropertyChanged(nameof(IsGroupSelectorVisible));
             OnPropertyChanged(nameof(IsGenderSelectorVisible));
             OnPropertyChanged(nameof(IsRemainingListVisible));

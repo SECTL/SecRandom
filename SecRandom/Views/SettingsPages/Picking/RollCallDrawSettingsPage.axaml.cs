@@ -27,12 +27,16 @@ public partial class RollCallDrawSettingsPage : UserControl
     private bool _normalizingSettings;
     private bool _isSubscribed;
     private bool _syncingHistoryGroupSelection;
-    private string _lastKnownDefaultClass = string.Empty;
 
     public RollCallDrawSettingsPage()
     {
         Settings = ViewModel.Config.RollCallSettings;
-        _lastKnownDefaultClass = Settings.DefaultClass;
+        DefaultClassSource = new DefaultRosterSettingSource(
+            "roll_call_list",
+            PickingResources.O_NoList,
+            () => Settings.DefaultClass,
+            value => Settings.DefaultClass = value,
+            () => SettingsView.Current?.IsPreviewMode == true);
         HistoryGroup = new DrawHistoryGroupSetting(
             PickingResources.O_HistoryGroupDefault,
             HistoryGroupKind.RollCall,
@@ -43,16 +47,17 @@ public partial class RollCallDrawSettingsPage : UserControl
             value => Settings.HistoryGroup = value);
         HistoryGroup.Refresh();
         MusicLibrary.Refresh();
-        RefreshStudentLists();
         DataContext = this;
         InitializeComponent();
         SubscribeSettings();
+        RefreshStudentLists();
         NormalizeDrawSettings();
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public RollCallSettingsConfig Settings { get; }
-    public ObservableCollection<string> StudentListNames { get; } = [];
+    public DefaultRosterSettingSource DefaultClassSource { get; }
+    public ObservableCollection<string> DefaultClassOptions => DefaultClassSource.Options;
     public IReadOnlyList<RollCallAlgorithmOption> Algorithms { get; } =
         RollCallAlgorithmRegistryService.RegisteredAlgorithms
             .Select(x => new RollCallAlgorithmOption(x.Id, x.Name)).ToArray();
@@ -169,18 +174,7 @@ public partial class RollCallDrawSettingsPage : UserControl
         }
 
         if (e.PropertyName == nameof(RollCallSettingsConfig.DefaultClass))
-        {
-            if (string.IsNullOrWhiteSpace(Settings.DefaultClass))
-            {
-                // 下拉框在 ItemsSource 刷新时会先清空选中项并回写空值，恢复用户之前的选择
-                // 而不是清空或回退到第一项，避免默认名单被瞬时空掉后又被兜底逻辑覆盖。
-                if (!string.IsNullOrWhiteSpace(_lastKnownDefaultClass))
-                    Settings.DefaultClass = _lastKnownDefaultClass;
-                return;
-            }
-
-            _lastKnownDefaultClass = Settings.DefaultClass;
-        }
+            DefaultClassSource.Sync(DefaultClassSelector);
 
         NormalizeDrawSettings();
         ConfigHandler.Save();
@@ -196,21 +190,11 @@ public partial class RollCallDrawSettingsPage : UserControl
         _isSubscribed = true;
     }
 
-    private void RefreshStudentLists()
-    {
-        StudentListNames.Clear();
-        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "roll_call_list"), "*.json")
-                     .OrderBy(Path.GetFileName))
-            StudentListNames.Add(Path.GetFileNameWithoutExtension(file));
+    /// <summary>重建默认名单候选值，并把选中项落回配置（未配置过时落到第一份并写回）。</summary>
+    private void RefreshStudentLists() => DefaultClassSource.Refresh(DefaultClassSelector);
 
-        if (StudentListNames.Count > 0
-            && string.IsNullOrWhiteSpace(Settings.DefaultClass)
-            && SettingsView.Current?.IsPreviewMode != true)
-        {
-            Settings.DefaultClass = StudentListNames[0];
-            ConfigHandler.Save();
-        }
-    }
+    private void DefaultClassSelectorOnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+        => DefaultClassSource.OnSelectionChanged(sender, e);
 
     private void NormalizeDrawSettings()
     {

@@ -174,6 +174,92 @@ public sealed record ControlV4Hello
 
     [JsonPropertyName("applied_state_revision")]
     public long AppliedStateRevision { get; init; }
+
+    /// <summary>
+    ///     v4.2：本机愿意让控制台改写的设置清单。缺省表示这台设备还没实现设置 schema 上报，
+    ///     旧控制台照旧只看到 <c>settings.read</c> 的完整目录。
+    /// </summary>
+    [JsonPropertyName("settings")]
+    public ControlV4SettingsReport? Settings { get; init; }
+}
+
+/// <summary>
+///     v4.2 的 <c>hello.settings</c>：设置 schema 与它的单调 revision。
+/// </summary>
+/// <remarks>
+///     <para>
+///         <c>revision</c> 只在<b>序列化后的 schema 内容</b>变化时递增；同样的内容重连、
+///         重启都复用同一个值。服务端按设备记下最高 revision，重连时收到更小的值会拒绝，
+///         因此这里必须持久化，而不是每次启动从 1 重新数。
+///     </para>
+///     <para>
+///         <c>schema</c> 只描述<b>可以让老师远程改</b>的设置：本机开关、节点身份、密钥、路径
+///         一律不出现。值的语义见 <see cref="ControlV4SettingSchemaField" />。
+///     </para>
+/// </remarks>
+public sealed record ControlV4SettingsReport
+{
+    [JsonPropertyName("revision")]
+    public int Revision { get; init; }
+
+    [JsonPropertyName("schema")]
+    public IReadOnlyDictionary<string, ControlV4SettingSchemaField> Schema { get; init; } =
+        new Dictionary<string, ControlV4SettingSchemaField>(StringComparer.Ordinal);
+}
+
+/// <summary>
+///     设置 schema 里的一项。类型只有 <c>bool</c>/<c>enum</c>/<c>int</c>/<c>duration</c>；
+///     <c>duration</c> 的单位固定是秒。
+/// </summary>
+/// <remarks>
+///     服务端（<c>settings-schema.mjs</c>）会逐项校验并丢弃不合法的项：
+///     key ≤48 字符、label ≤24 字符、enum 值 ≤20 个、字符串 maxLength ≤500、
+///     数字绝对值 ≤1,000,000、duration ≤86,400 秒，整份 schema ≤16 KiB。
+///     本机在 hello 前也会按同一套上限自查，宁可不报一项，也不发一份会被服务端
+///     悄悄丢弃的 schema。
+/// </remarks>
+public sealed record ControlV4SettingSchemaField
+{
+    [JsonPropertyName("type")]
+    public string Type { get; init; } = "bool";
+
+    [JsonPropertyName("label")]
+    public string Label { get; init; } = string.Empty;
+
+    /// <summary>控制台表单里的分组标题。缺省时按单组渲染。</summary>
+    [JsonPropertyName("group")]
+    public string? Group { get; init; }
+
+    /// <summary>一句提示，最多 60 字符。</summary>
+    [JsonPropertyName("hint")]
+    public string? Hint { get; init; }
+
+    [JsonPropertyName("default")]
+    public object? Default { get; init; }
+
+    /// <summary><c>enum</c> 的可选值；其他类型不出现。</summary>
+    [JsonPropertyName("values")]
+    public IReadOnlyList<string>? Values { get; init; }
+
+    /// <summary><c>enum</c> 的可选值标签（值 → 文案）；缺省时控制台直接显示值。</summary>
+    [JsonPropertyName("labels")]
+    public IReadOnlyDictionary<string, string>? Labels { get; init; }
+
+    [JsonPropertyName("min")]
+    public double? Min { get; init; }
+
+    [JsonPropertyName("max")]
+    public double? Max { get; init; }
+
+    [JsonPropertyName("step")]
+    public double? Step { get; init; }
+
+    [JsonPropertyName("maxLength")]
+    public int? MaxLength { get; init; }
+
+    /// <summary>数值的显示单位；duration 固定为 <c>seconds</c>。</summary>
+    [JsonPropertyName("unit")]
+    public string? Unit { get; init; }
 }
 
 /// <summary><c>hello</c> 的应答载荷。</summary>

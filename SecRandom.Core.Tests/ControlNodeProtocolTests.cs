@@ -43,6 +43,54 @@ public sealed class ControlNodeProtocolTests
     }
 
     [Fact]
+    public async Task hello上报设置schema与revision()
+    {
+        var report = new ControlV4SettingsReport
+        {
+            Revision = 7,
+            Schema = new Dictionary<string, ControlV4SettingSchemaField>(StringComparer.Ordinal)
+            {
+                ["voice.volume"] = new()
+                {
+                    Type = "int",
+                    Label = "音量",
+                    Group = "语音",
+                    Default = 80,
+                    Min = 0,
+                    Max = 100,
+                    Step = 1
+                },
+                ["voice.enable"] = new()
+                {
+                    Type = "bool",
+                    Label = "语音播报",
+                    Group = "语音",
+                    Default = true
+                }
+            }
+        };
+
+        var (session, transport, run, cts) = await StartAsync(
+            settingsReportSource: new FixedSettingsReportSource(report));
+
+        try
+        {
+            var hello = Assert.Single(transport.Sent, frame => frame.Topic == ControlV4Protocol.Topics.Hello);
+            var settings = AssertPayload(hello).GetProperty("settings");
+
+            Assert.Equal(7, settings.GetProperty("revision").GetInt32());
+            var schema = settings.GetProperty("schema");
+            Assert.Equal("int", schema.GetProperty("voice.volume").GetProperty("type").GetString());
+            Assert.Equal(80, schema.GetProperty("voice.volume").GetProperty("default").GetInt32());
+            Assert.True(schema.TryGetProperty("voice.enable", out _));
+        }
+        finally
+        {
+            await StopAsync(cts, run);
+        }
+    }
+
+    [Fact]
     public async Task 应答缺失draw_locked时按锁定上报_并沿用服务端心跳()
     {
         var store = new FakeStateStore();
@@ -298,16 +346,22 @@ public sealed class ControlNodeProtocolTests
     private static ControlNodeSession CreateSession(
         FakeTransport transport,
         FakeStateStore store,
-        FakeDispatcher dispatcher)
+        FakeDispatcher dispatcher,
+        IControlSettingsReportSource? settingsReportSource = null)
     {
         var options = new ControlNodeClientOptions { Version = "1.0.0", HostName = "测试机" };
         return new ControlNodeSession(
             transport, store, dispatcher, Credential, options,
-            NullLogger<ControlNodeSession>.Instance);
+            NullLogger<ControlNodeSession>.Instance,
+            settingsReportSource: settingsReportSource);
     }
 
     private static async Task<(ControlNodeSession Session, FakeTransport Transport, Task<ControlSessionResult> Run, CancellationTokenSource Cts)>
-        StartAsync(FakeDispatcher? dispatcher = null, bool remoteEnabled = true, FakeStateStore? store = null)
+        StartAsync(
+            FakeDispatcher? dispatcher = null,
+            bool remoteEnabled = true,
+            FakeStateStore? store = null,
+            IControlSettingsReportSource? settingsReportSource = null)
     {
         var transport = new FakeTransport();
         transport.OnSend = frame =>
@@ -325,7 +379,7 @@ public sealed class ControlNodeProtocolTests
 
         var effectiveStore = store ?? new FakeStateStore();
         effectiveStore.Current = effectiveStore.Current with { RemoteControlEnabled = remoteEnabled };
-        var session = CreateSession(transport, effectiveStore, dispatcher ?? new FakeDispatcher());
+        var session = CreateSession(transport, effectiveStore, dispatcher ?? new FakeDispatcher(), settingsReportSource);
         var cts = new CancellationTokenSource();
         var run = session.RunAsync(cts.Token);
 
@@ -354,6 +408,11 @@ public sealed class ControlNodeProtocolTests
                 throw new TimeoutException("等待条件超时");
             await Task.Delay(10);
         }
+    }
+
+    private sealed class FixedSettingsReportSource(ControlV4SettingsReport report) : IControlSettingsReportSource
+    {
+        public ControlV4SettingsReport? Build() => report;
     }
 
     private static JsonElement AssertPayload(ControlV4Frame frame)

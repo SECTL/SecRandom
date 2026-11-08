@@ -112,7 +112,12 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
             // 默认关闭：装了新版本不会凭空多出一个"远程抽取"入口，要用户自己在集控页打开。
             RemoteDrawPageEnabled = stored?.RemoteDrawPageEnabled ?? false,
             AppliedDesiredStateRevision = stored?.AppliedDesiredStateRevision ?? ControlDesiredState.NeverSetRevision,
-            DrawLocked = stored?.DrawLocked ?? false
+            DrawLocked = stored?.DrawLocked ?? false,
+            // 旧状态文件没有 schema 记录：从 0 开始，第一次上报时由 report source 决定为 revision 1。
+            SettingsSchemaRevision = stored?.SettingsSchemaRevision ?? 0,
+            SettingsSchemaHash = string.IsNullOrWhiteSpace(stored?.SettingsSchemaHash)
+                ? null
+                : stored!.SettingsSchemaHash
         };
 
         // 首次运行（或身份丢失）时立刻落盘：node_id 必须在任何一次 hello 之前稳定下来。
@@ -154,6 +159,10 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
                 RemoteDrawPageEnabled = state.RemoteDrawPageEnabled,
                 AppliedDesiredStateRevision = state.AppliedDesiredStateRevision,
                 DrawLocked = state.DrawLocked,
+                SettingsSchemaRevision = state.SettingsSchemaRevision,
+                SettingsSchemaHash = string.IsNullOrWhiteSpace(state.SettingsSchemaHash)
+                    ? null
+                    : state.SettingsSchemaHash,
                 UpdatedAt = DateTimeOffset.UtcNow
             };
 
@@ -198,6 +207,11 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
         public long AppliedDesiredStateRevision { get; set; }
 
         public bool DrawLocked { get; set; }
+
+        /// <summary>v4.2：最近上报的设置 schema revision 与内容哈希（见 ControlNodeState）。</summary>
+        public int SettingsSchemaRevision { get; set; }
+
+        public string? SettingsSchemaHash { get; set; }
 
         public DateTimeOffset? UpdatedAt { get; set; }
     }

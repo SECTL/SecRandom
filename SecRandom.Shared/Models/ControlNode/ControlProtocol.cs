@@ -208,6 +208,18 @@ public static class ControlRejectReasons
 
     /// <summary>执行失败（运行故障，不是拒绝）。</summary>
     public const string ExecutionFailed = "execution_failed";
+
+    /// <summary>
+    ///     v4.2 <c>settings.write</c>：键不在设备上报的 schema 里。
+    ///     与服务端 <c>validateSettingsPatch</c> 的 <c>unknown_setting</c> 对齐。
+    /// </summary>
+    public const string UnknownSetting = "unknown_setting";
+
+    /// <summary>
+    ///     v4.2 <c>settings.write</c>：值不符合 schema 的类型/枚举/范围。
+    ///     与服务端 <c>validateSettingsPatch</c> 的 <c>bad_setting_value</c> 对齐。
+    /// </summary>
+    public const string BadSettingValue = "bad_setting_value";
 }
 
 /// <summary>服务端下发的命令种类。</summary>

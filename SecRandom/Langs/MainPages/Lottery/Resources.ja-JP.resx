@@ -24,6 +24,8 @@
   <data name="M_DrawnCountFormat" xml:space="preserve"><value>{0} 件の賞品を抽選しました</value></data>
   <data name="M_CountSummaryFormat" xml:space="preserve"><value>賞品総数: {0} | 残りの賞品: {1}</value></data>
   <data name="M_NumberCountSummary" xml:space="preserve"><value>残り {0}/{1}</value></data>
+  <data name="M_NumberRangeStart" xml:space="preserve"><value>開始</value></data>
+  <data name="M_NumberRangeEnd" xml:space="preserve"><value>終了</value></data>
   <data name="M_DrawFailed" xml:space="preserve"><value>抽選に失敗しました</value></data>
   <data name="M_NoCandidates" xml:space="preserve"><value>抽選できる賞品がありません</value></data>
   <data name="M_NoEligibleCandidates" xml:space="preserve"><value>重み条件を満たす賞品がありません</value></data>

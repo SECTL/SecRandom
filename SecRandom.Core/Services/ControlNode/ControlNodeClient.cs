@@ -32,6 +32,7 @@ public sealed class ControlNodeClient
     private readonly INodeEnrollmentStore? _enrollmentStore;
     private readonly IControlNodeStateStore _stateStore;
     private readonly IControlCommandDispatcher _dispatcher;
+    private readonly IControlSettingsReportSource? _settingsReportSource;
     private readonly ControlNodeClientOptions _options;
     private readonly ILogger<ControlNodeClient> _logger;
     private readonly ILogger<ControlNodeSession> _sessionLogger;
@@ -63,12 +64,14 @@ public sealed class ControlNodeClient
         ControlNodeClientOptions options,
         ILogger<ControlNodeClient> logger,
         ILogger<ControlNodeSession> sessionLogger,
-        INodeEnrollmentStore? enrollmentStore = null)
+        INodeEnrollmentStore? enrollmentStore = null,
+        IControlSettingsReportSource? settingsReportSource = null)
     {
         _transportFactory = transportFactory;
         _enrollmentStore = enrollmentStore;
         _stateStore = stateStore;
         _dispatcher = dispatcher;
+        _settingsReportSource = settingsReportSource;
         _options = options;
         _logger = logger;
         _sessionLogger = sessionLogger;
@@ -207,7 +210,8 @@ public sealed class ControlNodeClient
                 transport);
 
             var session = new ControlNodeSession(
-                transport, _stateStore, _dispatcher, credential, _options, _sessionLogger);
+                transport, _stateStore, _dispatcher, credential, _options, _sessionLogger,
+                settingsReportSource: _settingsReportSource);
 
             // 只有**收到 hello 的 res.ok:true 之后**才算连上。
             void OnHandshaken(object? sender, int heartbeatSeconds) =>

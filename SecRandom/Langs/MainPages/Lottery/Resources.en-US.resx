@@ -24,6 +24,8 @@
   <data name="M_DrawnCountFormat" xml:space="preserve"><value>{0} prizes drawn</value></data>
   <data name="M_CountSummaryFormat" xml:space="preserve"><value>Total prizes: {0} | Remaining prizes: {1}</value></data>
   <data name="M_NumberCountSummary" xml:space="preserve"><value>Remaining: {0}/{1}</value></data>
+  <data name="M_NumberRangeStart" xml:space="preserve"><value>Start</value></data>
+  <data name="M_NumberRangeEnd" xml:space="preserve"><value>End</value></data>
   <data name="M_DrawFailed" xml:space="preserve"><value>Lottery failed</value></data>
   <data name="M_NoCandidates" xml:space="preserve"><value>No prizes are available to draw</value></data>
   <data name="M_NoEligibleCandidates" xml:space="preserve"><value>No prizes meet the weighting criteria</value></data>

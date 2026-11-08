@@ -9,8 +9,8 @@
              x:DataType="vm:LotteryPageViewModel">
     <UserControl.Resources>
         <DataTemplate x:Key="LotteryControlPanelTemplate" DataType="vm:LotteryPageViewModel">
-            <Viewbox Width="234">
-                <StackPanel Width="180" Spacing="6">
+            <Viewbox Width="280">
+                <StackPanel Width="216" Spacing="6">
                     <StackPanel.Resources>
                         <ResourceDictionary>
                             <system:Double x:Key="SizeBase">36</system:Double>
@@ -27,6 +27,10 @@
                         </Style>
                     </StackPanel.Styles>
 
+                    <!-- 内容列固定 144：上方的按钮/下拉框与下方的数字输入框共用同一条外边；
+                         起止标签不占内容列，而是落在面板另一侧 36px 的留白里 -->
+                    <StackPanel Width="180" Spacing="6"
+                                HorizontalAlignment="{Binding ControlPanelContentAlignment}">
                     <Button Content="{x:Static langs:Resources.C_Reset}"
                             IsVisible="{Binding MoreSettings.LotteryResetButton}"
                             Command="{Binding ResetDisplayCommand}" />
@@ -56,28 +60,62 @@
                               ItemsSource="{Binding PrizeListNames}" SelectedItem="{Binding SelectedPrizeListName}">
                         <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" /></DataTemplate></ComboBox.ItemTemplate>
                     </ComboBox>
-                    <StackPanel IsVisible="{Binding IsNumberPrizeMode}" Spacing="2"
+                    </StackPanel>
+                    <StackPanel IsVisible="{Binding IsNumberPrizeMode}" Spacing="4"
                                 HorizontalAlignment="Stretch">
                         <StackPanel.Styles>
-                            <!-- 面板只有 180px 宽：两个数字框改成上下各占满整行，保留调节按钮，数字仍然完整可见 -->
+                            <!-- 数字框与上方控件同宽（144）：起止标签放在旁边 36px 的留白里，保留调节按钮并放大数字 -->
                             <Style Selector="NumericUpDown">
-                                <Setter Property="FontSize" Value="14" />
-                                <Setter Property="Padding" Value="4,0" />
+                                <Setter Property="FontSize" Value="18" />
+                                <Setter Property="Padding" Value="6,0" />
+                                <Setter Property="HorizontalAlignment" Value="Stretch" />
                             </Style>
                             <Style Selector="NumericUpDown /template/ TextBox">
-                                <Setter Property="Padding" Value="2,0" />
+                                <Setter Property="Padding" Value="4,0" />
                                 <Setter Property="MinWidth" Value="0" />
                                 <Setter Property="TextAlignment" Value="Center" />
                             </Style>
+                            <Style Selector="TextBlock.RangeLabel">
+                                <Setter Property="FontSize" Value="13" />
+                                <Setter Property="Opacity" Value="0.7" />
+                                <Setter Property="VerticalAlignment" Value="Center" />
+                                <Setter Property="TextAlignment" Value="Center" />
+                                <Setter Property="TextWrapping" Value="NoWrap" />
+                            </Style>
                         </StackPanel.Styles>
-                        <NumericUpDown Height="{DynamicResource SizeBase}" HorizontalAlignment="Stretch"
-                                       Minimum="0" Increment="1" FormatString="0"
-                                       Value="{Binding NumberRangeStart}" />
-                        <TextBlock Text="-" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.6" />
-                        <NumericUpDown Height="{DynamicResource SizeBase}" HorizontalAlignment="Stretch"
-                                       Minimum="0" Increment="1" FormatString="0"
-                                       Value="{Binding NumberRangeEnd}" />
+                        <!-- 控制面板靠右：标签在输入框左侧留白里，输入框右边缘与上方控件对齐 -->
+                        <Grid ColumnDefinitions="36,180" IsVisible="{Binding IsControlPanelOnRight}">
+                            <TextBlock Classes="RangeLabel"
+                                       Text="{x:Static langs:Resources.M_NumberRangeStart}" />
+                            <NumericUpDown Grid.Column="1" Height="{DynamicResource SizeBase}"
+                                           Minimum="0" Increment="1" FormatString="0"
+                                           Value="{Binding NumberRangeStart}" />
+                        </Grid>
+                        <Grid ColumnDefinitions="36,180" IsVisible="{Binding IsControlPanelOnRight}">
+                            <TextBlock Classes="RangeLabel"
+                                       Text="{x:Static langs:Resources.M_NumberRangeEnd}" />
+                            <NumericUpDown Grid.Column="1" Height="{DynamicResource SizeBase}"
+                                           Minimum="0" Increment="1" FormatString="0"
+                                           Value="{Binding NumberRangeEnd}" />
+                        </Grid>
+                        <!-- 控制面板靠左：标签在输入框右侧留白里，输入框左边缘与上方控件对齐 -->
+                        <Grid ColumnDefinitions="180,36" IsVisible="{Binding IsControlPanelOnLeft}">
+                            <NumericUpDown Grid.Column="0" Height="{DynamicResource SizeBase}"
+                                           Minimum="0" Increment="1" FormatString="0"
+                                           Value="{Binding NumberRangeStart}" />
+                            <TextBlock Grid.Column="1" Classes="RangeLabel"
+                                       Text="{x:Static langs:Resources.M_NumberRangeStart}" />
+                        </Grid>
+                        <Grid ColumnDefinitions="180,36" IsVisible="{Binding IsControlPanelOnLeft}">
+                            <NumericUpDown Grid.Column="0" Height="{DynamicResource SizeBase}"
+                                           Minimum="0" Increment="1" FormatString="0"
+                                           Value="{Binding NumberRangeEnd}" />
+                            <TextBlock Grid.Column="1" Classes="RangeLabel"
+                                       Text="{x:Static langs:Resources.M_NumberRangeEnd}" />
+                        </Grid>
                     </StackPanel>
+                    <StackPanel Width="180" Spacing="6"
+                                HorizontalAlignment="{Binding ControlPanelContentAlignment}">
                     <ComboBox IsVisible="{Binding MoreSettings.LotteryStudentListSelector}"
                               ItemsSource="{Binding StudentListNames}" SelectedItem="{Binding SelectedStudentListName}">
                         <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" /></DataTemplate></ComboBox.ItemTemplate>
@@ -101,6 +139,7 @@
                         <TextBlock Text="{Binding CountSummary}" IsVisible="{Binding MoreSettings.LotteryQuantityLabel}"
                                    HorizontalAlignment="Center" TextAlignment="Center" />
                     </Viewbox>
+                    </StackPanel>
                 </StackPanel>
             </Viewbox>
         </DataTemplate>
