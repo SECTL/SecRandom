@@ -1,0 +1,157 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:personalized="clr-namespace:SecRandom.Views.SettingsPages.Personalized"
+             xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Personalized.FloatingWindowButtons"
+             mc:Ignorable="d" d:DesignWidth="1000" d:DesignHeight="720"
+             x:Class="SecRandom.Views.SettingsPages.Personalized.FloatingWindowButtonsSettingsPage"
+             x:Name="Root"
+             x:DataType="personalized:FloatingWindowButtonsSettingsPage"
+             Loaded="OnLoaded">
+    <Grid RowDefinitions="Auto,*" RowSpacing="8" Classes="page-container animated-intro">
+        <Border Grid.Row="0"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4">
+            <Grid ColumnDefinitions="*,Auto">
+                <fa:FACommandBar DefaultLabelPosition="Right">
+                    <fa:FACommandBar.PrimaryCommands>
+                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi AddFilled}}"
+                                              Label="{x:Static lsp:Resources.C_Add}"
+                                              Click="AddButton_OnClick" />
+                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi EditFilled}}"
+                                              Label="{x:Static lsp:Resources.C_Edit}"
+                                              IsEnabled="{Binding CanEdit}"
+                                              Click="EditButton_OnClick" />
+                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi DeleteFilled}}"
+                                              Label="{x:Static lsp:Resources.C_Delete}"
+                                              IsEnabled="{Binding CanDelete}"
+                                              Click="DeleteSelected_OnClick" />
+                        <fa:FACommandBarSeparator />
+                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi ArrowUpFilled}}"
+                                              Label="{x:Static lsp:Resources.C_MoveUp}"
+                                              IsEnabled="{Binding CanMoveUp}"
+                                              Click="MoveUp_OnClick" />
+                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi ArrowDownFilled}}"
+                                              Label="{x:Static lsp:Resources.C_MoveDown}"
+                                              IsEnabled="{Binding CanMoveDown}"
+                                              Click="MoveDown_OnClick" />
+                        <fa:FACommandBarSeparator />
+                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi EraserFilled}}"
+                                              Label="{x:Static lsp:Resources.C_Clear}"
+                                              Click="ClearAll_OnClick" />
+                    </fa:FACommandBar.PrimaryCommands>
+                </fa:FACommandBar>
+                <TextBlock Grid.Column="1"
+                           Text="{Binding CountText}"
+                           Classes="caption"
+                           VerticalAlignment="Center"
+                           Margin="0 0 12 0" />
+            </Grid>
+        </Border>
+
+        <Border Grid.Row="1"
+                MaxHeight="520"
+                VerticalAlignment="Top"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4"
+                ClipToBounds="True">
+            <Grid>
+                <DataGrid x:Name="RowsGrid"
+                          AutoGenerateColumns="False"
+                          CanUserSortColumns="False"
+                          CanUserReorderColumns="False"
+                          GridLinesVisibility="Horizontal"
+                          IsReadOnly="True"
+                          MinHeight="320"
+                          SelectionMode="Single"
+                          ItemsSource="{Binding Rows}"
+                          SelectionChanged="RowsGrid_OnSelectionChanged"
+                          DoubleTapped="RowsGrid_OnDoubleTapped">
+                    <DataGrid.Columns>
+                        <DataGridTemplateColumn Width="64" Header="{x:Static lsp:Resources.C_Enabled}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate x:DataType="personalized:FloatingWindowButtonRow">
+                                    <CheckBox IsChecked="{Binding Enabled}"
+                                              IsHitTestVisible="False"
+                                              Focusable="False"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTemplateColumn Width="64" Header="{x:Static lsp:Resources.C_Icon}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate x:DataType="personalized:FloatingWindowButtonRow">
+                                    <Panel Width="28" Height="28"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center">
+                                        <Image Width="26"
+                                               Height="26"
+                                               Stretch="Uniform"
+                                               Source="{Binding IconPreview}"
+                                               IsVisible="{Binding HasCustomImage}" />
+                                        <sr:FluentIcon Glyph="{Binding IconGlyph}"
+                                                       FontSize="20"
+                                                       IsVisible="{Binding ShowGlyphIcon}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center" />
+                                    </Panel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Width="0.8*"
+                                            MinWidth="100"
+                                            Header="{x:Static lsp:Resources.C_Label}"
+                                            Binding="{Binding Label}" />
+
+                        <DataGridTextColumn Width="150"
+                                            Header="{x:Static lsp:Resources.C_Action}"
+                                            Binding="{Binding ActionLabel}" />
+
+                        <DataGridTextColumn Width="*"
+                                            MinWidth="200"
+                                            Header="{x:Static lsp:Resources.C_Target}"
+                                            Binding="{Binding TargetLabel}" />
+
+                        <DataGridTemplateColumn Width="120" Header="{x:Static lsp:Resources.C_Operations}">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate x:DataType="personalized:FloatingWindowButtonRow">
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="2"
+                                                VerticalAlignment="Center">
+                                        <Button Theme="{StaticResource TransparentButton}"
+                                                Padding="6"
+                                                ToolTip.Tip="{x:Static lsp:Resources.C_Edit}"
+                                                Click="EditRow_OnClick">
+                                            <sr:FluentIcon Glyph="{sr:Fi EditFilled}" FontSize="14" />
+                                        </Button>
+                                        <Button Theme="{StaticResource TransparentButton}"
+                                                Padding="6"
+                                                ToolTip.Tip="{x:Static lsp:Resources.C_Delete}"
+                                                Click="DeleteRow_OnClick">
+                                            <sr:FluentIcon Glyph="{sr:Fi DeleteFilled}" FontSize="14" />
+                                        </Button>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <TextBlock Text="{x:Static lsp:Resources.M_Empty}"
+                           Classes="caption"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           IsVisible="{Binding IsEmpty}" />
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

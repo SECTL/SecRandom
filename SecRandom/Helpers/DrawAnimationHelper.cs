@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using SecRandom.Core.Behaviors;
 using SecRandom.Core.Enums.Configs;
 
 namespace SecRandom.Helpers;
@@ -75,7 +76,7 @@ internal static class DrawAnimationHelper
     {
         await Dispatcher.UIThread.InvokeAsync(target.UpdateLayout, DispatcherPriority.Render).GetTask()
             .ConfigureAwait(true);
-        await Task.Delay(16).ConfigureAwait(true);
+        await Task.Delay(AnimationFramePolicy.FrameIntervalMs).ConfigureAwait(true);
         await Dispatcher.UIThread.InvokeAsync(target.UpdateLayout, DispatcherPriority.Render).GetTask()
             .ConfigureAwait(true);
     }
@@ -99,7 +100,7 @@ internal static class DrawAnimationHelper
             }
         }
 
-        var steps = Math.Max(1, durationMs / 16);
+        var steps = AnimationFramePolicy.ResolveFrameCount(durationMs);
         try
         {
             for (var i = 0; i <= steps; i++)
@@ -108,7 +109,8 @@ internal static class DrawAnimationHelper
                 var progress = (double)i / steps;
                 await ApplyAnimationFrameAsync(target, transformGroup, style, progress, startOpacity)
                     .ConfigureAwait(true);
-                await Task.Delay(Math.Max(1, durationMs / steps), token).ConfigureAwait(true);
+                await Task.Delay(AnimationFramePolicy.ResolveFrameDelayMs(durationMs, steps), token)
+                    .ConfigureAwait(true);
             }
         }
         catch (OperationCanceledException)

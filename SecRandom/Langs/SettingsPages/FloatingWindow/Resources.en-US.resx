@@ -4,6 +4,8 @@
   <data name="S_Display"><value>Window Display</value></data>
   <data name="S_Display_StartupDisplay"><value>Show floating window at startup</value></data>
   <data name="S_Display_StartupDisplay_D"><value>Automatically open the floating window after the program starts</value></data>
+  <data name="S_Display_ShowOnBothSides"><value>Show on both sides</value></data>
+  <data name="S_Display_ShowOnBothSides_D"><value>Show one floating window on each side of the screen; both windows work the same way and can only move up and down</value></data><data name="S_Display_SyncBothSidesAnchor"><value>Keep both sides level</value></data><data name="S_Display_SyncBothSidesAnchor_D"><value>When on, moving one floating window up or down moves the other one with it; when off, each side remembers its own height</value></data>
   <data name="S_Display_Opacity"><value>Floating window opacity</value></data>
   <data name="S_Display_Opacity_D"><value>Applies to both the main floating window and the quick-draw window</value></data>
   <data name="S_Display_TopmostMode"><value>Floating window topmost mode</value></data>
@@ -39,6 +41,11 @@
   <data name="S_Interaction_HideOnForegroundWindowTitles"><value>Foreground window titles</value></data>
   <data name="S_Buttons_EnabledItems"><value>Floating Window Controls</value></data>
   <data name="S_Buttons_EnabledItems_D"><value>Choose the feature entries shown in the main floating window</value></data>
+  <data name="S_Buttons_CustomButtons"><value>Custom buttons</value></data>
+  <data name="S_Buttons_CustomButtons_D"><value>Add your own buttons that open a page, URL, file, or app; the icon can be an imported image or an application icon</value></data>
+  <data name="S_Buttons_CustomButtons_Open"><value>Manage custom buttons</value></data>
+  <data name="M_Buttons_CustomSummary"><value>{0} configured, up to {1}</value></data>
+  <data name="M_Buttons_CustomOpenFailed"><value>Could not open the custom buttons page</value></data>
   <data name="S_Buttons_Placement"><value>Control layout</value></data>
   <data name="S_Buttons_Placement_D"><value>Rectangle uses a two-column grid; vertical and horizontal use a single column</value></data>
   <data name="O_Placement_Rectangle"><value>Rectangle</value></data><data name="O_Placement_Vertical"><value>Vertical</value></data><data name="O_Placement_Horizontal"><value>Horizontal</value></data>

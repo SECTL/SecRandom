@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using Avalonia.Collections;
 using Avalonia.Controls;
@@ -10,10 +11,13 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.FloatingWindow;
 using SecRandom.Models;
+using SecRandom.Platforms.Abstractions;
 using SecRandom.Services.Desktop;
 using SecRandom.ViewModels;
 using SecRandom.Views;
@@ -24,6 +28,7 @@ namespace SecRandom.Views.SettingsPages.Personalized;
 [PageInfo("settings.personalized.floatingWindow", FluentIcons.WindowAppsFilled, "settings.personalized")]
 public partial class FloatingWindowSettingsPage : UserControl
 {
+    private const string CustomButtonsPageId = "settings.personalized.floatingWindowButtons";
     private bool _isSettingsSubscribed;
     private readonly IFloatingWindowButtonRegistry _floatingWindowButtonRegistry = IAppHost.GetService<IFloatingWindowButtonRegistry>();
 
@@ -37,6 +42,7 @@ public partial class FloatingWindowSettingsPage : UserControl
         _floatingWindowButtonRegistry.Changed += FloatingWindowButtonRegistry_OnChanged;
         DataContext = this;
         InitializeComponent();
+        RefreshCustomButtonsSummary();
         SubscribeSettings();
         if (migratedSize)
             ConfigHandler.Save();
@@ -52,6 +58,13 @@ public partial class FloatingWindowSettingsPage : UserControl
         : LR.S_Display_TopmostMode_D;
     public bool SupportsProgrammaticWindowPositioning => App.SupportsProgrammaticWindowPositioning;
 
+    /// <summary>
+    ///     无焦点模式依赖平台层的免激活能力（Windows 上是 <c>WS_EX_NOACTIVATE</c>）。
+    ///     平台不具备这项能力时隐藏该行，而不是给用户一个打开后点击仍会抢焦点的开关。
+    /// </summary>
+    public bool SupportsNoActivate => IAppHost.TryGetService<IWindowFeatureService>()
+        ?.SupportedFeatures.HasFlag(WindowFeatures.NoActivate) == true;
+
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private DesktopIntegrationService DesktopIntegration { get; } = IAppHost.GetService<DesktopIntegrationService>();
 
@@ -59,6 +72,7 @@ public partial class FloatingWindowSettingsPage : UserControl
     {
         SubscribeSettings();
         RebuildButtonOptions();
+        RefreshCustomButtonsSummary();
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
@@ -83,10 +97,36 @@ public partial class FloatingWindowSettingsPage : UserControl
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         ConfigHandler.Save();
+        if (e.PropertyName == nameof(Settings.CustomButtons))
+            RefreshCustomButtonsSummary();
         if (e.PropertyName == nameof(Settings.FloatingWindowTopmostMode)
             && Settings.FloatingWindowTopmostMode == TopmostMode.UiAccess
             && !DesktopIntegration.IsUiAccessAvailable())
             SettingsView.Current?.RequestRestartApp();
+    }
+
+    private void RefreshCustomButtonsSummary()
+    {
+        var count = FloatingWindowButtonCatalog
+            .GetRenderableButtons(Settings.CustomButtons)
+            .Count;
+        CustomButtonsSummary.Text = string.Format(
+            CultureInfo.CurrentCulture,
+            LR.M_Buttons_CustomSummary,
+            count,
+            FloatingWindowButtonCatalog.MaxButtons);
+    }
+
+    private void OpenCustomButtons_OnClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            SettingsView.Current?.NavigateToPage(CustomButtonsPageId);
+        }
+        catch (Exception ex)
+        {
+            this.ShowErrorToast(LR.M_Buttons_CustomOpenFailed, ex);
+        }
     }
 
     private AvaloniaList<MultiSelectSettingOption> BuildButtonOptions()

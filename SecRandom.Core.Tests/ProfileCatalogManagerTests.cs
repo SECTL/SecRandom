@@ -174,6 +174,95 @@ public sealed class ProfileCatalogManagerTests : IDisposable
     }
 
     [Fact]
+    public void ReplaceStudents_ReusesRecordIdAndMemberAttachedSettingsForExactMatch()
+    {
+        using var provider = CreateProvider();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var manager = provider.GetRequiredService<IProfileCatalogManager>();
+        var activeName = profile.StudentListConfig!.Name;
+
+        Assert.True(manager.ReplaceStudents(activeName, [new Student { Id = "1", Name = "甲" }]));
+        var existing = Assert.Single(profile.CurrentStudentList!.Students);
+        var oldRecordId = existing.RecordId;
+        Assert.NotEqual(Guid.Empty, oldRecordId);
+
+        var attachedKey = Guid.NewGuid();
+        existing.AttachedObjects[attachedKey] = "member-setting";
+        Assert.True(manager.SaveStudentList(profile.CurrentStudentList!));
+
+        // 模拟二维码导入：新对象先带一个占位 RecordId，认领后必须被旧 RecordId 覆盖。
+        var matched = new Student { Id = "1", Name = "甲", RecordId = Guid.NewGuid() };
+        Assert.True(manager.ReplaceStudents(activeName,
+            [matched, new Student { Id = "2", Name = "乙" }]));
+
+        Assert.Equal(oldRecordId, matched.RecordId);
+
+        var reloaded = manager.LoadStudentList(activeName)!;
+        var reloadedMatched = Assert.Single(reloaded.Students, student => student.Id == "1");
+        Assert.Equal(oldRecordId, reloadedMatched.RecordId);
+        Assert.Equal("member-setting", reloadedMatched.AttachedObjects[attachedKey]?.ToString());
+
+        var added = Assert.Single(reloaded.Students, student => student.Id == "2");
+        Assert.NotEqual(Guid.Empty, added.RecordId);
+        Assert.NotEqual(oldRecordId, added.RecordId);
+        Assert.Empty(added.AttachedObjects);
+    }
+
+    [Fact]
+    public void ReplaceStudents_AssignsNewRecordIdsWhenIdOrNameChanged()
+    {
+        using var provider = CreateProvider();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var manager = provider.GetRequiredService<IProfileCatalogManager>();
+        var activeName = profile.StudentListConfig!.Name;
+
+        Assert.True(manager.ReplaceStudents(activeName, [new Student { Id = "1", Name = "原名" }]));
+        var existing = Assert.Single(profile.CurrentStudentList!.Students);
+        var oldRecordId = existing.RecordId;
+        var attachedKey = Guid.NewGuid();
+        existing.AttachedObjects[attachedKey] = "member-setting";
+        Assert.True(manager.SaveStudentList(profile.CurrentStudentList!));
+
+        // 学号改了、姓名改了各一条：都不应被旧成员认领，更不能把旧附加设置带过去。
+        Assert.True(manager.ReplaceStudents(activeName,
+        [
+            new Student { Id = "1", Name = "改名" },
+            new Student { Id = "2", Name = "原名" }
+        ]));
+
+        var reloaded = manager.LoadStudentList(activeName)!;
+        Assert.Equal(2, reloaded.Students.Count);
+        Assert.All(reloaded.Students, student => Assert.NotEqual(Guid.Empty, student.RecordId));
+        Assert.All(reloaded.Students, student => Assert.NotEqual(oldRecordId, student.RecordId));
+        Assert.All(reloaded.Students, student => Assert.False(student.AttachedObjects.ContainsKey(attachedKey)));
+    }
+
+    [Fact]
+    public void ReplaceStudents_KeepsHistoryLookupForExactMatch()
+    {
+        using var provider = CreateProvider();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var manager = provider.GetRequiredService<IProfileCatalogManager>();
+        var activeName = profile.StudentListConfig!.Name;
+
+        Assert.True(manager.ReplaceStudents(activeName, [new Student { Id = "7", Name = "林" }]));
+        var beforeImport = Assert.Single(profile.CurrentStudentList!.Students);
+        profile.RecordStudentHistory([beforeImport], DateTime.Now, 1);
+        var oldRecordId = beforeImport.RecordId;
+
+        Assert.True(manager.ReplaceStudents(activeName, [new Student { Id = "7", Name = "林" }]));
+
+        var afterImport = Assert.Single(manager.LoadStudentList(activeName)!.Students);
+        Assert.Equal(oldRecordId, afterImport.RecordId);
+
+        var history = profile.CurrentStudentHistory;
+        Assert.NotNull(history);
+        var record = ProfileRecordIdentity.GetStudentHistory(history, afterImport);
+        Assert.NotNull(record);
+        Assert.Equal(1, record.TotalCount);
+    }
+
+    [Fact]
     public void ReplacePrizes_PersistsAndSyncsActiveProfile()
     {
         using var provider = CreateProvider();
@@ -265,7 +354,7 @@ public sealed class ProfileCatalogManagerTests : IDisposable
         profile.CurrentStudentList!.Students.Add(new Student { Name = "Alice" });
         var student = profile.CurrentStudentList.Students[0];
         profile.RecordStudentHistory([student], DateTime.Now, 1);
-        temporary.RecordStudents(oldName, null, [student]);
+        temporary.RecordStudents(oldName, null, null, [student]);
 
         Assert.True(manager.RenameStudentList(oldName, newName));
         Assert.Equal(newName, profile.StudentListConfig!.Name);
@@ -273,7 +362,7 @@ public sealed class ProfileCatalogManagerTests : IDisposable
         Assert.False(manager.StudentListExists(oldName));
         Assert.True(File.Exists(Utils.GetFilePath("history", "roll_call_history", $"{newName}{Utils.HistoryDatabaseExtension}")));
         Assert.False(File.Exists(Utils.GetFilePath("TEMP", $"roll_call_record_{oldName}.json")));
-        Assert.NotEmpty(temporary.GetStudentCounts(newName, null));
+        Assert.NotEmpty(temporary.GetStudentCounts(newName, null, null));
     }
 
     [Fact]

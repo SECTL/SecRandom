@@ -93,7 +93,8 @@ public partial class QuickDrawSettingsPage : UserControl
         if (_syncingHistoryGroupSelection || HistoryGroupSelector is null)
             return;
 
-        HistoryGroup.Selected = HistoryGroupSelector.SelectedItem as string;
+        if (HistoryGroupSelector.SelectedItem is string selectedGroup)
+            HistoryGroup.Selected = selectedGroup;
     }
 
     /// <summary>重建候选值并把选中项重新落回下拉框。</summary>

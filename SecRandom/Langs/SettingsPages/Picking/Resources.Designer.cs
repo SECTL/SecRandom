@@ -726,6 +726,15 @@ namespace SecRandom.Langs.SettingsPages.Picking {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 不使用名单.
+        /// </summary>
+        public static string O_NoList {
+            get {
+                return ResourceManager.GetString("O_NoList", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 点击后禁用时间.
         /// </summary>
         public static string S_DisableAfterClick {

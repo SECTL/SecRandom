@@ -95,6 +95,12 @@ public sealed class MobilePlatformServiceRoot : IPlatformServiceRoot, IWindowFea
         UnsupportedPlatformCameraDeviceCatalog.Instance;
 
     /// <summary>
+    ///     Reading an icon out of a local application file is a desktop capability; mobile surfaces never
+    ///     offer that picker, so the neutral library keeps the unsupported extractor.
+    /// </summary>
+    public IPlatformApplicationIconExtractor ApplicationIcons => UnsupportedApplicationIconExtractor.Instance;
+
+    /// <summary>
     ///     Platform heads replace this when their camera backend writes capture files outside the application
     ///     data root. Android does, because CameraView keeps one full-resolution JPEG per shutter release in
     ///     the app's external files directory; iOS composes every frame in memory and keeps the no-op default.

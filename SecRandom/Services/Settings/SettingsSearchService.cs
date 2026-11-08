@@ -17,7 +17,7 @@ public class SettingsSearchService
             ["FloatingWindow"] = new HashSet<string>
             {
                 "S_Buttons_RollCall", "S_Buttons_QuickDraw", "S_Buttons_Lottery",
-                "S_Interaction_DoNotStealFocus", "S_Interaction_HideOnForeground",
+                "S_Interaction_HideOnForeground",
                 "S_Interaction_HideOnForegroundProcessNames", "S_Interaction_HideOnForegroundWindowTitles",
                 "S_Interaction_LongPressDuration"
             },

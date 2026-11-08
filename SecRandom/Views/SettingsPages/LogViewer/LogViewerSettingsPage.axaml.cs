@@ -192,6 +192,9 @@ public partial class LogViewerSettingsPage : UserControl, INotifyPropertyChanged
 
     private void RefreshLogFiles(string? preferredFileName = null)
     {
+        // 兜底：文件大小由磁盘元数据得出，缓冲尚未落盘时列表里的大小会滞后。
+        FileLoggerProvider.FlushAll();
+
         var previousFileName = preferredFileName ?? SelectedLogFile?.FileName;
         LogFiles.Clear();
 
@@ -231,6 +234,10 @@ public partial class LogViewerSettingsPage : UserControl, INotifyPropertyChanged
 
         try
         {
+            // 当前日志走缓冲写入，读取前必须先落盘，否则刷新/打开时看不到最新几行。
+            if (file.IsCurrent)
+                FileLoggerProvider.FlushAll();
+
             var lines = await Task.Run(() => ReadTailLines(file.FilePath, MaxLoadedLines));
             foreach (var entry in ParseEntries(lines))
                 _entries.Add(entry);

@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true" />
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Page_Title" xml:space="preserve">
+    <value>Custom buttons</value>
+  </data>
+  <data name="S_Buttons" xml:space="preserve">
+    <value>Custom buttons</value>
+  </data>
+  <data name="S_Buttons_D" xml:space="preserve">
+    <value>Add your own shortcut buttons to the floating window with a name, icon, and action</value>
+  </data>
+  <data name="S_Buttons_List" xml:space="preserve">
+    <value>Button list</value>
+  </data>
+  <data name="S_Buttons_List_D" xml:space="preserve">
+    <value>Edit directly in the table; the order here is the order on the floating window</value>
+  </data>
+  <data name="C_Enabled" xml:space="preserve">
+    <value>Enabled</value>
+  </data>
+  <data name="C_Icon" xml:space="preserve">
+    <value>Icon</value>
+  </data>
+  <data name="C_Label" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="C_Action" xml:space="preserve">
+    <value>Action</value>
+  </data>
+  <data name="C_Target" xml:space="preserve">
+    <value>Target</value>
+  </data>
+  <data name="C_Operations" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="C_Add" xml:space="preserve">
+    <value>Add button</value>
+  </data>
+  <data name="C_Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="C_Delete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="C_Copy" xml:space="preserve">
+    <value>Duplicate</value>
+  </data>
+  <data name="C_MoveUp" xml:space="preserve">
+    <value>Move up</value>
+  </data>
+  <data name="C_MoveDown" xml:space="preserve">
+    <value>Move down</value>
+  </data>
+  <data name="C_SelectFile" xml:space="preserve">
+    <value>Choose file</value>
+  </data>
+  <data name="C_SelectFolder" xml:space="preserve">
+    <value>Choose folder</value>
+  </data>
+  <data name="C_UseIcon" xml:space="preserve">
+    <value>Use this icon</value>
+  </data>
+  <data name="C_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="C_PickIcon" xml:space="preserve">
+    <value>Choose icon</value>
+  </data>
+  <data name="A_MainPage" xml:space="preserve">
+    <value>Switch main page</value>
+  </data>
+  <data name="A_QuickDraw" xml:space="preserve">
+    <value>Open quick draw</value>
+  </data>
+  <data name="A_Timer" xml:space="preserve">
+    <value>Open timer</value>
+  </data>
+  <data name="A_SettingsPage" xml:space="preserve">
+    <value>Open settings page</value>
+  </data>
+  <data name="A_Uri" xml:space="preserve">
+    <value>Open link</value>
+  </data>
+  <data name="A_Path" xml:space="preserve">
+    <value>Open file or folder</value>
+  </data>
+  <data name="M_PickBuiltInIcon" xml:space="preserve">
+    <value>Choose built-in icon</value>
+  </data>
+  <data name="M_ImportImage" xml:space="preserve">
+    <value>Import image</value>
+  </data>
+  <data name="M_ImportApplicationIcon" xml:space="preserve">
+    <value>Import from application</value>
+  </data>
+  <data name="M_ClearCustomIcon" xml:space="preserve">
+    <value>Restore built-in icon</value>
+  </data>
+  <data name="M_LabelPlaceholder" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="M_TargetPlaceholder" xml:space="preserve">
+    <value>Target</value>
+  </data>
+  <data name="M_Empty" xml:space="preserve">
+    <value>No custom buttons yet. Click "Add button" to start</value>
+  </data>
+  <data name="M_Hint" xml:space="preserve">
+    <value>Up to 8 buttons with names of at most 8 characters; custom buttons appear after built-in buttons and before plugin buttons, and are hidden in simple mode</value>
+  </data>
+  <data name="M_CountFormat" xml:space="preserve">
+    <value>{0}/{1}</value>
+  </data>
+  <data name="M_DefaultLabel" xml:space="preserve">
+    <value>Button {0}</value>
+  </data>
+  <data name="M_AddLimit" xml:space="preserve">
+    <value>You can add up to {0} custom buttons</value>
+  </data>
+  <data name="M_DeleteTitle" xml:space="preserve">
+    <value>Delete custom button</value>
+  </data>
+  <data name="M_DeleteContent" xml:space="preserve">
+    <value>Delete button "{0}"</value>
+  </data>
+  <data name="M_DeleteDone" xml:space="preserve">
+    <value>Button deleted</value>
+  </data>
+  <data name="M_ClearTitle" xml:space="preserve">
+    <value>Clear custom buttons</value>
+  </data>
+  <data name="M_ClearContent" xml:space="preserve">
+    <value>All custom buttons and their custom icons will be deleted</value>
+  </data>
+  <data name="M_ClearDone" xml:space="preserve">
+    <value>Custom buttons cleared</value>
+  </data>
+  <data name="M_BrowseFileTitle" xml:space="preserve">
+    <value>Choose a file to open</value>
+  </data>
+  <data name="M_BrowseFolderTitle" xml:space="preserve">
+    <value>Choose a folder to open</value>
+  </data>
+  <data name="M_IconPickerTitle" xml:space="preserve">
+    <value>Choose icon</value>
+  </data>
+  <data name="M_IconSearchPlaceholder" xml:space="preserve">
+    <value>Search icon names</value>
+  </data>
+  <data name="M_IconCountFormat" xml:space="preserve">
+    <value>Showing {0} icons; type a keyword to narrow down</value>
+  </data>
+  <data name="M_InvalidTargetOption" xml:space="preserve">
+    <value>(target no longer available)</value>
+  </data>
+  <data name="M_IconUpdated" xml:space="preserve">
+    <value>Icon updated</value>
+  </data>
+  <data name="M_IconImportFailed" xml:space="preserve">
+    <value>Failed to import icon</value>
+  </data>
+  <data name="M_ImageType" xml:space="preserve">
+    <value>Images</value>
+  </data>
+  <data name="M_ApplicationType" xml:space="preserve">
+    <value>Applications</value>
+  </data>
+  <data name="M_OpenFailed" xml:space="preserve">
+    <value>Cannot open this target</value>
+  </data>
+  <data name="M_InvalidTarget" xml:space="preserve">
+    <value>The button target is no longer available. Choose it again</value>
+  </data>
+  <data name="M_SaveFailed" xml:space="preserve">
+    <value>Failed to save custom buttons</value>
+  </data>
+  <data name="V_LabelRequired" xml:space="preserve">
+    <value>Name cannot be empty</value>
+  </data>
+  <data name="V_LabelTooLong" xml:space="preserve">
+    <value>Name must be at most {0} characters</value>
+  </data>
+  <data name="V_IconMissing" xml:space="preserve">
+    <value>Choose an icon</value>
+  </data>
+  <data name="V_IconImageInvalid" xml:space="preserve">
+    <value>Icon file is invalid</value>
+  </data>
+  <data name="V_TargetRequired" xml:space="preserve">
+    <value>Choose a target</value>
+  </data>
+  <data name="V_TargetTooLong" xml:space="preserve">
+    <value>Target is too long</value>
+  </data>
+  <data name="V_TargetInvalidUri" xml:space="preserve">
+    <value>Enter a link starting with http:// or https://</value>
+  </data>
+  <data name="V_TargetInvalidPath" xml:space="preserve">
+    <value>Choose a full file or folder path</value>
+  </data>
+  <data name="V_UnsupportedAction" xml:space="preserve">
+    <value>Unsupported action</value>
+  </data>
+  <data name="E_Unreadable" xml:space="preserve">
+    <value>Cannot read the image</value>
+  </data>
+  <data name="E_TooLarge" xml:space="preserve">
+    <value>The image is too large. Choose a smaller one</value>
+  </data>
+  <data name="E_UnsupportedFormat" xml:space="preserve">
+    <value>This icon format is not supported. Import it as an image instead</value>
+  </data>
+  <data name="E_NotAnApplication" xml:space="preserve">
+    <value>The selected file is not an application</value>
+  </data>
+  <data name="E_NoIconFound" xml:space="preserve">
+    <value>No usable icon was found in this application</value>
+  </data>
+  <data name="E_ExtractionFailed" xml:space="preserve">
+    <value>Failed to read the application icon</value>
+  </data>
+  <data name="C_Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="C_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="M_AddTitle" xml:space="preserve">
+    <value>New quick button</value>
+  </data>
+  <data name="M_EditTitle" xml:space="preserve">
+    <value>Edit quick button</value>
+  </data>
+  <data name="M_EditorHint" xml:space="preserve">
+    <value>Pick an icon and a name, then choose the page or file to open; changes apply right after saving</value>
+  </data>
+</root>

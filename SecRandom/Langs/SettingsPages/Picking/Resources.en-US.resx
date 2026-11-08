@@ -29,6 +29,7 @@
   <data name="S_DefaultClass_D" xml:space="preserve"><value>The list used by default when opening a page or running Quick Draw</value></data>
   <data name="S_DefaultPool" xml:space="preserve"><value>Default Prize Pool</value></data>
   <data name="S_DefaultPool_D" xml:space="preserve"><value>The prize pool used by default when opening the lottery page</value></data>
+  <data name="O_NoList" xml:space="preserve"><value>No roster</value></data>
   <data name="S_DisableAfterClick" xml:space="preserve"><value>Disable After Click</value></data>
   <data name="S_DisableAfterClick_D" xml:space="preserve"><value>Seconds to disable the button after a Quick Draw</value></data>
   <data name="S_FontSource" xml:space="preserve"><value>Font Source</value></data>

@@ -54,6 +54,7 @@ namespace SecRandom.Langs.MainPages.RollCall {
         public static string M_NoEligibleCandidates => ResourceManager.GetString("M_NoEligibleCandidates", resourceCulture);
         public static string M_NoRemainingStudents => ResourceManager.GetString("M_NoRemainingStudents", resourceCulture);
         public static string M_NoStudents => ResourceManager.GetString("M_NoStudents", resourceCulture);
+        public static string M_NumberCountSummary => ResourceManager.GetString("M_NumberCountSummary", resourceCulture);
         public static string M_ResultSeparator => ResourceManager.GetString("M_ResultSeparator", resourceCulture);
         public static string M_Ready => ResourceManager.GetString("M_Ready", resourceCulture);
         public static string M_RepeatLimitExhausted => ResourceManager.GetString("M_RepeatLimitExhausted", resourceCulture);
@@ -63,5 +64,6 @@ namespace SecRandom.Langs.MainPages.RollCall {
         public static string O_AllGroups => ResourceManager.GetString("O_AllGroups", resourceCulture);
         public static string O_HistoryGroup => ResourceManager.GetString("O_HistoryGroup", resourceCulture);
         public static string O_HistoryGroupDefault => ResourceManager.GetString("O_HistoryGroupDefault", resourceCulture);
+        public static string O_NoList => ResourceManager.GetString("O_NoList", resourceCulture);
     }
 }

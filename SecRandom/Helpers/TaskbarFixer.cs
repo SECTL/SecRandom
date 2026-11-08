@@ -1,4 +1,4 @@
-﻿/*
+/*
  * UIAccess 任务栏图标修复器
  * 代码来自 [LegacyIsland / UIAccessX](https://github.com/segf4ultk1nger/dubiisland)
  * Licensed under the GNU General Public License v3.0
@@ -41,6 +41,10 @@ internal static class TaskbarFixer
     private static IntPtr _offscreenOwner;
     private static ITaskbarList? _taskbar;
     private static DispatcherTimer? _timer;
+    private static bool _sweepQueued;
+
+    /// <summary>低频兜底间隔：shell 偶尔会把主窗口重新加回任务栏，需要周期性重推一次。</summary>
+    private static readonly TimeSpan FallbackInterval = TimeSpan.FromSeconds(5);
 
     public static void Start()
     {
@@ -56,15 +60,33 @@ internal static class TaskbarFixer
             Fix(window);
             // 托盘菜单等窗口会被复用，每次重新 Show 后再修一遍。
             window.Opened += (_, _) => Fix(window);
+            window.Activated += (_, _) => Fix(window);
         });
         Window.ShowInTaskbarProperty.Changed.AddClassHandler<Window>((window, _) => Fix(window));
 
-        // 托盘菜单是短命窗口，Loaded 即修；主窗口进过编辑模式后可能被 shell 重新加回来，定期兜底。
-        _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _timer.Tick += (_, _) => FixAll();
+        // 兜底从 1 秒放宽到 5 秒：真正的触发点是上面的 Loaded/Opened/Activated/ShowInTaskbar 事件，
+        // 定时器只负责补救 shell 自行重算任务栏按钮的情况，不必每秒扫一遍全部窗口。
+        _timer = new DispatcherTimer { Interval = FallbackInterval };
+        _timer.Tick += (_, _) => QueueSweep();
         _timer.Start();
 
         FixAll();
+    }
+
+    /// <summary>把一次全量兜底挪到空闲优先级，避免与窗口动画/布局抢当前这一帧。</summary>
+    private static void QueueSweep()
+    {
+        if (_sweepQueued)
+        {
+            return;
+        }
+
+        _sweepQueued = true;
+        Dispatcher.UIThread.Post(() =>
+        {
+            _sweepQueued = false;
+            FixAll();
+        }, DispatcherPriority.Background);
     }
 
     private static void FixAll()

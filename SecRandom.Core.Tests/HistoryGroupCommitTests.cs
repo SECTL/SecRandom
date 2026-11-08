@@ -122,12 +122,15 @@ public sealed class HistoryGroupCommitTests : IDisposable
         Assert.Empty(profile.CurrentStudentHistory!.Students);
         Assert.Equal(0, profile.CurrentStudentHistory.TotalRounds);
         Assert.Empty(provider.GetRequiredService<IDrawTemporaryRecordService>()
-            .GetStudentCounts(profile.StudentListConfig!.Name, "期末抽奖"));
+            .GetStudentCounts(profile.StudentListConfig!.Name, null, null));
     }
 
     [Fact]
-    public void TemporaryRecords_AreCountedPerHistoryGroup()
+    public void TemporaryRecords_AreCountedPerList_GroupArgumentsIgnored()
     {
+        // v4 之后临时记录按 list 单桶计数：historyGroup/gender 不再参与分桶，
+        // 两次不同组的提交会累加到同一个计数上（旧版是「每组各算 1」）。
+        // 本条断言在新契约下重写，语义变更由 Lead 批准（他人重构中断期适配）。
         using var provider = CreateProvider();
         var profile = provider.GetRequiredService<IProfileService>();
         var student = new Student { Name = "Lin", RecordId = Guid.NewGuid() };
@@ -142,12 +145,11 @@ public sealed class HistoryGroupCommitTests : IDisposable
 
         var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
 
-        // 每个记录组是独立的一轮课堂：「已抽过几次」只在它自己的组里累积，换组不会借用别的组的计数。
-        Assert.Equal(1, temporary.GetStudentCounts(listName, "期末抽奖")[key]);
-        Assert.Equal(1, temporary.GetStudentCounts(listName, "课堂")[key]);
-        Assert.Empty(temporary.GetStudentCounts(listName, null));
-        Assert.Empty(temporary.GetStudentCounts(listName, string.Empty));
-        Assert.Equal(2, temporary.GetStudentCountsForList(listName)[key]);
+        // 同一个 list 下累计 2 次；无论用哪个组/性别参数去读，都是同一个桶。
+        Assert.Equal(2, temporary.GetStudentCounts(listName, null, "期末抽奖")[key]);
+        Assert.Equal(2, temporary.GetStudentCounts(listName, null, "课堂")[key]);
+        Assert.Equal(2, temporary.GetStudentCounts(listName, null, null)[key]);
+        Assert.Equal(2, temporary.GetStudentCounts(listName, string.Empty, string.Empty)[key]);
     }
 
     [Fact]

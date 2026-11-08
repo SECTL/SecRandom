@@ -27,6 +27,18 @@
   <data name="S_Display_StartupDisplay_D" xml:space="preserve">
     <value>控制程序启动后是否自动打开悬浮窗</value>
   </data>
+  <data name="S_Display_ShowOnBothSides" xml:space="preserve">
+    <value>左右两侧同时显示</value>
+  </data>
+  <data name="S_Display_ShowOnBothSides_D" xml:space="preserve">
+    <value>在屏幕左右两边各放一个悬浮窗，两扇窗功能一样，都只能上下移动</value>
+  </data>
+  <data name="S_Display_SyncBothSidesAnchor" xml:space="preserve">
+    <value>两侧保持同一高度</value>
+  </data>
+  <data name="S_Display_SyncBothSidesAnchor_D" xml:space="preserve">
+    <value>开启后拖动任意一侧的悬浮窗，另一侧会跟着上下移动；关闭后两侧各记各的高度</value>
+  </data>
   <data name="S_Display_Opacity" xml:space="preserve">
     <value>悬浮窗不透明度</value>
   </data>
@@ -131,6 +143,21 @@
   </data>
   <data name="S_Buttons_EnabledItems_D" xml:space="preserve">
     <value>选择主悬浮窗中显示的功能入口</value>
+  </data>
+  <data name="S_Buttons_CustomButtons" xml:space="preserve">
+    <value>自定义按钮</value>
+  </data>
+  <data name="S_Buttons_CustomButtons_D" xml:space="preserve">
+    <value>添加自己的按钮，可打开指定页面、网址、文件或运行应用，图标也能用导入的图片或应用图标</value>
+  </data>
+  <data name="S_Buttons_CustomButtons_Open" xml:space="preserve">
+    <value>管理自定义按钮</value>
+  </data>
+  <data name="M_Buttons_CustomSummary" xml:space="preserve">
+    <value>已配置 {0} 个，最多 {1} 个</value>
+  </data>
+  <data name="M_Buttons_CustomOpenFailed" xml:space="preserve">
+    <value>无法打开自定义按钮页面</value>
   </data>
   <data name="S_Buttons_Placement" xml:space="preserve">
     <value>控件排列</value>

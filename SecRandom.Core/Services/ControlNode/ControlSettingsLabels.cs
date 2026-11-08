@@ -415,6 +415,7 @@ public static class ControlSettingsLabels
         // ---------------- 悬浮窗
         ["startup_display_floating_window"] = R(FloatingWindow, "S_Display_StartupDisplay"),
         ["show_on_both_sides"] = R(FloatingWindow, "S_Display_ShowOnBothSides"),
+        ["sync_both_sides_anchor"] = R(FloatingWindow, "S_Display_SyncBothSidesAnchor"),
         ["floating_window_opacity"] = R(FloatingWindow, "S_Display_Opacity"),
         ["floating_window_topmost_mode"] = R(FloatingWindow, "S_Display_TopmostMode"),
         ["show_roll_call_button"] = R(FloatingWindow, "S_Buttons_RollCall"),

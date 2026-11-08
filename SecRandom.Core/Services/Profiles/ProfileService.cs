@@ -4,6 +4,7 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Services.Profiles;
 using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.Models.Profile;
@@ -366,6 +367,10 @@ public static partial class CoreRuntimeServiceCollectionExtensions
 
     private static string ResolveProfileName(string rootA, string rootB, string preferredName)
     {
+        // 「不使用名单」不是真实档案名：回落到磁盘上已有的名单，绝不为哨兵创建/读取档案文件。
+        if (RosterSelection.IsNone(preferredName))
+            preferredName = string.Empty;
+
         if (preferredName != string.Empty)
             ProfileConfigBase.ValidateProfileName(preferredName);
 

@@ -222,6 +222,42 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 左右两侧同时显示.
+        /// </summary>
+        public static string S_Display_ShowOnBothSides {
+            get {
+                return ResourceManager.GetString("S_Display_ShowOnBothSides", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 在屏幕左右两边各显示一个悬浮窗，开启后两扇窗只能上下移动。.
+        /// </summary>
+        public static string S_Display_ShowOnBothSides_D {
+            get {
+                return ResourceManager.GetString("S_Display_ShowOnBothSides_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 两侧保持同一高度.
+        /// </summary>
+        public static string S_Display_SyncBothSidesAnchor {
+            get {
+                return ResourceManager.GetString("S_Display_SyncBothSidesAnchor", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 开启后拖动任意一侧的悬浮窗，另一侧会跟着上下移动；关闭后两侧各记各的高度.
+        /// </summary>
+        public static string S_Display_SyncBothSidesAnchor_D {
+            get {
+                return ResourceManager.GetString("S_Display_SyncBothSidesAnchor_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 悬浮窗置顶模式.
         /// </summary>
         public static string S_Display_TopmostMode {
@@ -632,6 +668,51 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
         public static string O_StickDisplay_Arrow {
             get {
                 return ResourceManager.GetString("O_StickDisplay_Arrow", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 自定义按钮.
+        /// </summary>
+        public static string S_Buttons_CustomButtons {
+            get {
+                return ResourceManager.GetString("S_Buttons_CustomButtons", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 添加自己的按钮，可打开指定页面、网址、文件或运行应用，图标也能用导入的图片或应用图标.
+        /// </summary>
+        public static string S_Buttons_CustomButtons_D {
+            get {
+                return ResourceManager.GetString("S_Buttons_CustomButtons_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 管理自定义按钮.
+        /// </summary>
+        public static string S_Buttons_CustomButtons_Open {
+            get {
+                return ResourceManager.GetString("S_Buttons_CustomButtons_Open", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 已配置 {0} 个，最多 {1} 个.
+        /// </summary>
+        public static string M_Buttons_CustomSummary {
+            get {
+                return ResourceManager.GetString("M_Buttons_CustomSummary", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 无法打开自定义按钮页面.
+        /// </summary>
+        public static string M_Buttons_CustomOpenFailed {
+            get {
+                return ResourceManager.GetString("M_Buttons_CustomOpenFailed", resourceCulture);
             }
         }
     }

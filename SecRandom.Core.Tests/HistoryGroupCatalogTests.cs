@@ -249,14 +249,8 @@ public sealed class HistoryGroupCatalogTests : IDisposable
             Directory.Delete(_dataRoot, recursive: true);
     }
 
-    private static IHistoryGroupCatalog CreateCatalog(IProfileService profile)
-    {
-        var provider = CreateProvider();
-        return new HistoryGroupCatalog(
-            NullLogger<HistoryGroupCatalog>.Instance,
-            profile,
-            provider.GetRequiredService<IDrawTemporaryRecordService>());
-    }
+    private static IHistoryGroupCatalog CreateCatalog(IProfileService profile) =>
+        new HistoryGroupCatalog(NullLogger<HistoryGroupCatalog>.Instance, profile);
 
     private static ServiceProvider CreateProvider()
     {

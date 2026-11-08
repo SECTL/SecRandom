@@ -75,7 +75,7 @@ public sealed class PluginDrawServiceTests : IDisposable
         Assert.False(string.IsNullOrWhiteSpace(result.DrawRoundId));
 
         var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
-        Assert.Equal(1, temporary.GetStudentCounts("default", null)[student.RecordId.ToString("D")]);
+        Assert.Equal(1, temporary.GetStudentCounts("default", null, null)[student.RecordId.ToString("D")]);
     }
 
     [Fact]

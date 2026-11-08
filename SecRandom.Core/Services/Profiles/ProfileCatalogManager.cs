@@ -166,6 +166,24 @@ internal sealed class ProfileCatalogManager(
             return false;
 
         var list = LoadStudentList(name) ?? new StudentList(name);
+
+        // 导入是整表替换，但「同一个人」不能跟着旧对象一起丢掉：按「学号 + 姓名」精确认领，
+        // 复用 RecordId（点名历史与公平性统计挂在它上面）和成员级附加设置。
+        // 学号或姓名有一项变了就不认领——不靠姓名模糊兜底，避免重名错认，这类成员交给 Normalize 发新 Id。
+        // 同一个控件键如果本次导入已显式给出，则以导入值为准（集控 replace 载荷会携带特殊语音）。
+        foreach (var student in students)
+        {
+            var existing = list.Students.FirstOrDefault(x =>
+                string.Equals(x.Id, student.Id, StringComparison.Ordinal) &&
+                string.Equals(x.Name, student.Name, StringComparison.Ordinal));
+            if (existing is null || existing.RecordId == Guid.Empty)
+                continue;
+
+            student.RecordId = existing.RecordId;
+            foreach (var (controlId, value) in existing.AttachedObjects)
+                student.AttachedObjects.TryAdd(controlId, value);
+        }
+
         list.Students.Clear();
         foreach (var student in students)
             list.Students.Add(student);

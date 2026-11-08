@@ -8,6 +8,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Services.Profiles;
 using SecRandom.Services.Verification;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Models.Profile;
@@ -36,6 +37,28 @@ public sealed record RollCallDrawResult(
     string? Note = null,
     bool SuppressPresentation = false);
 
+/// <summary>One "no roster" number draw for the roll-call page (inclusive integer range).</summary>
+public sealed record RollCallNumberDrawRequest(
+    int RangeStart,
+    int RangeEnd,
+    int Count,
+    string CourseName,
+    string? HistoryGroup = null);
+
+public sealed record RollCallNumberDrawResult(
+    IReadOnlyList<Student> Numbers,
+    Guid ProofId,
+    string DrawRoundId,
+    IReadOnlyDictionary<Guid, double> FrozenWeights,
+    string? Note = null,
+    bool SuppressPresentation = false);
+
+public sealed record RollCallNumberSnapshot(int RangeStart, int RangeEnd, IReadOnlyList<Student> Remaining)
+{
+    public int TotalCount => RangeEnd >= RangeStart ? RangeEnd - RangeStart + 1 : 0;
+    public int RemainingCount => Remaining.Count;
+}
+
 /// <summary>
 /// Shared point-call use case for every UI. Presentation layers own authorization, preview and media.
 /// </summary>
@@ -51,7 +74,7 @@ public sealed class RollCallDrawService(
     IDrawPipelineService? pipeline = null,
     IPluginEventBus? eventBus = null)
 {
-    public RollCallDrawSnapshot GetSnapshot(string group, string gender, string? historyGroup = null)
+    public RollCallDrawSnapshot GetSnapshot(string group, string gender)
     {
         var students = profileService.CurrentStudentList?.Students ?? [];
         var candidates = students.Where(student => DrawCandidateFilter.MatchesScope(student, group, gender))
@@ -62,7 +85,7 @@ public sealed class RollCallDrawService(
         var threshold = DrawRepeatPolicy.ResolveThreshold(configHandler.Data.EffectiveRollCallSettings.DrawMode,
             configHandler.Data.EffectiveRollCallSettings.HalfRepeat);
         var remaining = DrawCandidateFilter.FilterEligibleStudents(candidates, group, gender,
-                temporaryRecords.GetStudentCounts(GetListName(), historyGroup), threshold)
+                temporaryRecords.GetStudentCounts(GetListName(), gender, group), threshold)
             .OrderForList().ToArray();
         return new RollCallDrawSnapshot(
             profileCatalogManager.GetStudentListNames(),
@@ -86,7 +109,7 @@ public sealed class RollCallDrawService(
     public async Task<RollCallDrawResult?> DrawAsync(RollCallDrawRequest request, CancellationToken cancellationToken = default)
     {
         SwitchList(request.ListName);
-        var snapshot = GetSnapshot(request.Group, request.Gender, request.HistoryGroup);
+        var snapshot = GetSnapshot(request.Group, request.Gender);
         var count = Math.Clamp(request.Count, 1, snapshot.RemainingCount);
         if (snapshot.RemainingCount == 0)
             return null;
@@ -158,8 +181,77 @@ public sealed class RollCallDrawService(
             edit?.Note, edit?.SuppressPresentation ?? false);
     }
 
-    public void Reset(string group, string gender, string? historyGroup = null) =>
-        temporaryRecords.ClearStudentScope(GetListName(), historyGroup);
+    public void Reset(string group, string gender) => temporaryRecords.ClearStudentScope(GetListName(), gender, group);
+
+    /// <summary>Temporary-record scope for number draws; deliberately not a real roster name.</summary>
+    public const string NumberListName = "__number_list__";
+
+    public RollCallNumberSnapshot GetNumberSnapshot(int rangeStart, int rangeEnd)
+    {
+        if (!RosterSelection.IsValidRange(rangeStart, rangeEnd))
+            return new RollCallNumberSnapshot(rangeStart, rangeEnd, []);
+        var tickets = NumberTickets.CreateStudents(rangeStart, rangeEnd);
+        var settings = configHandler.Data.EffectiveRollCallSettings;
+        var counts = temporaryRecords.GetStudentCounts(NumberListName, string.Empty, string.Empty);
+        var remaining = DrawCandidateFilter.FilterEligibleStudents(
+            tickets, string.Empty, string.Empty, counts,
+            DrawRepeatPolicy.ResolveThreshold(settings.DrawMode, settings.HalfRepeat));
+        return new RollCallNumberSnapshot(rangeStart, rangeEnd, remaining.ToArray());
+    }
+
+    public async Task<RollCallNumberDrawResult?> DrawNumbersAsync(RollCallNumberDrawRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var snapshot = GetNumberSnapshot(request.RangeStart, request.RangeEnd);
+        if (snapshot.RemainingCount == 0)
+            return null;
+        var count = Math.Clamp(request.Count, 1, snapshot.RemainingCount);
+        var outcome = await verification.DrawNumberStudentsAsync(
+            count, request.RangeStart, request.RangeEnd, snapshot.Remaining,
+            DrawProofExportContext.ForStudents(NumberListName, string.Empty, string.Empty, request.CourseName),
+            cancellationToken).ConfigureAwait(false);
+        if (outcome is null)
+            return null;
+
+        var weights = outcome.Winners.ToDictionary(student => student, student =>
+        {
+            ProfileRecordIdentity.EnsureRecordId(student);
+            return outcome.FrozenWeights.GetValueOrDefault(student.RecordId, 1d);
+        });
+        var drawRoundId = drawCommits.CommitNumberDraw(new NumberDrawCommit(
+            outcome.Winners,
+            NumberListName,
+            string.Empty,
+            string.Empty,
+            null,
+            null,
+            DateTime.Now,
+            count,
+            request.RangeStart,
+            request.RangeEnd));
+        try
+        {
+            verification.Publish(outcome);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "数字点名已提交，但抽取证明发布失败，证明将保持待发布状态。ProofId={ProofId}", outcome.Proof.ProofId);
+        }
+
+        usageReport.RecordRollCall();
+        eventBus?.Publish(new HostEvents.DrawCompleted(
+            DrawPresentationChannel.RollCall,
+            outcome.Winners,
+            [],
+            NumberListName,
+            string.Empty,
+            drawRoundId,
+            DateTime.Now,
+            count));
+        return new RollCallNumberDrawResult(outcome.Winners, outcome.Proof.ProofId, drawRoundId, outcome.FrozenWeights);
+    }
+
+    public void ResetNumbers() => temporaryRecords.ClearStudentScope(NumberListName, string.Empty, string.Empty);
 
     private DrawPipelineContext BuildRollCallContext(string group, string gender, string courseName, int requestedCount) =>
         new(DrawPresentationChannel.RollCall,
@@ -214,6 +306,31 @@ public sealed record LotteryDrawResult(
     string? Note = null,
     bool SuppressPresentation = false);
 
+/// <summary>One "no roster" number draw for the lottery page; members may still be assigned from a roster.</summary>
+public sealed record LotteryNumberDrawRequest(
+    int RangeStart,
+    int RangeEnd,
+    int Count,
+    string CourseName,
+    string StudentListName,
+    string Group,
+    string Gender,
+    string? HistoryGroup = null);
+
+public sealed record LotteryNumberDrawResult(
+    IReadOnlyList<Prize> Numbers,
+    IReadOnlyList<Student> AssignedStudents,
+    Guid PrizeProofId,
+    string DrawRoundId,
+    string? Note = null,
+    bool SuppressPresentation = false);
+
+public sealed record LotteryNumberSnapshot(int RangeStart, int RangeEnd, IReadOnlyList<Prize> Remaining)
+{
+    public int TotalCount => RangeEnd >= RangeStart ? RangeEnd - RangeStart + 1 : 0;
+    public int RemainingCount => Remaining.Count;
+}
+
 /// <summary>
 /// Shared lottery use case. It preserves one transactional draw round for prizes and assignments.
 /// </summary>
@@ -229,14 +346,14 @@ public sealed class LotteryDrawService(
     IDrawPipelineService? pipeline = null,
     IPluginEventBus? eventBus = null)
 {
-    public LotteryDrawSnapshot GetSnapshot(string studentListName, string group, string gender, string? historyGroup = null)
+    public LotteryDrawSnapshot GetSnapshot(string studentListName, string group, string gender)
     {
         var prizes = (profileService.CurrentPrizeList?.Prizes ?? []).Where(prize => prize.IsCandidate).ToArray();
         var settings = configHandler.Data.EffectiveLotterySettings;
         var counts = temporaryRecords.GetPrizeCounts(GetPrizePoolName());
         var remaining = DrawCandidateFilter.FilterEligiblePrizes(prizes, counts, settings.DrawType,
             DrawRepeatPolicy.ResolveThreshold(settings.DrawMode, settings.HalfRepeat)).OrderForList().ToArray();
-        var students = GetEligibleStudents(studentListName, group, gender, historyGroup);
+        var students = GetEligibleStudents(studentListName, group, gender);
         // 插件候选集过滤器同时作用于奖池与参与学生（与点名通道共用同一套过滤点）。
         var filtered = pipeline?.ApplyFilters(
             BuildLotteryContext(group, gender, string.Empty, 0), students, prizes);
@@ -290,7 +407,7 @@ public sealed class LotteryDrawService(
         if (hasStudentAssignment)
             SwitchStudentList(request.StudentListName);
 
-        var snapshot = GetSnapshot(request.StudentListName, request.Group, request.Gender, request.HistoryGroup);
+        var snapshot = GetSnapshot(request.StudentListName, request.Group, request.Gender);
         if (snapshot.RemainingCount == 0)
             return null;
         var count = Math.Clamp(request.Count, 1, snapshot.RemainingCount);
@@ -364,11 +481,100 @@ public sealed class LotteryDrawService(
             edit?.Note, edit?.SuppressPresentation ?? false);
     }
 
-    public void Reset(string studentListName, string group, string gender, string? historyGroup = null)
+    public void Reset(string studentListName, string group, string gender)
     {
         temporaryRecords.ClearPrizeList(GetPrizePoolName());
         if (!string.IsNullOrWhiteSpace(studentListName))
-            temporaryRecords.ClearStudentScope(GetStudentListName(), historyGroup);
+            temporaryRecords.ClearStudentScope(GetStudentListName(), gender, group);
+    }
+
+    /// <summary>Temporary-record scope for number prize draws; deliberately not a real prize-pool name.</summary>
+    public const string NumberPrizePoolName = "__number_prize_pool__";
+
+    public LotteryNumberSnapshot GetNumberSnapshot(int rangeStart, int rangeEnd)
+    {
+        if (!RosterSelection.IsValidRange(rangeStart, rangeEnd))
+            return new LotteryNumberSnapshot(rangeStart, rangeEnd, []);
+        var prizes = NumberTickets.CreatePrizes(rangeStart, rangeEnd);
+        var settings = configHandler.Data.EffectiveLotterySettings;
+        var counts = temporaryRecords.GetPrizeCounts(NumberPrizePoolName);
+        var remaining = DrawCandidateFilter.FilterEligiblePrizes(
+            prizes, counts, settings.DrawType,
+            DrawRepeatPolicy.ResolveThreshold(settings.DrawMode, settings.HalfRepeat));
+        return new LotteryNumberSnapshot(rangeStart, rangeEnd, remaining.ToArray());
+    }
+
+    public async Task<LotteryNumberDrawResult?> DrawNumbersAsync(LotteryNumberDrawRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var hasStudentAssignment = !string.IsNullOrWhiteSpace(request.StudentListName);
+        if (hasStudentAssignment)
+            SwitchStudentList(request.StudentListName);
+
+        var snapshot = GetNumberSnapshot(request.RangeStart, request.RangeEnd);
+        if (snapshot.RemainingCount == 0)
+            return null;
+        var count = Math.Clamp(request.Count, 1, snapshot.RemainingCount);
+        IReadOnlyList<Student> eligible = hasStudentAssignment
+            ? GetEligibleStudents(request.StudentListName, request.Group, request.Gender)
+            : [];
+        if (hasStudentAssignment && eligible.Count < count)
+            return null;
+
+        var prizes = await verification.DrawNumberPrizesAsync(
+            count, request.RangeStart, request.RangeEnd, snapshot.Remaining,
+            DrawProofExportContext.ForPrizes(NumberPrizePoolName),
+            cancellationToken).ConfigureAwait(false);
+        if (prizes is null)
+            return null;
+
+        IReadOnlyList<Student> assigned = [];
+        VerificationDrawOutcome<Student>? assignedOutcome = null;
+        if (hasStudentAssignment)
+        {
+            assignedOutcome = await verification.DrawStudentsAsync(count, eligible, DrawSettingsType.RollCall,
+                DrawProofExportContext.ForStudents(GetStudentListName(), request.Group, request.Gender, request.CourseName),
+                prizes.Proof.ProofId, request.CourseName, request.HistoryGroup, cancellationToken).ConfigureAwait(false);
+            if (assignedOutcome is null)
+                return null;
+            assigned = assignedOutcome.Winners;
+            if (assigned.Count != prizes.Winners.Count)
+                return null;
+        }
+
+        var drawRoundId = drawCommits.CommitNumberDraw(new NumberDrawCommit(
+            hasStudentAssignment ? assigned : null,
+            hasStudentAssignment ? GetStudentListName() : null,
+            request.Group,
+            request.Gender,
+            prizes.Winners,
+            NumberPrizePoolName,
+            DateTime.Now,
+            count,
+            request.RangeStart,
+            request.RangeEnd));
+        PublishProof(prizes);
+        if (assignedOutcome is not null)
+            PublishProof(assignedOutcome);
+
+        usageReport.RecordLottery();
+        eventBus?.Publish(new HostEvents.DrawCompleted(
+            DrawPresentationChannel.Lottery,
+            assigned,
+            prizes.Winners,
+            hasStudentAssignment ? GetStudentListName() : string.Empty,
+            NumberPrizePoolName,
+            drawRoundId,
+            DateTime.Now,
+            count));
+        return new LotteryNumberDrawResult(prizes.Winners, assigned, prizes.Proof.ProofId, drawRoundId);
+    }
+
+    public void ResetNumbers(string studentListName, string group, string gender)
+    {
+        temporaryRecords.ClearPrizeList(NumberPrizePoolName);
+        if (!string.IsNullOrWhiteSpace(studentListName))
+            temporaryRecords.ClearStudentScope(GetStudentListName(), gender, group);
     }
 
     private DrawPipelineContext BuildLotteryContext(string group, string gender, string courseName, int requestedCount) =>
@@ -394,14 +600,14 @@ public sealed class LotteryDrawService(
         }
     }
 
-    private IReadOnlyList<Student> GetEligibleStudents(string selectedList, string group, string gender, string? historyGroup = null)
+    private IReadOnlyList<Student> GetEligibleStudents(string selectedList, string group, string gender)
     {
         if (string.IsNullOrWhiteSpace(selectedList))
             return [];
         var threshold = DrawRepeatPolicy.ResolveThreshold(configHandler.Data.EffectiveRollCallSettings.DrawMode,
             configHandler.Data.EffectiveRollCallSettings.HalfRepeat);
         return DrawCandidateFilter.FilterEligibleStudents(profileService.CurrentStudentList?.Students ?? [], group, gender,
-            temporaryRecords.GetStudentCounts(GetStudentListName(), historyGroup), threshold).ToArray();
+            temporaryRecords.GetStudentCounts(GetStudentListName(), gender, group), threshold).ToArray();
     }
 
     private IReadOnlyList<string> GetStudentScopeValues(Func<Student, string> selector) =>

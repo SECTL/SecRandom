@@ -58,7 +58,7 @@ public sealed class DrawCommitCoordinatorTests : IDisposable
 
         var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
         Assert.Equal(1, temporary.GetPrizeCounts(profile.PrizeListConfig!.Name)[prize.RecordId.ToString("D")]);
-        Assert.Equal(1, temporary.GetStudentCounts(profile.StudentListConfig!.Name, null)[student.RecordId.ToString("D")]);
+        Assert.Equal(1, temporary.GetStudentCounts(profile.StudentListConfig!.Name, null, null)[student.RecordId.ToString("D")]);
     }
 
     [Fact]
@@ -81,7 +81,7 @@ public sealed class DrawCommitCoordinatorTests : IDisposable
         Assert.Equal(roundId, prizeItem.DrawRoundId);
         Assert.Empty(profile.CurrentStudentHistory!.Students);
         Assert.Empty(provider.GetRequiredService<IDrawTemporaryRecordService>().GetStudentCounts(
-            profile.StudentListConfig!.Name, null));
+            profile.StudentListConfig!.Name, null, null));
     }
 
     [Fact]
@@ -106,7 +106,7 @@ public sealed class DrawCommitCoordinatorTests : IDisposable
             profile.StudentListConfig!.Name)));
 
         var temporary = provider.GetRequiredService<IDrawTemporaryRecordService>();
-        Assert.Empty(temporary.GetStudentCounts(profile.StudentListConfig!.Name, null));
+        Assert.Empty(temporary.GetStudentCounts(profile.StudentListConfig!.Name, null, null));
         Assert.Equal(0, profile.CurrentStudentHistory!.TotalRounds);
         Assert.Equal(0, profile.CurrentStudentHistory.TotalStats);
         Assert.Empty(profile.CurrentStudentHistory.Students);

@@ -133,8 +133,8 @@ public sealed class ControlDrawResetHandler(
 
     private int ResetStudents(string listName)
     {
-        // 远程重置清的是整份名单（所有记录组的桶），因此统计也要跨桶求和。
-        var counts = temporaryRecords.GetStudentCountsForList(listName);
+        // 空的条件＝整份名单的桶（临时记录只属于名单，不属于某次 (性别, 分组) 过滤）。
+        var counts = temporaryRecords.GetStudentCounts(listName, string.Empty, string.Empty);
         var cleared = counts.Values.Sum();
         temporaryRecords.ResetStudentList(listName);
         return cleared;

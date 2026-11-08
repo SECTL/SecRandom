@@ -116,6 +116,27 @@ public sealed class CourseLinkageService
     public bool IsConfirmedNonClassTime => Settings.InstantDrawDisable
         && IsConfirmedBreakTime;
 
+    /// <summary>
+    ///     数据源已经选择，但当前拿不到可靠状态（未连接、未导入课程表、读取失败……）。
+    /// </summary>
+    /// <remarks>
+    ///     数据源为「关闭」时快照同样不可用，但那表示用户没有启用联动，不能算作数据源异常。
+    ///     应用刚启动、第一次刷新尚未完成时也落在这里：既然拿不到信息，就只能按拿不到处理。
+    /// </remarks>
+    public bool IsSourceUnavailable =>
+        Settings.DataSource != LinkageDataSource.Off && !_snapshot.IsAvailable;
+
+    /// <summary>
+    ///     抽取与重置当前是否应被课程联动限制。
+    /// </summary>
+    /// <remarks>
+    ///     除了明确确认的非上课时段，开启「数据源不可用时维持限制」后，拿不到课程信息同样算受限：
+    ///     宁可挡住，也不因为数据源异常而静默放行（fail-closed）。快照不可用时没有倒计时，
+    ///     因此不存在课前解禁/课后延迟窗口，受限就是完全受限。
+    /// </remarks>
+    public bool IsClassTimeRestrictionActive => Settings.InstantDrawDisable
+        && (IsConfirmedBreakTime || (Settings.RestrictWhenUnavailable && IsSourceUnavailable));
+
     public string GetSubjectFilter()
     {
         if (!Settings.SubjectHistoryFilterEnabled || !_snapshot.IsAvailable)

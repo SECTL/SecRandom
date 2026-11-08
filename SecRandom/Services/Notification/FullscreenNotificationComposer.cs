@@ -115,7 +115,9 @@ public static class FullscreenNotificationComposer
     public static FullscreenResultSnapshot CreatePreviewSnapshot(
         NotificationSettingsType kind,
         IReadOnlyList<FullscreenResultItem> results,
-        IReadOnlyList<FullscreenResultItem> frozenPool)
+        IReadOnlyList<FullscreenResultItem> frozenPool,
+        int? totalCount = null,
+        int? remainingCount = null)
     {
         var settings = TryGetSettings();
 

@@ -87,6 +87,9 @@
   <data name="S_DefaultPool_D" xml:space="preserve">
     <value>くじ引きページを開くときに使う景品プール</value>
   </data>
+  <data name="O_NoList" xml:space="preserve">
+    <value>名簿なし</value>
+  </data>
   <data name="S_DisableAfterClick" xml:space="preserve">
     <value>クリック後の無効時間</value>
   </data>

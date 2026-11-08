@@ -99,6 +99,41 @@ public sealed class VerificationDrawCoordinator(
     }
 
     /// <summary>
+    ///     Verifies a "no roster" number draw. The tickets are synthetic records generated from the committed
+    ///     inclusive range, so there is no roster behind them and no roster digest is emitted.
+    /// </summary>
+    public async Task<VerificationDrawOutcome<Student>?> DrawNumberStudentsAsync(
+        int count,
+        int rangeStart,
+        int rangeEnd,
+        IReadOnlyCollection<Student> tickets,
+        DrawProofExportContext exportContext,
+        CancellationToken cancellationToken = default)
+    {
+        var verificationMode = configHandler.Data.General.Verification.Mode;
+        var input = drawEngine.CreateNumberVerificationInput(count, rangeStart, rangeEnd);
+        return await DrawAsync(input, tickets, exportContext, null, verificationMode, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Prize-side counterpart of <see cref="DrawNumberStudentsAsync" /> for the lottery page's number mode.
+    /// </summary>
+    public async Task<VerificationDrawOutcome<Prize>?> DrawNumberPrizesAsync(
+        int count,
+        int rangeStart,
+        int rangeEnd,
+        IReadOnlyCollection<Prize> tickets,
+        DrawProofExportContext exportContext,
+        CancellationToken cancellationToken = default)
+    {
+        var verificationMode = configHandler.Data.General.Verification.Mode;
+        var input = drawEngine.CreateNumberVerificationInput(count, rangeStart, rangeEnd);
+        return await DrawAsync(input, tickets, exportContext, null, verificationMode, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
     ///     Commits the roster the draw was taken from so that renaming someone afterwards cannot silently
     ///     re-point a winning record id at a different person. The digest is omitted when the active profile
     ///     is not the list the caller drew from, so a stale profile can never produce a wrong commitment —

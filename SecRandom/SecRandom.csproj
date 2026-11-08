@@ -156,6 +156,11 @@
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
+        <EmbeddedResource Update="Langs\SettingsPages\Personalized\FloatingWindowButtons\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
         <EmbeddedResource Update="Langs\SettingsPages\About\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -364,6 +369,12 @@
             <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
 
+        <Compile Update="Langs\SettingsPages\Personalized\FloatingWindowButtons\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+
         <Compile Update="Langs\SettingsPages\About\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
@@ -528,6 +539,16 @@
 
         <Compile Update="Views\SettingsPages\Personalized\FloatingWindowSettingsPage.axaml.cs">
           <DependentUpon>FloatingWindowSettingsPage.axaml</DependentUpon>
+          <SubType>Code</SubType>
+        </Compile>
+
+        <Compile Update="Views\SettingsPages\Personalized\FloatingWindowButtonsSettingsPage.axaml.cs">
+          <DependentUpon>FloatingWindowButtonsSettingsPage.axaml</DependentUpon>
+          <SubType>Code</SubType>
+        </Compile>
+
+        <Compile Update="Views\SettingsPages\Personalized\FloatingWindowButtonEditorView.axaml.cs">
+          <DependentUpon>FloatingWindowButtonEditorView.axaml</DependentUpon>
           <SubType>Code</SubType>
         </Compile>
 

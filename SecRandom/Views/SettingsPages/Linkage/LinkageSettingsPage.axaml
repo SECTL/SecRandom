@@ -37,6 +37,16 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_External_RestrictWhenUnavailable"
+                                   Header="{x:Static lsp:Resources.S_External_RestrictWhenUnavailable}"
+                                   Description="{x:Static lsp:Resources.S_External_RestrictWhenUnavailable_D}"
+                                   IsVisible="{Binding Settings.InstantDrawDisable}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ShieldErrorFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.RestrictWhenUnavailable}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_External_DataSource"
                                    Header="{x:Static lsp:Resources.S_External_DataSource}"
                                    Description="{x:Static lsp:Resources.S_External_DataSource_D}"

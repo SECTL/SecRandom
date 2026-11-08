@@ -12,6 +12,12 @@
   <data name="S_External_VerificationRequired_D">
     <value>授業外制限が有効な場合、設定したセキュリティ認証後に一時的な抽選やリセットを許可します</value>
   </data>
+  <data name="S_External_RestrictWhenUnavailable">
+    <value>データソース利用不可時も制限を維持</value>
+  </data>
+  <data name="S_External_RestrictWhenUnavailable_D">
+    <value>データソース未接続・時間割未インポート・読み取り失敗の間も、授業外と同様に抽選とリセットを制限します</value>
+  </data>
   <data name="S_External_InstantDrawDisable">
     <value>授業外の操作を制限</value>
   </data>

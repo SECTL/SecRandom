@@ -56,11 +56,33 @@
                               ItemsSource="{Binding StudentListNames}" SelectedItem="{Binding SelectedStudentListName}">
                         <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" /></DataTemplate></ComboBox.ItemTemplate>
                     </ComboBox>
-                    <ComboBox IsVisible="{Binding MoreSettings.RollCallRangeSelector}"
+                    <StackPanel IsVisible="{Binding IsNumberMode}" Spacing="2"
+                                HorizontalAlignment="Stretch">
+                        <StackPanel.Styles>
+                            <!-- 面板只有 180px 宽：两个数字框改成上下各占满整行，保留调节按钮，数字仍然完整可见 -->
+                            <Style Selector="NumericUpDown">
+                                <Setter Property="FontSize" Value="14" />
+                                <Setter Property="Padding" Value="4,0" />
+                            </Style>
+                            <Style Selector="NumericUpDown /template/ TextBox">
+                                <Setter Property="Padding" Value="2,0" />
+                                <Setter Property="MinWidth" Value="0" />
+                                <Setter Property="TextAlignment" Value="Center" />
+                            </Style>
+                        </StackPanel.Styles>
+                        <NumericUpDown Height="{DynamicResource SizeBase}" HorizontalAlignment="Stretch"
+                                       Minimum="0" Increment="1" FormatString="0"
+                                       Value="{Binding NumberRangeStart}" />
+                        <TextBlock Text="-" HorizontalAlignment="Center" VerticalAlignment="Center" Opacity="0.6" />
+                        <NumericUpDown Height="{DynamicResource SizeBase}" HorizontalAlignment="Stretch"
+                                       Minimum="0" Increment="1" FormatString="0"
+                                       Value="{Binding NumberRangeEnd}" />
+                    </StackPanel>
+                    <ComboBox IsVisible="{Binding IsGroupSelectorVisible}"
                               ItemsSource="{Binding GroupOptions}" SelectedItem="{Binding SelectedGroup}">
                         <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" /></DataTemplate></ComboBox.ItemTemplate>
                     </ComboBox>
-                    <ComboBox IsVisible="{Binding MoreSettings.RollCallGenderSelector}"
+                    <ComboBox IsVisible="{Binding IsGenderSelectorVisible}"
                               ItemsSource="{Binding GenderOptions}" SelectedItem="{Binding SelectedGender}">
                         <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" /></DataTemplate></ComboBox.ItemTemplate>
                     </ComboBox>
@@ -69,7 +91,7 @@
                         <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center" TextAlignment="Center" /></DataTemplate></ComboBox.ItemTemplate>
                     </ComboBox>
                     <Button Content="{x:Static langs:Resources.C_ShowRemainingList}"
-                            IsVisible="{Binding MoreSettings.RollCallRemainingButton}"
+                            IsVisible="{Binding IsRemainingListButtonVisible}"
                             Click="RemainingListButton_OnClick" />
                     <Viewbox HorizontalAlignment="Stretch" StretchDirection="DownOnly">
                         <TextBlock Text="{Binding CountSummary}" IsVisible="{Binding MoreSettings.RollCallQuantityLabel}"

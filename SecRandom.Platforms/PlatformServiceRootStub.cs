@@ -23,6 +23,8 @@ public sealed class PlatformServiceRootStub : IPlatformServiceRoot, IWindowFeatu
 
     public IPlatformCameraDeviceCatalog CameraDevices => UnsupportedPlatformCameraDeviceCatalog.Instance;
 
+    public IPlatformApplicationIconExtractor ApplicationIcons => UnsupportedApplicationIconExtractor.Instance;
+
     public global::SecRandom.Platforms.Abstractions.WindowFeatures SupportedFeatures =>
         global::SecRandom.Platforms.Abstractions.WindowFeatures.None;
 

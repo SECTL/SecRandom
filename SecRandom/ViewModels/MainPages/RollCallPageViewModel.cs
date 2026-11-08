@@ -21,11 +21,13 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
+using SecRandom.Core.Models.Notification;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Services.Profiles;
 using SecRandom.Helpers;
 using SecRandom.Services.ControlNode;
 using SecRandom.Services.Draw;
@@ -48,6 +50,9 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private static string AllGendersOption => SR.O_AllGenders;
     private static string DefaultHistoryGroupOption => SR.O_HistoryGroupDefault;
 
+    /// <summary>「不使用名单」下拉项：选中它即进入数字范围抽取模式。</summary>
+    public static string NoListOption => SR.O_NoList;
+
     private readonly DrawEngine _drawEngine;
     private readonly IProfileService _profileService;
     private readonly IProfileCatalogManager _profileCatalogManager;
@@ -64,6 +69,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private readonly NotificationService? _notificationService;
     private readonly IHistoryGroupCatalog _historyGroupCatalog;
     private readonly FileSystemWatcher? _studentListWatcher;
+    private readonly FileWatcherDebouncer? _studentListDebouncer;
     private List<Student> _lastResultStudents = [];
     private int _studentIdPadWidth;
     private bool _isRefreshingLists;
@@ -74,6 +80,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private CancellationTokenSource? _previewCts;
 
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
+    [ObservableProperty] private int _numberRangeStart = 1;
+    [ObservableProperty] private int _numberRangeEnd = 50;
     [ObservableProperty] private string _selectedGroup = AllGroupsOption;
     [ObservableProperty] private string _selectedGender = AllGendersOption;
     [ObservableProperty] private string _selectedHistoryGroup = DefaultHistoryGroupOption;
@@ -122,6 +130,9 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         if (App.IsDesktop && !OperatingSystem.IsIOS())
         {
             _studentListWatcher = CreateStudentListWatcher();
+            _studentListDebouncer = new FileWatcherDebouncer(
+                TimeSpan.FromMilliseconds(400),
+                RefreshAfterListFileChange);
         }
 
         StudentListNames.CollectionChanged += StudentListNamesOnCollectionChanged;
@@ -168,7 +179,21 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     ///     手写 <c>IsVisible</c> 转换器，是为了让移动端复用同一份 VM 时自动一致。
     /// </remarks>
     public bool IsHistoryGroupSelectorVisible =>
-        Config.EffectiveHistoryGroups.Enabled && MoreSettings.RollCallHistoryGroupSelector;
+        Config.EffectiveHistoryGroups.Enabled && MoreSettings.RollCallHistoryGroupSelector && !IsNumberMode;
+
+    /// <summary>
+    ///     是否处于「不使用名单」的数字范围抽取模式：此时候选池是一段整数，与共享档案无关。
+    /// </summary>
+    public bool IsNumberMode => string.Equals(SelectedStudentListName, NoListOption, StringComparison.Ordinal);
+
+    /// <summary>数字模式下没有性别维度，性别选择器随隐藏。</summary>
+    public bool IsGenderSelectorVisible => MoreSettings.RollCallGenderSelector && !IsNumberMode;
+
+    /// <summary>数字模式下没有分组维度，分组选择器随隐藏。</summary>
+    public bool IsGroupSelectorVisible => MoreSettings.RollCallRangeSelector && !IsNumberMode;
+
+    /// <summary>数字模式没有「剩余名单」可看，按钮随隐藏。</summary>
+    public bool IsRemainingListButtonVisible => MoreSettings.RollCallRemainingButton && !IsNumberMode;
 
     public bool CanDecreaseCount => DrawCount > 1;
     public bool CanIncreaseCount => DrawCount < MaximumDrawCount;
@@ -177,7 +202,9 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     public int TotalCount { get; private set; }
     public int RemainingCount { get; private set; }
     public int MaximumDrawCount => Math.Max(1, Math.Max(TotalCount, RemainingCount));
-    public string CountSummary => string.Format(SR.M_CountSummaryFormat, TotalCount, RemainingCount);
+    public string CountSummary => IsNumberMode
+        ? string.Format(SR.M_NumberCountSummary, RemainingCount, TotalCount)
+        : string.Format(SR.M_CountSummaryFormat, TotalCount, RemainingCount);
     public string ResultText { get; private set; }
     public IBrush ReminderBrush => BuildReminderBrush();
     public double ResultFontSize => DisplaySettings.FontSize;
@@ -244,16 +271,80 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     {
         if (!string.IsNullOrWhiteSpace(value) && !_isApplyingSelectionRefresh)
         {
-            _profileService.LoadStudentProfile(value);
-            EnsureRestartTemporaryRecordsCleared(value);
-            if (Config.RollCallSettings.DefaultClass != value)
+            // 自动刷新解析出的选择（名单被删、学生暂时全被禁用等）不算用户决策：
+            // 依然按该选择加载档案/计数，但不得覆盖用户配置的默认名单。
+            var persistSelection = !_isRefreshingLists;
+            if (IsNumberMode)
             {
-                Config.RollCallSettings.DefaultClass = value;
-                _configHandler.Save();
+                // 数字模式不读任何名单：不切换共享档案（否则会把别的会话的档案改成"数字名单"），
+                // 只把「默认抽取名单」记成哨兵值，下次进页面仍然是数字模式。
+                if (persistSelection && !RosterSelection.IsNone(Config.RollCallSettings.DefaultClass))
+                {
+                    Config.RollCallSettings.DefaultClass = RosterSelection.None;
+                    _configHandler.Save();
+                }
+            }
+            else
+            {
+                _profileService.LoadStudentProfile(value);
+                EnsureRestartTemporaryRecordsCleared(value);
+                if (persistSelection && Config.RollCallSettings.DefaultClass != value)
+                {
+                    Config.RollCallSettings.DefaultClass = value;
+                    _configHandler.Save();
+                }
             }
         }
 
+        // 模式切换会同时改变筛选器显隐与计数口径，派生属性必须一并重算。
+        OnPropertyChanged(nameof(IsNumberMode));
+        OnPropertyChanged(nameof(IsGenderSelectorVisible));
+        OnPropertyChanged(nameof(IsGroupSelectorVisible));
+        OnPropertyChanged(nameof(IsHistoryGroupSelectorVisible));
+        OnPropertyChanged(nameof(IsRemainingListButtonVisible));
         RefreshFilterOptions();
+        RefreshCounts();
+    }
+
+    partial void OnNumberRangeStartChanged(int value)
+    {
+        NormalizeNumberRange(startChanged: true, value);
+    }
+
+    partial void OnNumberRangeEndChanged(int value)
+    {
+        NormalizeNumberRange(startChanged: false, value);
+    }
+
+    /// <summary>
+    ///     把起始/终止数字夹到 <see cref="RosterSelection" /> 允许的区间：起始不小于 0、终止不小于起始、
+    ///     跨度不超过 <see cref="RosterSelection.MaxNumberRangeSpan" />。
+    /// </summary>
+    /// <remarks>
+    ///     夹紧后的值再写回属性会重新进入这里；用「值确实变了才回写」收敛，避免自激。
+    /// </remarks>
+    private void NormalizeNumberRange(bool startChanged, int value)
+    {
+        var start = Math.Max(0, startChanged ? value : NumberRangeStart);
+        var end = RosterSelection.ClampEnd(start, startChanged ? NumberRangeEnd : value);
+        if (startChanged && start != value)
+        {
+            NumberRangeStart = start;
+            return;
+        }
+
+        if (!startChanged && end != value)
+        {
+            NumberRangeEnd = end;
+            return;
+        }
+
+        if (end != NumberRangeEnd)
+        {
+            NumberRangeEnd = end;
+            return;
+        }
+
         RefreshCounts();
     }
 
@@ -338,9 +429,13 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     public void ResetRemotePresentation() => ResetDrawHistoryCore(showToast: false);
 
     private void ResetDrawHistoryCore(bool showToast = false)
-    {        _lastResultStudents.Clear();
+    {
+        _lastResultStudents.Clear();
         ResultItems.Clear();
-        _rollCallDrawService.Reset(CurrentGroupScope, CurrentGenderScope, CurrentHistoryGroup);
+        if (IsNumberMode)
+            _rollCallDrawService.ResetNumbers();
+        else
+            _rollCallDrawService.Reset(CurrentGroupScope, CurrentGenderScope);
         IsResultVisible = false;
         ResultText = ReminderSettings.ReminderText;
         StatusText = SR.M_ResetDone;
@@ -369,6 +464,12 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         if (IsDrawing)
             return;
 
+        if (IsNumberMode)
+        {
+            await StartNumberDrawCoreAsync();
+            return;
+        }
+
         EnsureActiveProfileMatchesSelection();
 
         RefreshCounts();
@@ -391,8 +492,23 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         // 否则中途切组会让「按 A 组权重抽出来的人写进 B 组记录」。
         var historyGroup = CurrentHistoryGroup;
         SetDrawCommandRunning(true);
+        IReadOnlyList<FullscreenResultItem> fullscreenPool = [];
         try
         {
+            if (_notificationService is not null
+                && _notificationService.UsesFullscreenNotificationService(NotificationSettingsType.RollCall))
+            {
+                fullscreenPool = FullscreenNotificationComposer.MapStudents(candidates);
+                _notificationService.BeginFullscreenPresentation(
+                    NotificationSettingsType.RollCall,
+                    FullscreenNotificationComposer.CreateSeed(
+                        NotificationSettingsType.RollCall,
+                        fullscreenPool,
+                        TotalCount,
+                        RemainingCount,
+                        SelectedStudentListName));
+            }
+
             if (_notificationService is not null)
                 await _notificationService.BeginClassIslandAnimationAsync(
                     NotificationSettingsType.RollCall,
@@ -417,6 +533,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
                     await (_drawAudioService?.StopAnimationMusicAsync(0, immediate: true) ?? Task.CompletedTask)
                         .ConfigureAwait(false);
                     ClearUncommittedPreview();
+                    _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.RollCall);
                     StatusText = SR.M_NoCandidates;
                     return;
                 }
@@ -435,6 +552,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
                 await (_drawAudioService?.StopAnimationMusicAsync(0, immediate: true) ?? Task.CompletedTask)
                     .ConfigureAwait(false);
                 ClearUncommittedPreview();
+                _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.RollCall);
                 StatusText = SR.M_DrawFailed;
                 return;
             }
@@ -452,12 +570,172 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             OnPropertyChanged(nameof(ResultText));
 
             if (_notificationService is not null)
+            {
                 _notificationService.QueueStudents(
                     NotificationSettingsType.RollCall,
                     SelectedStudentListName,
                     drawnStudents);
 
-            if (_voiceAnnouncementService is not null && VoiceAnnouncementSettings.VoiceAnnouncementEnabled)
+                if (_notificationService.UsesFullscreenNotificationService(NotificationSettingsType.RollCall))
+                    _notificationService.CompleteFullscreenPresentation(
+                        NotificationSettingsType.RollCall,
+                        FullscreenNotificationComposer.CreateSnapshot(
+                            NotificationSettingsType.RollCall,
+                            FullscreenNotificationComposer.MapStudents(drawnStudents),
+                            fullscreenPool,
+                            TotalCount,
+                            RemainingCount,
+                            courseName,
+                            historyGroup,
+                            SelectedStudentListName));
+            }
+
+            // 全屏渠道自己会播报时，跳过全局语音，避免同一句结果被读两遍。
+            var fullscreenVoiceActive = _notificationService?.UsesFullscreenNotificationService(NotificationSettingsType.RollCall) == true
+                                        && Config.NotificationSettings.Fullscreen.ShowVoiceAnnouncement;
+            if (!fullscreenVoiceActive && _voiceAnnouncementService is not null && VoiceAnnouncementSettings.VoiceAnnouncementEnabled)
+                await _voiceAnnouncementService.SpeakStudentsAsync(drawnStudents).ConfigureAwait(false);
+        }
+        finally
+        {
+            SetDrawCommandRunning(false);
+        }
+    }
+
+    /// <summary>
+    ///     数字范围抽取：候选池是一段连续整数（每个整数一张"票"），与任何名单/共享档案无关。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         预览候选在开始抽取**之前**就冻结：动画期间区间值可能被改动，而提交用的区间来自
+    ///         同一刻的 <see cref="NumberRangeStart" />/<see cref="NumberRangeEnd" />，冻结预览只是为了让
+    ///         舞台上滚动的数字和真正参与抽取的数字是同一批。
+    ///     </para>
+    ///     <para>
+    ///         公平性与可验证证明由 <see cref="RollCallDrawService.DrawNumbersAsync" /> 内部完成（重复规则、
+    ///         权重、证明发布、事务提交），这里只做界面编排，结果处理与名单抽取保持一致。
+    ///     </para>
+    /// </remarks>
+    private async Task StartNumberDrawCoreAsync()
+    {
+        RefreshCounts();
+        ResetForNewRoundIfExhausted();
+        if (RemainingCount <= 0)
+        {
+            StatusText = TotalCount == 0 ? SR.M_NoStudents : SR.M_NoRemainingStudents;
+            return;
+        }
+
+        // 预览用整段区间而不是"剩余票"：动画只是示意，受重复规则约束的结果由服务返回。
+        var frozenCandidates = NumberTickets.CreateStudents(NumberRangeStart, NumberRangeEnd);
+        if (frozenCandidates.Count == 0)
+        {
+            StatusText = SR.M_NoCandidates;
+            return;
+        }
+
+        var count = Math.Clamp(DrawCount, 1, Math.Min(RemainingCount, frozenCandidates.Count));
+        var historyGroup = CurrentHistoryGroup;
+        SetDrawCommandRunning(true);
+        IReadOnlyList<FullscreenResultItem> fullscreenPool = [];
+        try
+        {
+            if (_notificationService is not null
+                && _notificationService.UsesFullscreenNotificationService(NotificationSettingsType.RollCall))
+            {
+                fullscreenPool = FullscreenNotificationComposer.MapStudents(frozenCandidates);
+                _notificationService.BeginFullscreenPresentation(
+                    NotificationSettingsType.RollCall,
+                    FullscreenNotificationComposer.CreateSeed(
+                        NotificationSettingsType.RollCall,
+                        fullscreenPool,
+                        TotalCount,
+                        RemainingCount,
+                        NoListOption));
+            }
+
+            if (_notificationService is not null)
+                await _notificationService.BeginClassIslandAnimationAsync(
+                    NotificationSettingsType.RollCall,
+                    NoListOption,
+                    frozenCandidates,
+                    count);
+
+            var courseName = _linkageDrawCoordinator.GetCourseName();
+            var drawTask = _rollCallDrawService.DrawNumbersAsync(new RollCallNumberDrawRequest(
+                NumberRangeStart, NumberRangeEnd, count, courseName, historyGroup));
+            var previewTask = ShowPreviewAsync(frozenCandidates, count, MusicSettings.AnimationMusic);
+            List<Student> drawnStudents;
+            try
+            {
+                var drawCompletedFirst = await Task.WhenAny(drawTask, previewTask).ConfigureAwait(true) == drawTask;
+                var drawResult = await drawTask.ConfigureAwait(true);
+                if (drawResult is null)
+                {
+                    _previewCts?.Cancel();
+                    await (_drawAudioService?.StopAnimationMusicAsync(0, immediate: true) ?? Task.CompletedTask)
+                        .ConfigureAwait(false);
+                    ClearUncommittedPreview();
+                    _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.RollCall);
+                    StatusText = SR.M_NoCandidates;
+                    return;
+                }
+
+                drawnStudents = drawResult.Numbers.ToList();
+                if (drawCompletedFirst && !previewTask.IsCompleted)
+                    await PlayAnimationMusicAsync(DrawMusicAttachedSettingsResolver.GetAnimationMusic(
+                        drawnStudents.FirstOrDefault(), MusicSettings.AnimationMusic)).ConfigureAwait(true);
+
+                await previewTask.ConfigureAwait(true);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "可验证数字点名抽取失败。");
+                _previewCts?.Cancel();
+                await (_drawAudioService?.StopAnimationMusicAsync(0, immediate: true) ?? Task.CompletedTask)
+                    .ConfigureAwait(false);
+                ClearUncommittedPreview();
+                _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.RollCall);
+                StatusText = SR.M_DrawFailed;
+                return;
+            }
+
+            ResultItems.Clear();
+            _lastResultStudents = drawnStudents;
+            RefreshResultItems();
+
+            IsResultVisible = ResultItems.Count > 0;
+            TriggerResultAnimation();
+            await PlayResultMusicAsync(drawnStudents.FirstOrDefault()).ConfigureAwait(false);
+            StatusText = string.Format(SR.M_DrawnCountFormat, ResultItems.Count);
+            RefreshCounts();
+            ResetForNewRoundIfExhausted();
+            OnPropertyChanged(nameof(ResultText));
+
+            if (_notificationService is not null)
+            {
+                _notificationService.QueueStudents(
+                    NotificationSettingsType.RollCall,
+                    NoListOption,
+                    drawnStudents);
+
+                if (_notificationService.UsesFullscreenNotificationService(NotificationSettingsType.RollCall))
+                    _notificationService.CompleteFullscreenPresentation(
+                        NotificationSettingsType.RollCall,
+                        FullscreenNotificationComposer.CreateSnapshot(
+                            NotificationSettingsType.RollCall,
+                            FullscreenNotificationComposer.MapStudents(drawnStudents),
+                            fullscreenPool,
+                            TotalCount,
+                            RemainingCount,
+                            courseName,
+                            historyGroup,
+                            NoListOption));
+            }
+
+            var fullscreenVoiceActive = _notificationService?.UsesFullscreenNotificationService(NotificationSettingsType.RollCall) == true
+                                        && Config.NotificationSettings.Fullscreen.ShowVoiceAnnouncement;
+            if (!fullscreenVoiceActive && _voiceAnnouncementService is not null && VoiceAnnouncementSettings.VoiceAnnouncementEnabled)
                 await _voiceAnnouncementService.SpeakStudentsAsync(drawnStudents).ConfigureAwait(false);
         }
         finally
@@ -512,22 +790,35 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
             return RemoteDrawOutcome.Busy();
 
         RefreshLists();
-        var listName = request.ListName ?? SelectedStudentListName;
-        if (string.IsNullOrWhiteSpace(listName) || !StudentListNames.Contains(listName))
+        // 数字模式用稳定哨兵值表示：载荷里的空串与哨兵都映射成「不使用名单」；
+        // null 仍保持旧语义——沿用本页当前选择。
+        var listName = request.ListName is null ? SelectedStudentListName : request.ListName;
+        if (string.IsNullOrWhiteSpace(listName) || RosterSelection.IsNone(listName))
+            listName = NoListOption;
+        if (!StudentListNames.Contains(listName))
             return RemoteDrawOutcome.Invalid("invalid_value:list_name:not_found");
 
-        var members = _profileCatalogManager.LoadStudentList(listName)?.Students;
-        if (members is null || members.Count == 0)
-            return RemoteDrawOutcome.Invalid("invalid_value:list_name:no_candidate");
+        var isNumberDraw = string.Equals(listName, NoListOption, StringComparison.Ordinal);
+        if (!isNumberDraw)
+        {
+            var members = _profileCatalogManager.LoadStudentList(listName)?.Students;
+            if (members is null || members.Count == 0)
+                return RemoteDrawOutcome.Invalid("invalid_value:list_name:no_candidate");
 
-        if (!ControlDrawConditions.TryResolve(members, request, out _, out var reason))
-            return RemoteDrawOutcome.Invalid(reason);
+            if (!ControlDrawConditions.TryResolve(members, request, out _, out var reason))
+                return RemoteDrawOutcome.Invalid(reason);
 
-        // 切换页面选择与共享档案：抽取用的候选池取自共享档案，只改页面选择会抽到上一次的名单。
-        if (string.Equals(SelectedStudentListName, listName, StringComparison.Ordinal))
-            _profileService.LoadStudentProfile(listName);
-        else
-            SelectedStudentListName = listName;
+            // 切换页面选择与共享档案：抽取用的候选池取自共享档案，只改页面选择会抽到上一次的名单。
+            if (string.Equals(SelectedStudentListName, listName, StringComparison.Ordinal))
+                _profileService.LoadStudentProfile(listName);
+            else
+                SelectedStudentListName = listName;
+        }
+        else if (!string.Equals(SelectedStudentListName, NoListOption, StringComparison.Ordinal))
+        {
+            // 数字模式没有名单可切，只切换本页选择（走与用户选择相同的分支：记录默认值为哨兵）。
+            SelectedStudentListName = NoListOption;
+        }
 
         SelectedGender = request.Gender ?? AllGendersOption;
         SelectedGroup = request.Group ?? AllGroupsOption;
@@ -584,27 +875,52 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         {
             var previousName = SelectedStudentListName;
             StudentListNames.Clear();
+            // 首项永远是「不使用名单」：它既是"没有任何名单"时的默认值，也是数字范围抽取模式的入口。
+            StudentListNames.Add(NoListOption);
 
             var directory = Utils.GetDirectoryPath("list", "roll_call_list");
-            foreach (var file in Directory.GetFiles(directory, "*.json").OrderBy(Path.GetFileName))
-                StudentListNames.Add(Path.GetFileNameWithoutExtension(file));
+            var realNames = Directory.GetFiles(directory, "*.json")
+                .OrderBy(Path.GetFileName)
+                .Select(file => Path.GetFileNameWithoutExtension(file) ?? string.Empty)
+                .Where(RosterSelection.IsUsable)
+                .ToList();
+            foreach (var name in realNames)
+                StudentListNames.Add(name);
 
-            if (StudentListNames.Count == 0)
+            var hasDrawable = realNames.Count > 0 && HasDrawableStudents(realNames);
+            var defaultClass = Config.RollCallSettings.DefaultClass;
+            // 旧配置里没有「默认抽取名单」时，一旦出现可抽取的真实名单就自动把第一份设为默认：用户没有配置过默认名单，
+            // 设置页的默认名单下拉框也应该直接落在这一份上。空串才代表「从未设置」，哨兵「不使用名单」是明确选择，必须保留。
+            if (hasDrawable && string.IsNullOrEmpty(defaultClass))
             {
-                var config = new StudentListConfig("default");
-                config.Save();
-                StudentListNames.Add(config.Name);
+                defaultClass = realNames[0];
+                Config.RollCallSettings.DefaultClass = defaultClass;
+                _configHandler.Save();
             }
 
-            var defaultClass = Config.RollCallSettings.DefaultClass;
-            var currentName = _profileService.StudentListConfig?.Name ?? string.Empty;
-            var selected = StudentListNames.Contains(previousName)
-                ? previousName
-                : StudentListNames.Contains(defaultClass)
-                    ? defaultClass
-                    : StudentListNames.Contains(currentName)
-                        ? currentName
-                        : StudentListNames[0];
+            string selected;
+            if (!hasDrawable)
+            {
+                // 名单可以被完全删掉（这里刻意不再自动创建 default.json），也可能全都关掉了学生：
+                // 没有可抽的名单时默认落到数字范围抽取，而不是显示一个抽不出任何人的名单。
+                selected = NoListOption;
+            }
+            else if (realNames.Contains(previousName))
+            {
+                selected = previousName;
+            }
+            else if (RosterSelection.IsNone(defaultClass))
+            {
+                selected = NoListOption;
+            }
+            else if (realNames.Contains(defaultClass))
+            {
+                selected = defaultClass;
+            }
+            else
+            {
+                selected = realNames[0];
+            }
 
             // 后台刷新（列表文件 watcher）会先清空下拉项，TwoWay 绑定把选中项回写成空值，
             // 随后又原样恢复为刷新前的选择；这种「假变化」不得把共享档案切回本页选中项，
@@ -628,6 +944,35 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         }
     }
 
+    /// <summary>真实名单里是否至少有一份含有可抽取的学生。</summary>
+    /// <remarks>
+    ///     用 <see cref="IProfileCatalogManager.GetStudentListNames" /> +
+    ///     <see cref="IProfileCatalogManager.LoadStudentList" /> 的快照判定，绝不切换活动档案：
+    ///     一个后台刷新（文件 watcher、设置页改名单）不该把别的会话的档案切走。
+    /// </remarks>
+    private bool HasDrawableStudents(IReadOnlyList<string> realNames)
+    {
+        var names = _profileCatalogManager.GetStudentListNames();
+        if (names.Count == 0)
+            names = realNames;
+
+        foreach (var name in names)
+        {
+            try
+            {
+                if (_profileCatalogManager.LoadStudentList(name)?.Students.Any(student => student.IsCandidate) == true)
+                    return true;
+            }
+            catch (Exception exception)
+            {
+                // 单份名单读不出来不能拖垮整个下拉框刷新，按"没有可抽学生"处理。
+                _logger.LogWarning(exception, "读取名单 {ListName} 失败。", name);
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>Refreshes the shared draw session after profile mutations made by settings or import flows.</summary>
     public void RefreshAfterProfileChange()
     {
@@ -646,6 +991,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         Config.EffectiveMoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.EffectiveHistoryGroups.PropertyChanged -= SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged -= SettingsOnPropertyChanged;
+        _studentListDebouncer?.Dispose();
         _studentListWatcher?.Dispose();
     }
 
@@ -676,6 +1022,13 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     private void QueueStudentListRefresh()
     {
+        // 合并短时间内的连续文件事件；没有去抖器（移动端）时退回原来的即时合并逻辑。
+        if (_studentListDebouncer != null)
+        {
+            _studentListDebouncer.Notify();
+            return;
+        }
+
         if (_isStudentListRefreshQueued)
             return;
 
@@ -683,10 +1036,15 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         Dispatcher.UIThread.Post(() =>
         {
             _isStudentListRefreshQueued = false;
-            RefreshLists();
-            RefreshFilterOptions();
-            RefreshCounts();
+            RefreshAfterListFileChange();
         });
+    }
+
+    private void RefreshAfterListFileChange()
+    {
+        RefreshLists();
+        RefreshFilterOptions();
+        RefreshCounts();
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -695,6 +1053,10 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         {
             OnPropertyChanged(nameof(IsControlPanelOnLeft));
             OnPropertyChanged(nameof(IsControlPanelOnRight));
+            // 三个选择器（分组/性别/剩余名单）的显隐开关与数字模式是"与"的关系，开关变化要重算。
+            OnPropertyChanged(nameof(IsGenderSelectorVisible));
+            OnPropertyChanged(nameof(IsGroupSelectorVisible));
+            OnPropertyChanged(nameof(IsRemainingListButtonVisible));
         }
 
         if (sender == Config.EffectiveMoreSettings || sender == Config.EffectiveHistoryGroups)
@@ -892,11 +1254,22 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     {
         UpdateStudentIdPadWidth();
 
-        var candidates = GetCandidates().ToList();
-        TotalCount = candidates.Count;
-        RemainingCount = GetEligibleCandidates(candidates).Count();
-        DrawCount = Math.Clamp(DrawCount, 1, Math.Max(1, TotalCount));
-        RefreshRemainingList(candidates);
+        if (IsNumberMode)
+        {
+            var snapshot = _rollCallDrawService.GetNumberSnapshot(NumberRangeStart, NumberRangeEnd);
+            TotalCount = snapshot.TotalCount;
+            RemainingCount = snapshot.RemainingCount;
+            DrawCount = Math.Clamp(DrawCount, 1, Math.Max(1, RemainingCount));
+            RefreshNumberRemainingList(snapshot.Remaining);
+        }
+        else
+        {
+            var candidates = GetCandidates().ToList();
+            TotalCount = candidates.Count;
+            RemainingCount = GetEligibleCandidates(candidates).Count();
+            DrawCount = Math.Clamp(DrawCount, 1, Math.Max(1, TotalCount));
+            RefreshRemainingList(candidates);
+        }
 
         OnPropertyChanged(nameof(TotalCount));
         OnPropertyChanged(nameof(RemainingCount));
@@ -909,7 +1282,30 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     public void RefreshRemainingList()
     {
+        if (IsNumberMode)
+        {
+            RefreshNumberRemainingList(
+                _rollCallDrawService.GetNumberSnapshot(NumberRangeStart, NumberRangeEnd).Remaining);
+            return;
+        }
+
         RefreshRemainingList(null);
+    }
+
+    /// <summary>数字模式的剩余名单：每张票的显示文本就是数字本身，不带编号/名称格式。</summary>
+    private void RefreshNumberRemainingList(IReadOnlyList<Student> remaining)
+    {
+        RemainingItems.Clear();
+        foreach (var item in remaining
+                     .OrderForList()
+                     .Select(student => new RollCallRemainingItem(
+                         student.Name,
+                         student.Id,
+                         student.Name,
+                         student.Group,
+                         student.Gender,
+                         student.Tags)))
+            RemainingItems.Add(item);
     }
 
     private void RefreshRemainingList(IEnumerable<Student>? candidates)
@@ -934,8 +1330,11 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         if (TotalCount <= 0 || RemainingCount > 0)
             return false;
 
-        // 只重置当前记录组的计数：别的组是别的课堂进度，自动重置不该把它们一起清掉。
-        _temporaryRecordService.ClearStudentScope(SelectedStudentListName, CurrentHistoryGroup);
+        // 数字模式没有名单临时记录，重置的是数字票那一份临时记录（与 ResetNumbers 同一口径）。
+        if (IsNumberMode)
+            _rollCallDrawService.ResetNumbers();
+        else
+            _temporaryRecordService.ResetStudentList(SelectedStudentListName);
         RefreshCounts();
         MainView.ShowSuccessToast(SR.M_AutoResetDone);
         return true;
@@ -968,7 +1367,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     {
         var source = candidates ?? GetVisibleStudents();
         var threshold = DrawRepeatPolicy.ResolveThreshold(Config.EffectiveRollCallSettings.DrawMode, Config.EffectiveRollCallSettings.HalfRepeat);
-        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentHistoryGroup);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
         return DrawCandidateFilter.FilterEligibleStudents(source, CurrentGroupScope, CurrentGenderScope, counts, threshold);
     }
 
@@ -977,7 +1376,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private bool HasReachedRepeatLimit(Student student)
     {
         var threshold = DrawRepeatPolicy.ResolveThreshold(Config.EffectiveRollCallSettings.DrawMode, Config.EffectiveRollCallSettings.HalfRepeat);
-        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentHistoryGroup);
+        var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
         return DrawRepeatPolicy.HasReachedLimit(counts.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(student)), threshold);
     }
 
@@ -1040,8 +1439,15 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 
     private string FormatStudent(Student student)
     {
-        var id = FormatNumericId(student.Id, _studentIdPadWidth);
+        // 数字票的 Id 与 Name 是同一个号码，套用"编号 + 名称"的显示格式会得到「7 7」这种结果，
+        // 所以号码直接显示一次。这里按学生自身判定而不是记住上一次抽取的模式：切换名单后，
+        // 上一次数字结果与剩余列表还要按各自的数据正确显示。
+        var rawId = student.Id.Trim();
         var name = student.Name.Trim();
+        if (rawId.Length > 0 && string.Equals(rawId, name, StringComparison.Ordinal) && int.TryParse(name, out _))
+            return name;
+
+        var id = FormatNumericId(student.Id, _studentIdPadWidth);
         return DisplaySettings.DisplayFormat switch
         {
             DisplayFormatMode.Id => string.IsNullOrWhiteSpace(id) ? name : id,

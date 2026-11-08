@@ -12,6 +12,12 @@
   <data name="S_External_VerificationRequired_D">
     <value>When off-class restrictions are enabled, allow temporary drawing or reset after configured security verification; otherwise block directly</value>
   </data>
+  <data name="S_External_RestrictWhenUnavailable">
+    <value>Keep restricting when data is unavailable</value>
+  </data>
+  <data name="S_External_RestrictWhenUnavailable_D">
+    <value>When the course source is disconnected, no timetable is imported, or reading fails, still restrict drawing and reset as off-class time</value>
+  </data>
   <data name="S_External_InstantDrawDisable">
     <value>Restrict off-class operations</value>
   </data>

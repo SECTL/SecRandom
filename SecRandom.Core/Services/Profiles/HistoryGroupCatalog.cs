@@ -36,8 +36,7 @@ namespace SecRandom.Core.Services.Profiles;
 /// </remarks>
 internal sealed class HistoryGroupCatalog(
     ILogger<HistoryGroupCatalog> logger,
-    IProfileService profileService,
-    IDrawTemporaryRecordService temporaryRecords) : IHistoryGroupCatalog
+    IProfileService profileService) : IHistoryGroupCatalog
 {
     private readonly object _gate = new();
 
@@ -111,10 +110,7 @@ internal sealed class HistoryGroupCatalog(
             logger.LogInformation("已重命名历史记录组：类型={Kind}，旧名称={OldName}，新名称={NewName}，重写记录={RecordCount}。",
                 kind, from, target, rewritten);
 
-            var saved = TrySave(view, "rename", target, out error);
-            // 临时记录的「已抽过几次」也按组存放：跟着改名走，否则改名等于把这个组的进度悄悄清零。
-            MigrateTemporaryRecords(kind, from, target);
-            return saved;
+            return TrySave(view, "rename", target, out error);
         }
     }
 
@@ -134,9 +130,6 @@ internal sealed class HistoryGroupCatalog(
             var changed = RewriteRecords(view.Records, name, string.Empty);
             if (view.Groups.Remove(name))
                 changed++;
-
-            // 临时记录的进度同样只是移回默认组，不从这一轮里消失。
-            MigrateTemporaryRecords(kind, name, string.Empty);
 
             if (changed == 0)
                 return;
@@ -210,33 +203,6 @@ internal sealed class HistoryGroupCatalog(
 
             default:
                 throw new ArgumentOutOfRangeException(nameof(kind), kind, "Unknown history group kind.");
-        }
-    }
-
-    /// <summary>
-    ///     Follows a group rename/delete in the active student list's temporary records, so 「已抽过几次」 stays attached
-    ///     to the same group instead of restarting for a renamed group or vanishing with a deleted one (delete falls back
-    ///     to the default group, exactly like the history records). Best-effort: a temporary-record failure must never
-    ///     make the group operation fail, because the history rewrite is the load-bearing part.
-    /// </summary>
-    private void MigrateTemporaryRecords(HistoryGroupKind kind, string from, string to)
-    {
-        // 奖品临时记录按奖池存（承载实物库存），与记录组无关。
-        if (kind != HistoryGroupKind.RollCall)
-            return;
-
-        var listName = profileService.StudentListConfig?.Name;
-        if (string.IsNullOrWhiteSpace(listName))
-            return;
-
-        try
-        {
-            temporaryRecords.RenameStudentScope(listName, from, to);
-        }
-        catch (Exception exception)
-        {
-            logger.LogWarning(exception, "迁移临时抽取记录的记录组失败：名单={ListName}，从={From}，到={To}。",
-                listName, from, to);
         }
     }
 

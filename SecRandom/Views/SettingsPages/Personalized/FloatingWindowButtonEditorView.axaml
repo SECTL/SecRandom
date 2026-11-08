@@ -1,0 +1,118 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:personalized="clr-namespace:SecRandom.Views.SettingsPages.Personalized"
+             xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.Personalized.FloatingWindowButtons"
+             mc:Ignorable="d" d:DesignWidth="380" d:DesignHeight="640"
+             x:Class="SecRandom.Views.SettingsPages.Personalized.FloatingWindowButtonEditorView"
+             x:DataType="personalized:FloatingWindowButtonEditorView"
+             Width="380">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="16" RowSpacing="12">
+        <StackPanel Grid.Row="0" Spacing="4">
+            <TextBlock x:Name="TitleText"
+                       Theme="{StaticResource SubtitleTextBlockStyle}"
+                       TextWrapping="Wrap" />
+            <TextBlock Text="{x:Static lsp:Resources.M_EditorHint}"
+                       Classes="caption"
+                       TextWrapping="Wrap" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="14">
+                <CheckBox x:Name="EnabledCheck"
+                          Content="{x:Static lsp:Resources.C_Enabled}" />
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="{x:Static lsp:Resources.C_Label}" Classes="caption" />
+                    <TextBox x:Name="LabelBox"
+                             MaxLength="8"
+                             PlaceholderText="{x:Static lsp:Resources.M_LabelPlaceholder}" />
+                </StackPanel>
+
+                <StackPanel Spacing="6">
+                    <TextBlock Text="{x:Static lsp:Resources.C_Icon}" Classes="caption" />
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                        <Border Width="56" Height="56"
+                                CornerRadius="8"
+                                Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                                BorderThickness="1"
+                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}">
+                            <Panel>
+                                <Image x:Name="IconImage"
+                                       Width="34" Height="34"
+                                       Stretch="Uniform"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center" />
+                                <sr:FluentIcon x:Name="IconGlyph"
+                                               FontSize="30"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center" />
+                            </Panel>
+                        </Border>
+                        <StackPanel Grid.Column="1" Spacing="6" VerticalAlignment="Center">
+                            <Button HorizontalAlignment="Left">
+                                <Button.Content>
+                                    <sr:IconText Text="{x:Static lsp:Resources.C_PickIcon}"
+                                                 Glyph="{sr:Fi ImageFilled}" />
+                                </Button.Content>
+                                <Button.Flyout>
+                                    <MenuFlyout>
+                                        <MenuItem Header="{x:Static lsp:Resources.M_PickBuiltInIcon}"
+                                                  Icon="{sr:FluentIcon {sr:Fi StarFilled}}"
+                                                  Click="PickBuiltInIcon_OnClick" />
+                                        <MenuItem Header="{x:Static lsp:Resources.M_ImportImage}"
+                                                  Icon="{sr:FluentIcon {sr:Fi ImageFilled}}"
+                                                  Click="ImportImage_OnClick" />
+                                        <MenuItem Header="{x:Static lsp:Resources.M_ImportApplicationIcon}"
+                                                  Icon="{sr:FluentIcon {sr:Fi WindowAppsFilled}}"
+                                                  Click="ImportApplicationIcon_OnClick" />
+                                        <Separator />
+                                        <MenuItem Header="{x:Static lsp:Resources.M_ClearCustomIcon}"
+                                                  Icon="{sr:FluentIcon {sr:Fi EraserFilled}}"
+                                                  Click="ClearCustomIcon_OnClick" />
+                                    </MenuFlyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Text="{x:Static lsp:Resources.C_Action}" Classes="caption" />
+                    <ComboBox x:Name="ActionBox" HorizontalAlignment="Stretch" />
+                </StackPanel>
+
+                <StackPanel x:Name="TargetSection" Spacing="4">
+                    <TextBlock Text="{x:Static lsp:Resources.C_Target}" Classes="caption" />
+                    <ComboBox x:Name="TargetBox" HorizontalAlignment="Stretch" />
+                    <TextBox x:Name="TargetTextBox"
+                             PlaceholderText="{x:Static lsp:Resources.M_TargetPlaceholder}" />
+                    <StackPanel x:Name="PathBrowsePanel" Orientation="Horizontal" Spacing="8">
+                        <Button Theme="{StaticResource TransparentButton}" Click="BrowseFile_OnClick">
+                            <sr:IconText Text="{x:Static lsp:Resources.C_SelectFile}"
+                                         Glyph="{sr:Fi DocumentFilled}" />
+                        </Button>
+                        <Button Theme="{StaticResource TransparentButton}" Click="BrowseFolder_OnClick">
+                            <sr:IconText Text="{x:Static lsp:Resources.C_SelectFolder}"
+                                         Glyph="{sr:Fi FolderOpenFilled}" />
+                        </Button>
+                    </StackPanel>
+                </StackPanel>
+
+                <TextBlock x:Name="ErrorText"
+                           Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                           TextWrapping="Wrap"
+                           IsVisible="False" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="{x:Static lsp:Resources.C_Cancel}" Click="Cancel_OnClick" />
+            <Button Content="{x:Static lsp:Resources.C_Save}"
+                    Classes="accent"
+                    Click="Save_OnClick" />
+        </StackPanel>
+    </Grid>
+</UserControl>

@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
+    <xsd:element name="root" msdata:IsDataSet="true" />
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>1.3</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Page_Title" xml:space="preserve">
+    <value>カスタムボタン</value>
+  </data>
+  <data name="S_Buttons" xml:space="preserve">
+    <value>カスタムボタン</value>
+  </data>
+  <data name="S_Buttons_D" xml:space="preserve">
+    <value>名前・アイコン・動作を決めて、フローティングウィンドウに自分専用のショートカットを追加します</value>
+  </data>
+  <data name="S_Buttons_List" xml:space="preserve">
+    <value>ボタン一覧</value>
+  </data>
+  <data name="S_Buttons_List_D" xml:space="preserve">
+    <value>表の中でそのまま編集できます。並び順がフローティングウィンドウでの表示順になります</value>
+  </data>
+  <data name="C_Enabled" xml:space="preserve">
+    <value>有効</value>
+  </data>
+  <data name="C_Icon" xml:space="preserve">
+    <value>アイコン</value>
+  </data>
+  <data name="C_Label" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="C_Action" xml:space="preserve">
+    <value>動作</value>
+  </data>
+  <data name="C_Target" xml:space="preserve">
+    <value>対象</value>
+  </data>
+  <data name="C_Operations" xml:space="preserve">
+    <value>操作</value>
+  </data>
+  <data name="C_Add" xml:space="preserve">
+    <value>ボタンを追加</value>
+  </data>
+  <data name="C_Clear" xml:space="preserve">
+    <value>すべて削除</value>
+  </data>
+  <data name="C_Delete" xml:space="preserve">
+    <value>削除</value>
+  </data>
+  <data name="C_Copy" xml:space="preserve">
+    <value>複製</value>
+  </data>
+  <data name="C_MoveUp" xml:space="preserve">
+    <value>上へ</value>
+  </data>
+  <data name="C_MoveDown" xml:space="preserve">
+    <value>下へ</value>
+  </data>
+  <data name="C_SelectFile" xml:space="preserve">
+    <value>ファイルを選択</value>
+  </data>
+  <data name="C_SelectFolder" xml:space="preserve">
+    <value>フォルダーを選択</value>
+  </data>
+  <data name="C_UseIcon" xml:space="preserve">
+    <value>このアイコンを使う</value>
+  </data>
+  <data name="C_Cancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="C_PickIcon" xml:space="preserve">
+    <value>アイコンを選択</value>
+  </data>
+  <data name="A_MainPage" xml:space="preserve">
+    <value>メインページを切り替え</value>
+  </data>
+  <data name="A_QuickDraw" xml:space="preserve">
+    <value>クイック抽選を開く</value>
+  </data>
+  <data name="A_Timer" xml:space="preserve">
+    <value>タイマーを開く</value>
+  </data>
+  <data name="A_SettingsPage" xml:space="preserve">
+    <value>設定ページを開く</value>
+  </data>
+  <data name="A_Uri" xml:space="preserve">
+    <value>リンクを開く</value>
+  </data>
+  <data name="A_Path" xml:space="preserve">
+    <value>ファイルやフォルダーを開く</value>
+  </data>
+  <data name="M_PickBuiltInIcon" xml:space="preserve">
+    <value>組み込みアイコンを選択</value>
+  </data>
+  <data name="M_ImportImage" xml:space="preserve">
+    <value>画像を読み込む</value>
+  </data>
+  <data name="M_ImportApplicationIcon" xml:space="preserve">
+    <value>アプリから読み込む</value>
+  </data>
+  <data name="M_ClearCustomIcon" xml:space="preserve">
+    <value>組み込みアイコンに戻す</value>
+  </data>
+  <data name="M_LabelPlaceholder" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="M_TargetPlaceholder" xml:space="preserve">
+    <value>対象</value>
+  </data>
+  <data name="M_Empty" xml:space="preserve">
+    <value>カスタムボタンはまだありません。「ボタンを追加」から始めてください</value>
+  </data>
+  <data name="M_Hint" xml:space="preserve">
+    <value>ボタンは最大 8 個、名前は最大 8 文字です。カスタムボタンは組み込みボタンの後、プラグインボタンの前に表示され、シンプルモードでは表示されません</value>
+  </data>
+  <data name="M_CountFormat" xml:space="preserve">
+    <value>{0}/{1}</value>
+  </data>
+  <data name="M_DefaultLabel" xml:space="preserve">
+    <value>ボタン{0}</value>
+  </data>
+  <data name="M_AddLimit" xml:space="preserve">
+    <value>カスタムボタンは最大 {0} 個まで追加できます</value>
+  </data>
+  <data name="M_DeleteTitle" xml:space="preserve">
+    <value>カスタムボタンを削除</value>
+  </data>
+  <data name="M_DeleteContent" xml:space="preserve">
+    <value>「{0}」を削除しますか</value>
+  </data>
+  <data name="M_DeleteDone" xml:space="preserve">
+    <value>ボタンを削除しました</value>
+  </data>
+  <data name="M_ClearTitle" xml:space="preserve">
+    <value>カスタムボタンをすべて削除</value>
+  </data>
+  <data name="M_ClearContent" xml:space="preserve">
+    <value>すべてのカスタムボタンと、そのカスタムアイコンが削除されます</value>
+  </data>
+  <data name="M_ClearDone" xml:space="preserve">
+    <value>カスタムボタンをすべて削除しました</value>
+  </data>
+  <data name="M_BrowseFileTitle" xml:space="preserve">
+    <value>開くファイルを選択</value>
+  </data>
+  <data name="M_BrowseFolderTitle" xml:space="preserve">
+    <value>開くフォルダーを選択</value>
+  </data>
+  <data name="M_IconPickerTitle" xml:space="preserve">
+    <value>アイコンを選択</value>
+  </data>
+  <data name="M_IconSearchPlaceholder" xml:space="preserve">
+    <value>アイコン名を検索</value>
+  </data>
+  <data name="M_IconCountFormat" xml:space="preserve">
+    <value>{0} 個のアイコンを表示中。キーワードで絞り込めます</value>
+  </data>
+  <data name="M_InvalidTargetOption" xml:space="preserve">
+    <value>（対象は利用できません）</value>
+  </data>
+  <data name="M_IconUpdated" xml:space="preserve">
+    <value>アイコンを更新しました</value>
+  </data>
+  <data name="M_IconImportFailed" xml:space="preserve">
+    <value>アイコンの読み込みに失敗しました</value>
+  </data>
+  <data name="M_ImageType" xml:space="preserve">
+    <value>画像</value>
+  </data>
+  <data name="M_ApplicationType" xml:space="preserve">
+    <value>アプリケーション</value>
+  </data>
+  <data name="M_OpenFailed" xml:space="preserve">
+    <value>この対象を開けません</value>
+  </data>
+  <data name="M_InvalidTarget" xml:space="preserve">
+    <value>ボタンの対象が利用できません。選び直してください</value>
+  </data>
+  <data name="M_SaveFailed" xml:space="preserve">
+    <value>カスタムボタンを保存できませんでした</value>
+  </data>
+  <data name="V_LabelRequired" xml:space="preserve">
+    <value>名前を入力してください</value>
+  </data>
+  <data name="V_LabelTooLong" xml:space="preserve">
+    <value>名前は最大 {0} 文字です</value>
+  </data>
+  <data name="V_IconMissing" xml:space="preserve">
+    <value>アイコンを選択してください</value>
+  </data>
+  <data name="V_IconImageInvalid" xml:space="preserve">
+    <value>アイコンファイルが無効です</value>
+  </data>
+  <data name="V_TargetRequired" xml:space="preserve">
+    <value>対象を選択してください</value>
+  </data>
+  <data name="V_TargetTooLong" xml:space="preserve">
+    <value>対象の内容が長すぎます</value>
+  </data>
+  <data name="V_TargetInvalidUri" xml:space="preserve">
+    <value>http:// または https:// で始まるリンクを入力してください</value>
+  </data>
+  <data name="V_TargetInvalidPath" xml:space="preserve">
+    <value>ファイルまたはフォルダーの完全なパスを選択してください</value>
+  </data>
+  <data name="V_UnsupportedAction" xml:space="preserve">
+    <value>未対応の動作です</value>
+  </data>
+  <data name="E_Unreadable" xml:space="preserve">
+    <value>画像を読み込めません</value>
+  </data>
+  <data name="E_TooLarge" xml:space="preserve">
+    <value>画像が大きすぎます。小さい画像を選んでください</value>
+  </data>
+  <data name="E_UnsupportedFormat" xml:space="preserve">
+    <value>このアイコン形式には対応していません。画像として読み込んでください</value>
+  </data>
+  <data name="E_NotAnApplication" xml:space="preserve">
+    <value>選択したファイルはアプリケーションではありません</value>
+  </data>
+  <data name="E_NoIconFound" xml:space="preserve">
+    <value>このアプリには使えるアイコンが見つかりません</value>
+  </data>
+  <data name="E_ExtractionFailed" xml:space="preserve">
+    <value>アプリのアイコンを読み込めませんでした</value>
+  </data>
+  <data name="C_Edit" xml:space="preserve">
+    <value>編集</value>
+  </data>
+  <data name="C_Save" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="M_AddTitle" xml:space="preserve">
+    <value>クイックボタンを追加</value>
+  </data>
+  <data name="M_EditTitle" xml:space="preserve">
+    <value>クイックボタンを編集</value>
+  </data>
+  <data name="M_EditorHint" xml:space="preserve">
+    <value>アイコンと名前を設定し、クリック時に開くページまたはファイルを指定します。保存するとすぐに反映されます</value>
+  </data>
+</root>

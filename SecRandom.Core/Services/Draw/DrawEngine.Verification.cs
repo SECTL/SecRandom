@@ -3,6 +3,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Models.Verification;
 using SecRandom.Core.Services.Draw.Exceptions;
+using SecRandom.Core.Services.Profiles;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Interfaces;
 using SecRandom.Shared.Models.Profile;
@@ -176,6 +177,77 @@ public partial class DrawEngine
                     ? GetLotteryRepeatThreshold()
                     : (int?)null
             }, rosterDigest)
+        };
+    }
+
+    /// <summary>
+    ///     Freezes an inclusive integer range for the "no roster" number draw. Every integer in the range is one
+    ///     equally weighted ticket, so sampling is a uniform partial permutation — the same shape the verifier
+    ///     already uses for equal-probability inventory. Only the range leaves the device in the anonymous audit
+    ///     payload; there is no roster behind these tickets, so no roster digest is emitted.
+    /// </summary>
+    public VerificationDrawInput CreateNumberVerificationInput(int count, int rangeStart, int rangeEnd)
+    {
+        if (!RosterSelection.IsValidRange(rangeStart, rangeEnd))
+            throw new InvalidOperationException("The prepared number range cannot satisfy this draw.");
+        var total = rangeEnd - rangeStart + 1;
+        if (count <= 0 || count > total)
+            throw new InvalidOperationException("The prepared number range cannot satisfy this draw.");
+
+        List<VerificationCandidate> candidates = new(total);
+        for (var number = rangeStart; number <= rangeEnd; number++)
+            candidates.Add(new VerificationCandidate(
+                NumberTickets.CreateRecordId(rangeStart, rangeEnd, number), 0, 1_000_000, false));
+        candidates.Sort((left, right) =>
+        {
+            var byRecordId = string.CompareOrdinal(left.RecordId.ToString("N"), right.RecordId.ToString("N"));
+            return byRecordId != 0 ? byRecordId : left.OccurrenceIndex.CompareTo(right.OccurrenceIndex);
+        });
+
+        var ordered = candidates.Select((candidate, index) => new
+        {
+            index,
+            recordId = candidate.RecordId,
+            candidate.OccurrenceIndex,
+            candidate.WeightMicros,
+            candidate.IsGuaranteed,
+            internalSettingApplied = false,
+            internalProbability = (double?)null,
+            historyCount = 0,
+            lastDrawnUtc = (DateTime?)null
+        }).ToArray();
+
+        var auditPayload = JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            format = "secrandom-anonymous-audit/v2",
+            operation = "number",
+            requestedCount = count,
+            candidateCount = ordered.Length,
+            internalSettingsApplied = false,
+            internalCandidateCount = 0,
+            internalExcludedCandidateCount = 0,
+            fairness = new
+            {
+                fairDraw = true,
+                algorithmProfile = VerificationAlgorithmProfile.NumberUniformPermutation.ToString(),
+                repeatMode = "no-repeat",
+                samplingAlgorithm = "inventory-partial-permutation",
+                inventoryEntriesEqualWeight = true,
+                internalRulesRequireWeightedFallback = false
+            },
+            numberRange = new { start = rangeStart, end = rangeEnd },
+            rosterDigest = (string?)null,
+            candidates = ordered
+        });
+
+        return new VerificationDrawInput
+        {
+            Kind = VerificationDrawKind.Number,
+            SamplingMode = VerificationSamplingMode.InventoryPermutation,
+            AlgorithmProfile = VerificationAlgorithmProfile.NumberUniformPermutation,
+            Count = count,
+            Candidates = candidates,
+            AuditPayload = auditPayload
         };
     }
 

@@ -90,4 +90,10 @@
   <data name="O_HistoryGroupDefault" xml:space="preserve">
     <value>默认记录组</value>
   </data>
+  <data name="O_NoList" xml:space="preserve">
+    <value>不使用名单</value>
+  </data>
+  <data name="M_NumberCountSummary" xml:space="preserve">
+    <value>剩余 {0}/{1}</value>
+  </data>
 </root>

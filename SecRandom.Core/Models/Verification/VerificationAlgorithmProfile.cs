@@ -21,5 +21,6 @@ public enum VerificationAlgorithmProfile : byte
     StudentFairInternalRuleHalfRepeat = 14,
     StudentRandomInternalRuleRepeat = 15,
     StudentRandomInternalRuleNoRepeat = 16,
-    StudentRandomInternalRuleHalfRepeat = 17
+    StudentRandomInternalRuleHalfRepeat = 17,
+    NumberUniformPermutation = 18
 }

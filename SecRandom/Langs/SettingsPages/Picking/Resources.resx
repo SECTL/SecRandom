@@ -39,6 +39,7 @@
   <data name="S_DefaultClass_D" xml:space="preserve"><value>打开页面或执行闪抽时默认使用的名单</value></data>
   <data name="S_DefaultPool" xml:space="preserve"><value>默认抽奖名单</value></data>
   <data name="S_DefaultPool_D" xml:space="preserve"><value>打开抽奖页时默认使用的奖池</value></data>
+  <data name="O_NoList" xml:space="preserve"><value>不使用名单</value></data>
   <data name="S_DisableAfterClick" xml:space="preserve"><value>点击后禁用时间</value></data>
   <data name="S_DisableAfterClick_D" xml:space="preserve"><value>点击一次闪抽后禁用按钮的秒数</value></data>
   <data name="S_FontSource" xml:space="preserve"><value>字体来源</value></data>

@@ -194,7 +194,7 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
                                             + $"{T("C_SnapshotAvailable")}: {snapshot.IsAvailable}\n"
                                             + $"{T("C_CurrentCourse")}: {snapshot.CurrentCourse?.Name ?? "-"}\n"
                                             + $"{T("C_NextCourse")}: {snapshot.NextCourse?.Name ?? "-"}\n"
-                                            + $"{T("C_DrawRestricted")}: {_courseLinkage.IsConfirmedNonClassTime}\n"
+                                            + $"{T("C_DrawRestricted")}: {_courseLinkage.IsClassTimeRestrictionActive}\n"
                                              + $"{T("C_SnapshotError")}: {EmptyAsDash(FormatScheduleError(snapshot.Error))}\n\n"
                                             + $"{T("C_NotificationsEnabled")}: {notification.Enabled}\n"
                                             + $"{T("C_BuiltInNotification")}: {notification.UsesBuiltInNotificationService}\n"

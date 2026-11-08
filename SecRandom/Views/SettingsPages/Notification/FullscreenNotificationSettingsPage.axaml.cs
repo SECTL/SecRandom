@@ -536,34 +536,32 @@ public partial class FullscreenNotificationSettingsPage : UserControl, INotifyPr
             if (presenter.HasActiveSession)
                 presenter.Cancel(NotificationSettingsType.RollCall);
 
-            var items = new List<FullscreenResultItem>
+            var candidates = new List<FullscreenResultItem>
             {
                 new(Text("Preview student 1", "M_FullscreenPreviewStudent1"), "0001"),
                 new(Text("Preview student 2", "M_FullscreenPreviewStudent2"), "0002"),
                 new(Text("Preview student 3", "M_FullscreenPreviewStudent3"), "0003")
             };
 
+            // 示例按"3 个候选抽 1 个"播放（用户 m03298）：冻结池是 3 人，结果只有 1 人，抽完剩 2 人。
+            // 之前把 3 个人全部当结果，网格与轮盘会同时亮三个，跟真实抽取的形态不一样。
+            var winner = candidates[Random.Shared.Next(candidates.Count)];
+            var results = new List<FullscreenResultItem> { winner };
+
             // 预览必须和真实展示同形：先 Begin 打开待揭晓窗口，再 Complete 播结果，否则网格会缺少冻结池。
             var seed = FullscreenNotificationComposer.CreateSeed(
                 NotificationSettingsType.RollCall,
-                items,
-                items.Count,
-                items.Count,
+                candidates,
+                candidates.Count,
+                candidates.Count,
                 null);
 
-            var snapshot = new FullscreenResultSnapshot(
+            var snapshot = FullscreenNotificationComposer.CreatePreviewSnapshot(
                 NotificationSettingsType.RollCall,
-                items,
-                items,
-                items.Count,
-                items.Count,
-                null,
-                null,
-                null,
-                DateTimeOffset.Now,
-                FullscreenNotificationComposer.FallbackTemplate,
-                Settings.ShowText,
-                null);
+                results,
+                candidates,
+                candidates.Count,
+                candidates.Count - 1);
 
             // 预览走一次性的 3 秒倒计时覆盖值，不动任何真实设置：正式倒计时永远取自通知渠道的显示时长。
             presenter.Begin(NotificationSettingsType.RollCall, seed);

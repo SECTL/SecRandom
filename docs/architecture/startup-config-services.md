@@ -1,4 +1,4 @@
-﻿# SecRandom 启动流程、配置系统和服务注册架构总结
+# SecRandom 启动流程、配置系统和服务注册架构总结
 
 ## 1. 启动流程概览
 
@@ -133,6 +133,11 @@ protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 ### 锁机制
 - OnlineStatusService 使用 SemaphoreSlim 防止并发刷新 IP 缓存
 - 配置保存使用锁保护（在 ConfigHandlerBase 中）
+
+### 单实例
+- Mutex + 命名管道：`SecRandom.Core/Services/SingleInstance/SingleInstanceService.cs`
+- 第二个进程不再询问用户：启动 URL 存在时转发该 `secrandom://` URL，否则向已运行实例发送 `ShowMainWindow` 让它显示主窗口，然后本进程直接退出（跳过 BuildHost）
+- 仅当管道不通（已运行实例卡死或不可达）才显示单按钮提示 `MultiInstance_Unreachable`；重启入口在托盘菜单，不作为多开时的提问选项
 
 ### 启动选项
 - 自动启动: BasicSettings.Autostart (需平台特定实现)

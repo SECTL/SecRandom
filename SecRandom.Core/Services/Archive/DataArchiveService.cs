@@ -15,6 +15,7 @@ using SecRandom.Core.Helpers;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Profiles;
 using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
 
@@ -579,8 +580,12 @@ public sealed class DataArchiveService(
 
     private void ReloadConfiguredProfiles()
     {
-        profileService.LoadStudentProfile(configHandler.Data.RollCallSettings.DefaultClass, saveCurrent: false);
-        profileService.LoadPrizeProfile(configHandler.Data.LotterySettings.DefaultPool, saveCurrent: false);
+        var defaultClass = configHandler.Data.RollCallSettings.DefaultClass;
+        var defaultPool = configHandler.Data.LotterySettings.DefaultPool;
+        if (!RosterSelection.IsNone(defaultClass))
+            profileService.LoadStudentProfile(defaultClass, saveCurrent: false);
+        if (!RosterSelection.IsNone(defaultPool))
+            profileService.LoadPrizeProfile(defaultPool, saveCurrent: false);
     }
 
     /// <summary>
@@ -684,7 +689,7 @@ public sealed class DataArchiveService(
                      candidate.LotterySettings.DefaultPool
                  })
         {
-            if (name == string.Empty)
+            if (name == string.Empty || RosterSelection.IsNone(name))
                 continue;
             if (!ProfileConfigBase.IsValidProfileName(name))
                 throw new InvalidDataException(SecRandom.Core.Langs.Common.Resources.M_InvalidProfileDefault);

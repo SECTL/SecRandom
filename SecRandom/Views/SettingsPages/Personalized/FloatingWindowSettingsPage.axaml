@@ -28,6 +28,25 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_Display_ShowOnBothSides"
+                                   Header="{x:Static lsp:Resources.S_Display_ShowOnBothSides}"
+                                   Description="{x:Static lsp:Resources.S_Display_ShowOnBothSides_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.ShowOnBothSides}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Display_SyncBothSidesAnchor"
+                                   Header="{x:Static lsp:Resources.S_Display_SyncBothSidesAnchor}"
+                                   Description="{x:Static lsp:Resources.S_Display_SyncBothSidesAnchor_D}"
+                                   IsVisible="{Binding Settings.ShowOnBothSides}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.SyncBothSidesAnchor}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_Display_Opacity"
                                    Header="{x:Static lsp:Resources.S_Display_Opacity}"
                                    Description="{x:Static lsp:Resources.S_Display_Opacity_D}"
@@ -65,6 +84,19 @@
                     <sr:MultiComboBox MinWidth="260"
                                        ItemsSource="{Binding ButtonOptions}"
                                        SelectedItems="{Binding SelectedButtonOptions}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Buttons_CustomButtons"
+                                   Header="{x:Static lsp:Resources.S_Buttons_CustomButtons}"
+                                   Description="{x:Static lsp:Resources.S_Buttons_CustomButtons_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi AppsListDetailFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                        <TextBlock x:Name="CustomButtonsSummary" VerticalAlignment="Center" />
+                        <Button Content="{x:Static lsp:Resources.S_Buttons_CustomButtons_Open}"
+                                Click="OpenCustomButtons_OnClick" />
+                    </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
@@ -120,6 +152,16 @@
                                    IconSource="{sr:FluentIconSource {sr:Fi GestureFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.Draggable}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Interaction_DoNotStealFocus"
+                                   Header="{x:Static lsp:Resources.S_Interaction_DoNotStealFocus}"
+                                   Description="{x:Static lsp:Resources.S_Interaction_DoNotStealFocus_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}"
+                                   IsVisible="{Binding SupportsNoActivate}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.DoNotStealFocus}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

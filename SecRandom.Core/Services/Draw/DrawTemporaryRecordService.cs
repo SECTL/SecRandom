@@ -12,13 +12,10 @@ public static partial class CoreRuntimeServiceCollectionExtensions
     private sealed class DrawTemporaryRecordService(ILogger<DrawTemporaryRecordService> logger) : IDrawTemporaryRecordService, IDrawTemporaryRecordCompensation
     {
     private const string PrizeScopeKey = "prizes";
-    // 学生临时记录按历史记录组分桶：抽中次数是"某一轮/某个用途"内的计数，换组不应该互相影响。
-    // null（抽取时完全不按组）= 所有组共用的桶；""（默认记录组）= 默认组的桶；其余就是组名本身。
-    // 两个下划线包围的键是 HistoryGroupName 的保留形式，真实组名不会和它们相撞。
-    private const string AllGroupsScopeKey = "__all__";
-    private const string DefaultGroupScopeKey = "__default__";
-    // 分桶格式版本：旧文件按 (性别, 分组) 过滤条件分桶（更早）或只有一个 "*" 桶（#294 之后），都没有这个字段。
-    private const int StudentStateFormatVersion = 2;
+    // Student temporary records are per list, not per (gender, group) filter: the draw scope only narrows
+    // which members are visible, so a record bucketed by the filter could be escaped by switching filters.
+    // Legacy files written with one bucket per filter are merged into this single scope on load.
+    private const string ListScopeKey = "*";
     private readonly HashSet<string> _clearedStudentLists = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _clearedPrizeLists = new(StringComparer.OrdinalIgnoreCase);
     private readonly object _gate = new();
@@ -28,44 +25,26 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         WriteIndented = true
     };
 
-    public IReadOnlyDictionary<string, int> GetStudentCounts(string listName, string? historyGroup)
+    public IReadOnlyDictionary<string, int> GetStudentCounts(string listName, string gender, string group)
     {
         lock (_gate)
         {
             var state = LoadStudentState(listName);
-            return state.Scopes.TryGetValue(ToScopeKey(historyGroup), out var scope)
+            return state.Scopes.TryGetValue(ListScopeKey, out var scope)
                 ? scope.Records.ToDictionary(pair => pair.Key, pair => pair.Value.Count)
                 : new Dictionary<string, int>();
         }
     }
 
-    public IReadOnlyDictionary<string, int> GetStudentCountsForList(string listName)
+    public void RecordStudents(string listName, string gender, string group, IEnumerable<Student> students)
     {
         lock (_gate)
         {
             var state = LoadStudentState(listName);
-            var counts = new Dictionary<string, int>();
-            foreach (var scope in state.Scopes.Values)
-            foreach (var (recordId, record) in scope.Records)
-            {
-                var current = counts.GetValueOrDefault(recordId);
-                counts[recordId] = current > int.MaxValue - record.Count ? int.MaxValue : current + record.Count;
-            }
-
-            return counts;
-        }
-    }
-
-    public void RecordStudents(string listName, string? historyGroup, IEnumerable<Student> students)
-    {
-        lock (_gate)
-        {
-            var state = LoadStudentState(listName);
-            var scopeKey = ToScopeKey(historyGroup);
-            if (!state.Scopes.TryGetValue(scopeKey, out var scope))
+            if (!state.Scopes.TryGetValue(ListScopeKey, out var scope))
             {
                 scope = new TemporaryRecordScope();
-                state.Scopes[scopeKey] = scope;
+                state.Scopes[ListScopeKey] = scope;
             }
 
             var now = DateTimeOffset.Now;
@@ -89,37 +68,15 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         }
     }
 
-    public void ClearStudentScope(string listName, string? historyGroup)
+    public void ClearStudentScope(string listName, string gender, string group)
     {
         lock (_gate)
         {
             var state = LoadStudentState(listName);
-            if (!state.Scopes.Remove(ToScopeKey(historyGroup)))
+            if (state.Scopes.Count == 0)
                 return;
 
-            state.UpdatedAt = DateTimeOffset.Now;
-            SaveStudentState(listName, state);
-        }
-    }
-
-    public void RenameStudentScope(string listName, string from, string to)
-    {
-        lock (_gate)
-        {
-            var state = LoadStudentState(listName);
-            var fromKey = ToScopeKey(from);
-            var toKey = ToScopeKey(to);
-            if (string.Equals(fromKey, toKey, StringComparison.Ordinal))
-                return;
-            if (!state.Scopes.TryGetValue(fromKey, out var source))
-                return;
-
-            state.Scopes.Remove(fromKey);
-            if (state.Scopes.TryGetValue(toKey, out var target))
-                MergeScopeInto(target, source);
-            else
-                state.Scopes[toKey] = source;
-
+            state.Scopes.Clear();
             state.UpdatedAt = DateTimeOffset.Now;
             SaveStudentState(listName, state);
         }
@@ -132,7 +89,6 @@ public static partial class CoreRuntimeServiceCollectionExtensions
             SaveStudentState(listName, new TemporaryRecordState
             {
                 ListName = listName,
-                FormatVersion = StudentStateFormatVersion,
                 UpdatedAt = DateTimeOffset.Now
             });
         }
@@ -208,7 +164,6 @@ public static partial class CoreRuntimeServiceCollectionExtensions
             SavePrizeState(listName, new TemporaryRecordState
             {
                 ListName = listName,
-                FormatVersion = StudentStateFormatVersion,
                 UpdatedAt = DateTimeOffset.Now
             });
         }
@@ -249,8 +204,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
     private TemporaryRecordState LoadStudentState(string listName)
     {
         var state = LoadState(GetStudentPath(listName), listName, "读取临时抽取记录失败，将使用空记录：{Path}");
-        if (MigrateStudentScopes(state))
-            SaveStudentState(listName, state);
+        MergeStudentScopes(state);
         return state;
     }
 
@@ -261,25 +215,19 @@ public static partial class CoreRuntimeServiceCollectionExtensions
     private TemporaryRecordState LoadState(string path, string listName, string failureMessage)
     {
         if (!File.Exists(path))
-            return CreateState(listName);
+            return new TemporaryRecordState { ListName = listName };
 
         try
         {
             return JsonSerializer.Deserialize<TemporaryRecordState>(File.ReadAllText(path), JsonOptions)
-                   ?? CreateState(listName);
+                   ?? new TemporaryRecordState { ListName = listName };
         }
         catch (Exception ex)
         {
             logger.LogWarning(ex, failureMessage, path);
-            return CreateState(listName);
+            return new TemporaryRecordState { ListName = listName };
         }
     }
-
-    private static TemporaryRecordState CreateState(string listName) => new()
-    {
-        ListName = listName,
-        FormatVersion = StudentStateFormatVersion
-    };
 
     private static void SaveState(string path, TemporaryRecordState state)
     {
@@ -290,23 +238,23 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         File.Move(temporaryPath, path, overwrite: true);
     }
 
-    public string? CaptureStudentScopeSnapshot(string listName, string? historyGroup)
+    public string? CaptureStudentScopeSnapshot(string listName, string gender, string group)
     {
         lock (_gate)
         {
             var state = LoadStudentState(listName);
-            return state.Scopes.TryGetValue(ToScopeKey(historyGroup), out var scope)
+            return state.Scopes.TryGetValue(ListScopeKey, out var scope)
                 ? JsonSerializer.Serialize(scope, JsonOptions)
                 : null;
         }
     }
 
-    public void RestoreStudentScopeSnapshot(string listName, string? historyGroup, string? snapshotJson)
+    public void RestoreStudentScopeSnapshot(string listName, string gender, string group, string? snapshotJson)
     {
         lock (_gate)
         {
             var state = LoadStudentState(listName);
-            var scopeKey = ToScopeKey(historyGroup);
+            var scopeKey = ListScopeKey;
             if (snapshotJson is null)
                 state.Scopes.Remove(scopeKey);
             else
@@ -350,65 +298,45 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         Utils.GetFilePath("TEMP", $"lottery_record_{NormalizeFileComponent(listName)}.json");
 
     /// <summary>
-    ///     Turns the scope value the draw ran with into its bucket key: <c>null</c> (no group scope at all) shares
-    ///     one bucket, the empty string is the default record group, and a name is that group.
+    ///     Collapses the legacy per-(gender, group) buckets into the single per-list scope, summing counts so
+    ///     an upgraded install keeps every recorded draw instead of silently restarting the repeat limit.
     /// </summary>
-    private static string ToScopeKey(string? historyGroup)
+    private static void MergeStudentScopes(TemporaryRecordState state)
     {
-        if (historyGroup is null)
-            return AllGroupsScopeKey;
-        var name = historyGroup.Trim();
-        return name.Length == 0 ? DefaultGroupScopeKey : name;
-    }
-
-    /// <summary>
-    ///     Legacy files had no format version: the oldest ones bucketed by the (gender, group) draw filter, and the
-    ///     #294 build kept a single <c>"*"</c> bucket, so no count can be attributed to a record group. Those counts
-    ///     are summed into the all-groups bucket once, so an upgraded install keeps every recorded draw instead of
-    ///     silently restarting the repeat limit; files written by this version are left exactly as they are.
-    /// </summary>
-    private static bool MigrateStudentScopes(TemporaryRecordState state)
-    {
-        if (state.FormatVersion >= StudentStateFormatVersion)
-            return false;
+        if (state.Scopes.Count == 0 || (state.Scopes.Count == 1 && state.Scopes.ContainsKey(ListScopeKey)))
+            return;
 
         var merged = new TemporaryRecordScope();
         foreach (var scope in state.Scopes.Values)
-            MergeScopeInto(merged, scope);
-
-        state.Scopes.Clear();
-        state.Scopes[AllGroupsScopeKey] = merged;
-        state.FormatVersion = StudentStateFormatVersion;
-        return true;
-    }
-
-    /// <summary>Adds one bucket's counts into another, keeping the newest name/id/time per record.</summary>
-    private static void MergeScopeInto(TemporaryRecordScope target, TemporaryRecordScope source)
-    {
-        foreach (var (recordId, record) in source.Records)
         {
-            if (!target.Records.TryGetValue(recordId, out var existing))
+            foreach (var (recordId, record) in scope.Records)
             {
-                target.Records[recordId] = new TemporaryRecordItem
+                if (!merged.Records.TryGetValue(recordId, out var existing))
                 {
-                    Name = record.Name,
-                    Id = record.Id,
-                    Count = record.Count,
-                    LastDrawnTime = record.LastDrawnTime
-                };
-                continue;
-            }
+                    merged.Records[recordId] = new TemporaryRecordItem
+                    {
+                        Name = record.Name,
+                        Id = record.Id,
+                        Count = record.Count,
+                        LastDrawnTime = record.LastDrawnTime
+                    };
+                    continue;
+                }
 
-            existing.Count = existing.Count > int.MaxValue - record.Count
-                ? int.MaxValue
-                : existing.Count + record.Count;
-            if (record.LastDrawnTime > existing.LastDrawnTime)
-            {
-                existing.LastDrawnTime = record.LastDrawnTime;
-                existing.Name = record.Name;
-                existing.Id = record.Id;
+                existing.Count = existing.Count > int.MaxValue - record.Count
+                    ? int.MaxValue
+                    : existing.Count + record.Count;
+                if (record.LastDrawnTime > existing.LastDrawnTime)
+                {
+                    existing.LastDrawnTime = record.LastDrawnTime;
+                    existing.Name = record.Name;
+                    existing.Id = record.Id;
+                }
             }
         }
+
+        state.Scopes.Clear();
+        state.Scopes[ListScopeKey] = merged;
     }
 
     private static string NormalizeFileComponent(string value)
@@ -423,8 +351,6 @@ public static partial class CoreRuntimeServiceCollectionExtensions
     {
         public string ListName { get; set; } = string.Empty;
         public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.Now;
-        /// <summary>Student bucket-layout version; 0 means a file written before record groups split the buckets.</summary>
-        public int FormatVersion { get; set; }
         public Dictionary<string, TemporaryRecordScope> Scopes { get; set; } = [];
     }
 

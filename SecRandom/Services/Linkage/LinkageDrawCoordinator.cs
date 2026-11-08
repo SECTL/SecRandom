@@ -20,7 +20,7 @@ public enum LinkageDrawGate
     /// <summary>本机会拉起密码/TOTP/USB 验证框。<b>集控远程命令不能用这种路径</b>（教室机可能没人）。</summary>
     RequiresLocalVerification,
 
-    /// <summary>已确认非上课时间，而联动设置不允许这时候抽取。</summary>
+    /// <summary>课程联动判定为受限（确认非上课，或数据源不可用且要求维持限制），而联动设置不允许这时候抽取。</summary>
     BlockedByClassTime,
 
     /// <summary>集控期望状态锁定了抽取。</summary>
@@ -49,7 +49,7 @@ public sealed class LinkageDrawCoordinator(
         if (controlDrawGate.IsDrawLocked)
             return false;
 
-        if (!linkageService.IsConfirmedNonClassTime)
+        if (!linkageService.IsClassTimeRestrictionActive)
             return await securityService.AuthorizeAsync(operations, action, cancellationToken).ConfigureAwait(false);
 
         if (!linkageService.Settings.VerificationRequired)
@@ -79,7 +79,7 @@ public sealed class LinkageDrawCoordinator(
         if (controlDrawGate.IsDrawLocked)
             return LinkageDrawGate.BlockedByRemoteLock;
 
-        if (!linkageService.IsConfirmedNonClassTime)
+        if (!linkageService.IsClassTimeRestrictionActive)
             return operations.Any(securityService.RequiresVerification)
                 ? LinkageDrawGate.RequiresLocalVerification
                 : LinkageDrawGate.Allowed;
@@ -87,7 +87,7 @@ public sealed class LinkageDrawCoordinator(
         if (!linkageService.Settings.VerificationRequired)
             return LinkageDrawGate.BlockedByClassTime;
 
-        // 确认非上课时间后的抽取要额外过 BypassClassTimeRestriction，而它永远需要当场验证。
+        // 受限后的抽取要额外过 BypassClassTimeRestriction，而它永远需要当场验证。
         return LinkageDrawGate.RequiresLocalVerification;
     }
 

@@ -102,11 +102,11 @@ public sealed class ControlDrawResetTests : IDisposable
             new Student { Id = "12", Name = "学生12" },
             new Student { Id = "13", Name = "学生13" }
         ]));
-        temporary.RecordStudents("测试 1", null, [
+        temporary.RecordStudents("测试 1", string.Empty, string.Empty, [
             new Student { Id = "12", Name = "学生12" },
             new Student { Id = "13", Name = "学生13" }
         ]);
-        Assert.Equal(2, temporary.GetStudentCounts("测试 1", null).Values.Sum());
+        Assert.Equal(2, temporary.GetStudentCounts("测试 1", string.Empty, string.Empty).Values.Sum());
 
         // 历史文件：内容与字节都要在执行前后逐字节相同。
         var historyPath = Utils.GetFilePath("history", "roll_call", "测试 1.json");
@@ -117,7 +117,7 @@ public sealed class ControlDrawResetTests : IDisposable
         var outcome = handler.Apply(new ControlDrawResetRequest(ControlDrawResetRequest.TargetRollCall, "测试 1"));
 
         Assert.True(outcome.Ok, outcome.Reason);
-        Assert.Equal(0, temporary.GetStudentCounts("测试 1", null).Values.Sum());
+        Assert.Equal(0, temporary.GetStudentCounts("测试 1", string.Empty, string.Empty).Values.Sum());
 
         Assert.Equal(historyBytes, File.ReadAllBytes(historyPath));
 
@@ -139,7 +139,7 @@ public sealed class ControlDrawResetTests : IDisposable
         Assert.True(catalog.ReplaceStudents("测试 1", [new Student { Id = "12", Name = "学生12" }]));
         Assert.True(catalog.ReplacePrizes("元旦抽奖", [new Prize { Id = "p1", Name = "一等奖", Count = 1 }]));
 
-        temporary.RecordStudents("测试 1", null, [new Student { Id = "12", Name = "学生12" }]);
+        temporary.RecordStudents("测试 1", string.Empty, string.Empty, [new Student { Id = "12", Name = "学生12" }]);
         temporary.RecordPrizes("元旦抽奖", [new Prize { Id = "p1", Name = "一等奖", Count = 1 }]);
 
         var outcome = handler.Apply(new ControlDrawResetRequest(ControlDrawResetRequest.TargetLottery, null));
@@ -147,7 +147,7 @@ public sealed class ControlDrawResetTests : IDisposable
         Assert.True(outcome.Ok, outcome.Reason);
         Assert.Equal(0, temporary.GetPrizeCounts("元旦抽奖").Values.Sum());
         // 奖品目标不该顺手把学生的进度也清了。
-        Assert.Equal(1, temporary.GetStudentCounts("测试 1", null).Values.Sum());
+        Assert.Equal(1, temporary.GetStudentCounts("测试 1", string.Empty, string.Empty).Values.Sum());
     }
 
     [Fact]
@@ -199,14 +199,14 @@ public sealed class ControlDrawResetTests : IDisposable
         var handler = CreateHandler(provider, presenter);
 
         Assert.True(catalog.ReplaceStudents("测试 1", [new Student { Id = "12", Name = "学生12" }]));
-        temporary.RecordStudents("测试 1", null, [new Student { Id = "12", Name = "学生12" }]);
+        temporary.RecordStudents("测试 1", string.Empty, string.Empty, [new Student { Id = "12", Name = "学生12" }]);
 
         var outcome = handler.Apply(new ControlDrawResetRequest(ControlDrawResetRequest.TargetRollCall, "测试 1"));
 
         Assert.True(outcome.Ok, outcome.Reason);
         Assert.Equal(1, presenter.GateCalls);
         Assert.Equal(1, presenter.ClearCalls);
-        Assert.Equal(0, temporary.GetStudentCounts("测试 1", null).Values.Sum());
+        Assert.Equal(0, temporary.GetStudentCounts("测试 1", string.Empty, string.Empty).Values.Sum());
     }
 
     [Fact]
@@ -220,7 +220,7 @@ public sealed class ControlDrawResetTests : IDisposable
         var handler = CreateHandler(provider, presenter);
 
         Assert.True(catalog.ReplaceStudents("测试 1", [new Student { Id = "12", Name = "学生12" }]));
-        temporary.RecordStudents("测试 1", null, [new Student { Id = "12", Name = "学生12" }]);
+        temporary.RecordStudents("测试 1", string.Empty, string.Empty, [new Student { Id = "12", Name = "学生12" }]);
 
         var historyPath = Utils.GetFilePath("history", "roll_call", "测试 1.json");
         Directory.CreateDirectory(Path.GetDirectoryName(historyPath)!);
@@ -232,7 +232,7 @@ public sealed class ControlDrawResetTests : IDisposable
         Assert.False(outcome.Ok);
         Assert.Equal("draw_denied", outcome.Reason);
         Assert.Equal(0, presenter.ClearCalls);
-        Assert.Equal(1, temporary.GetStudentCounts("测试 1", null).Values.Sum());
+        Assert.Equal(1, temporary.GetStudentCounts("测试 1", string.Empty, string.Empty).Values.Sum());
         Assert.Equal(historyBytes, File.ReadAllBytes(historyPath));
     }
 

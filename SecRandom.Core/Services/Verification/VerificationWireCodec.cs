@@ -16,12 +16,19 @@ public static class VerificationWireCodec
     public const string StudentAlgorithmId = "secrandom-fairdraw-history-balanced-weighted-chacha20/v3";
     public const string InventoryLotteryAlgorithmId = "secrandom-inventory-permutation-chacha20/v3";
     public const string WeightedLotteryAlgorithmId = "secrandom-lottery-weighted-without-replacement-chacha20/v3";
+    public const string NumberAlgorithmId = "secrandom-number-permutation-chacha20/v3";
     public const string AlgorithmId = StudentAlgorithmId;
 
     /// <summary>
     ///     Engine version stamped into every new proof.
     /// </summary>
     /// <remarks>
+    ///     <para>
+    ///         3.5.0 adds the number-range kind: a "no roster" draw commits its inclusive integer range and samples
+    ///         uniformly without replacement over it. A verifier must know the <c>NumberUniformPermutation</c>
+    ///         profile before a build that emits this generation is released, exactly like a new audit field.
+    ///         Proofs already stamped with an earlier engine version keep replaying under their own branch.
+    ///     </para>
     ///     3.4.0 changes no replay arithmetic: student draws still sample over history-balanced weights and the
     ///     frozen candidate weights are unchanged. It marks the proof protocol that may declare a
     ///     <c>fairness.historyScope</c> — the anonymous audit payload can now say that a candidate's
@@ -31,7 +38,7 @@ public static class VerificationWireCodec
     ///     build that emits it is released. Proofs already stamped 3.3.0 and earlier keep replaying under their own
     ///     branch.
     /// </remarks>
-    public const string AlgorithmEngineVersion = "3.4.0";
+    public const string AlgorithmEngineVersion = "3.5.0";
 
     private static readonly byte[] InputMagic = "SRDI"u8.ToArray();
     private static readonly byte[] RequestMagic = "SRDQ"u8.ToArray();
@@ -77,6 +84,7 @@ public static class VerificationWireCodec
         VerificationAlgorithmProfile.StudentRandomInternalRuleRepeat => "secrandom-student-random-internal-rule-repeat/v3",
         VerificationAlgorithmProfile.StudentRandomInternalRuleNoRepeat => "secrandom-student-random-internal-rule-no-repeat/v3",
         VerificationAlgorithmProfile.StudentRandomInternalRuleHalfRepeat => "secrandom-student-random-internal-rule-half-repeat/v3",
+        VerificationAlgorithmProfile.NumberUniformPermutation => NumberAlgorithmId,
         _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, "Verification algorithm profile is unsupported.")
     };
 
@@ -99,6 +107,7 @@ public static class VerificationWireCodec
         VerificationAlgorithmProfile.StudentRandomInternalRuleRepeat => "点名：随机，内幕规则加权，允许重复",
         VerificationAlgorithmProfile.StudentRandomInternalRuleNoRepeat => "点名：随机，内幕规则加权，不重复",
         VerificationAlgorithmProfile.StudentRandomInternalRuleHalfRepeat => "点名：随机，内幕规则加权，半重复",
+        VerificationAlgorithmProfile.NumberUniformPermutation => "数字：范围内等概率不放回",
         _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, "Verification algorithm profile is unsupported.")
     };
 
@@ -123,6 +132,7 @@ public static class VerificationWireCodec
             "secrandom-student-random-internal-rule-repeat/v3" => GetAlgorithmLabel(VerificationAlgorithmProfile.StudentRandomInternalRuleRepeat),
             "secrandom-student-random-internal-rule-no-repeat/v3" => GetAlgorithmLabel(VerificationAlgorithmProfile.StudentRandomInternalRuleNoRepeat),
             "secrandom-student-random-internal-rule-half-repeat/v3" => GetAlgorithmLabel(VerificationAlgorithmProfile.StudentRandomInternalRuleHalfRepeat),
+            NumberAlgorithmId => GetAlgorithmLabel(VerificationAlgorithmProfile.NumberUniformPermutation),
             InventoryLotteryAlgorithmId => "按剩余数量",
             WeightedLotteryAlgorithmId => "加权无放回",
             _ => string.Empty
@@ -155,6 +165,7 @@ public static class VerificationWireCodec
                 or VerificationAlgorithmProfile.LotteryPanHalfRepeat
                 => samplingMode == VerificationSamplingMode.WeightedWithoutReplacement,
             VerificationAlgorithmProfile.LotteryInventoryCount
+                or VerificationAlgorithmProfile.NumberUniformPermutation
                 => samplingMode == VerificationSamplingMode.InventoryPermutation,
             _ => false
         };
@@ -183,6 +194,8 @@ public static class VerificationWireCodec
                 or VerificationAlgorithmProfile.LotteryPanNoRepeat
                 or VerificationAlgorithmProfile.LotteryPanHalfRepeat
                 => kind == VerificationDrawKind.Prize,
+            VerificationAlgorithmProfile.NumberUniformPermutation
+                => kind == VerificationDrawKind.Number,
             _ => false
         };
     }

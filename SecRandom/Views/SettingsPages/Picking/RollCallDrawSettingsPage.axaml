@@ -58,8 +58,8 @@
                                    Description="{x:Static lp:Resources.S_DefaultClass_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PeopleListFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <ComboBox ItemsSource="{Binding DefaultClassOptions}"
-                              SelectedItem="{Binding SelectedDefaultClass, Mode=TwoWay}"
+                    <ComboBox ItemsSource="{Binding StudentListNames}"
+                              SelectedItem="{Binding Settings.DefaultClass, Mode=TwoWay}"
                               MinWidth="220" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>

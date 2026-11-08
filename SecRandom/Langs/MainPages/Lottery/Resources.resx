@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root" xmlns="">
     <xsd:element name="root" msdata:IsDataSet="true" />
@@ -32,6 +32,9 @@
   </data>
   <data name="C_Close" xml:space="preserve">
     <value>关闭</value>
+  </data>
+  <data name="O_NoList" xml:space="preserve">
+    <value>不使用名单</value>
   </data>
   <data name="O_NoStudentAssignment" xml:space="preserve">
     <value>不抽取成员</value>
@@ -68,6 +71,9 @@
   </data>
   <data name="M_CountSummaryFormat" xml:space="preserve">
     <value>总奖数: {0} | 剩余奖数: {1}</value>
+  </data>
+  <data name="M_NumberCountSummary" xml:space="preserve">
+    <value>剩余 {0}/{1}</value>
   </data>
   <data name="M_DrawFailed" xml:space="preserve">
     <value>抽奖失败</value>

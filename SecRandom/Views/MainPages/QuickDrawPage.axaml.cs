@@ -8,6 +8,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Behaviors;
 using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Helpers;
@@ -218,7 +219,7 @@ public partial class QuickDrawPage : UserControl
         for (var i = 0; i < 2; i++)
         {
             await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
-            await Task.Delay(16);
+            await Task.Delay(AnimationFramePolicy.FrameIntervalMs);
         }
     }
 

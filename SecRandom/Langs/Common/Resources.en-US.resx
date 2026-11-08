@@ -253,17 +253,8 @@ Move the entire portable package to a writable location, or adjust the directory
     <data name="MultiInstance_Title" xml:space="preserve">
         <value>Application Already Running</value>
     </data>
-    <data name="MultiInstance_Message" xml:space="preserve">
-        <value>Another instance of SecRandom is already running</value>
-    </data>
-    <data name="MultiInstance_OpenExisting" xml:space="preserve">
-        <value>Show Running Instance</value>
-    </data>
-    <data name="MultiInstance_Restart" xml:space="preserve">
-        <value>Restart</value>
-    </data>
-    <data name="MultiInstance_Cancel" xml:space="preserve">
-        <value>Cancel</value>
+    <data name="MultiInstance_Unreachable" xml:space="preserve">
+        <value>Could not open the running SecRandom instance. Find it in the taskbar or the system tray</value>
     </data>
     <data name="C_PickButtonText" xml:space="preserve">
         <value>Go</value>

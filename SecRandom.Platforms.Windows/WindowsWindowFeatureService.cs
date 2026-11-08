@@ -8,6 +8,7 @@ public sealed class WindowsWindowFeatureService : IWindowFeatureService
 {
     private const int GwlExStyle = -20;
     private const long WsExTransparent = 0x00000020L;
+    private const long WsExTopmost = 0x00000008L;
     private const long WsExToolWindow = 0x00000080L;
     private const long WsExAppWindow = 0x00040000L;
     private const long WsExLayered = 0x00080000L;
@@ -16,6 +17,7 @@ public sealed class WindowsWindowFeatureService : IWindowFeatureService
     private const uint WdaExcludeFromCapture = 0x00000011;
     private const uint SwpNoMove = 0x0002;
     private const uint SwpNoSize = 0x0001;
+    private const uint SwpNoZorder = 0x0004;
     private const uint SwpNoActivate = 0x0010;
     private const uint SwpFrameChanged = 0x0020;
     private const WindowFeatures StyleFeatures = WindowFeatures.ToolWindow |
@@ -182,15 +184,23 @@ public sealed class WindowsWindowFeatureService : IWindowFeatureService
                 }
             }
 
-            if (SetWindowPos(window, nint.Zero, 0, 0, 0, 0,
-                    SwpNoMove | SwpNoSize | SwpNoActivate | SwpFrameChanged))
+            // 刷新扩展样式时不能改变 z 序：SWP_FRAMECHANGED 会触发一次窗口重排，
+            // 少了 SWP_NOZORDER 的话置顶窗口会被按 HWND_TOP 重新放回普通层（悬浮窗因此掉置顶）。
+            if (!SetWindowPos(window, nint.Zero, 0, 0, 0, 0,
+                    SwpNoMove | SwpNoSize | SwpNoZorder | SwpNoActivate | SwpFrameChanged))
             {
-                failure = null;
-                return true;
+                failure = $"SetWindowPos failed with Win32 error {Marshal.GetLastWin32Error()}.";
+                return false;
             }
 
-            failure = $"SetWindowPos failed with Win32 error {Marshal.GetLastWin32Error()}.";
-            return false;
+            // 免激活（WS_EX_NOACTIVATE）窗口点击时不会被激活，Windows 也不会把它抬回置顶窗口带
+            // 的最上层，所以光有 WS_EX_TOPMOST 仍可能被别的置顶窗口压住。样式刷新后补断言一次
+            // HWND_TOPMOST，让「无焦点模式 + 置顶」可以同时成立。
+            if ((style & WsExTopmost) != 0)
+                SetWindowPos(window, HwndTopmost, 0, 0, 0, 0, SwpNoMove | SwpNoSize | SwpNoActivate);
+
+            failure = null;
+            return true;
         }
         catch (Exception exception)
         {

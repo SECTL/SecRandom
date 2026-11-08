@@ -27,6 +27,12 @@
   <data name="S_External_VerificationRequired_D" xml:space="preserve">
     <value>仅在已启用非上课时段限制时生效；开启后，通过已配置的安全验证可以临时继续抽取或重置；关闭后将直接阻止</value>
   </data>
+  <data name="S_External_RestrictWhenUnavailable" xml:space="preserve">
+    <value>数据源不可用时维持限制</value>
+  </data>
+  <data name="S_External_RestrictWhenUnavailable_D" xml:space="preserve">
+    <value>课程数据源未连接、课程表未导入或读取失败时，仍按非上课时段限制抽取和重置</value>
+  </data>
   <data name="S_External_InstantDrawDisable" xml:space="preserve">
     <value>限制非上课时段操作</value>
   </data>

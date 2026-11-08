@@ -13,4 +13,7 @@ public interface IPlatformServiceRoot
     IRemovableStorageBindingMarker RemovableStorageBindingMarker { get; }
 
     IPlatformCameraDeviceCatalog CameraDevices { get; }
+
+    /// <summary>从本机应用文件读取图标的能力。</summary>
+    IPlatformApplicationIconExtractor ApplicationIcons { get; }
 }
