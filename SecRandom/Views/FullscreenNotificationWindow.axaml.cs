@@ -312,15 +312,8 @@ public partial class FullscreenNotificationWindow : Window
                         _accentColor,
                         settings.EffectiveTypewriterCharactersPerSecond,
                         cue,
-                        cts.Token);
-
-                    // 打字机是唯一会把 ResultHost 清空后重写的样式，头像必须等它吐完再插，
-                    // 否则会被逐帧清掉——这是"勾了头像却看不到"的直接原因。
-                    if (cts.IsCancellationRequested)
-                        return;
-
-                    if (snapshot is { ShowResultAvatar: true })
-                        ApplyInlineAvatars(snapshot);
+                        cts.Token,
+                        BuildAvatarControls(snapshot));
                     break;
 
                 case FullscreenAnimationStyle.Direct:
@@ -1117,63 +1110,30 @@ public partial class FullscreenNotificationWindow : Window
         FullscreenResultSnapshot? snapshot = null)
     {
         ResultHost.IsVisible = true;
-        FullscreenTextAnimation.FillStatic(ResultHost, lines, _bodyFontSize, _bodyColor, _accentColor);
-
-        // 头像只出现在"结果画面"里（直接显示/打字机/网格提前退出的兜底）：
-        // 网格卡片本身就是纯文字的排布，往里塞头像会挤掉辨识度。
-        if (snapshot is { ShowResultAvatar: true })
-            ApplyInlineAvatars(snapshot);
+        FullscreenTextAnimation.FillStatic(
+            ResultHost,
+            lines,
+            _bodyFontSize,
+            _bodyColor,
+            _accentColor,
+            snapshot is null ? null : BuildAvatarControls(snapshot));
     }
 
     /// <summary>
-    ///     把头像放到姓名左侧（用户 m03502）：配了图片的成员显示照片，没配图片的成员显示姓名首字的圆形占位，
-    ///     这样"勾了头像却什么都没有"不会发生。结果行本身仍是 <see cref="TextBlock"/>，
-    ///     这里只把它套进一个水平容器，动画器（打字机每帧重写 ResultHost）结束后再调用即可。
+    ///     每条结果的头像控件（用户 m03502：头像在名称左侧；m03587：整段文字连续排布，头像内联在名字前面）。
+    ///     配了图片的成员显示照片，没配图片的成员显示姓名首字的圆形占位；未勾选头像时返回 null。
     /// </summary>
-    private void ApplyInlineAvatars(FullscreenResultSnapshot snapshot)
+    private IReadOnlyList<Control?>? BuildAvatarControls(FullscreenResultSnapshot snapshot)
     {
-        try
-        {
-            if (snapshot.Results.Count == 0 || ResultHost.Children.Count == 0)
-                return;
+        if (!snapshot.ShowResultAvatar || snapshot.Results.Count == 0)
+            return null;
 
-            var size = Math.Clamp(_bodyFontSize * 1.15, 64, 160);
-            var spacing = Math.Clamp(_bodyFontSize * 0.28, 12, 40);
-            var lineIndex = 0;
-            var rebuilt = new List<Control>(ResultHost.Children.Count);
-            foreach (var child in ResultHost.Children.ToList())
-            {
-                if (child is not TextBlock block || lineIndex >= snapshot.Results.Count || lineIndex >= MaxAvatars)
-                {
-                    rebuilt.Add(child);
-                    continue;
-                }
+        var size = Math.Clamp(_bodyFontSize * 1.15, 48, 160);
+        var controls = new List<Control?>(Math.Min(snapshot.Results.Count, MaxAvatars));
+        for (var index = 0; index < snapshot.Results.Count && index < MaxAvatars; index++)
+            controls.Add(CreateAvatar(snapshot.Results[index], size));
 
-                var avatar = CreateAvatar(snapshot.Results[lineIndex], size);
-                lineIndex++;
-
-                rebuilt.Add(new StackPanel
-                {
-                    Orientation = Orientation.Horizontal,
-                    Spacing = spacing,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    VerticalAlignment = VerticalAlignment.Center,
-                    Children =
-                    {
-                        avatar,
-                        block
-                    }
-                });
-            }
-
-            ResultHost.Children.Clear();
-            foreach (var child in rebuilt)
-                ResultHost.Children.Add(child);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "全屏通知窗口：头像渲染失败，已跳过。");
-        }
+        return controls;
     }
 
     /// <summary>单条结果的圆形头像：有照片用照片，没照片用姓名首字。</summary>
@@ -1196,6 +1156,7 @@ public partial class FullscreenNotificationWindow : Window
         {
             Width = size,
             Height = size,
+            Margin = new Thickness(0, 0, size * 0.3, 0),
             CornerRadius = new CornerRadius(size / 2),
             BorderThickness = new Thickness(3),
             BorderBrush = new SolidColorBrush(_accentColor),

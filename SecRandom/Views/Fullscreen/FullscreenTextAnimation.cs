@@ -110,29 +110,55 @@ internal static class FullscreenTextAnimation
     /// <summary>结果帧文本：就是结果本身（高亮由 Run 的字号/字重/颜色负责）。</summary>
     public static string BuildResultFrame(string? result) => result ?? string.Empty;
 
+    /// <summary>结果之间的分隔符：全角空格，比逗号中性，也不会在结尾留下标点。</summary>
+    private const string SeparatorText = "　　";
+
     /// <summary>
-    ///     直接在 <paramref name="host" /> 里铺满整句（Direct），或作为网格的兜底结果。
+    ///     直接在 <paramref name="host" /> 里铺成**一段连续文字**（Direct），或作为网格的兜底结果。
     /// </summary>
+    /// <remarks>
+    ///     多人结果不再每人一行（用户 m03587）：整段文字按可用宽度自动换行，字号自适应之后
+    ///     30 个人也能在一屏里排开。头像通过 <see cref="InlineUIContainer" /> 内联在该成员名字左侧。
+    /// </remarks>
     public static void FillStatic(
         StackPanel host,
         IReadOnlyList<FullscreenResultLine> lines,
         double bodyFontSize,
         Color bodyColor,
-        Color accentColor)
+        Color accentColor,
+        IReadOnlyList<Control?>? avatars = null)
     {
         host.Children.Clear();
         var bodyBrush = new SolidColorBrush(bodyColor);
         var accentBrush = new SolidColorBrush(accentColor);
+        var block = CreateFlowingBlock(bodyFontSize, bodyBrush);
 
-        foreach (var line in lines)
+        for (var index = 0; index < lines.Count; index++)
         {
-            var block = BuildLineBlock(line, bodyFontSize, bodyBrush, accentBrush,
-                out var prefixRun, out var resultRun, out var suffixRun);
+            var line = lines[index];
+            var prefixRun = CreateRun(bodyFontSize, FontWeight.Normal, bodyBrush);
             prefixRun.Text = line.Prefix;
+            block.Inlines?.Add(prefixRun);
+
+            // 头像紧挨在名字左侧：夹在模板前段与结果帧之间，"恭喜 头像 张三" 才读得顺。
+            AddAvatarInline(block, avatars, index);
+
+            var resultRun = CreateRun(bodyFontSize * ResultFontScale, FontWeight.SemiBold, accentBrush);
             resultRun.Text = BuildResultFrame(line.Result);
-            suffixRun.Text = line.Suffix;
-            host.Children.Add(block);
+            block.Inlines?.Add(resultRun);
+
+            if (index < lines.Count - 1)
+                block.Inlines?.Add(CreateSeparatorRun(bodyFontSize, bodyBrush));
+
+            if (!string.IsNullOrEmpty(line.Suffix))
+            {
+                var suffixRun = CreateRun(bodyFontSize, FontWeight.Normal, bodyBrush);
+                suffixRun.Text = line.Suffix;
+                block.Inlines?.Add(suffixRun);
+            }
         }
+
+        host.Children.Add(block);
     }
 
     /// <summary>
@@ -150,24 +176,46 @@ internal static class FullscreenTextAnimation
         Color accentColor,
         int charactersPerSecond,
         Action? completedCue,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IReadOnlyList<Control?>? avatars = null)
     {
         host.Children.Clear();
         var bodyBrush = new SolidColorBrush(bodyColor);
         var accentBrush = new SolidColorBrush(accentColor);
         var cursors = new List<TypewriterCursor>(lines.Count * 3);
+        var block = CreateFlowingBlock(bodyFontSize, bodyBrush);
 
-        foreach (var line in lines)
+        for (var index = 0; index < lines.Count; index++)
         {
-            var block = BuildLineBlock(line, bodyFontSize, bodyBrush, accentBrush,
-                out var prefixRun, out var resultRun, out var suffixRun);
-            host.Children.Add(block);
-
+            var line = lines[index];
+            var prefixRun = CreateRun(bodyFontSize, FontWeight.Normal, bodyBrush);
+            block.Inlines?.Add(prefixRun);
             cursors.Add(TypewriterCursor.ForText(prefixRun, line.Prefix));
+
+            // 头像先占位：整段文字连续排布，不能等吐完再插，否则会整段重排。
+            AddAvatarInline(block, avatars, index);
+
+            var resultRun = CreateRun(bodyFontSize * ResultFontScale, FontWeight.SemiBold, accentBrush);
+            block.Inlines?.Add(resultRun);
             // 结果帧整体一次性出现，所以只占一个"字"的节奏。
             cursors.Add(TypewriterCursor.ForWhole(resultRun, BuildResultFrame(line.Result)));
-            cursors.Add(TypewriterCursor.ForText(suffixRun, line.Suffix));
+
+            if (index < lines.Count - 1)
+            {
+                var separatorRun = CreateSeparatorRun(bodyFontSize, bodyBrush);
+                block.Inlines?.Add(separatorRun);
+                cursors.Add(TypewriterCursor.ForText(separatorRun, SeparatorText));
+            }
+
+            if (!string.IsNullOrEmpty(line.Suffix))
+            {
+                var suffixRun = CreateRun(bodyFontSize, FontWeight.Normal, bodyBrush);
+                block.Inlines?.Add(suffixRun);
+                cursors.Add(TypewriterCursor.ForText(suffixRun, line.Suffix));
+            }
         }
+
+        host.Children.Add(block);
 
         var totalUnits = cursors.Sum(cursor => cursor.Steps.Length);
         if (totalUnits == 0)
@@ -235,31 +283,43 @@ internal static class FullscreenTextAnimation
             cursor.RevealAll();
     }
 
-    private static TextBlock BuildLineBlock(
-        FullscreenResultLine line,
-        double bodyFontSize,
-        IBrush bodyBrush,
-        IBrush accentBrush,
-        out Run prefixRun,
-        out Run resultRun,
-        out Run suffixRun)
-    {
-        var block = new TextBlock
+    /// <summary>整段连续文字的文本框：按可用宽度自动换行、居中排版（多人结果不再一人一行）。</summary>
+    private static TextBlock CreateFlowingBlock(double bodyFontSize, IBrush bodyBrush)
+        => new()
         {
             TextWrapping = TextWrapping.Wrap,
             TextAlignment = TextAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
             FontSize = bodyFontSize,
             Foreground = bodyBrush
         };
 
-        prefixRun = CreateRun(bodyFontSize, FontWeight.Normal, bodyBrush);
-        resultRun = CreateRun(bodyFontSize * ResultFontScale, FontWeight.SemiBold, accentBrush);
-        suffixRun = CreateRun(bodyFontSize, FontWeight.Normal, bodyBrush);
-        block.Inlines?.Add(prefixRun);
-        block.Inlines?.Add(resultRun);
-        block.Inlines?.Add(suffixRun);
-        return block;
+    /// <summary>每个成员的分隔符：小一号的正文色，只负责把相邻结果拉开。</summary>
+    private static Run CreateSeparatorRun(double bodyFontSize, IBrush bodyBrush)
+    {
+        var run = CreateRun(bodyFontSize * 0.9, FontWeight.Normal, bodyBrush);
+        run.Text = SeparatorText;
+        return run;
+    }
+
+    /// <summary>把头像内联到该成员名字左侧（没有头像的成员直接跳过）。</summary>
+    private static void AddAvatarInline(
+        TextBlock block,
+        IReadOnlyList<Control?>? avatars,
+        int index)
+    {
+        if (avatars is null || index >= avatars.Count)
+            return;
+
+        var avatar = avatars[index];
+        if (avatar is null)
+            return;
+
+        block.Inlines?.Add(new InlineUIContainer
+        {
+            Child = avatar,
+            BaselineAlignment = BaselineAlignment.Center
+        });
     }
 
     private static Run CreateRun(double fontSize, FontWeight weight, IBrush foreground)
