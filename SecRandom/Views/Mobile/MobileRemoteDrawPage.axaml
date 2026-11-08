@@ -130,14 +130,16 @@
                     <TextBox Text="{Binding ViewModel.ControlPlaneEndpoint}"
                              IsVisible="{Binding ViewModel.ShowEndpointField}"
                              PlaceholderText="{Binding ViewModel.ControlPlaneEndpointPlaceholder}" />
-                    <!-- v4 双因子：地点 ID 决定进哪个地点，配对码决定准不准进；两个都要填。 -->
+                    <!-- v4 双因子：地点 ID 决定进哪个地点，配对码决定准不准进；两个都要填。
+                         两个框都收得下一整句：控制台复制的是「地点ID + 配对码 + 有效期」，
+                         粘进来后 VM 会自动拆成两个值（手输时仍然按 9 位归一显示）。 -->
                     <TextBox x:Name="SiteIdBox"
                              Text="{Binding ViewModel.SiteId}"
-                             MaxLength="9"
+                             MaxLength="200"
                              PlaceholderText="{x:Static langs:Resources.RD_SiteId}" />
                     <TextBox x:Name="EnrollmentCodeBox"
                              Text="{Binding ViewModel.EnrollmentCode}"
-                             MaxLength="9"
+                             MaxLength="200"
                              PlaceholderText="{x:Static langs:Resources.RD_EnrollCode}" />
                     <!-- 地址不合法：只提示、不落盘，也不拿它去发请求。 -->
                     <TextBlock Text="{x:Static langs:Resources.RD_EndpointInvalid}"

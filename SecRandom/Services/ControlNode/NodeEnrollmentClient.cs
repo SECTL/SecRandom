@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using SecRandom.Core.Services.ControlNode;
@@ -365,6 +366,69 @@ public sealed class NodeEnrollmentClient
     {
         var compact = NormalizePairingCode(value);
         return compact is null ? value ?? string.Empty : $"{compact[..4]}-{compact[4..]}";
+    }
+
+    /// <summary>
+    ///     输入框上限：控制台生成配对码后复制的是一整句
+    ///     （`地点ID：SC-6M34RQ　配对码：K7Q2-9XMD　有效期 24 小时`），
+    ///     用户会把整句粘进任一输入框，所以输入框必须先能收下整句，再解析。
+    /// </summary>
+    public const int MaxInputTextLength = 200;
+
+    /// <summary>地点 ID 的容忍写法：<c>SC</c> 前缀 + 6 位主体，中间可有分隔符、可小写。</summary>
+    private static readonly Regex SiteIdInTextPattern = new(
+        @"SC[\s\-_:：.]*[2-9A-HJ-KM-NP-Z]{6}",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    /// <summary>配对码的容忍写法：4 + 4，中间可有分隔符。</summary>
+    private static readonly Regex PairingCodeInTextPattern = new(
+        @"[2-9A-HJ-KM-NP-Z]{4}[\s\-_:：.]*[2-9A-HJ-KM-NP-Z]{4}",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    /// <summary>
+    ///     从一段「整句」里同时认出地点 ID 与配对码；两个都认出来才算成功。
+    /// </summary>
+    /// <remarks>
+    ///     为什么需要这个：控制台生成配对码后会自动复制一整句给用户，运维的实际动作是把
+    ///     这句话粘进某个输入框、再手抄两段到两个框里 —— 手工挑段是出错的主要来源。
+    ///     识别顺序必须是「先地点、后配对码」：地点主体只有 6 位，如果先找配对码，地点自己
+    ///     加上后面的字符就能凑出「4+4」，得到的会是一个看起来合法、实际上错的码。
+    /// </remarks>
+    public static bool TryParseEnrollmentText(string? value, out string? siteId, out string? pairingCode)
+    {
+        siteId = null;
+        pairingCode = null;
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+
+        // 全角冒号/全角空格先归一（NFKC），再把大小写拉平，后面的正则只面向一种形态。
+        var text = value.Normalize(NormalizationForm.FormKC).ToUpperInvariant();
+
+        var siteMatch = SiteIdInTextPattern.Match(text);
+        if (!siteMatch.Success)
+            return false;
+        siteId = NormalizeSiteId(siteMatch.Value);
+        if (siteId is null)
+            return false;
+
+        var rest = text.Remove(siteMatch.Index, siteMatch.Length);
+        var codeMatch = PairingCodeInTextPattern.Match(rest);
+        if (!codeMatch.Success)
+        {
+            // 半成品不算数：调用方拿到 true 才填两个框，失败时两个值都必须是 null，
+            // 否则「只认出地点」会被误当成「识别成功」。
+            siteId = null;
+            return false;
+        }
+
+        pairingCode = NormalizePairingCode(codeMatch.Value);
+        if (pairingCode is null)
+        {
+            siteId = null;
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>v1 兼容：判断输入是否像旧版 <c>srn_</c> 令牌。v4 的接入码永远不会命中。</summary>

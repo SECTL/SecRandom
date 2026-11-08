@@ -43,6 +43,7 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     private readonly NodeEnrollmentClient? _enrollmentClient;
     private bool _suppressPersist;
     private bool _suppressPairingFormat;
+    private bool _suppressAutoParse;
 
     public ControlSettingsPageViewModel(
         MainConfigHandler configHandler,
@@ -187,18 +188,51 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
 
     public bool CanSaveClass => IsEnrolled && !IsTreeLoading && HasTree;
 
-    /// <summary>地点 ID 输入上限：<c>SC-</c> 加 6 位。</summary>
-    public int SiteIdMaxLength => 9;
+    /// <summary>地点 ID 输入上限：整句粘贴要先能收下整句（见 <see cref="NodeEnrollmentClient.TryParseEnrollmentText" />）。</summary>
+    public int SiteIdMaxLength => NodeEnrollmentClient.MaxInputTextLength;
 
-    /// <summary>配对码输入上限：展示为 <c>ABCD-7KQ2</c>。</summary>
-    public int PairingCodeMaxLength => 9;
+    /// <summary>配对码输入上限：同上，整句粘贴需要。</summary>
+    public int PairingCodeMaxLength => NodeEnrollmentClient.MaxInputTextLength;
 
     public bool ShowEnrollmentMessage => !string.IsNullOrEmpty(EnrollmentMessage);
 
+    /// <summary>接入提示是否属于「成功」类：成功用绿色 Toast，其余用红色。</summary>
+    public bool EnrollmentMessageIsSuccess => IsSuccessMessage(EnrollmentMessage);
+
+    /// <summary>班级保存提示是否属于「成功」类。</summary>
+    public bool ClassSaveMessageIsSuccess => IsSuccessMessage(ClassSaveMessage);
+
+    /// <summary>
+    ///     成功类文案只有三种：接入成功（带地点名的格式化串）、班级已保存、班级清空。
+    /// </summary>
+    /// <remarks>
+    ///     没有在每次赋值为空串/失败串的地方各加一个布尔标记：那样要改十几处赋值点，
+    ///     只要漏一处就会把失败报成成功；反过来按文案识别，漏一处只是颜色不对，不会骗人。
+    /// </remarks>
+    private static bool IsSuccessMessage(string? message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return false;
+
+        var successTemplate = LR.M_Enroll_Success;
+        var placeholder = successTemplate.IndexOf("{0}", StringComparison.Ordinal);
+        var successPrefix = placeholder < 0 ? successTemplate : successTemplate[..placeholder];
+        return (!string.IsNullOrEmpty(successPrefix) && message.StartsWith(successPrefix, StringComparison.Ordinal))
+               || message == LR.M_Enroll_Class_Saved
+               || message == LR.M_Enroll_Class_None;
+    }
+
     partial void OnSiteIdInputChanged(string value)
     {
-        _suppressPairingFormat = true;
         OnPropertyChanged(nameof(CanEnroll));
+        if (_suppressAutoParse)
+            return;
+
+        // 用户把控制台复制的一整句粘进任一输入框：两个都认出来时一次填好两个框。
+        if (TryApplyPastedComposite(value))
+            return;
+
+        _suppressPairingFormat = true;
         // 边输边归一：用户贴进来的 "sc k7q2m9" 与手输的格式应当得到同一个值，不必让他自己排版。
         var normalized = NodeEnrollmentClient.NormalizeSiteId(value);
         if (normalized is not null && !string.Equals(normalized, value, StringComparison.Ordinal))
@@ -209,6 +243,12 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     partial void OnPairingCodeInputChanged(string value)
     {
         OnPropertyChanged(nameof(CanEnroll));
+        if (_suppressAutoParse)
+            return;
+
+        if (TryApplyPastedComposite(value))
+            return;
+
         if (_suppressPairingFormat)
             return;
 
@@ -220,6 +260,29 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         _suppressPairingFormat = true;
         PairingCodeInput = formatted;
         _suppressPairingFormat = false;
+    }
+
+    /// <summary>整句粘贴：同时认出地点 ID 与配对码时一次填好两个输入框并返回 true。</summary>
+    private bool TryApplyPastedComposite(string? text)
+    {
+        if (!NodeEnrollmentClient.TryParseEnrollmentText(text, out var siteId, out var pairingCode)
+            || siteId is null
+            || pairingCode is null)
+            return false;
+
+        _suppressAutoParse = true;
+        try
+        {
+            SiteIdInput = siteId;
+            PairingCodeInput = NodeEnrollmentClient.FormatPairingCode(pairingCode);
+        }
+        finally
+        {
+            _suppressAutoParse = false;
+        }
+
+        OnPropertyChanged(nameof(CanEnroll));
+        return true;
     }
 
     partial void OnIsEnrollingChanged(bool value) => OnPropertyChanged(nameof(CanEnroll));
@@ -237,7 +300,14 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
 
     partial void OnHasTreeChanged(bool value) => OnPropertyChanged(nameof(CanSaveClass));
 
-    partial void OnEnrollmentMessageChanged(string value) => OnPropertyChanged(nameof(ShowEnrollmentMessage));
+    partial void OnEnrollmentMessageChanged(string value)
+    {
+        OnPropertyChanged(nameof(ShowEnrollmentMessage));
+        OnPropertyChanged(nameof(EnrollmentMessageIsSuccess));
+    }
+
+    /// <summary>班级保存提示变化：Toast 需要区分成功与失败。</summary>
+    partial void OnClassSaveMessageChanged(string value) => OnPropertyChanged(nameof(ClassSaveMessageIsSuccess));
 
     /// <summary>切换年级：班级列表换成这一年级的班，不重新请求服务端。</summary>
     partial void OnSelectedGradeChanged(ControlGradeNode? value)
@@ -421,7 +491,9 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         {
             _stateStore.Update(state => state with
             {
-                NodeId = string.IsNullOrWhiteSpace(record.DeviceId) ? state.NodeId : record.DeviceId,
+                // 本机 ID 保持 UUID 不动：服务端签发的是 device_id（凭据里另存），拿它覆盖本机 ID
+                // 会让「本机身份」跟着接入记录走——换一个地点接入，本机 ID 就变了，日志与本地
+                // 状态也对不上。展示层要设备 ID 就去看凭据，不要污染本机标识。
                 SiteId = record.SiteId,
                 SiteName = record.SiteName,
                 ClassId = record.ClassId

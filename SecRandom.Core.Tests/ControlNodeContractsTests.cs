@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.Extensions.Logging.Abstractions;
 using SecRandom.Core.Services.ControlNode;
+using SecRandom.Services.ControlNode;
 using SecRandom.Shared;
 using SecRandom.Shared.Models.ControlNode;
 using SecRandom.Shared.Models.ControlNode.V4;
@@ -201,9 +202,9 @@ public sealed class ControlNodeContractsTests
             var store = new FileControlNodeStateStore(NullLogger<FileControlNodeStateStore>.Instance);
             var nodeId = store.Current.NodeId;
 
-            // 128 位随机十六进制：稳定、不可枚举、不含隐私。
-            Assert.Equal(32, nodeId.Length);
-            Assert.True(Guid.TryParseExact(nodeId, "N", out _));
+            // 标准 UUID（36 字符、带连字符）：稳定、不可枚举、不含隐私，且用户一眼能认出是 UUID。
+            Assert.Equal(36, nodeId.Length);
+            Assert.True(Guid.TryParseExact(nodeId, "D", out _));
             Assert.False(store.Current.RemoteControlEnabled);
 
             store.Update(state => state with
@@ -297,7 +298,7 @@ public sealed class ControlNodeContractsTests
             // 身份会重新生成，但接入地点、开关与班级回到保守默认：损坏的文件不该被信任。
             Assert.Null(store.Current.SiteId);
             Assert.Null(store.Current.ClassId);
-            Assert.Equal(32, store.Current.NodeId.Length);
+            Assert.Equal(36, store.Current.NodeId.Length);
             Assert.Equal(ControlNodeClientOptions.DefaultEndpoint, store.Current.ServerUrl);
             Assert.False(store.Current.RemoteControlEnabled);
             Assert.Equal(ControlDesiredState.NeverSetRevision, store.Current.AppliedDesiredStateRevision);
@@ -309,5 +310,45 @@ public sealed class ControlNodeContractsTests
             else
                 File.WriteAllText(path, backup);
         }
+    }
+
+    [Theory]
+    // 控制台实际复制的那一整句：全角冒号 + 全角空格 + 尾巴上还有有效期。
+    [InlineData("地点ID：SC-6M34RQ　配对码：K7Q2-9XMD　有效期 24 小时", "SC-6M34RQ", "K7Q29XMD")]
+    // 小写、半角空格、码也拆开写。
+    [InlineData("sc 6m34rq k7q2 9xmd", "SC-6M34RQ", "K7Q29XMD")]
+    // 只有两段、紧挨着。
+    [InlineData("SC-6M34RQ K7Q2-9XMD", "SC-6M34RQ", "K7Q29XMD")]
+    // 夹在中文句子里也能认出来。
+    [InlineData("请把 SC-6M34RQ 和 K7Q2-9XMD 填进去", "SC-6M34RQ", "K7Q29XMD")]
+    public void 整句粘贴能同时认出地点与配对码(string text, string siteId, string pairingCode)
+    {
+        Assert.True(NodeEnrollmentClient.TryParseEnrollmentText(text, out var parsedSite, out var parsedCode));
+        Assert.Equal(siteId, parsedSite);
+        Assert.Equal(pairingCode, parsedCode);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("SC-6M34RQ")]            // 只有地点
+    [InlineData("K7Q2-9XMD")]            // 只有配对码
+    [InlineData("地点ID：SC-6M34RQ　有效期 24 小时")] // 缺配对码：不能拿地点主体凑一个出来
+    public void 整句粘贴缺一半就不认(string? text)
+    {
+        Assert.False(NodeEnrollmentClient.TryParseEnrollmentText(text, out var siteId, out var pairingCode));
+        Assert.Null(siteId);
+        Assert.Null(pairingCode);
+    }
+
+    [Fact]
+    public void 整句粘贴不会把地点主体当成配对码()
+    {
+        // 地点主体 6 位加上后面的文字很容易凑出「4+4」：必须先剥掉地点，再在剩余文本里找码。
+        const string text = "SC-K7Q2M9 有效期 24 小时";
+
+        Assert.False(NodeEnrollmentClient.TryParseEnrollmentText(text, out _, out var pairingCode));
+        Assert.Null(pairingCode);
     }
 }

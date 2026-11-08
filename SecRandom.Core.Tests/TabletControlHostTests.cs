@@ -540,8 +540,8 @@ public sealed class TabletControlHostTests
         var footer = card[footerStart..(footerEnd + footerClose.Length)];
         Assert.DoesNotContain("<", card[(footerEnd + footerClose.Length)..], StringComparison.Ordinal);
 
-        // 失败提示跟着 Footer 一起走（卡片没有正文区，放正文区就等于把提示塞进展开器里）。
-        Assert.Contains("IsVisible=\"{Binding ShowEnrollmentMessage}\"", footer, StringComparison.Ordinal);
+        // 结果提示走 Toast（设置页是长列表，内联那行字用户很容易漏看）：接入卡里不再有内联提示。
+        Assert.DoesNotContain("Binding EnrollmentMessage", footer, StringComparison.Ordinal);
 
         // v4 接入是双因子：地点 ID 与配对码是两个输入框，缺一不可。
         // 上限由 VM 提供、协议长度由 NodeEnrollmentClient 的常量兜底，界面不写死业务数字。
@@ -566,13 +566,26 @@ public sealed class TabletControlHostTests
             viewModelSource,
             StringComparison.Ordinal);
 
-        // 输入上限对得上协议形状：地点 ID 是 SC- 加 6 位（9 字符），配对码是 4+4 带连字符（9 字符）。
-        Assert.Contains("public int SiteIdMaxLength => 9;", viewModelSource, StringComparison.Ordinal);
-        Assert.Contains("public int PairingCodeMaxLength => 9;", viewModelSource, StringComparison.Ordinal);
+        // 输入框上限是「一整句」的上限：控制台复制的是地点ID+配对码+有效期一整句，
+        // 用户会把它粘进任一输入框，所以框必须先收下整句，再在 VM 里解析成两个值。
+        Assert.Contains("public int SiteIdMaxLength => NodeEnrollmentClient.MaxInputTextLength;", viewModelSource,
+            StringComparison.Ordinal);
+        Assert.Contains("public int PairingCodeMaxLength => NodeEnrollmentClient.MaxInputTextLength;", viewModelSource,
+            StringComparison.Ordinal);
+        Assert.Contains("private bool TryApplyPastedComposite(string? text)", viewModelSource, StringComparison.Ordinal);
 
         var clientSource = File.ReadAllText(GetRepositoryPath(@"SecRandom/Services/ControlNode/NodeEnrollmentClient.cs"));
         Assert.Contains("public const int SiteIdBodyLength = 6;", clientSource, StringComparison.Ordinal);
         Assert.Contains("public const int PairingCodeLength = 8;", clientSource, StringComparison.Ordinal);
+        Assert.Contains("public const int MaxInputTextLength = 200;", clientSource, StringComparison.Ordinal);
+        Assert.Contains("public static bool TryParseEnrollmentText(", clientSource, StringComparison.Ordinal);
+
+        // 提示用 Toast：成功绿色、失败红色；空串是「没有消息」，不弹。
+        var pageSource = File.ReadAllText(GetRepositoryPath(
+            @"SecRandom/Views/SettingsPages/General/ControlSettingsPage.axaml.cs"));
+        Assert.Contains("MainView.ShowSuccessToast", pageSource, StringComparison.Ordinal);
+        Assert.Contains("FAInfoBarSeverity.Error", pageSource, StringComparison.Ordinal);
+        Assert.Contains("string.IsNullOrEmpty(message)", pageSource, StringComparison.Ordinal);
 
         // 接入之后的状态行在"已接入"卡里右对齐；未接入卡只留双因子输入与失败提示。
         var enrolled = SectionOf(xaml, "x:Name=\"S_Enrolled\"", "</fa:FASettingsExpander>", includeStart: true);

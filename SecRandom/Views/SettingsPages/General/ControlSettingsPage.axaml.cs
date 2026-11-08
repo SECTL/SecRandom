@@ -1,8 +1,11 @@
+using System.ComponentModel;
 using Avalonia.Controls;
+using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Icons;
 using SecRandom.ViewModels.SettingsPages;
+using SecRandom.Views;
 
 namespace SecRandom.Views.SettingsPages.General;
 
@@ -22,7 +25,34 @@ public partial class ControlSettingsPage : UserControl
         ViewModel = IAppHost.GetService<ControlSettingsPageViewModel>();
         DataContext = ViewModel;
         InitializeComponent();
+        // 接入/保存的结果用 Toast 通知：设置页是长列表，内联那行文字用户很容易漏看。
+        ViewModel.PropertyChanged += OnViewModelPropertyChanged;
     }
 
     public ControlSettingsPageViewModel ViewModel { get; }
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        switch (args.PropertyName)
+        {
+            case nameof(ControlSettingsPageViewModel.EnrollmentMessage):
+                NotifyMessage(ViewModel.EnrollmentMessage, ViewModel.EnrollmentMessageIsSuccess);
+                break;
+            case nameof(ControlSettingsPageViewModel.ClassSaveMessage):
+                NotifyMessage(ViewModel.ClassSaveMessage, ViewModel.ClassSaveMessageIsSuccess);
+                break;
+        }
+    }
+
+    /// <summary>空串是「没有消息」（命令开始前会先清空），不要弹空 Toast。</summary>
+    private static void NotifyMessage(string? message, bool success)
+    {
+        if (string.IsNullOrEmpty(message))
+            return;
+
+        if (success)
+            MainView.ShowSuccessToast(message);
+        else
+            MainView.ShowToast(message, FAInfoBarSeverity.Error);
+    }
 }

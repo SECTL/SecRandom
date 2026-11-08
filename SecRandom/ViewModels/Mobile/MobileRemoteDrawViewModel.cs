@@ -1436,8 +1436,44 @@ public sealed partial class MobileRemoteDrawViewModel : ViewModelBase, IDisposab
     partial void OnIsBusyChanged(bool value) => RefreshDerived();
 
     // 按钮可用性、以及"基址非法"提示的消失，都跟着这几项走。
-    partial void OnSiteIdChanged(string value) => RefreshDerived();
-    partial void OnEnrollmentCodeChanged(string value) => RefreshDerived();
+    partial void OnSiteIdChanged(string value)
+    {
+        TryApplyPastedComposite(value);
+        RefreshDerived();
+    }
+
+    partial void OnEnrollmentCodeChanged(string value)
+    {
+        TryApplyPastedComposite(value);
+        RefreshDerived();
+    }
+
+    private bool _suppressAutoParse;
+
+    /// <summary>
+    ///     整句粘贴：控制台复制的是「地点ID + 配对码 + 有效期」一整句，
+    ///     两个都认出来时一次填好两个输入框（手机上没有键盘边打边试的余地）。
+    /// </summary>
+    private void TryApplyPastedComposite(string? value)
+    {
+        if (_suppressAutoParse)
+            return;
+        if (!NodeEnrollmentClient.TryParseEnrollmentText(value, out var siteId, out var pairingCode)
+            || siteId is null
+            || pairingCode is null)
+            return;
+
+        _suppressAutoParse = true;
+        try
+        {
+            SiteId = siteId;
+            EnrollmentCode = NodeEnrollmentClient.FormatPairingCode(pairingCode);
+        }
+        finally
+        {
+            _suppressAutoParse = false;
+        }
+    }
 
     partial void OnIsEnrollingChanged(bool value) => RefreshDerived();
 

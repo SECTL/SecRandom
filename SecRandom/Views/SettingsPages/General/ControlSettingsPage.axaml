@@ -103,10 +103,8 @@
                                     Command="{Binding ClearEnrollmentCommand}"
                                     IsEnabled="{Binding CanClearEnrollment}" />
                         </StackPanel>
-                        <TextBlock Text="{Binding EnrollmentMessage}"
-                                   TextWrapping="Wrap"
-                                   Foreground="{DynamicResource SystemFillColorCriticalBrush}"
-                                   IsVisible="{Binding ShowEnrollmentMessage}" />
+                        <!-- 提示统一走 Toast（右上角浮条），这里不再留一行内联文字：
+                             内联不讲成功/失败颜色、也不吸引视线，用户很容易点完按钮什么都没看见。 -->
                     </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
@@ -184,10 +182,7 @@
                         <ProgressBar IsIndeterminate="True"
                                      Height="4"
                                      IsVisible="{Binding IsTreeLoading}" />
-                        <TextBlock Text="{Binding ClassSaveMessage}"
-                                   TextWrapping="Wrap"
-                                   Foreground="{DynamicResource SystemFillColorCautionBrush}"
-                                   IsVisible="{Binding ClassSaveMessage, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                        <!-- 班级保存结果同样走 Toast，理由见上方接入区的注释。 -->
                     </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>

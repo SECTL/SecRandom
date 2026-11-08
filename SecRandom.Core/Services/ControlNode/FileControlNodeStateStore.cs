@@ -125,7 +125,15 @@ public sealed class FileControlNodeStateStore : IControlNodeStateStore
         return state;
     }
 
-    private static string NewNodeId() => Guid.NewGuid().ToString("n");
+    /// <summary>
+    ///     本机 ID：标准 UUID（36 字符带连字符）。
+    /// </summary>
+    /// <remarks>
+    ///     这个值只用于本机标识与界面展示，替代原来的 32 位无连字符 Guid——两者都是随机的
+    ///     128 位，但带连字符的那种用户一眼能看出是 UUID，复制粘贴到别处也不会被当成别的东西。
+    ///     注意：接入之后服务端签发的是设备 ID（Appwrite 20 位 hex），那是另一件事，不要覆盖这个值。
+    /// </remarks>
+    private static string NewNodeId() => Guid.NewGuid().ToString();
 
     private void Save(ControlNodeState state)
     {
