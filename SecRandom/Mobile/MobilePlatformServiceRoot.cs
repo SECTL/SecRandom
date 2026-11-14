@@ -94,6 +94,8 @@ public sealed class MobilePlatformServiceRoot : IPlatformServiceRoot, IWindowFea
     public IPlatformCameraDeviceCatalog CameraDevices { get; set; } =
         UnsupportedPlatformCameraDeviceCatalog.Instance;
 
+    public IScreenLuminanceSampler ScreenLuminance => UnsupportedScreenLuminanceSampler.Instance;
+
     /// <summary>
     ///     Reading an icon out of a local application file is a desktop capability; mobile surfaces never
     ///     offer that picker, so the neutral library keeps the unsupported extractor.
