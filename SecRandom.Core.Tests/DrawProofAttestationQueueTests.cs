@@ -85,7 +85,7 @@ public sealed class DrawProofAttestationQueueTests : IDisposable
         Assert.Equal(1, failed.PendingCount);
         Assert.Equal(0, failed.FailedCount);
 
-        witness.Handler = _ => Task.FromResult(new WitnessAttestationResult("receipt-token", null));
+        witness.Handler = _ => Task.FromResult(new WitnessAttestationResult("receipt-token"));
         var succeeded = await service.RetryNowAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(0, succeeded.PendingCount);
@@ -161,33 +161,6 @@ public sealed class DrawProofAttestationQueueTests : IDisposable
     }
 
     [Fact]
-    public async Task AServiceChainAnchorAlertIsCountedWithoutFailingTheSubmission()
-    {
-        using var provider = CreateProvider();
-        var exporter = provider.GetRequiredService<DrawProofExportService>();
-        var witness = new RecordingWitnessClient
-        {
-            Handler = _ => Task.FromResult(new WitnessAttestationResult(
-                "receipt-token",
-                new WitnessChainAnchor { Status = "behind", HeadIndex = 5, Breaks = 1 }))
-        };
-        var service = CreateService(provider, witness);
-
-        var proof = CreateProof(Guid.NewGuid());
-        var path = PathFor("draw-chain.srproof.json");
-        exporter.SaveAtPath(path, proof);
-        service.Request(proof, path);
-
-        var status = await service.RetryNowAsync(TestContext.Current.CancellationToken);
-
-        Assert.Equal(1, status.ChainAlertCount);
-        Assert.Equal(0, status.PendingCount);
-        Assert.True(status.HasIssues);
-        Assert.True(exporter.TryRead(path, out var attested));
-        Assert.Equal("receipt-token", attested!.Witness?.Receipt);
-    }
-
-    [Fact]
     public async Task TimestampFailureIsReportedSeparatelyFromReceiptFailure()
     {
         using var provider = CreateProvider();
@@ -218,7 +191,6 @@ public sealed class DrawProofAttestationQueueTests : IDisposable
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.None));
         services.AddCoreRuntimeServices();
-        services.AddSingleton<ProofChainStore>();
         services.AddSingleton<DrawProofExportService>();
         return services.BuildServiceProvider();
     }
@@ -272,7 +244,7 @@ public sealed class DrawProofAttestationQueueTests : IDisposable
     private sealed class RecordingWitnessClient : IWitnessClient
     {
         public Func<DrawProof, Task<WitnessAttestationResult>> Handler { get; set; } =
-            _ => Task.FromResult(new WitnessAttestationResult("receipt-token", null));
+            _ => Task.FromResult(new WitnessAttestationResult("receipt-token"));
 
         public List<DrawProof> Submitted { get; } = [];
 

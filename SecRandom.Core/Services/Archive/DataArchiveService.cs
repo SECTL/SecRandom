@@ -56,23 +56,7 @@ public sealed class DataArchiveService(
         "Language", "logs", "texts"
     ];
 
-    /// <summary>
-    ///     Hard ceiling for account cloud backups: the portable data a cloud archive may ever carry.
-    ///     It deliberately omits the device identity, the generated voice cache, draw proofs, theme
-    ///     resources, and logs, because a cloud archive must never re-identify another device or carry
-    ///     regenerable/diagnostic payloads. Plugins, security credentials, and staging directories are
-    ///     excluded by <see cref="IsManagedPath" /> for every archive kind, and logs are never
-    ///     committed by a restore either.
-    /// </summary>
-    public static readonly string[] CloudBackupRoots =
-    [
-        "config/settings.json", "list", "history", "TEMP", "audio/music", "CSES", "images", "Language", "proofs", "texts"
-    ];
-
-    /// <summary>Cloud roots whose content has no row in the cloud backup-content selection.</summary>
-    private static readonly string[] AlwaysSelectedCloudRoots = ["TEMP", "Language"];
-
-    /// <summary>Device-identity path that cloud restore must never commit, even if an archive carries it.</summary>
+    /// <summary>Device-identity path that no restore may commit even if an archive carries it.</summary>
     private const string DeviceUuidPath = "config/device-uuid.json";
 
     private readonly string _dataDirectory = Utils.DataRoot;
@@ -101,65 +85,6 @@ public sealed class DataArchiveService(
     public Task<string> ExportAllDataAsync(string destinationPath, CancellationToken cancellationToken = default)
     {
         return Task.Run(() => CreateArchive(destinationPath, ArchiveKind.AllData, AllDataRoots, cancellationToken), cancellationToken);
-    }
-
-    /// <summary>
-    ///     Resolves the cloud archive root set from the dedicated cloud backup-content selection.
-    ///     <see cref="CloudBackupRoots" /> stays the hard ceiling, so the device identity, the voice
-    ///     cache, and logs are never uploaded even when the local backup includes them.
-    /// </summary>
-    public static IReadOnlyList<string> ResolveCloudBackupRoots(BackupConfig backup)
-    {
-        ArgumentNullException.ThrowIfNull(backup);
-        var selection = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        if (backup.CloudIncludeConfig) selection.Add("config/settings.json");
-        // 全屏渠道的文案库跟着「配置」一起上云：它是一份小的文本清单，属于通知与外观配置的一部分，
-        // 而且没为它单开一行勾选——单开一行会把云备份内容选择从 7 行变成 8 行，属于另一件事。
-        if (backup.CloudIncludeConfig) selection.Add("texts");
-        if (backup.CloudIncludeList) selection.Add("list");
-        if (backup.CloudIncludeHistory) selection.Add("history");
-        if (backup.CloudIncludeAudio) selection.Add("audio");
-        if (backup.CloudIncludeCses) selection.Add("CSES");
-        if (backup.CloudIncludeImages) selection.Add("images");
-        if (backup.CloudIncludeProofs) selection.Add("proofs");
-
-        return CloudBackupRoots
-            .Where(root => AlwaysSelectedCloudRoots.Contains(root, StringComparer.OrdinalIgnoreCase)
-                           || selection.Contains(root)
-                           || selection.Any(chosen => root.StartsWith(chosen + "/", StringComparison.OrdinalIgnoreCase)))
-            .ToArray();
-    }
-
-    /// <summary>The cloud root set the current cloud backup-content selection resolves to.</summary>
-    public IReadOnlyList<string> GetCloudBackupRoots() => ResolveCloudBackupRoots(configHandler.Data.General.Backup);
-
-    /// <summary>
-    ///     Creates the account cloud-sync package from the cloud backup-content selection. The archive
-    ///     is a normal v3 archive with <see cref="ArchiveKind.CloudBackup" />, and its root set is
-    ///     capped by <see cref="CloudBackupRoots" />, so an upload never carries plugins, the voice
-    ///     cache, the device identity, credentials, or logs.
-    /// </summary>
-    public Task<string> ExportCloudBackupAsync(string destinationPath, CancellationToken cancellationToken = default)
-    {
-        var roots = GetCloudBackupRoots();
-        return Task.Run(() => CreateArchive(destinationPath, ArchiveKind.CloudBackup, roots, cancellationToken), cancellationToken);
-    }
-
-    /// <summary>
-    ///     Read-only inspection for a downloaded cloud backup. A valid v3 archive of any other kind is
-    ///     reported as unsupported instead of being silently restore-equivalent to a cloud package.
-    /// </summary>
-    public Task<ImportInspection> InspectCloudBackupAsync(string sourcePath, CancellationToken cancellationToken = default)
-    {
-        return Task.Run(() =>
-        {
-            var inspection = InspectArchive(sourcePath, cancellationToken);
-            return inspection.Kind == ArchiveKind.CloudBackup
-                ? inspection
-                : new ImportInspection(ArchiveFormat.Unknown, inspection.Kind, inspection.ProducerVersion,
-                    inspection.FileCount, inspection.UncompressedBytes, [],
-                    ["该文件不是云端备份归档。"]);
-        }, cancellationToken);
     }
 
     public Task<ImportInspection> InspectSettingsAsync(string sourcePath, CancellationToken cancellationToken = default)
@@ -213,17 +138,6 @@ public sealed class DataArchiveService(
         return Task.Run(() => ImportArchive(sourcePath, createSnapshot: true, cancellationToken), cancellationToken);
     }
 
-    /// <summary>
-    ///     Restores a downloaded cloud backup. Only <see cref="ArchiveKind.CloudBackup" /> archives are
-    ///     accepted, and the device identity is filtered out of the commit roots even when a crafted
-    ///     archive contains it, so a cloud restore can never overwrite this device's identity.
-    /// </summary>
-    public Task<ImportResult> ImportCloudBackupAsync(string sourcePath, CancellationToken cancellationToken = default)
-    {
-        return Task.Run(() => ImportArchive(sourcePath, createSnapshot: true, cancellationToken,
-            requiredKind: ArchiveKind.CloudBackup, excludeDeviceIdentity: true), cancellationToken);
-    }
-
     public string CreateManualBackup(IReadOnlyCollection<string> roots)
     {
         if (roots.Count == 0)
@@ -261,8 +175,7 @@ public sealed class DataArchiveService(
         return Task.Run(() => ImportArchive(sourcePath, createSnapshot: true, cancellationToken), cancellationToken);
     }
 
-    private ImportResult ImportArchive(string sourcePath, bool createSnapshot, CancellationToken cancellationToken,
-        ArchiveKind? requiredKind = null, bool excludeDeviceIdentity = false)
+    private ImportResult ImportArchive(string sourcePath, bool createSnapshot, CancellationToken cancellationToken)
     {
         lock (_archiveOperationLock)
         {
@@ -272,10 +185,10 @@ public sealed class DataArchiveService(
                 var inspection = InspectArchive(sourceCopy, cancellationToken);
                 if (inspection.Kind == ArchiveKind.Diagnostic)
                     throw new InvalidDataException("诊断数据不能导入。");
+                if (inspection.Kind == ArchiveKind.CloudBackup)
+                    throw new InvalidDataException("云端备份已停止支持，该归档不能再导入。");
                 if (!inspection.IsSupportedV3)
                     throw CreateUnsupportedVersionException(inspection);
-                if (requiredKind is { } kind && inspection.Kind != kind)
-                    throw new InvalidDataException("该文件不是云端备份归档。");
 
                 var staging = Path.Combine(_dataDirectory, ".import-staging", Guid.NewGuid().ToString("N"));
                 Directory.CreateDirectory(staging);
@@ -295,10 +208,6 @@ public sealed class DataArchiveService(
                     var rootsToCommit = inspection.Kind == ArchiveKind.AllData
                         ? AllDataRoots
                         : inspection.Roots;
-                    if (excludeDeviceIdentity)
-                        rootsToCommit = rootsToCommit
-                            .Where(root => !root.Equals(DeviceUuidPath, StringComparison.OrdinalIgnoreCase))
-                            .ToArray();
                     CommitCandidate(staging, rootsToCommit, inspection.Kind == ArchiveKind.AllData, warnings);
                     ReloadCoreRuntimeState();
                     warnings.AddRange(postImportHooks.OnAllDataImported());

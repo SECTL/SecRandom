@@ -15,7 +15,6 @@ namespace SecRandom.Services.Verification;
 
 public sealed class DrawProofExportService(
     MainConfigHandler configHandler,
-    ProofChainStore chainStore,
     ILogger<DrawProofExportService> logger)
 {
     private const int MaximumFileNameLength = 240;
@@ -32,19 +31,18 @@ public sealed class DrawProofExportService(
     public DrawProofExportResult Save(DrawProof proof, DrawProofExportContext context)
     {
         RemoveExpiredProofs(configHandler.Data.General.ProofRetention.RetentionDays);
-        var chained = proof with { Chain = chainStore.NextChain(proof) };
-        var timestamp = TimeZoneInfo.ConvertTime(chained.CreatedAtUtc, ChinaStandardTime);
+        var timestamp = TimeZoneInfo.ConvertTime(proof.CreatedAtUtc, ChinaStandardTime);
         var path = Utils.GetFilePath(
             "proofs",
             timestamp.ToString("yyyy-MM"),
             timestamp.ToString("yyyy-MM-dd"),
-            CreateFileName(chained, context));
-        SaveAtPath(path, chained);
+            CreateFileName(proof, context));
+        SaveAtPath(path, proof);
         RemoveProofsOverStorageLimit(configHandler.Data.General.ProofRetention.MaximumStorageBytes, path);
         logger.LogInformation(
-            "已导出抽取证明：ProofId={ProofId}，模式={Mode}，链序={ChainIndex}，路径={Path}。",
-            chained.ProofId, chained.Mode, chained.Chain?.Index, path);
-        return new DrawProofExportResult(path, chained);
+            "已导出抽取证明：ProofId={ProofId}，模式={Mode}，路径={Path}。",
+            proof.ProofId, proof.Mode, path);
+        return new DrawProofExportResult(path, proof);
     }
 
     public void SaveAtPath(string path, DrawProof proof)
@@ -117,17 +115,12 @@ public sealed class DrawProofExportService(
             return;
 
         var cutoff = DateTime.UtcNow.AddDays(-retentionDays);
-        List<long> removed = [];
         foreach (var path in Directory.EnumerateFiles(root, "*.srproof.json", SearchOption.AllDirectories))
         {
             try
             {
                 if (File.GetLastWriteTimeUtc(path) < cutoff)
-                {
-                    if (TryReadChainIndex(path, out var chainIndex))
-                        removed.Add(chainIndex);
                     File.Delete(path);
-                }
             }
             catch (IOException exception)
             {
@@ -138,8 +131,6 @@ public sealed class DrawProofExportService(
                 logger.LogDebug(exception, "无权删除过期证明文件：{Path}。", path);
             }
         }
-
-        chainStore.RecordRemovedIndices(removed, ProofChainEvent.RetentionCleanup);
     }
 
     private void RemoveProofsOverStorageLimit(long maximumStorageBytes, string protectedPath)
@@ -157,23 +148,19 @@ public sealed class DrawProofExportService(
             .ThenBy(file => file.FullName, StringComparer.Ordinal)
             .ToList();
         var totalBytes = files.Sum(file => file.Length);
-        List<long> removed = [];
         foreach (var file in files)
         {
             if (totalBytes <= maximumStorageBytes)
                 break;
 
-            // The proof saved by this very call must survive its own cleanup: deleting it would leave the
-            // chain head pointing at a file that never landed (a self-inflicted missing tail) and hand the
-            // attestation queue a path that no longer exists.
+            // The proof saved by this very call must survive its own cleanup: the attestation queue was
+            // handed this path and would otherwise be left pointing at a file that never landed.
             if (string.Equals(file.FullName, protectedPath, StringComparison.Ordinal))
                 continue;
 
             try
             {
                 var length = file.Length;
-                if (TryReadChainIndex(file.FullName, out var chainIndex))
-                    removed.Add(chainIndex);
                 file.Delete();
                 totalBytes -= length;
             }
@@ -186,18 +173,6 @@ public sealed class DrawProofExportService(
                 logger.LogDebug(exception, "无权删除超限证明文件：{Path}。", file.FullName);
             }
         }
-
-        chainStore.RecordRemovedIndices(removed, ProofChainEvent.StorageLimitCleanup);
-    }
-
-    private bool TryReadChainIndex(string path, out long chainIndex)
-    {
-        chainIndex = 0;
-        if (!TryRead(path, out var proof) || proof?.Chain is null)
-            return false;
-
-        chainIndex = proof.Chain.Index;
-        return true;
     }
 
     private static TimeZoneInfo GetChinaStandardTime()

@@ -52,7 +52,7 @@ public sealed class WitnessClient(
             receipt.Mode != proof.Mode)
             throw new InvalidDataException("Server attestation is not bound to this proof.");
 
-        return new WitnessAttestationResult(envelope.Token, envelope.Chain);
+        return new WitnessAttestationResult(envelope.Token);
     }
 
     public async Task<DrawProof> NotarizeAsync(

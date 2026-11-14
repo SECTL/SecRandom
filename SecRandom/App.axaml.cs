@@ -38,12 +38,14 @@ using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Notification;
+using SecRandom.Core.Services.Stats;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Presentation;
 using SecRandom.Core.Services.Views;
 using SecRandom.Core.Services.Archive;
+using SecRandom.Core.Services.DataRoot;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Services.SingleInstance;
@@ -68,6 +70,7 @@ using SecRandom.Core.Services.Threading;
 using SecRandom.Core.Views;
 using SecRandom.Shared.Models.Ipc;
 using SecRandom.Shared;
+using SecRandom.Shared.DataRoot;
 using SecRandom.Helpers;
 using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.AppearanceSettingsConfig;
 using PerformanceSettingsConfig = SecRandom.Core.Models.SubConfigs.General.PerformanceSettingsConfig;
@@ -131,6 +134,7 @@ using FloatingWindowSettingsPage = SecRandom.Views.SettingsPages.Personalized.Fl
 using FloatingWindowButtonsSettingsPage = SecRandom.Views.SettingsPages.Personalized.FloatingWindowButtonsSettingsPage;
 using FullscreenNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.FullscreenNotificationSettingsPage;
 using LotteryNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.LotteryNotificationSettingsPage;
+using NotificationFloatingWindowSettingsPage = SecRandom.Views.SettingsPages.Notification.NotificationFloatingWindowSettingsPage;
 using QuickDrawNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.QuickDrawNotificationSettingsPage;
 using RollCallNotificationSettingsPage = SecRandom.Views.SettingsPages.Notification.RollCallNotificationSettingsPage;
 using TextLibrarySettingsPage = SecRandom.Views.SettingsPages.Notification.TextLibrarySettingsPage;
@@ -148,6 +152,24 @@ public partial class App : Application
     private static Window? _quickDrawWindow;
     private static NotificationChannelSettings? _quickDrawNotificationSettings;
     private static bool _positioningQuickDrawWindow;
+
+    /// <summary>
+    ///     本次通知已经算好的自适应前景方案。一次通知只采样一次：预览开始时算好，结果揭晓时复用，
+    ///     否则滚动动画播放到一半再换前景色，看起来就是闪一下。
+    /// </summary>
+    private static AdaptiveTheme? _quickDrawNotificationTheme;
+
+    /// <summary>采样区在卡片矩形之外再向外扩一圈：贴着卡片的桌面才是肉眼看到的对比背景。</summary>
+    private const int NotificationBackdropSampleMarginPixels = 48;
+
+    /// <summary>少于这么多像素说明区域几乎全被剔除（例如贴屏边），结论不可信。</summary>
+    private const int NotificationBackdropMinimumSamples = 256;
+
+    /// <summary>采样上限：超过它就用应用主题，绝不为了配色阻塞抽取开始。</summary>
+    private static readonly TimeSpan NotificationBackdropSampleTimeout = TimeSpan.FromMilliseconds(60);
+
+    private const int NotificationFadeInSteps = 6;
+    private static readonly TimeSpan NotificationFadeInStepDelay = TimeSpan.FromMilliseconds(15);
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
     private static Task? _runtimeServicesStartupTask;
@@ -165,8 +187,6 @@ public partial class App : Application
     private readonly object _shutdownGate = new();
     private bool _isStopping;
     private bool _isOobeActive;
-    private bool _settingsIntegrityConfirmationPending;
-    private SettingsIntegrityService? _settingsIntegrity;
     private StyleInclude? _reducedMotionStyles;
     private FloatingWindowSettingsConfig? _observedFloatingWindowSettings;
     private bool _observesFloatingWindowConfigHandler;
@@ -202,14 +222,16 @@ public partial class App : Application
     {
         TouchInputModeAssist.Initialize();
         var isMobile = PlatformStartupContext.Current is MobilePlatformServiceRoot;
+        var isDataRootMigration = DataRootLaunchState.IsMigration;
         if (isMobile)
             Utils.ConfigureMobileDataRoot();
-        else
-            _desktopDataRootPreparation = Utils.PrepareDesktopDataRoot();
+        else if (!isDataRootMigration)
+            // The migration window owns the move; it must not lock a root or read settings before the move is done.
+            _desktopDataRootPreparation = Utils.PrepareDesktopDataRoot(GlobalConstants.IsDevelopment);
 
         // 初始化语言
         var mainConfig = new MainConfigModel();
-        var settings = _desktopDataRootPreparation is { IsPortablePackage: true, IsWritable: false }
+        var settings = isDataRootMigration || _desktopDataRootPreparation is { IsWritable: false }
             ? mainConfig
             : LoadStartupSettings(mainConfig);
         var culture = settings.Basic.Language switch
@@ -253,9 +275,16 @@ public partial class App : Application
             _desktopLifetime = desktop;
             IsDesktop = true;
 
-            if (_desktopDataRootPreparation is { IsPortablePackage: true, IsWritable: false } preparation)
+            if (DataRootLaunchState.MigrationId is { } migrationId)
             {
-                desktop.MainWindow = CreatePortableDataRootFailureHost(desktop, preparation);
+                desktop.MainWindow = CreateDataRootMigrationHost(desktop, migrationId);
+                base.OnFrameworkInitializationCompleted();
+                return;
+            }
+
+            if (_desktopDataRootPreparation is { IsWritable: false } preparation)
+            {
+                desktop.MainWindow = CreateDataRootFailureHost(desktop, preparation);
                 base.OnFrameworkInitializationCompleted();
                 return;
             }
@@ -311,26 +340,6 @@ public partial class App : Application
             if (IAppHost.GetService<FirstRunOobeService>().IsRequired())
             {
                 ShowFirstRunOobe(desktop, startupProtocolUri);
-                base.OnFrameworkInitializationCompleted();
-                return;
-            }
-
-            // 防篡改校验是设置文件的启动闸门：记录不符时按配置自动恢复，或先用安全密码确认当前内容
-            _settingsIntegrity = IAppHost.GetService<SettingsIntegrityService>();
-            if (_settingsIntegrity.GetPendingMismatch() is { } settingsMismatch)
-            {
-                if (IAppHost.GetService<SecuritySettingsStore>().Data.SettingsIntegrityAction
-                    == SettingsIntegrityAction.AutoRestore)
-                {
-                    WriteDesktopStartupDiagnostic("Settings integrity check is attempting automatic recovery.");
-                    ShowSettingsIntegrityRecovery(desktop, startupProtocolUri, settingsMismatch);
-                }
-                else
-                {
-                    WriteDesktopStartupDiagnostic("Settings integrity check requires confirmation.");
-                    ShowSettingsIntegrityGate(desktop, startupProtocolUri, settingsMismatch);
-                }
-
                 base.OnFrameworkInitializationCompleted();
                 return;
             }
@@ -650,7 +659,7 @@ public partial class App : Application
             DispatcherPriority.Loaded);
     }
 
-    /// <summary>创建主窗或右侧副窗，并接好托盘菜单与字段回收。</summary>
+    /// <summary>创建主窗或另一侧的副窗，并接好托盘菜单与字段回收。</summary>
     private static FloatingWindow CreateFloatingWindow(bool isSecondary)
     {
         var window = new FloatingWindow(isSecondary);
@@ -673,8 +682,8 @@ public partial class App : Application
     }
 
     /// <summary>
-    ///     按"左右两侧同时显示"设置布置悬浮窗：开启时主窗钉右、副窗钉左；关闭时收起副窗并解除钉边，
-    ///     主窗留在右侧（右侧才是主浮窗，关掉两侧显示后不该让窗口跳到另一边）。
+    ///     按"左右两侧同时显示"设置布置悬浮窗：开启时主窗钉在它原本那一侧、副窗钉在另一侧；
+    ///     关闭时收起副窗并解除钉边，主窗留在原来那一侧。
     /// </summary>
     private void ApplyFloatingWindowLayout()
     {
@@ -682,7 +691,11 @@ public partial class App : Application
             return;
 
         var showOnBothSides = IAppHost.GetService<MainConfigHandler>().Data.EffectiveFloatingWindowSettings.ShowOnBothSides;
-        primary.SetEdgePinned(showOnBothSides, onLeft: false);
+
+        // 主窗钉在哪侧由它此刻所在的位置决定，而不是写死右侧：用户原本把单扇浮窗放在左边时，
+        // 开启两侧显示不能把它搬到右边，否则关掉开关后就回不到原来那一侧了。
+        var mainOnLeft = showOnBothSides && primary.IsOnLeftSide;
+        primary.SetEdgePinned(showOnBothSides, onLeft: mainOnLeft);
 
         if (!showOnBothSides)
         {
@@ -699,7 +712,7 @@ public partial class App : Application
         {
             secondary = CreateFloatingWindow(isSecondary: true);
             _secondaryFloatingWindow = secondary;
-            secondary.SetEdgePinned(true, onLeft: true);
+            secondary.SetEdgePinned(true, onLeft: !mainOnLeft);
 
             // 两侧高度统一时，副窗的纵向锚点跟着主窗走；先在它打开之前把锚点对齐，
             // 副窗自己的启动定位就会落在与主窗相同的高度上。
@@ -720,7 +733,7 @@ public partial class App : Application
             return;
         }
 
-        secondary.SetEdgePinned(true, onLeft: true);
+        secondary.SetEdgePinned(true, onLeft: !mainOnLeft);
         Dispatcher.UIThread.Post(AlignFloatingWindowAnchors, DispatcherPriority.Loaded);
     }
 
@@ -877,176 +890,6 @@ public partial class App : Application
     }
 
     /// <summary>
-    ///     设置文件防篡改校验未通过时的启动闸门。确认流程与首次运行向导一致：
-    ///     先把闸门窗口作为主窗口，待用户用安全密码接受当前设置文件后再继续正常启动。
-    /// </summary>
-    private void ShowSettingsIntegrityGate(
-        IClassicDesktopStyleApplicationLifetime desktop,
-        string? startupProtocolUri,
-        SettingsIntegrityMismatch mismatch,
-        string? recoveryFailure = null)
-    {
-        _settingsIntegrityConfirmationPending = true;
-        var gate = CreateSettingsIntegrityGate(desktop, startupProtocolUri, mismatch, recoveryFailure);
-        desktop.MainWindow = gate;
-        gate.Show();
-    }
-
-    /// <summary>
-    ///     篡改处理方式为「自动恢复」时的启动流程：先从备份恢复设置文件，成功后自动重启应用；
-    ///     没有可用备份或恢复失败则回退到安全密码确认闸门，并把失败原因写进确认对话框。
-    /// </summary>
-    private void ShowSettingsIntegrityRecovery(
-        IClassicDesktopStyleApplicationLifetime desktop,
-        string? startupProtocolUri,
-        SettingsIntegrityMismatch mismatch)
-    {
-        var host = CreateStartupGateWindow();
-        host.Background = this.FindResource("SolidBackgroundFillColorBaseBrush") as IBrush;
-        host.Content = CreateIntegrityRecoveryContent(SecurityResources.M_IntegrityRecovering, showProgress: true);
-        desktop.MainWindow = host;
-
-        // Opened 在 Dispatcher 事件循环内异步运行，恢复期间界面不会阻塞
-        host.Opened += async (_, _) =>
-        {
-            var outcome = await IAppHost.GetService<SettingsIntegrityRecoveryService>().TryRecoverAsync();
-            if (outcome.Succeeded)
-            {
-                host.Content = CreateIntegrityRecoveryContent(
-                    string.Format(
-                        SecurityResources.M_IntegrityRecoverSuccessFormat,
-                        outcome.FromCloud ? SecurityResources.M_IntegritySourceCloud : SecurityResources.M_IntegritySourceLocal,
-                        outcome.BackupName ?? SecurityResources.M_IntegrityUnknownValue,
-                        outcome.PreRestorePath ?? SecurityResources.M_IntegrityUnknownValue),
-                    showProgress: false);
-                WriteDesktopStartupDiagnostic("Settings file restored from backup; restarting the application.");
-                await Task.Delay(TimeSpan.FromSeconds(3));
-                Restart();
-                return;
-            }
-
-            var failure = DescribeIntegrityRecoveryFailure(outcome);
-            WriteDesktopStartupDiagnostic($"Settings integrity automatic recovery failed: {failure}");
-            // 先显示确认闸门再关闭本窗口，避免出现「最后一个窗口关闭」而直接结束进程
-            ShowSettingsIntegrityGate(desktop, startupProtocolUri, mismatch, failure);
-            host.Close();
-        };
-
-        host.Show();
-    }
-
-    private static string DescribeIntegrityRecoveryFailure(SettingsIntegrityRecoveryResult outcome) =>
-        outcome.Status switch
-        {
-            SettingsIntegrityRecoveryStatus.CloudNotSignedIn => SecurityResources.M_IntegrityNotSignedIn,
-            SettingsIntegrityRecoveryStatus.Failed => string.IsNullOrWhiteSpace(outcome.Detail)
-                ? SecurityResources.M_IntegrityBackupInvalid
-                : outcome.Detail!,
-            _ => SecurityResources.M_IntegrityNoBackup
-        };
-
-    private Control CreateIntegrityRecoveryContent(string message, bool showProgress)
-    {
-        var content = new StackPanel
-        {
-            Spacing = 12,
-            MaxWidth = 560,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-
-        if (showProgress)
-        {
-            content.Children.Add(new FAProgressRing
-            {
-                IsActive = true,
-                Width = 40,
-                Height = 40,
-                HorizontalAlignment = HorizontalAlignment.Center
-            });
-        }
-
-        content.Children.Add(new TextBlock
-        {
-            Text = SecurityResources.M_IntegrityRecoverTitle,
-            FontSize = 20,
-            FontWeight = FontWeight.SemiBold,
-            TextWrapping = TextWrapping.Wrap,
-            TextAlignment = TextAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Center
-        });
-        content.Children.Add(new TextBlock
-        {
-            Text = message,
-            TextWrapping = TextWrapping.Wrap,
-            TextAlignment = TextAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Center
-        });
-        return content;
-    }
-
-    private Window CreateSettingsIntegrityGate(
-        IClassicDesktopStyleApplicationLifetime desktop,
-        string? startupProtocolUri,
-        SettingsIntegrityMismatch mismatch,
-        string? recoveryFailure)
-    {
-        var host = CreateStartupGateWindow();
-
-        // Opened 在 Dispatcher 事件循环内异步运行，不会阻塞 UI 线程
-        host.Opened += async (_, _) =>
-        {
-            var fallback = SecurityResources.M_IntegrityUnknownValue;
-            var message = string.Format(
-                SecurityResources.M_IntegrityDetectedFormat,
-                mismatch.RecordedAtUtc.ToLocalTime().ToString("g"),
-                string.IsNullOrWhiteSpace(mismatch.RecordedAppVersion) ? fallback : mismatch.RecordedAppVersion,
-                mismatch.FileModifiedAtUtc?.ToLocalTime().ToString("g") ?? fallback);
-            if (!string.IsNullOrWhiteSpace(recoveryFailure))
-                message = $"{string.Format(SecurityResources.M_IntegrityRecoverFailedFormat, recoveryFailure)}{Environment.NewLine}{Environment.NewLine}{message}";
-            var dialog = new FATaskDialog
-            {
-                XamlRoot = host,
-                Title = SecurityResources.M_IntegrityDialogTitle,
-                Header = SecurityResources.M_IntegrityDetectedHeader,
-                Content = new TextBlock { TextWrapping = TextWrapping.Wrap, Text = message }
-            };
-            dialog.Buttons.Add(new FATaskDialogButton(SecurityResources.C_IntegrityExit, "exit"));
-            dialog.Buttons.Add(new FATaskDialogButton(SecurityResources.C_IntegrityAccept, "accept") { IsDefault = true });
-
-            if (!Equals(await dialog.ShowAsync(), "accept"))
-            {
-                host.Close();
-                RequestDesktopShutdown();
-                return;
-            }
-
-            var accepted = await IAppHost.GetService<ISecurityService>().AuthorizePasswordAsync(
-                host,
-                () =>
-                {
-                    _settingsIntegrity?.AcceptCurrentFile();
-                    return Task.CompletedTask;
-                });
-            if (!accepted)
-            {
-                // 未通过密码确认即视为拒绝当前设置文件，不再继续启动
-                host.Close();
-                RequestDesktopShutdown();
-                return;
-            }
-
-            _settingsIntegrityConfirmationPending = false;
-            WriteDesktopStartupDiagnostic("Settings integrity confirmed, continuing desktop startup.");
-            ContinueDesktopStartup(desktop, startupProtocolUri);
-            host.Close();
-            ShowMainWindow();
-        };
-
-        return host;
-    }
-
-    /// <summary>
     ///     启动闸门共用的宿主窗口：全屏透明无边框，内容由闸门自己填充，
     ///     保证在 Host 启动前也能弹出一个不抢任务栏位置的遮罩窗口。
     /// </summary>
@@ -1114,20 +957,21 @@ public partial class App : Application
             .ConfigureAwait(true);
     }
 
-    private static Window CreatePortableDataRootFailureHost(
+    private static Window CreateDataRootFailureHost(
         IClassicDesktopStyleApplicationLifetime desktop,
         Utils.DesktopDataRootPreparationResult preparation)
     {
         var host = new SecRandomTmpRootWindow();
         host.Opened += async (_, _) =>
         {
+            var isPortable = preparation.IsPortablePackage;
             var dialog = new FATaskDialog
             {
                 XamlRoot = host,
-                Title = CR.M_PortableDataDirectoryUnavailableTitle,
-                Header = CR.M_PortableDataDirectoryUnavailableTitle,
+                Title = isPortable ? CR.M_PortableDataDirectoryUnavailableTitle : CR.M_DataRootUnavailableTitle,
+                Header = isPortable ? CR.M_PortableDataDirectoryUnavailableTitle : CR.M_DataRootUnavailableTitle,
                 Content = string.Format(
-                    CR.M_PortableDataDirectoryUnavailableContent,
+                    isPortable ? CR.M_PortableDataDirectoryUnavailableContent : CR.M_DataRootUnavailableContent,
                     preparation.DataRoot,
                     preparation.ErrorMessage ?? CR.M_UnknownError)
             };
@@ -1141,6 +985,14 @@ public partial class App : Application
         return host;
     }
 
+    private static Window CreateDataRootMigrationHost(
+        IClassicDesktopStyleApplicationLifetime desktop,
+        Guid migrationId)
+    {
+        // The migration runs before the Host exists: no config, no DI, no single-instance acquisition.
+        return new DataRootMigrationWindow(migrationId, desktop);
+    }
+
     /// <summary>
     ///     处理来自后续实例的 IPC 命令（第一个实例专用）。
     ///     回调来自后台线程，需通过 <see cref="Dispatcher"/> 切换到 UI 线程。
@@ -1150,8 +1002,6 @@ public partial class App : Application
         Dispatcher.UIThread.Post(() =>
         {
             if (_isOobeActive)
-                return;
-            if (!SettingsIntegrityCommandGate.IsAllowed(_settingsIntegrityConfirmationPending))
                 return;
 
             switch (command)
@@ -1182,23 +1032,21 @@ public partial class App : Application
         });
     }
 
+    /// <summary>首次引导是否仍在进行；v2 自动化管道据此拒绝所有命令。</summary>
+    public bool IsOobeActive => _isOobeActive;
+
     private Task<IpcResponseEnvelope> OnIpcRequestReceived(IpcRequestEnvelope request,
         CancellationToken cancellationToken)
     {
         if (_isOobeActive)
             return Task.FromResult(new IpcResponseEnvelope(true, "url",
                 new IpcBusinessResult("error", "初始设置尚未完成。", "oobe_required")));
-        if (_settingsIntegrityConfirmationPending)
-            return Task.FromResult(IpcResponseEnvelope.TransportFailure("url", "integrity_confirmation_required", "设置文件完整性尚未确认。"));
 
         return IAppHost.GetService<ProtocolCommandRouter>().HandleIpcAsync(request, cancellationToken);
     }
 
     private void HandleProtocolUri(string value)
     {
-        if (!SettingsIntegrityCommandGate.IsAllowed(_settingsIntegrityConfirmationPending))
-            return;
-
         ObserveTask(IAppHost.GetService<ProtocolCommandRouter>().HandleUrlAsync(value),
             "Protocol URL handling failed.");
     }
@@ -1323,23 +1171,12 @@ public partial class App : Application
                     client.Timeout = TimeSpan.FromSeconds(15);
                 });
                 services.AddSingleton<AnnouncementService>();
-                // SECTL 账号与云备份在桌面和移动端都注册：移动端用自定义 scheme + 系统浏览器完成
-                // 授权（见 MobileAuthRedirectBroker），云备份的归档引擎本来就是平台中立的。
+                // SECTL 账号在桌面和移动端都注册：移动端用自定义 scheme + 系统浏览器完成授权（见 MobileAuthRedirectBroker）。
                 services.AddSingleton<SectlTokenStore>();
                 services.AddSingleton<SectlAuthService>();
                 services.AddSingleton<SectlHeartbeatService>();
                 services.AddHostedService(serviceProvider =>
                     serviceProvider.GetRequiredService<SectlHeartbeatService>());
-                services.AddHttpClient("sectl-cloud", client =>
-                {
-                    client.BaseAddress = new Uri("https://appwrite.sectl.cn/");
-                    client.Timeout = TimeSpan.FromSeconds(60);
-                });
-                services.AddSingleton<SectlCloudStorageClient>();
-                services.AddSingleton<CloudBackupService>();
-                services.AddSingleton<CloudAutomaticBackupService>();
-                services.AddHostedService(serviceProvider =>
-                    serviceProvider.GetRequiredService<CloudAutomaticBackupService>());
                 services.AddSingleton<ITelemetrySdkAdapter, SentryTelemetrySdkAdapter>();
                 services.AddSingleton<TelemetryRuntimeService>();
                 services.AddHostedService<OnlineStatusService>();
@@ -1384,9 +1221,7 @@ public partial class App : Application
                     services.AddSingleton<TimerViewModel>();
                     services.AddSingleton<TimerViewService>();
                 }
-                services.AddSingleton<ProofChainStore>();
                 services.AddSingleton<DrawProofExportService>();
-                services.AddSingleton<ProofIntegrityVerifier>();
                 services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
                 services.AddHttpClient<IWitnessClient, WitnessClient>(client =>
                     client.Timeout = TimeSpan.FromSeconds(3));
@@ -1506,6 +1341,17 @@ public partial class App : Application
                     services.AddSingleton<ControlRosterPushHandler>();
                     services.AddSingleton<ControlRosterReadHandler>();
                     services.AddSingleton<ControlSettingsReadHandler>();
+
+                    // v2 自动化管道：与集控读/写处理器共用同一套校验与 UI 线程边界。
+                    services.AddSingleton(SingleInstanceService.Instance);
+                    services.AddSingleton<PageRouteResolver>();
+                    services.AddSingleton<AutomationEventBus>();
+                    services.AddSingleton<IpcAuditLogger>();
+                    services.AddSingleton<AutomationCommandRegistry>();
+                    services.AddSingleton<AutomationEventServer>();
+                    services.AddHostedService(provider => provider.GetRequiredService<AutomationEventServer>());
+                    services.AddSingleton<AutomationIpcServer>();
+                    services.AddHostedService(provider => provider.GetRequiredService<AutomationIpcServer>());
                     // 远程抽取：解析/闸门/回执在 ControlDrawTriggerHandler 里（可脱离界面单测），
                     // 真正动手的那一步在 ControlPageDrawExecutor 里（要回到 UI 线程）。
                     services.AddSingleton<IControlDrawExecutor, ControlPageDrawExecutor>();
@@ -1540,16 +1386,6 @@ public partial class App : Application
                 services.AddSingleton<IUsbDeviceCatalog, UsbDeviceCatalog>();
                 services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
                 services.AddSingleton<ISecurityService, SecurityService>();
-                services.AddSingleton(serviceProvider => new SettingsIntegrityService(
-                    serviceProvider.GetRequiredService<MainConfigHandler>(),
-                    serviceProvider.GetRequiredService<SecuritySettingsStore>(),
-                    serviceProvider.GetRequiredService<SecurityCredentialStore>(),
-                    serviceProvider.GetRequiredService<ILogger<SettingsIntegrityService>>()));
-                services.AddSingleton(serviceProvider => new SettingsIntegrityRecoveryService(
-                    serviceProvider.GetRequiredService<MainConfigHandler>(),
-                    serviceProvider.GetRequiredService<SecuritySettingsStore>(),
-                    serviceProvider.GetRequiredService<IImportExportService>(),
-                    serviceProvider.GetRequiredService<ILogger<SettingsIntegrityRecoveryService>>()));
 
                 // 接入令牌：自建集控的节点凭据，独立加密存放（data/config/security/control-node.json）。
                 // 注册在**共享分支**里：手机端虽然不跑节点，但远程抽取页同样要在"未登录 SECTL"时可用，
@@ -1599,6 +1435,7 @@ public partial class App : Application
                 services.AddSingleton<LotteryPageViewModel>();
                 services.AddTransient<RollCallHistoryViewModel>();
                 services.AddTransient<HomeSettingsPageViewModel>();
+                services.AddTransient<RandomNumberSettingsPageViewModel>();
                 // "远程抽取"页的 ViewModel：**桌面/平板/手机三个宿主共用同一份**。它只跟协议有关，
                 // 与谁是控制端/被控端无关，因此注册在共享分支；页面每次进入都重建（FAFrame 不快取），
                 // 它自己会记住上次选中的设备，不需要做成单例。
@@ -1694,6 +1531,12 @@ public partial class App : Application
                 services.AddSettingsPage<VerificationSettingsPage>(Langs.SettingsPages.General.Verification
                     .Resources.Page_Title);
                 services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
+                if (!isMobile)
+                {
+                    // 数据目录只能由桌面壳迁移（手机数据根位于系统沙盒，无法选择也无法整体搬迁）。
+                    services.AddSettingsPage<StorageSettingsPage>(
+                        Langs.SettingsPages.General.Storage.Resources.Page_Title);
+                }
                 if (hostShape.RunsControlNode)
                 {
                     // 集控节点与集控设置页成对出现：跑节点的宿主（桌面/平板）才该看到这个页面。
@@ -1742,6 +1585,8 @@ public partial class App : Application
                     Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
                 services.AddSettingsPage<LotteryDrawSettingsPage>(
                     Langs.SettingsPages.Picking.Resources.Page_Lottery);
+                services.AddSettingsPage<RandomNumberSettingsPage>(
+                    Langs.SettingsPages.Picking.Resources.Page_RandomNumber);
 
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_Notification, "settings.notification",
@@ -1762,6 +1607,10 @@ public partial class App : Application
                         .Settings_QuickDrawNotification);
                     services.AddSettingsPage<LotteryNotificationSettingsPage>(Langs.Common.Resources
                         .Settings_LotteryNotification);
+                    // 内置通知浮窗的窗口设置（位置 / 显示器 / 偏移 / 不透明度）独立成页，紧贴全屏渠道页之上：
+                    // 两者都是"结果用什么窗口显示"的设置，而渠道页现在只保留启用、动画与通知服务。
+                    services.AddSettingsPage<NotificationFloatingWindowSettingsPage>(
+                        Langs.SettingsPages.Notification.Resources.Page_FloatingWindow);
                     // 全屏渠道的两页：外观/动画设置 + 文案库管理。分开放是因为文案库是一张会一直在长的
                     // 清单（导入、编辑、统计），而设置页只该放"外观与行为"。
                     services.AddSettingsPage<FullscreenNotificationSettingsPage>(
@@ -2092,9 +1941,9 @@ public partial class App : Application
         }
     }
 
-    public async void Restart()
+    public async void Restart(IEnumerable<string>? arguments = null)
     {
-        var startInfos = CrashRecoveryRuntime.CreateRestartStartInfos([]);
+        var startInfos = CrashRecoveryRuntime.CreateRestartStartInfos(arguments ?? []);
 
         TrySaveConfigForCrashRecovery();
         SingleInstanceService.Instance.Dispose();
@@ -2619,6 +2468,15 @@ public partial class App : Application
             () => ShowMainWindowCoreAsync(pageId)), "Main window authorization failed.");
     }
 
+    /// <summary>主窗口当前是否可见；IPC 的 <c>state.windows</c> 用它读取真实状态。</summary>
+    public static bool IsMainWindowVisible => _mainWindow is { IsVisible: true };
+
+    /// <summary>设置窗口当前是否可见。</summary>
+    public static bool IsSettingsWindowVisible => _settingsWindow is { IsVisible: true };
+
+    /// <summary>悬浮窗是否被用户期望显示（不受课程联动临时隐藏影响）。</summary>
+    public static bool IsFloatingWindowVisible => _floatingWindow is { UserWantsVisible: true };
+
     public static void SetMainWindowVisibility(string action, string? pageId = null)
     {
         ObserveTask(SetMainWindowVisibilityCoreAsync(action, pageId), "Main window visibility update failed.");
@@ -2812,9 +2670,10 @@ public partial class App : Application
         }
     }
 
-    public static void ShowQuickDrawWindow()
+    /// <summary>打开闪抽；<paramref name="count" /> 是浮窗长按快选选好的人数，默认 1 人。</summary>
+    public static void ShowQuickDrawWindow(int count = 1)
     {
-        ObserveTask(ShowQuickDrawWindowAsync(), "Quick draw window action failed.");
+        ObserveTask(ShowQuickDrawWindowAsync(count), "Quick draw window action failed.");
     }
 
     public static void ShowQuickDrawNotificationWindow(
@@ -2833,26 +2692,173 @@ public partial class App : Application
 
     public static Task ShowQuickDrawNotificationPreviewWindowAsync(NotificationChannelSettings windowSettings)
     {
-        return Dispatcher.UIThread.InvokeAsync(() =>
+        return Dispatcher.UIThread.InvokeAsync(async () =>
         {
             _quickDrawNotificationSettings = windowSettings;
             var quickDraw = IAppHost.GetService<QuickDrawPageViewModel>();
-            quickDraw.NotificationOpacity = Math.Clamp(windowSettings.Transparency, 20, 100);
-            var window = GetOrCreateQuickDrawWindow();
+            await PrepareQuickDrawNotificationWindowAsync(quickDraw, windowSettings);
+        });
+    }
+
+    /// <summary>
+    ///     建窗、定位、背景采样与淡入合成的唯一入口。
+    /// </summary>
+    /// <remarks>
+    ///     时序是这次改动的核心：窗口先以 0 不透明度占位，<see cref="ResolveQuickDrawNotificationThemeAsync" />
+    ///     在后台算亮度，主题落定后才淡入。于是"建窗"和"采样"是并行的，用户感知到的是卡片带着正确
+    ///     的前景色一起出现，而不是先白后黑闪一下。
+    /// </remarks>
+    private static async Task<Window> PrepareQuickDrawNotificationWindowAsync(
+        QuickDrawPageViewModel quickDraw,
+        NotificationChannelSettings settings)
+    {
+        var window = GetOrCreateQuickDrawWindow();
+        quickDraw.NotificationOpacity = Math.Clamp(settings.Transparency, 20, 100);
+
+        // 采样先扔到后台线程，再建窗/排版/定位：两者并行，CPU 抓屏的那几毫秒被窗口工作完全盖住。
+        // 此刻窗口还没排版，采样区按 MinWidth/MinHeight 估算；Show 之后如果发现实际卡片偏离估算
+        // （高 DPI 下 Show 之前拿不到真实 RenderScaling、或 SizeToContent 比最小值大），再补采一次。
+        var predictedRect = TryResolveQuickDrawNotificationTargetRect(window, settings, null, out var predicted)
+            ? predicted
+            : (PixelRect?)null;
+        var themeTask = _quickDrawNotificationTheme is null
+            ? ResolveQuickDrawNotificationThemeAsync(window, settings)
+            : null;
+
+        var fadeIn = !window.IsVisible;
+        if (fadeIn)
+        {
+            window.Opacity = 0;
+            window.Show();
+        }
+
+        ApplyQuickDrawWindowFocusFree(window);
+
+        // Show 之后先跑一轮渲染/排版：SizeToContent 窗口的尺寸与 RenderScaling 到这里才是最终值，
+        // 而窗口定位必须用它算出来。
+        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render).GetTask();
+        PositionQuickDrawNotificationWindow(window, settings);
+
+        if (themeTask is not null)
+        {
+            if (predictedRect is { } predictedTarget
+                && TryResolveQuickDrawNotificationTargetRect(window, settings, window.Bounds.Size, out var actual)
+                && !IsCloseEnough(predictedTarget, actual))
+                themeTask = ResolveQuickDrawNotificationThemeAsync(window, settings, window.Bounds.Size);
+
+            ApplyQuickDrawNotificationTheme(quickDraw, await themeTask);
+        }
+
+        if (fadeIn)
+            // 淡入不 await：抽取已经开始，绝不能为了 90ms 的视觉过渡把开抽往后推。
+            ObserveTask(FadeInQuickDrawWindowAsync(window), "Quick draw notification fade-in failed.");
+        else if (window.Opacity < 1)
             window.Opacity = 1;
-            if (!window.IsVisible)
-                window.Show();
-            ApplyQuickDrawWindowFocusFree(window);
-            Dispatcher.UIThread.Post(
-                () => PositionQuickDrawNotificationWindow(window, windowSettings),
-                DispatcherPriority.Render);
-        }).GetTask();
+
+        return window;
+    }
+
+    private static void ApplyQuickDrawNotificationTheme(QuickDrawPageViewModel quickDraw, AdaptiveTheme theme)
+    {
+        _quickDrawNotificationTheme = theme;
+        quickDraw.ApplyNotificationTheme(theme);
+    }
+
+    /// <summary>
+    ///     两个采样区是否基本重合：中心与尺寸都落在采样外扩量之内时，早先的采样结果仍然有效，
+    ///     不必为了一次 DPI 取整再抓一次屏。
+    /// </summary>
+    private static bool IsCloseEnough(PixelRect left, PixelRect right)
+    {
+        var tolerance = NotificationBackdropSampleMarginPixels;
+        return Math.Abs(left.X + left.Width / 2 - (right.X + right.Width / 2)) <= tolerance
+               && Math.Abs(left.Y + left.Height / 2 - (right.Y + right.Height / 2)) <= tolerance
+               && Math.Abs(left.Width - right.Width) <= tolerance * 2
+               && Math.Abs(left.Height - right.Height) <= tolerance * 2;
+    }
+
+    /// <summary>
+    ///     在当前通知窗即将出现的位置采一块桌面亮度，换成白/黑前景方案。
+    /// </summary>
+    /// <remarks>
+    ///     采样失败（无平台实现、锁屏、远程桌面、区域被自己盖满）一律回退应用主题，
+    ///     绝不把"抓不到"当成"背景是黑的"。
+    /// </remarks>
+    private static async Task<AdaptiveTheme> ResolveQuickDrawNotificationThemeAsync(
+        Window window,
+        NotificationChannelSettings settings,
+        Size? logicalSize = null)
+    {
+        var isDarkTheme = Application.Current?.ActualThemeVariant == ThemeVariant.Dark;
+        var fallback = AdaptiveBackdropResolver.FromAppTheme(isDarkTheme);
+
+        // 关掉的开关与低配模式走同一条回退：不抓屏、不改配色，就是今天这个纯主题外观。
+        // 低配模式强制关闭这一项，设置页因此把开关置灰并显示为关闭。
+        if (!settings.AdaptiveForeground || Helpers.UiRenderQuality.IsLowSpecMode)
+            return fallback;
+
+        var sampler = PlatformStartupContext.Current.ScreenLuminance;
+        if (!sampler.IsSupported)
+            return fallback;
+
+        if (!TryResolveQuickDrawNotificationTargetRect(
+                window, settings, logicalSize, out var targetRect))
+            return fallback;
+
+        var region = new PlatformPixelRect(
+            targetRect.X - NotificationBackdropSampleMarginPixels,
+            targetRect.Y - NotificationBackdropSampleMarginPixels,
+            targetRect.Width + NotificationBackdropSampleMarginPixels * 2,
+            targetRect.Height + NotificationBackdropSampleMarginPixels * 2);
+
+        // 只有窗口真的在画东西时才需要剔除自己：那时采到的会是上一轮通知的卡片，颜色会自我循环。
+        // 以 Opacity=0 占位时整窗不显示任何像素，桌面是原样的，因此保留卡片区域反而更准。
+        List<PlatformPixelRect> exclusions = [];
+        if (window.IsVisible && window.Opacity > 0.01)
+            exclusions.Add(new PlatformPixelRect(
+                targetRect.X, targetRect.Y, targetRect.Width, targetRect.Height));
+
+        ScreenLuminanceSample? sample;
+        try
+        {
+            sample = await Task.Run(() => sampler.Sample(new ScreenLuminanceRequest(region, exclusions)))
+                .WaitAsync(NotificationBackdropSampleTimeout);
+        }
+        catch (TimeoutException)
+        {
+            return fallback;
+        }
+        catch (Exception ex)
+        {
+            IAppHost.TryGetService<ILogger<App>>()?.LogDebug(ex, "Quick draw notification backdrop sampling failed.");
+            return fallback;
+        }
+
+        if (sample is null || sample.PixelCount < NotificationBackdropMinimumSamples)
+            return fallback;
+
+        return AdaptiveBackdropResolver.Resolve(
+            BackdropLuminance.FromPercentiles(sample.P10, sample.Median, sample.P90),
+            isDarkTheme);
+    }
+
+    private static async Task FadeInQuickDrawWindowAsync(Window window)
+    {
+        for (var step = 1; step <= NotificationFadeInSteps; step++)
+        {
+            if (!ReferenceEquals(window, _quickDrawWindow))
+                return;
+
+            window.Opacity = step / (double)NotificationFadeInSteps;
+            await Task.Delay(NotificationFadeInStepDelay);
+        }
     }
 
     public static void HideQuickDrawNotificationWindow()
     {
         Dispatcher.UIThread.Post(() =>
         {
+            _quickDrawNotificationTheme = null;
             if (_quickDrawWindow is { IsVisible: true })
                 _quickDrawWindow.Hide();
         });
@@ -2868,12 +2874,12 @@ public partial class App : Application
     {
         _quickDrawNotificationSettings = windowSettings;
         var quickDraw = IAppHost.GetService<QuickDrawPageViewModel>();
-        quickDraw.NotificationOpacity = Math.Clamp(windowSettings.Transparency, 20, 100);
-        var window = GetOrCreateQuickDrawWindow();
-        window.Opacity = 1;
-        if (!window.IsVisible)
-            window.Show();
-        ApplyQuickDrawWindowFocusFree(window);
+
+        // 预览已经开始时窗口与主题都已就绪，这一步只是空转；没有预览的路径（例如只显示结果）
+        // 则在这里一次把建窗、定位、采样、淡入全部做完，保证 ShowNotificationPreview 写结果项之前
+        // 前景色已经落定。
+        var window = await PrepareQuickDrawNotificationWindowAsync(quickDraw, windowSettings);
+
         if (showPreview)
         {
             quickDraw.ShowNotificationPreview(items, preserveQuickDrawResult);
@@ -2886,7 +2892,7 @@ public partial class App : Application
             DispatcherPriority.Render);
     }
 
-    private static async Task ShowQuickDrawWindowAsync()
+    private static async Task ShowQuickDrawWindowAsync(int count = 1)
     {
         TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
         using var transaction = telemetry?.StartTransaction("ui.quick_draw_window", "ui.navigation");
@@ -2974,6 +2980,7 @@ public partial class App : Application
             quickDrawPage.ResultLayoutChanged -= resultLayoutChanged;
             _quickDrawWindow = null;
             _quickDrawNotificationSettings = null;
+            _quickDrawNotificationTheme = null;
         };
         return _quickDrawWindow;
     }
@@ -3042,30 +3049,41 @@ public partial class App : Application
         if (window is null)
             return;
 
-        var nativeNames = WindowsMonitorNameProvider.GetNames();
-        var screen = window.Screens.All.FirstOrDefault(candidate =>
-                     {
-                         nativeNames.TryGetValue(candidate.Bounds.Position, out var nativeName);
-                         var displayName = string.IsNullOrWhiteSpace(candidate.DisplayName)
-                             ? nativeName
-                             : candidate.DisplayName;
-                         return !string.IsNullOrWhiteSpace(settings.EnabledMonitor)
-                                && NotificationMonitorIdentifier.Matches(
-                                    displayName,
-                                    candidate.Bounds,
-                                    settings.EnabledMonitor);
-                     })
-                     ?? window.Screens.Primary
-                     ?? window.Screens.All.FirstOrDefault();
-        if (screen is null)
+        if (!TryResolveQuickDrawNotificationTargetRect(window, settings, logicalSize, out var target))
             return;
+
+        if (window.Position != target.Position)
+            window.Position = target.Position;
+    }
+
+    /// <summary>
+    ///     算出通知窗最终会出现在哪里、多大：定位与背景采样共用这一份结果。
+    /// </summary>
+    /// <remarks>
+    ///     两边各算一次是不行的——缩放取整或 working-area 夹取上的任何一点差异，都会让采样区
+    ///     偏到卡片旁边，白/黑前景就会按错的桌面亮度决定。
+    /// </remarks>
+    private static bool TryResolveQuickDrawNotificationTargetRect(
+        Window window,
+        NotificationChannelSettings settings,
+        Size? logicalSize,
+        out PixelRect target)
+    {
+        target = default;
+
+        var screen = ResolveQuickDrawNotificationScreen(window, settings);
+        if (screen is null)
+            return false;
 
         var scale = window.RenderScaling;
         var size = logicalSize ?? window.Bounds.Size;
+        if (size.Width <= 0 || size.Height <= 0)
+            size = new Size(window.MinWidth, window.MinHeight);
+
         var width = (int)Math.Round(size.Width * scale);
         var height = (int)Math.Round(size.Height * scale);
         if (width <= 0 || height <= 0)
-            return;
+            return false;
 
         var area = screen.WorkingArea;
         var x = settings.WindowPosition switch
@@ -3082,11 +3100,31 @@ public partial class App : Application
             3 or 4 => area.Center.Y - height / 2,
             _ => area.Center.Y - height / 2
         };
-        var target = new PixelPoint(
+        target = new PixelRect(
             Math.Clamp(x + settings.HorizontalOffset, area.X, Math.Max(area.X, area.Right - width)),
-            Math.Clamp(y + settings.VerticalOffset, area.Y, Math.Max(area.Y, area.Bottom - height)));
-        if (window.Position != target)
-            window.Position = target;
+            Math.Clamp(y + settings.VerticalOffset, area.Y, Math.Max(area.Y, area.Bottom - height)),
+            width,
+            height);
+        return true;
+    }
+
+    private static Screen? ResolveQuickDrawNotificationScreen(Window window, NotificationChannelSettings settings)
+    {
+        var nativeNames = WindowsMonitorNameProvider.GetNames();
+        return window.Screens.All.FirstOrDefault(candidate =>
+                   {
+                       nativeNames.TryGetValue(candidate.Bounds.Position, out var nativeName);
+                       var displayName = string.IsNullOrWhiteSpace(candidate.DisplayName)
+                           ? nativeName
+                           : candidate.DisplayName;
+                       return !string.IsNullOrWhiteSpace(settings.EnabledMonitor)
+                              && NotificationMonitorIdentifier.Matches(
+                                  displayName,
+                                  candidate.Bounds,
+                                  settings.EnabledMonitor);
+                   })
+               ?? window.Screens.Primary
+               ?? window.Screens.All.FirstOrDefault();
     }
 
     private static void ApplyQuickDrawWindowBounds(Window? window)

@@ -241,14 +241,10 @@ public static class ControlSettingsLabels
         ["sentry_telemetry_enabled"] = R(Privacy, "S_SentryTelemetry_Enabled"),
         ["online_status_mode"] = R(Privacy, "S_OnlineStatus_Mode"),
 
-        // ---------------- 通用：备份（本地与云端两套内容选择共用同一批文案）
+        // ---------------- 通用：备份
         ["auto_backup_enabled"] = R(Backup, "S_AutoBackup"),
         ["auto_backup_interval_days"] = R(Backup, "S_AutoBackup_IntervalDays"),
         ["auto_backup_max_count"] = R(Backup, "S_AutoBackup_MaxCount"),
-        ["cloud_device_alias"] = R(Backup, "S_CloudDeviceAlias"),
-        ["cloud_auto_backup_enabled"] = R(Backup, "S_CloudAutoBackup"),
-        ["cloud_auto_backup_interval_days"] = R(Backup, "S_CloudAutoBackup_IntervalDays"),
-        ["cloud_auto_backup_max_count"] = R(Backup, "S_CloudAutoBackup_MaxCount"),
         ["include_config"] = R(Backup, "S_Includes_Config"),
         ["include_list"] = R(Backup, "S_Includes_List"),
         ["include_history"] = R(Backup, "S_Includes_History"),
@@ -437,6 +433,9 @@ public static class ControlSettingsLabels
         ["stick_to_edge"] = R(FloatingWindow, "S_Interaction_StickToEdge"),
         ["stick_to_edge_recover_seconds"] = R(FloatingWindow, "S_Interaction_StickToEdgeRecoverSeconds"),
         ["stick_to_edge_display_style"] = R(FloatingWindow, "S_Interaction_StickToEdgeDisplayStyle"),
+        ["stick_to_edge_display_text"] = R(FloatingWindow, "S_Dock_Text", FloatingWindow, "S_Dock_Text_D"),
+        ["stick_to_edge_display_icon_glyph"] = R(FloatingWindow, "S_Dock_Icon", FloatingWindow, "S_Dock_Icon_D"),
+        ["stick_to_edge_display_icon_image"] = R(FloatingWindow, "S_Dock_Icon", FloatingWindow, "S_Dock_Icon_D"),
         ["docked_window_size"] = R(FloatingWindow, "S_Dock_Size"),
         ["draggable"] = R(FloatingWindow, "S_Interaction_Draggable"),
         ["long_press_duration"] = R(FloatingWindow, "S_Interaction_LongPressDuration"),

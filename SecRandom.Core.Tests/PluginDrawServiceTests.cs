@@ -79,7 +79,7 @@ public sealed class PluginDrawServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task DrawStudents_WhenCommitFails_DoesNotPublishProofOrAdvanceChain()
+    public async Task DrawStudents_WhenCommitFails_DoesNotPublishProof()
     {
         using var provider = CreateProvider(allowAuthorization: true);
         var config = provider.GetRequiredService<MainConfigHandler>();
@@ -95,16 +95,12 @@ public sealed class PluginDrawServiceTests : IDisposable
         File.Delete(historyPath);
         Directory.CreateDirectory(historyPath);
 
-        var chain = provider.GetRequiredService<ProofChainStore>();
-        Assert.Equal(0, chain.Read().HeadIndex);
-
         var service = provider.GetRequiredService<RollCallDrawService>();
         await Assert.ThrowsAnyAsync<Exception>(() => service.DrawAsync(
             new RollCallDrawRequest("default", string.Empty, string.Empty, 1, string.Empty),
             TestContext.Current.CancellationToken));
 
         Assert.Empty(provider.GetRequiredService<DrawProofExportService>().EnumerateProofPaths());
-        Assert.Equal(0, chain.Read().HeadIndex);
         Assert.Equal(0, provider.GetRequiredService<DrawProofAttestationService>().GetStatus().PendingCount);
     }
 
@@ -129,8 +125,6 @@ public sealed class PluginDrawServiceTests : IDisposable
         File.Delete(historyPath);
         Directory.CreateDirectory(historyPath);
 
-        var chain = provider.GetRequiredService<ProofChainStore>();
-        Assert.Equal(0, chain.Read().HeadIndex);
 
         var service = provider.GetRequiredService<LotteryDrawService>();
         await Assert.ThrowsAnyAsync<Exception>(() => service.DrawAsync(
@@ -138,7 +132,6 @@ public sealed class PluginDrawServiceTests : IDisposable
             TestContext.Current.CancellationToken));
 
         Assert.Empty(provider.GetRequiredService<DrawProofExportService>().EnumerateProofPaths());
-        Assert.Equal(0, chain.Read().HeadIndex);
         Assert.Equal(0, provider.GetRequiredService<DrawProofAttestationService>().GetStatus().PendingCount);
     }
 
@@ -184,7 +177,6 @@ public sealed class PluginDrawServiceTests : IDisposable
         services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
         services.AddSingleton<IWitnessClient>(_ => new StubWitnessClient());
         services.AddSingleton<ITimestampAuthorityClient>(_ => new StubTimestampAuthorityClient());
-        services.AddSingleton<ProofChainStore>();
         services.AddSingleton<DrawProofExportService>();
         services.AddSingleton<DrawProofAttestationService>();
         services.AddSingleton<CsesScheduleParser>();
@@ -227,7 +219,7 @@ public sealed class PluginDrawServiceTests : IDisposable
     {
         public Task<WitnessAttestationResult> AttestAsync(DrawProof proof, CancellationToken cancellationToken)
         {
-            return Task.FromResult(new WitnessAttestationResult("attested", null));
+            return Task.FromResult(new WitnessAttestationResult("attested"));
         }
 
         public Task<DrawProof> NotarizeAsync(FormalNotarizationRequest request, CancellationToken cancellationToken)

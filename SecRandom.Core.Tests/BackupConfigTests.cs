@@ -30,19 +30,26 @@ public class BackupConfigTests
     }
 
     [Fact]
-    public void CloudBackupDefaults_StayOffAndKeepImagesOutOfTheUpload()
+    public void LegacyCloudBackupFields_AreIgnoredAndLocalFieldsStillLoad()
     {
-        MainConfigModel defaults = new();
-        BackupConfig backup = defaults.General.Backup;
+        const string legacyJson = """
+                                  {
+                                    "general": {
+                                      "backup": {
+                                        "cloud_auto_backup_enabled": true,
+                                        "cloud_auto_backup_max_count": 9,
+                                        "cloud_device_alias": "old-device",
+                                        "cloud_include_images": true,
+                                        "auto_backup_interval_days": 3
+                                      }
+                                    }
+                                  }
+                                  """;
 
-        Assert.False(backup.CloudAutoBackupEnabled);
-        Assert.Equal(5, backup.CloudAutoBackupMaxCount);
-        Assert.Equal(string.Empty, backup.CloudDeviceAlias);
-        Assert.False(backup.CloudIncludeImages);
-        Assert.False(backup.CloudIncludeAudio);
-        Assert.False(backup.CloudIncludeProofs);
-        Assert.True(backup.CloudIncludeConfig);
-        Assert.True(backup.CloudIncludeList);
-        Assert.True(backup.CloudIncludeHistory);
+        MainConfigModel? restored = JsonSerializer.Deserialize<MainConfigModel>(legacyJson, ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(restored);
+        Assert.Equal(3, restored.General.Backup.AutoBackupIntervalDays);
+        Assert.True(restored.General.Backup.IncludeProofs);
     }
 }

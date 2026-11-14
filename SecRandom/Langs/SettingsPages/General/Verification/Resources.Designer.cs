@@ -58,20 +58,4 @@ public class Resources
     public static string M_ProofQueueFailed => Get(nameof(M_ProofQueueFailed));
     public static string M_ProofQueueConflict => Get(nameof(M_ProofQueueConflict));
     public static string M_ProofQueueTimestampFailed => Get(nameof(M_ProofQueueTimestampFailed));
-    public static string M_ProofQueueChainAlert => Get(nameof(M_ProofQueueChainAlert));
-    public static string S_ProofIntegrity => Get(nameof(S_ProofIntegrity));
-    public static string S_ProofIntegrity_D => Get(nameof(S_ProofIntegrity_D));
-    public static string C_VerifyProofs => Get(nameof(C_VerifyProofs));
-    public static string M_ProofIntegrityIdle => Get(nameof(M_ProofIntegrityIdle));
-    public static string M_ProofIntegrityHealthy => Get(nameof(M_ProofIntegrityHealthy));
-    public static string M_ProofIntegrityCounts => Get(nameof(M_ProofIntegrityCounts));
-    public static string M_ProofIntegrityProblems => Get(nameof(M_ProofIntegrityProblems));
-    public static string M_ProofIntegrityLimits => Get(nameof(M_ProofIntegrityLimits));
-    public static string M_ProofIssue_Unreadable => Get(nameof(M_ProofIssue_Unreadable));
-    public static string M_ProofIssue_Modified => Get(nameof(M_ProofIssue_Modified));
-    public static string M_ProofIssue_UnsupportedVersion => Get(nameof(M_ProofIssue_UnsupportedVersion));
-    public static string M_ProofIssue_BrokenLink => Get(nameof(M_ProofIssue_BrokenLink));
-    public static string M_ProofIssue_Gap => Get(nameof(M_ProofIssue_Gap));
-    public static string M_ProofIssue_BeyondHead => Get(nameof(M_ProofIssue_BeyondHead));
-    public static string M_ProofIssue_MissingTail => Get(nameof(M_ProofIssue_MissingTail));
 }

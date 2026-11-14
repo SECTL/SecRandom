@@ -11,7 +11,6 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Platforms.Abstractions;
-using IntegrityAction = SecRandom.Core.Enums.Configs.SettingsIntegrityAction;
 
 namespace SecRandom.Services.Security;
 
@@ -1100,9 +1099,6 @@ internal sealed class SecurityService(
         bool ProtectLotteryStart,
         bool ProtectLotteryReset,
         bool ProtectLinkage,
-        bool SettingsIntegrityCheckEnabled,
-        SettingsIntegrityAction SettingsIntegrityAction,
-        SettingsIntegrityRestoreSource SettingsIntegrityRestoreSource,
         int SudoModeDurationSeconds,
         bool SudoModeEnabled)
     {
@@ -1125,9 +1121,6 @@ internal sealed class SecurityService(
             settings.ProtectLotteryStart,
             settings.ProtectLotteryReset,
             settings.ProtectLinkage,
-            settings.SettingsIntegrityCheckEnabled,
-            settings.SettingsIntegrityAction,
-            settings.SettingsIntegrityRestoreSource,
             settings.SudoModeDurationSeconds,
             settings.SudoModeEnabled);
         public void Restore(SecuritySettingsConfig settings)
@@ -1150,9 +1143,6 @@ internal sealed class SecurityService(
             settings.ProtectLotteryStart = ProtectLotteryStart;
             settings.ProtectLotteryReset = ProtectLotteryReset;
             settings.ProtectLinkage = ProtectLinkage;
-            settings.SettingsIntegrityCheckEnabled = SettingsIntegrityCheckEnabled;
-            settings.SettingsIntegrityAction = SettingsIntegrityAction;
-            settings.SettingsIntegrityRestoreSource = SettingsIntegrityRestoreSource;
             settings.SudoModeDurationSeconds = SudoModeDurationSeconds;
             settings.SudoModeEnabled = SudoModeEnabled;
         }
@@ -1168,9 +1158,6 @@ internal sealed class SecurityService(
             || Removed(UsbBindingEnabled, after.UsbBindingEnabled)
             || Removed(RequireAllSelectedFactors, after.RequireAllSelectedFactors)
             || Added(AllowSettingsPreview, after.AllowSettingsPreview)
-            || Removed(SettingsIntegrityCheckEnabled, after.SettingsIntegrityCheckEnabled)
-            || (SettingsIntegrityAction == IntegrityAction.Confirm &&
-                after.SettingsIntegrityAction == IntegrityAction.AutoRestore)
             || Removed(ProtectOpenSettings, after.ProtectOpenSettings)
             || Removed(ProtectToggleMainWindow, after.ProtectToggleMainWindow)
             || Removed(ProtectToggleFloatingWindow, after.ProtectToggleFloatingWindow)
@@ -1214,15 +1201,12 @@ internal sealed class SecurityService(
             DisableOperationProtections();
         }
 
-        // 防篡改校验属于安全保护的一部分，保护关闭时一并关闭
-        if (!Settings.SecurityEnabled)
-            Settings.SettingsIntegrityCheckEnabled = false;
+        
     }
 
     private void DisableOperationProtections()
     {
-        // 防篡改校验以安全凭据为锚点，保护被整体关闭时它也不再成立
-        Settings.SettingsIntegrityCheckEnabled = false;
+        
         Settings.ProtectOpenSettings = false;
         Settings.ProtectToggleMainWindow = false;
         Settings.ProtectToggleFloatingWindow = false;
@@ -1440,9 +1424,7 @@ internal sealed class SecurityService(
             DisableOperationProtections();
         }
 
-        // 防篡改校验属于安全保护的一部分，保护关闭时一并关闭
-        if (!Settings.SecurityEnabled)
-            Settings.SettingsIntegrityCheckEnabled = false;
+        
     }
 
     private void TryDeleteUsbKeyAtPath(string rootPath)

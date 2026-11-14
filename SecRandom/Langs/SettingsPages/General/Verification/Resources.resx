@@ -7,7 +7,7 @@
   <data name="Page_Title" xml:space="preserve"><value>抽取验证</value></data>
   <data name="S_Verification" xml:space="preserve"><value>可验证抽取</value></data>
   <data name="C_WitnessNoticeTitle" xml:space="preserve"><value>服务端验证</value></data>
-  <data name="M_WitnessModeNotice" xml:space="preserve"><value>普通模式在本地立即抽取，断网时仍可使用并保存本地可重放证明；联网后会为新证明后台提交服务端重放验证，并申请第三方时间戳（只发送证明摘要，不发送名单或抽取内容）；历史证明不会自动补传，可联网后手动上传到验证网站；证明按追加式哈希链保存，事后改动、删除旧证明、删光重建都能被发现；证明还会承诺抽取时所用名单的记录映射摘要，抽取之后再改名单同样会被发现；但它不证明抽取之前的本地程序、随机种子或名单未被改动，也不能排除抽取前先筛选名单再抽取</value></data>
+  <data name="M_WitnessModeNotice" xml:space="preserve"><value>普通模式在本地立即抽取，断网时仍可使用并保存本地可重放证明；联网后会为新证明后台提交服务端重放验证，并申请第三方时间戳（只发送证明摘要，不发送名单或抽取内容）；历史证明不会自动补传，可联网后手动上传到验证网站；证明还会承诺抽取时所用名单的记录映射摘要，抽取之后再改名单同样会被发现；但它不证明抽取之前的本地程序、随机种子或名单未被改动，也不能排除抽取前先筛选名单再抽取</value></data>
   <data name="S_VerificationMode" xml:space="preserve"><value>可验证抽取模式</value></data>
   <data name="S_VerificationMode_D" xml:space="preserve"><value>普通模式可离线在本地立即抽取并在联网后手动验证；正式公证模式由服务端锁定候选池、生成随机材料并计算最终结果</value></data>
   <data name="O_VerificationMode_Local" xml:space="preserve"><value>普通模式</value></data>
@@ -17,8 +17,6 @@
   <data name="C_Cancel" xml:space="preserve"><value>取消</value></data>
   <data name="C_ModeReadConfirm" xml:space="preserve"><value>我已阅读并理解上述限制</value></data>
   <data name="M_ModeConfirmLocal" xml:space="preserve"><value>普通模式会立即在本地抽取，断网时仍可完成抽取并保存本地可重放证明；联网时，应用只为新完成的普通抽取在后台向 fair.sectl.cn 提交一次重放签名请求，并向第三方时间戳服务申请时间戳（只发送证明摘要，不发送名单或抽取内容）；离线保存或失败的历史证明不会自动补传，可在联网后手动上传到验证网站
-
-证明按追加式哈希链保存，因此事后修改、删除旧证明、删光重建都能被发现；服务端还会记住每台设备见过的链头，把本地证明删光重建会被识别为链位置回退
 
 证明会承诺抽取时所用名单的「记录 ID → 姓名/学号/组别」映射摘要，所以抽取之后再改名单、把中签记录指向别人同样会被发现
 
@@ -61,21 +59,21 @@
   <data name="M_ProofQueueConflict" xml:space="preserve"><value>检测到 {0} 项证明内容在提交期间被改动</value></data>
   
   
-  <data name="S_ProofIntegrity" xml:space="preserve"><value>证明链完整性</value></data>
-  <data name="S_ProofIntegrity_D" xml:space="preserve"><value>校验本机证明文件的哈希链是否连续、内容是否被改动；本地链只能让删改可见，不能证明没有更早的记录被删除</value></data>
-  <data name="C_VerifyProofs" xml:space="preserve"><value>开始验证</value></data>
-  <data name="M_ProofIntegrityIdle" xml:space="preserve"><value>尚未验证</value></data>
-  <data name="M_ProofIntegrityHealthy" xml:space="preserve"><value>证明链完整</value></data>
-  <data name="M_ProofIntegrityCounts" xml:space="preserve"><value>共 {0} 份，已入链 {1} 份，旧格式 {2} 份</value></data>
-  <data name="M_ProofIntegrityProblems" xml:space="preserve"><value>缺口 {0}，断链 {1}，被改动 {2}，超出链头 {3}，未落盘 {4}，已过期 {5}</value></data>
-  <data name="M_ProofIntegrityLimits" xml:space="preserve"><value>本地链只能发现删改，不能证明没有更早的记录被删除</value></data>
-  <data name="M_ProofIssue_Unreadable" xml:space="preserve"><value>无法解析</value></data>
-  <data name="M_ProofIssue_Modified" xml:space="preserve"><value>内容被改动</value></data>
-  <data name="M_ProofIssue_UnsupportedVersion" xml:space="preserve"><value>版本不支持</value></data>
-  <data name="M_ProofIssue_BrokenLink" xml:space="preserve"><value>链不衔接</value></data>
-  <data name="M_ProofIssue_Gap" xml:space="preserve"><value>缺少文件</value></data>
-  <data name="M_ProofIssue_BeyondHead" xml:space="preserve"><value>超出链头</value></data>
-  <data name="M_ProofIssue_MissingTail" xml:space="preserve"><value>未落盘</value></data>
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   <data name="M_ProofQueueTimestampFailed" xml:space="preserve"><value>时间戳未完成 {0} 项</value></data>
-  <data name="M_ProofQueueChainAlert" xml:space="preserve"><value>服务端发现 {0} 项证明链异常</value></data>
+  
 </root>

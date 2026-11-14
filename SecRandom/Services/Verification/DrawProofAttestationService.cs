@@ -53,7 +53,6 @@ public sealed class DrawProofAttestationService(
     private string? _queueFilePath;
     private bool _queueLoaded;
     private string? _lastError;
-    private int _chainAlertCount;
 
     /// <summary>
     ///     Raised whenever the pending/attested state of a proof changes so the settings surface can refresh.
@@ -113,7 +112,7 @@ public sealed class DrawProofAttestationService(
                 }
             }
 
-            return new ProofAttestationStatus(pending, failed, timestampFailed, conflict, _chainAlertCount, _lastError);
+            return new ProofAttestationStatus(pending, failed, timestampFailed, conflict, _lastError);
         }
     }
 
@@ -249,7 +248,6 @@ public sealed class DrawProofAttestationService(
                 receipt = attestation.Receipt;
                 // Kept in memory so a later timestamp failure does not ask the service to re-attest the same proof.
                 item.Receipt = receipt;
-                RecordChainAnchor(proof, attestation.Chain);
             }
 
             if (requestedTimestamp)
@@ -280,27 +278,6 @@ public sealed class DrawProofAttestationService(
 
             RaiseStatusChanged();
         }
-    }
-
-    /// <summary>
-    ///     Surfaces a chain position the service does not consider continuous with what it recorded before.
-    ///     "behind" is the interesting one: the submitted chain is older than the anchor the service holds,
-    ///     which is what a deleted-and-rebuilt local chain looks like from the outside.
-    /// </summary>
-    private void RecordChainAnchor(DrawProof proof, WitnessChainAnchor? anchor)
-    {
-        if (anchor is null || anchor.Status is not ("broken" or "gap" or "behind" or "conflict"))
-            return;
-
-        lock (_gate)
-        {
-            _chainAlertCount++;
-        }
-
-        logger.LogWarning(
-            "服务端证明链锚定报告异常。ProofId={ProofId}，状态={Status}，服务端链头={HeadIndex}",
-            proof.ProofId, anchor.Status, anchor.HeadIndex);
-        RaiseStatusChanged();
     }
 
     /// <summary>
@@ -565,7 +542,6 @@ public sealed record ProofAttestationStatus(
     int FailedCount,
     int TimestampFailedCount,
     int ConflictCount,
-    int ChainAlertCount,
     string? LastError)
 {
     /// <summary>
@@ -576,7 +552,7 @@ public sealed record ProofAttestationStatus(
 
     public bool HasOutstandingWork => PendingCount > 0 || FailedCount > 0;
 
-    public bool HasIssues => FailedCount > 0 || ConflictCount > 0 || ChainAlertCount > 0;
+    public bool HasIssues => FailedCount > 0 || ConflictCount > 0;
 }
 
 internal enum ProofSubmissionStage

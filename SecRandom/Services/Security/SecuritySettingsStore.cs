@@ -194,14 +194,11 @@ internal sealed class SecuritySettingsStore
 
     /// <summary>
     ///     最严的一档：防护总开关打开、所有受保护操作打开。因素开关不在这里预置，它们由凭据推导。
-    ///     防篡改校验不在这里打开——那是用户明确选择的功能，不能替用户打开。
     /// </summary>
     private static SecuritySettingsConfig CreateProtectiveDefaults() => new()
     {
         SecurityEnabled = true,
         SudoModeEnabled = true,
-        SettingsIntegrityAction = SettingsIntegrityAction.Confirm,
-        SettingsIntegrityRestoreSource = SettingsIntegrityRestoreSource.Local,
         ProtectOpenSettings = true,
         ProtectToggleMainWindow = true,
         ProtectToggleFloatingWindow = true,

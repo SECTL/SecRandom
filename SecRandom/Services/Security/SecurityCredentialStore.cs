@@ -76,8 +76,7 @@ internal sealed class SecurityCredentialStore
                 envelope.Nonce,
                 envelope.Tag,
                 envelope.Ciphertext,
-                isReadable: true,
-                settingsIntegrity: envelope.SettingsIntegrity);
+                isReadable: true);
         }
         catch (IOException)
         {
@@ -384,8 +383,7 @@ internal sealed class SecurityCredentialStore
             LockedUntilUtc = metadata.LockedUntilUtc,
             Nonce = metadata.Nonce!,
             Tag = metadata.Tag!,
-            Ciphertext = metadata.Ciphertext!,
-            SettingsIntegrity = metadata.SettingsIntegrity
+            Ciphertext = metadata.Ciphertext!
         };
     }
 
@@ -541,8 +539,7 @@ internal sealed class SecurityCredentialMetadata(
     string? nonce,
     string? tag,
     string? ciphertext,
-    bool isReadable,
-    SettingsIntegrityRecord? settingsIntegrity = null)
+    bool isReadable)
 {
     public static SecurityCredentialMetadata CreateEmpty() => new(null, false, [], 0, null, null, null, null, true);
     public static SecurityCredentialMetadata CreateInvalid() => new(null, false, [], 0, null, null, null, null, false);
@@ -556,9 +553,6 @@ internal sealed class SecurityCredentialMetadata(
     public string? Tag { get; set; } = tag;
     public string? Ciphertext { get; set; } = ciphertext;
     public bool IsReadable { get; } = isReadable;
-
-    /// <summary>settings.json 的整份文件指纹记录；为 null 表示未开启防篡改校验。</summary>
-    public SettingsIntegrityRecord? SettingsIntegrity { get; set; } = settingsIntegrity;
 
     private static UsbBindingCredential CloneBinding(UsbBindingCredential binding)
     {
@@ -605,24 +599,9 @@ internal sealed class SecurityCredentialEnvelope
     public required string Nonce { get; init; }
     public required string Tag { get; init; }
     public required string Ciphertext { get; init; }
-    public SettingsIntegrityRecord? SettingsIntegrity { get; init; }
 }
 
-/// <summary>
-///     settings.json 的整份文件指纹记录。它与锁定状态同级存放在凭据信封的明文部分，
-///     因此无需主密码即可刷新和校验；代价是能改凭据文件的人也能改这份指纹，
-///     所以它属于"防误改、防普通用户"级别的保护，而不是密码学意义上的防伪。
-/// </summary>
-internal sealed class SettingsIntegrityRecord
-{
-    public const int CurrentFormatVersion = 1;
 
-    public int FormatVersion { get; init; } = CurrentFormatVersion;
-    public required string Digest { get; init; }
-    public DateTimeOffset RecordedAtUtc { get; init; }
-    public string? RecordedAppVersion { get; init; }
-    public long Generation { get; init; }
-}
 
 internal sealed record SecurityCredentialAuthenticationData(
     int FormatVersion,

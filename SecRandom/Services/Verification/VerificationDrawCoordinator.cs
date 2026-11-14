@@ -24,7 +24,6 @@ public sealed class VerificationDrawCoordinator(
     IVerificationKernel kernel,
     DrawProofExportService proofExporter,
     DrawProofAttestationService attestationService,
-    ProofChainStore chainStore,
     IProfileService profileService,
     MainConfigHandler configHandler,
     IWitnessClient witnessClient,
@@ -184,7 +183,6 @@ public sealed class VerificationDrawCoordinator(
         VerificationKernelResult result;
         if (verificationMode == VerificationMode.FormalNotarized)
         {
-            var head = chainStore.Read();
             var request = new FormalNotarizationRequest
             {
                 ProofId = Guid.NewGuid(),
@@ -192,9 +190,7 @@ public sealed class VerificationDrawCoordinator(
                 InputHash = WitnessClient.ToBase64Url(inputHash),
                 ZeroSeedRequest = WitnessClient.ToBase64Url(VerificationWireCodec.EncodeDrawRequest(input, new byte[32])),
                 AuditPayload = WitnessClient.ToBase64Url(input.AuditPayload),
-                ClientNonce = WitnessClient.ToBase64Url(VerificationSeedDerivation.CreateCsprngNonce()),
-                ChainIndex = head.HeadIndex,
-                ChainHash = head.HeadHash
+                ClientNonce = WitnessClient.ToBase64Url(VerificationSeedDerivation.CreateCsprngNonce())
             };
             proof = await witnessClient.NotarizeAsync(request, cancellationToken).ConfigureAwait(false);
             result = VerificationWireCodec.DecodeDrawResponse(GetResponse(proof));
