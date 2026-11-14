@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 using System.ComponentModel;
@@ -6,11 +7,13 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Behaviors;
 using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Core.Models.SubConfigs;
+using SecRandom.Core.Services.Presentation;
 using SecRandom.Helpers;
 using SecRandom.ViewModels.MainPages;
 using CommonResources = SecRandom.Langs.Common.Resources;
@@ -30,6 +33,9 @@ public partial class QuickDrawPage : UserControl
     private int _clickCount;
     private int _remainingAutoCloseSeconds;
 
+    /// <summary>本次自动关闭是否走四周描边；描边创建失败时回退到原有的文字倒计时。</summary>
+    private bool _usesEdgeCountdown;
+
     public QuickDrawPage()
     {
         ViewModel = IAppHost.GetService<QuickDrawPageViewModel>();
@@ -39,6 +45,7 @@ public partial class QuickDrawPage : UserControl
         ViewModel.PropertyChanged += ViewModel_OnPropertyChanged;
         ViewModel.Config.EffectiveFloatingWindowSettings.PropertyChanged += FloatingWindowSettings_OnPropertyChanged;
         UpdateFloatingWindowOpacity();
+        ApplyNotificationTheme(ViewModel.NotificationTheme);
         Unloaded += OnUnloaded;
     }
 
@@ -77,6 +84,37 @@ public partial class QuickDrawPage : UserControl
             ViewModel.NotificationOpacity ?? ViewModel.Config.EffectiveFloatingWindowSettings.FloatingWindowOpacity,
             20,
             100) / 100.0;
+    }
+
+    /// <summary>
+    ///     把通知窗口的 Fluent 画笔替换成按桌面亮度算出的自适应配色；null 表示恢复应用主题。
+    /// </summary>
+    /// <remarks>
+    ///     写入的是 <see cref="RootBorder" /> 自己的资源字典。DynamicResource 从控件自身开始向上查找，
+    ///     所以卡片里所有模板（结果项、头像占位、状态文字）会一起换色，而页面上层
+    ///     <c>QuickDrawAvatarTemplate</c> 之类的模板资源不受影响；传 null 时清空该字典即可落回主题。
+    /// </remarks>
+    public void ApplyNotificationTheme(AdaptiveTheme? theme)
+    {
+        if (RootBorder is null)
+            return;
+
+        if (theme is not { } adaptive)
+        {
+            RootBorder.Resources = new ResourceDictionary();
+            return;
+        }
+
+        RootBorder.Resources = new ResourceDictionary
+        {
+            ["SolidBackgroundFillColorBaseBrush"] = new SolidColorBrush(adaptive.Surface),
+            ["ControlElevationBorderBrush"] = new SolidColorBrush(adaptive.Stroke),
+            ["TextFillColorPrimaryBrush"] = new SolidColorBrush(adaptive.Foreground),
+            ["TextFillColorSecondaryBrush"] = new SolidColorBrush(adaptive.SecondaryForeground),
+            ["TextFillColorTertiaryBrush"] = new SolidColorBrush(adaptive.SecondaryForeground),
+            ["CardBackgroundFillColorDefaultBrush"] = new SolidColorBrush(adaptive.CardSurface),
+            ["ControlFillColorSecondaryBrush"] = new SolidColorBrush(adaptive.AvatarSurface)
+        };
     }
 
     private void RootBorder_OnPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -135,6 +173,9 @@ public partial class QuickDrawPage : UserControl
 
         if (e.PropertyName == nameof(QuickDrawPageViewModel.NotificationOpacity))
             UpdateFloatingWindowOpacity();
+
+        if (e.PropertyName == nameof(QuickDrawPageViewModel.NotificationTheme))
+            ApplyNotificationTheme(ViewModel.NotificationTheme);
 
         Dispatcher.UIThread.Post(async () => await RunResultAnimationAsync(e.PropertyName), DispatcherPriority.Render);
     }
@@ -242,19 +283,40 @@ public partial class QuickDrawPage : UserControl
     {
         var seconds = ViewModel.ResultAutoCloseTime;
         _remainingAutoCloseSeconds = seconds;
+        _usesEdgeCountdown = seconds > 0 && TryApplyEdgeCountdownAppearance();
         UpdateAutoCloseHint();
         if (seconds == 0)
             return;
 
         var cts = new CancellationTokenSource();
         _autoCloseCts = cts;
+        var total = TimeSpan.FromSeconds(seconds);
+        var stopwatch = Stopwatch.StartNew();
         try
         {
-            while (_remainingAutoCloseSeconds > 0)
+            if (_usesEdgeCountdown)
             {
-                await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
-                _remainingAutoCloseSeconds--;
-                UpdateAutoCloseHint();
+                // 描边按真实剩余时间逐帧收缩，而不是每秒跳一格：窗口缩小时也不会突然加快。
+                while (true)
+                {
+                    var remaining = total - stopwatch.Elapsed;
+                    if (remaining <= TimeSpan.Zero)
+                        break;
+
+                    CountdownRing.Progress = remaining / total;
+                    await Task.Delay(AnimationFramePolicy.FrameIntervalMs, cts.Token);
+                }
+
+                _remainingAutoCloseSeconds = 0;
+            }
+            else
+            {
+                while (_remainingAutoCloseSeconds > 0)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1), cts.Token);
+                    _remainingAutoCloseSeconds--;
+                    UpdateAutoCloseHint();
+                }
             }
 
             if (!_isUnloaded && autoCloseRevision == _autoCloseRevision && ReferenceEquals(_autoCloseCts, cts))
@@ -265,8 +327,13 @@ public partial class QuickDrawPage : UserControl
         }
         finally
         {
+            // 只有仍然是「当前这次自动关闭」时才收掉描边：更晚的一次已经接管时不能把它的描边藏掉。
             if (ReferenceEquals(_autoCloseCts, cts))
+            {
                 _autoCloseCts = null;
+                HideCountdownRing();
+            }
+
             cts.Dispose();
         }
     }
@@ -276,11 +343,51 @@ public partial class QuickDrawPage : UserControl
         _autoCloseCts?.Cancel();
         _autoCloseCts = null;
         _remainingAutoCloseSeconds = 0;
+        _usesEdgeCountdown = false;
+        HideCountdownRing();
         UpdateAutoCloseHint();
+    }
+
+    /// <summary>按配置决定这次自动关闭画不画四周描边；任何失败都退回文字倒计时。</summary>
+    private bool TryApplyEdgeCountdownAppearance()
+    {
+        try
+        {
+            var settings = ViewModel.Config.NotificationSettings.Default;
+            if (!settings.UsesEdgeCountdown)
+                return false;
+
+            CountdownRing.SetPalette(
+                settings.CountdownColorMode == (int)NotificationCountdownColorMode.Gradient,
+                settings.ResolvedCountdownColors);
+            CountdownRing.Progress = 1;
+            CountdownRing.IsVisible = true;
+            return true;
+        }
+        catch
+        {
+            HideCountdownRing();
+            return false;
+        }
+    }
+
+    private void HideCountdownRing()
+    {
+        CountdownRing.IsVisible = false;
+        CountdownRing.Progress = 1;
     }
 
     private void UpdateAutoCloseHint()
     {
+        // 描边已经在表达剩余时间，这一行只留「三连击关闭」的静态说明，避免两个倒计时同时读秒。
+        if (_usesEdgeCountdown && _remainingAutoCloseSeconds > 0)
+        {
+            AutoCloseHintTextBlock.Text =
+                CommonResources.ResourceManager.GetString("C_QuickDrawManualCloseHint", CommonResources.Culture)
+                ?? throw new InvalidOperationException("Quick draw manual-close localization is missing.");
+            return;
+        }
+
         AutoCloseHintTextBlock.Text = _remainingAutoCloseSeconds > 0
             ? string.Format(
                 CommonResources.ResourceManager.GetString("C_QuickDrawAutoCloseHint", CommonResources.Culture)

@@ -8,69 +8,6 @@
              x:DataType="notification:DefaultNotificationSettingsPage">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro settings">
-            <sr:IconText x:Name="S_Default" Text="{Binding NotificationWindowSettingsTitle}" Glyph="{sr:Fi WindowFilled}" Margin="0 0 0 4" />
-
-            <fa:FASettingsExpander x:Name="S_Default_WindowPosition" Header="{Binding WindowPositionTitle}"
-                                   Description="{Binding WindowPositionDescription}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <ComboBox SelectedIndex="{Binding ChannelSettings.WindowPosition}">
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_WindowPosition_Center}" />
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_WindowPosition_Top}" />
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_WindowPosition_Bottom}" />
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_WindowPosition_Left}" />
-                        <ComboBoxItem Content="{x:Static lsp:Resources.O_WindowPosition_Right}" />
-                    </ComboBox>
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander x:Name="S_Default_EnabledMonitor" Header="{Binding EnabledMonitorTitle}"
-                                   Description="{Binding EnabledMonitorDescription}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi WindowFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <ComboBox ItemsSource="{Binding MonitorOptions}"
-                              SelectedItem="{Binding SelectedMonitor, Mode=TwoWay}"
-                              PlaceholderText="{x:Static lsp:Resources.O_Monitor_Unspecified}"
-                              MinWidth="180">
-                        <ComboBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Label}" />
-                            </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander x:Name="S_Default_Offset" Header="{Binding OffsetTitle}"
-                                   Description="{Binding OffsetDescription}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PositionToBackFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <NumericUpDown Value="{Binding ChannelSettings.HorizontalOffset}" Minimum="-2000" Maximum="2000" />
-                        <NumericUpDown Value="{Binding ChannelSettings.VerticalOffset}" Minimum="-2000" Maximum="2000" />
-                    </StackPanel>
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander x:Name="S_Default_Transparency" Header="{Binding TransparencyTitle}"
-                                    Description="{Binding TransparencyDescription}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <Grid Width="280" ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                        <Slider Minimum="20"
-                                Maximum="100"
-                                TickFrequency="1"
-                                IsSnapToTickEnabled="True"
-                                Value="{Binding ChannelSettings.Transparency, Mode=TwoWay}" />
-                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
-                            <TextBlock Width="32" TextAlignment="Right" Text="{Binding ChannelSettings.Transparency}" />
-                            <TextBlock Text="%" />
-                        </StackPanel>
-                    </Grid>
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
-            <Separator Margin="0 12 0 4" />
             <sr:IconText Text="{Binding NotificationServiceTitle}" Glyph="{sr:Fi CommentNoteFilled}" Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Default_NotificationServiceType" Header="{Binding NotificationServiceTypeTitle}"

@@ -33,24 +33,6 @@
   <data name="S_Default_Animation_D" xml:space="preserve">
     <value>显示通知时播放进入和退出动画</value>
   </data>
-  <data name="S_Default_WindowPosition" xml:space="preserve">
-    <value>通知位置</value>
-  </data>
-  <data name="S_Default_WindowPosition_D" xml:space="preserve">
-    <value>选择通知浮窗显示位置</value>
-  </data>
-  <data name="S_Default_Offset" xml:space="preserve">
-    <value>通知偏移</value>
-  </data>
-  <data name="S_Default_Offset_D" xml:space="preserve">
-    <value>设置通知浮窗相对默认位置的水平和垂直偏移</value>
-  </data>
-  <data name="S_Default_Transparency" xml:space="preserve">
-    <value>通知不透明度</value>
-  </data>
-  <data name="S_Default_Transparency_D" xml:space="preserve">
-    <value>设置通知浮窗的不透明度</value>
-  </data>
   <data name="S_Default_DisplayDuration" xml:space="preserve">
     <value>通知显示时长</value>
   </data>
@@ -108,18 +90,6 @@
   <data name="S_Lottery_UseMainWindowWhenExceedThreshold_D" xml:space="preserve">
     <value>抽取奖品数超过阈值时不显示浮窗通知，仅在主窗口显示结果</value>
   </data>
-  <data name="S_RollCall_Offset" xml:space="preserve">
-    <value>点名通知偏移</value>
-  </data>
-  <data name="S_RollCall_Transparency_D" xml:space="preserve">
-    <value>设置点名通知浮窗的不透明度</value>
-  </data>
-  <data name="S_Lottery_WindowPosition" xml:space="preserve">
-    <value>抽奖通知位置</value>
-  </data>
-  <data name="S_QuickDraw_Transparency_D" xml:space="preserve">
-    <value>设置闪抽通知浮窗的不透明度</value>
-  </data>
   <data name="S_QuickDraw_MainWindowDisplayThreshold_D" xml:space="preserve">
     <value>超过此人数后使用主窗口显示结果</value>
   </data>
@@ -129,32 +99,17 @@
   <data name="S_Lottery_MainWindowDisplayThreshold" xml:space="preserve">
     <value>抽奖通知阈值</value>
   </data>
-  <data name="S_RollCall_Transparency" xml:space="preserve">
-    <value>点名通知不透明度</value>
-  </data>
-  <data name="S_QuickDraw_Offset" xml:space="preserve">
-    <value>闪抽通知偏移</value>
-  </data>
-  <data name="S_Lottery_Offset" xml:space="preserve">
-    <value>抽奖通知偏移</value>
-  </data>
   <data name="S_RollCall_MainWindowDisplayThreshold" xml:space="preserve">
     <value>点名通知阈值</value>
   </data>
   <data name="O_WindowPosition_Left" xml:space="preserve">
     <value>左侧</value>
   </data>
-  <data name="S_QuickDraw_Offset_D" xml:space="preserve">
-    <value>设置闪抽通知浮窗相对默认位置的水平和垂直偏移</value>
-  </data>
   <data name="S_QuickDraw_DisplayDuration_D" xml:space="preserve">
     <value>设置通知服务显示闪抽结果的秒数</value>
   </data>
   <data name="S_Lottery_UseMainWindowWhenExceedThreshold" xml:space="preserve">
     <value>超过阈值时使用主窗口</value>
-  </data>
-  <data name="S_Lottery_Transparency" xml:space="preserve">
-    <value>抽奖通知不透明度</value>
   </data>
   <data name="O_WindowPosition_Right" xml:space="preserve">
     <value>右侧</value>
@@ -171,17 +126,8 @@
   <data name="S_QuickDraw_UseMainWindowWhenExceedThreshold_D" xml:space="preserve">
     <value>抽取人数超过阈值时不显示浮窗通知，仅在主窗口显示结果</value>
   </data>
-  <data name="S_QuickDraw_WindowPosition_D" xml:space="preserve">
-    <value>选择闪抽通知浮窗显示位置</value>
-  </data>
-  <data name="S_QuickDraw_WindowPosition" xml:space="preserve">
-    <value>闪抽通知位置</value>
-  </data>
   <data name="S_Lottery_Animation" xml:space="preserve">
     <value>抽奖通知动画</value>
-  </data>
-  <data name="S_RollCall_Offset_D" xml:space="preserve">
-    <value>设置点名通知浮窗相对默认位置的水平和垂直偏移</value>
   </data>
   <data name="S_RollCall_UseMainWindowWhenExceedThreshold" xml:space="preserve">
     <value>超过阈值时使用主窗口</value>
@@ -192,14 +138,8 @@
   <data name="O_WindowPosition_Top" xml:space="preserve">
     <value>顶部</value>
   </data>
-  <data name="S_QuickDraw_Transparency" xml:space="preserve">
-    <value>闪抽通知不透明度</value>
-  </data>
   <data name="O_WindowPosition_Center" xml:space="preserve">
     <value>中心</value>
-  </data>
-  <data name="S_RollCall_WindowPosition" xml:space="preserve">
-    <value>点名通知位置</value>
   </data>
   <data name="S_Lottery_DisplayDuration" xml:space="preserve">
     <value>抽奖通知显示时长</value>
@@ -216,26 +156,14 @@
   <data name="S_QuickDraw_Animation_D" xml:space="preserve">
     <value>显示闪抽通知时播放进入和退出动画</value>
   </data>
-  <data name="S_Lottery_WindowPosition_D" xml:space="preserve">
-    <value>选择抽奖通知浮窗显示位置</value>
-  </data>
-  <data name="S_Lottery_Offset_D" xml:space="preserve">
-    <value>设置抽奖通知浮窗相对默认位置的水平和垂直偏移</value>
-  </data>
   <data name="S_RollCall_DisplayDuration_D" xml:space="preserve">
     <value>设置通知服务显示点名结果的秒数</value>
   </data>
   <data name="S_Lottery_DisplayDuration_D" xml:space="preserve">
     <value>设置通知服务显示抽奖结果的秒数</value>
   </data>
-  <data name="S_RollCall_WindowPosition_D" xml:space="preserve">
-    <value>选择点名通知浮窗显示位置</value>
-  </data>
   <data name="S_RollCall_DisplayDuration" xml:space="preserve">
     <value>点名通知显示时长</value>
-  </data>
-  <data name="S_Lottery_Transparency_D" xml:space="preserve">
-    <value>设置抽奖通知浮窗的不透明度</value>
   </data>
   <data name="O_WindowPosition_TopLeft" xml:space="preserve">
     <value>左上</value>
@@ -258,44 +186,32 @@
   <data name="O_NotificationService_Both" xml:space="preserve">
     <value>同时使用（ClassIsland + 浮窗通知）</value>
   </data>
-  <data name="S_Common_EnabledMonitor" xml:space="preserve">
-    <value>通知显示器</value>
-  </data>
-  <data name="S_Common_EnabledMonitor_D" xml:space="preserve">
-    <value>指定通知窗口显示在哪个显示器；不指定时使用主显示器</value>
-  </data>
-  <data name="S_Common_FloatingWindow" xml:space="preserve">
+  <data name="S_FloatingWindow" xml:space="preserve">
     <value>内置通知浮窗</value>
   </data>
-  <data name="S_Common_FloatingWindowEnabledMonitor" xml:space="preserve">
+  <data name="S_FloatingWindow_EnabledMonitor" xml:space="preserve">
     <value>浮窗显示器</value>
   </data>
-  <data name="S_Common_FloatingWindowEnabledMonitor_D" xml:space="preserve">
+  <data name="S_FloatingWindow_EnabledMonitor_D" xml:space="preserve">
     <value>指定内置通知浮窗显示在哪个显示器；不指定时使用主显示器</value>
   </data>
-  <data name="S_Common_FloatingWindowPosition" xml:space="preserve">
+  <data name="S_FloatingWindow_WindowPosition" xml:space="preserve">
     <value>浮窗位置</value>
   </data>
-  <data name="S_Common_FloatingWindowPosition_D" xml:space="preserve">
+  <data name="S_FloatingWindow_WindowPosition_D" xml:space="preserve">
     <value>选择内置通知浮窗的显示位置</value>
   </data>
-  <data name="S_Common_FloatingWindowOffset" xml:space="preserve">
+  <data name="S_FloatingWindow_Offset" xml:space="preserve">
     <value>浮窗偏移</value>
   </data>
-  <data name="S_Common_FloatingWindowOffset_D" xml:space="preserve">
+  <data name="S_FloatingWindow_Offset_D" xml:space="preserve">
     <value>设置内置通知浮窗相对默认位置的水平和垂直偏移</value>
   </data>
-  <data name="S_Common_FloatingWindowTransparency" xml:space="preserve">
+  <data name="S_FloatingWindow_Transparency" xml:space="preserve">
     <value>浮窗不透明度</value>
   </data>
-  <data name="S_Common_FloatingWindowTransparency_D" xml:space="preserve">
+  <data name="S_FloatingWindow_Transparency_D" xml:space="preserve">
     <value>设置内置通知浮窗的不透明度</value>
-  </data>
-  <data name="S_Common_FloatingWindowAutoCloseTime" xml:space="preserve">
-    <value>浮窗关闭时间</value>
-  </data>
-  <data name="S_Common_FloatingWindowAutoCloseTime_D" xml:space="preserve">
-    <value>内置通知浮窗自动关闭前保留的秒数</value>
   </data>
   <data name="S_Common_NotificationService" xml:space="preserve">
     <value>通知服务</value>
@@ -317,9 +233,6 @@
   </data>
   <data name="S_Common_OverridableSettings" xml:space="preserve">
     <value>可覆盖设置</value>
-  </data>
-  <data name="S_Common_NotificationWindowSettings" xml:space="preserve">
-    <value>通知窗口</value>
   </data>
   <data name="C_EnableOverride" xml:space="preserve">
     <value>启用覆盖</value>
@@ -566,5 +479,14 @@
   </data>
   <data name="S_Fullscreen_AccentFollowTheme_D" xml:space="preserve">
     <value>跟随主题色，或选择自定义颜色后自行取色</value>
+  </data>
+  <data name="Page_FloatingWindow" xml:space="preserve">
+    <value>内置通知浮窗</value>
+  </data>
+<data name="S_FloatingWindow_AdaptiveForeground" xml:space="preserve">
+    <value>自适应前景色</value>
+  </data>
+  <data name="S_FloatingWindow_AdaptiveForeground_D" xml:space="preserve">
+    <value>按浮窗背后的桌面亮度自动选用白色或黑色文字与描边，让结果卡片在任何壁纸上都清晰可读；低配模式下此项会被强制关闭</value>
   </data>
 </root>

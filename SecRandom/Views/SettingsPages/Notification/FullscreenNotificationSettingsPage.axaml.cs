@@ -84,8 +84,30 @@ public partial class FullscreenNotificationSettingsPage : UserControl, INotifyPr
 
     public IReadOnlyList<AccentColorModeOption> AccentColorModeOptions { get; private set; }
 
+    /// <summary>
+    ///     低配模式会把全屏通知压成"直接展示结果"并跳过背景模糊（见 FullscreenNotificationPresenter.ResolveStyle
+    ///     与 FullscreenNotificationWindow 的模糊分支），这两个控件此时已无意义，统一置灰并显示实际生效值。
+    /// </summary>
+    public bool IsLowSpecModeActive => UiRenderQuality.IsLowSpecMode;
+
     /// <summary>文案分区（含打字机速度）只在打字机样式下有意义，其余样式直接展示结果画面。</summary>
-    public bool IsTypewriterStyle => Settings.AnimationStyle == FullscreenAnimationStyle.Typewriter;
+    public bool IsTypewriterStyle => !IsLowSpecModeActive && Settings.AnimationStyle == FullscreenAnimationStyle.Typewriter;
+
+    /// <summary>
+    ///     背景模糊的可写视图：低配模式不渲染模糊，因此对外显示 0 并拒绝写入，
+    ///     用户原来的半径留在配置里，退出低配后自动恢复。
+    /// </summary>
+    public int BackgroundBlurRadius
+    {
+        get => IsLowSpecModeActive ? 0 : Settings.BackgroundBlurRadius;
+        set
+        {
+            if (IsLowSpecModeActive || Settings.BackgroundBlurRadius == value)
+                return;
+
+            Settings.BackgroundBlurRadius = value;
+        }
+    }
 
     /// <summary>背景图导入、模糊与背景不透明度只在自定义图片模式下出现。</summary>
     public bool IsBackgroundImageMode => Settings.BackgroundMode == FullscreenBackgroundMode.Image;
@@ -114,11 +136,16 @@ public partial class FullscreenNotificationSettingsPage : UserControl, INotifyPr
 
     public AnimationStyleOption SelectedAnimationStyleOption
     {
-        get => AnimationStyleOptions.FirstOrDefault(option => option.Value == Settings.AnimationStyle)
-               ?? AnimationStyleOptions[0];
+        get
+        {
+            // 低配模式固定按 Direct 播放，选中项也显示为 Direct，避免"选了打字机却不生效"。
+            var style = IsLowSpecModeActive ? FullscreenAnimationStyle.Direct : Settings.AnimationStyle;
+            return AnimationStyleOptions.FirstOrDefault(option => option.Value == style)
+                   ?? AnimationStyleOptions[0];
+        }
         set
         {
-            if (value is null || Settings.AnimationStyle == value.Value)
+            if (IsLowSpecModeActive || value is null || Settings.AnimationStyle == value.Value)
                 return;
 
             Settings.AnimationStyle = value.Value;
@@ -274,6 +301,9 @@ public partial class FullscreenNotificationSettingsPage : UserControl, INotifyPr
     private void NotifyDerivedSettingsProperties()
     {
         OnPropertyChanged(nameof(IsTypewriterStyle));
+        OnPropertyChanged(nameof(IsLowSpecModeActive));
+        OnPropertyChanged(nameof(SelectedAnimationStyleOption));
+        OnPropertyChanged(nameof(BackgroundBlurRadius));
         OnPropertyChanged(nameof(IsBackgroundImageMode));
         OnPropertyChanged(nameof(IsSolidBackgroundMode));
         OnPropertyChanged(nameof(IsGradientBackgroundMode));

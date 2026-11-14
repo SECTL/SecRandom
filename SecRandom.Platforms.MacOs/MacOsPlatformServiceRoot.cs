@@ -31,5 +31,7 @@ public sealed class MacOsPlatformServiceRoot : IPlatformServiceRoot
 
     public IPlatformCameraDeviceCatalog CameraDevices { get; } = new MacOsCameraDeviceCatalog();
 
+    public IScreenLuminanceSampler ScreenLuminance => UnsupportedScreenLuminanceSampler.Instance;
+
     public IPlatformApplicationIconExtractor ApplicationIcons { get; } = new MacOsApplicationIconExtractor();
 }

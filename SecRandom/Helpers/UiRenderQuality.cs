@@ -25,7 +25,10 @@ internal static class UiRenderQuality
         ? BitmapInterpolationMode.LowQuality
         : BitmapInterpolationMode.HighQuality;
 
-    private static bool IsLowSpecMode =>
+    /// <summary>
+    ///     低配模式是否开启。窗口合成、模糊与位图重采样都要读它，所以对外可见。
+    /// </summary>
+    public static bool IsLowSpecMode =>
         IAppHost.TryGetService<MainConfigHandler>()?.Data.General.PerformanceSettings.LowSpecMode == true;
 
     /// <summary>

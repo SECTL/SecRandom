@@ -104,11 +104,12 @@
                                        Description="{x:Static lsp:Resources.S_Fullscreen_BackgroundBlur_D}"
                                        IconSource="{sr:FluentIconSource {sr:Fi BlurFilled}}">
                     <fa:FASettingsExpander.Footer>
-                        <Grid Width="280" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Grid Width="280" ColumnDefinitions="*,Auto" ColumnSpacing="12"
+                              IsEnabled="{Binding !IsLowSpecModeActive}">
                             <Slider Minimum="0" Maximum="64" TickFrequency="1" IsSnapToTickEnabled="True"
-                                    Value="{Binding Settings.BackgroundBlurRadius, Mode=TwoWay}" />
+                                    Value="{Binding BackgroundBlurRadius, Mode=TwoWay}" />
                             <TextBlock Grid.Column="1" Width="32" TextAlignment="Right"
-                                       Text="{Binding Settings.BackgroundBlurRadius}" />
+                                       Text="{Binding BackgroundBlurRadius}" />
                         </Grid>
                     </fa:FASettingsExpander.Footer>
                 </fa:FASettingsExpander>
@@ -222,6 +223,7 @@
                 <fa:FASettingsExpander.Footer>
                     <ComboBox ItemsSource="{Binding AnimationStyleOptions}"
                               SelectedItem="{Binding SelectedAnimationStyleOption, Mode=TwoWay}"
+                              IsEnabled="{Binding !IsLowSpecModeActive}"
                               MinWidth="180">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>

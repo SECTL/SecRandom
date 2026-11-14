@@ -22,12 +22,6 @@ public partial class DefaultNotificationSettingsPage : NotificationChannelSettin
     public override string EnabledDescription => Text(nameof(EnabledDescription), "S_Default_Enabled_D");
     public override string AnimationTitle => Text(nameof(AnimationTitle), "S_Default_Animation");
     public override string AnimationDescription => Text(nameof(AnimationDescription), "S_Default_Animation_D");
-    public override string WindowPositionTitle => Text(nameof(WindowPositionTitle), "S_Default_WindowPosition");
-    public override string WindowPositionDescription => Text(nameof(WindowPositionDescription), "S_Default_WindowPosition_D");
-    public override string OffsetTitle => Text(nameof(OffsetTitle), "S_Default_Offset");
-    public override string OffsetDescription => Text(nameof(OffsetDescription), "S_Default_Offset_D");
-    public override string TransparencyTitle => Text(nameof(TransparencyTitle), "S_Default_Transparency");
-    public override string TransparencyDescription => Text(nameof(TransparencyDescription), "S_Default_Transparency_D");
     public override string DisplayDurationTitle => Text(nameof(DisplayDurationTitle), "S_Default_DisplayDuration");
     public override string DisplayDurationDescription => Text(nameof(DisplayDurationDescription), "S_Default_DisplayDuration_D");
     public override string UseMainWindowWhenExceedThresholdTitle => Text(nameof(UseMainWindowWhenExceedThresholdTitle), "S_Default_UseMainWindowWhenExceedThreshold");

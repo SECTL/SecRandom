@@ -36,5 +36,7 @@ public sealed class WindowsPlatformServiceRoot : IPlatformServiceRoot
 
     public IPlatformCameraDeviceCatalog CameraDevices { get; } = new WindowsCameraDeviceCatalog();
 
+    public IScreenLuminanceSampler ScreenLuminance { get; } = new WindowsScreenLuminanceSampler();
+
     public IPlatformApplicationIconExtractor ApplicationIcons { get; } = new WindowsApplicationIconExtractor();
 }

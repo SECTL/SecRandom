@@ -22,6 +22,7 @@ using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Services.Presentation;
 using SecRandom.Core.Services.Profiles;
 using SecRandom.Helpers;
 using QuickDrawResources = SecRandom.Langs.MainPages.QuickDraw.Resources;
@@ -730,9 +731,21 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
 
     [ObservableProperty] private double? _notificationOpacity;
 
+    /// <summary>
+    ///     本次通知的自适应配色。由 App 在窗口显示前按桌面亮度算好，
+    ///     页面据此换掉 Fluent 画笔；为 null 时沿用应用主题。
+    /// </summary>
+    [ObservableProperty] private AdaptiveTheme? _notificationTheme;
+
+    public void ApplyNotificationTheme(AdaptiveTheme? theme)
+    {
+        NotificationTheme = theme;
+    }
+
     public void ClearNotificationPresentation()
     {
         NotificationOpacity = null;
+        NotificationTheme = null;
     }
 
     public void ResetForCourseLinkage()
@@ -759,6 +772,11 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     {
         var weight = BuildDisplayWeight(student);
         var accentBrush = ResolveAccentBrush();
+        // 通知卡片压在桌面（用户自己的壁纸/PPT）上，强调色在这里只留给边框：
+        // 文字如果继续用强调色，浅色桌面上一个亮黄/亮青的强调色会直接消失。
+        var textBrush = NotificationTheme is { } theme
+            ? DrawColorHelper.ResolveTextBrush(null, Config.Appearance.Theme, theme.Foreground)
+            : DrawColorHelper.ResolveTextBrush(accentBrush, Config.Appearance.Theme);
         return new QuickDrawResultItem(
             FormatStudent(student),
             student.Tags,
@@ -779,13 +797,18 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private QuickDrawResultItem CreateNotificationResultItem(string item)
     {
         var accentBrush = ResolveAccentBrush();
+        // 通知卡片压在桌面（用户自己的壁纸/PPT）上，强调色在这里只留给边框：
+        // 文字如果继续用强调色，浅色桌面上一个亮黄/亮青的强调色会直接消失。
+        var textBrush = NotificationTheme is { } theme
+            ? DrawColorHelper.ResolveTextBrush(null, Config.Appearance.Theme, theme.Foreground)
+            : DrawColorHelper.ResolveTextBrush(accentBrush, Config.Appearance.Theme);
         return new QuickDrawResultItem(
             item,
             string.Empty,
             false,
             DisplaySettings.DisplayStyle == DisplayStyleMode.Card,
             accentBrush,
-            DrawColorHelper.ResolveTextBrush(accentBrush, Config.Appearance.Theme),
+            textBrush,
             false,
             string.Empty,
             1,

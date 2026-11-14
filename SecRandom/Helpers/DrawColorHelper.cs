@@ -26,10 +26,15 @@ internal static class DrawColorHelper
         };
     }
 
-    public static IBrush ResolveTextBrush(IBrush? accentBrush, ThemeMode appTheme)
+    public static IBrush ResolveTextBrush(IBrush? accentBrush, ThemeMode appTheme, Color? adaptiveForeground = null)
     {
         if (accentBrush is not null)
             return accentBrush;
+
+        // 通知卡片压在桌面上时，白/黑应该由采样到的桌面亮度决定，而不是应用主题：
+        // 深色主题的用户很可能正对着一页白底 PPT，反过来也一样。
+        if (adaptiveForeground is { } color)
+            return new SolidColorBrush(color);
 
         return IsDarkTheme(appTheme) ? Brushes.White : Brushes.Black;
     }

@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -9,7 +8,6 @@ using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
-using SecRandom.Services.Notification;
 using SecRandom.ViewModels;
 using LR = SecRandom.Langs.SettingsPages.Notification.Resources;
 
@@ -29,9 +27,6 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
     {
         ChannelSettings = SelectChannelSettings(ViewModel.Config.NotificationSettings);
         NotificationServiceOptions = BuildNotificationServiceOptions();
-        MonitorOptions = [new MonitorOption("", Text("Not specified", "O_Monitor_Unspecified"))];
-        if (!string.IsNullOrWhiteSpace(ChannelSettings.EnabledMonitor))
-            MonitorOptions.Add(new MonitorOption(ChannelSettings.EnabledMonitor, ChannelSettings.EnabledMonitor));
         DataContext = this;
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
@@ -39,18 +34,6 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public NotificationChannelSettings ChannelSettings { get; }
-    public ObservableCollection<MonitorOption> MonitorOptions { get; }
-    public MonitorOption? SelectedMonitor
-    {
-        get => MonitorOptions.FirstOrDefault(option => option.Value == ChannelSettings.EnabledMonitor);
-        set
-        {
-            if (value is null || value.Value == ChannelSettings.EnabledMonitor)
-                return;
-
-            ChannelSettings.EnabledMonitor = value.Value;
-        }
-    }
     public IReadOnlyList<NotificationServiceOption> NotificationServiceOptions { get; private set; }
     public NotificationServiceOption SelectedNotificationServiceOption
     {
@@ -80,18 +63,6 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
         add => NotifyPropertyChanged += value;
         remove => NotifyPropertyChanged -= value;
     }
-    public bool OverrideNotificationWindowSettings
-    {
-        get => OverrideSettings?.OverrideNotificationWindowSettings ?? true;
-        set
-        {
-            if (OverrideSettings is null || OverrideSettings.OverrideNotificationWindowSettings == value)
-                return;
-
-            OverrideSettings.OverrideNotificationWindowSettings = value;
-            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OverrideNotificationWindowSettings)));
-        }
-    }
     public bool OverrideServiceSettings
     {
         get => OverrideSettings?.OverrideServiceSettings ?? true;
@@ -105,21 +76,12 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
         }
     }
     public virtual string BasicSettingsTitle => Text(nameof(BasicSettingsTitle), "S_Common_BasicSettings");
-    public virtual string NotificationWindowSettingsTitle => Text(nameof(NotificationWindowSettingsTitle), "S_Common_NotificationWindowSettings");
     public virtual string OverridableSettingsTitle => Text(nameof(OverridableSettingsTitle), "S_Common_OverridableSettings");
     public virtual string OverrideTitle => Text(nameof(OverrideTitle), "C_EnableOverride");
     public abstract string EnabledTitle { get; }
     public abstract string EnabledDescription { get; }
     public virtual string AnimationTitle => Text(nameof(AnimationTitle), "S_Default_Animation");
     public virtual string AnimationDescription => Text(nameof(AnimationDescription), "S_Default_Animation_D");
-    public virtual string WindowPositionTitle => Text(nameof(WindowPositionTitle), "S_Default_WindowPosition");
-    public virtual string WindowPositionDescription => Text(nameof(WindowPositionDescription), "S_Default_WindowPosition_D");
-    public virtual string EnabledMonitorTitle => Text(nameof(EnabledMonitorTitle), "S_Common_EnabledMonitor");
-    public virtual string EnabledMonitorDescription => Text(nameof(EnabledMonitorDescription), "S_Common_EnabledMonitor_D");
-    public virtual string OffsetTitle => Text(nameof(OffsetTitle), "S_Default_Offset");
-    public virtual string OffsetDescription => Text(nameof(OffsetDescription), "S_Default_Offset_D");
-    public virtual string TransparencyTitle => Text(nameof(TransparencyTitle), "S_Default_Transparency");
-    public virtual string TransparencyDescription => Text(nameof(TransparencyDescription), "S_Default_Transparency_D");
     public virtual string NotificationServiceTitle => Text(nameof(NotificationServiceTitle), "S_Common_NotificationService");
     public virtual string NotificationServiceTypeTitle => Text(nameof(NotificationServiceTypeTitle), "S_Common_NotificationServiceType");
     public virtual string NotificationServiceTypeDescription => Text(nameof(NotificationServiceTypeDescription), "S_Common_NotificationServiceType_D");
@@ -260,36 +222,6 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
             NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NotificationServiceOptions)));
             NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedNotificationServiceOption)));
         }
-
-        var selectedMonitor = ChannelSettings.EnabledMonitor;
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel?.Screens is not null)
-        {
-            var nativeNames = WindowsMonitorNameProvider.GetNames();
-            for (var index = 0; index < topLevel.Screens.All.Count; index++)
-            {
-                var screen = topLevel.Screens.All[index];
-                nativeNames.TryGetValue(screen.Bounds.Position, out var nativeName);
-                var displayName = string.IsNullOrWhiteSpace(screen.DisplayName) ? nativeName : screen.DisplayName;
-                var identifier = NotificationMonitorIdentifier.Get(displayName, screen.Bounds);
-                if (MonitorOptions.All(option => option.Value != identifier))
-                {
-                    var label = NotificationMonitorIdentifier.GetLabel(
-                        displayName,
-                        screen.Bounds,
-                        screen.IsPrimary,
-                        index,
-                        Text("{0}: {1}x{2} @ {3},{4}{5}", "O_Monitor_Label"),
-                        Text("（主显示器）", "O_Monitor_Primary"));
-                    MonitorOptions.Add(new MonitorOption(identifier, label));
-                }
-            }
-        }
-
-        if (!string.IsNullOrWhiteSpace(selectedMonitor)
-            && MonitorOptions.All(option => option.Value != selectedMonitor))
-            MonitorOptions.Add(new MonitorOption(selectedMonitor, selectedMonitor));
-
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -298,8 +230,6 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
             or nameof(NotificationChannelSettings.Animation))
             OverrideSettings?.OverrideBasicSettings = true;
 
-        if (e.PropertyName == nameof(NotificationChannelSettings.EnabledMonitor))
-            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedMonitor)));
         if (e.PropertyName == nameof(NotificationChannelSettings.NotificationServiceType))
         {
             NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(UsesExternalNotificationServiceOnly)));
@@ -308,7 +238,5 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
         ConfigHandler.Save();
     }
 }
-
-public sealed record MonitorOption(string Value, string Label);
 
 public sealed record NotificationServiceOption(int Value, string Label);

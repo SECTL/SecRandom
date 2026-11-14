@@ -34,5 +34,7 @@ public sealed class LinuxPlatformServiceRoot : IPlatformServiceRoot
 
     public IPlatformCameraDeviceCatalog CameraDevices { get; } = new LinuxCameraDeviceCatalog();
 
+    public IScreenLuminanceSampler ScreenLuminance => UnsupportedScreenLuminanceSampler.Instance;
+
     public IPlatformApplicationIconExtractor ApplicationIcons { get; } = new LinuxApplicationIconExtractor();
 }
