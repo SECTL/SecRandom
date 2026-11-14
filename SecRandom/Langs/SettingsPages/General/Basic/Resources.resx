@@ -69,6 +69,12 @@
     <data name="S_Behavior_UrlProtocol_D" xml:space="preserve">
         <value>注册自定义 URL 协议 (secrandom://)，并启用 IPC 通信，支持链接启动与外部联动</value>
     </data>
+    <data name="S_Behavior_AutomationIpc" xml:space="preserve">
+        <value>自动化 IPC 服务</value>
+    </data>
+    <data name="S_Behavior_AutomationIpc_D" xml:space="preserve">
+        <value>允许本机同一用户的其他程序通过命名管道读取状态并执行受保护操作，URL 激活不受此开关影响</value>
+    </data>
     <data name="O_MainWindowTopmostMode_None" xml:space="preserve">
         <value>关闭置顶</value>
     </data>

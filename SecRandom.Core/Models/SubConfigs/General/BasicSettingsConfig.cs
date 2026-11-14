@@ -1,4 +1,4 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Core.Enums.Configs;
 using System.Text.Json.Serialization;
 
@@ -13,6 +13,13 @@ public partial class BasicSettingsConfig : ObservableObject
     [ObservableProperty] private TopmostMode _mainWindowTopmostMode = TopmostMode.None;
     [ObservableProperty] private bool _backgroundResident = true;
     [ObservableProperty] private bool _urlProtocol = false;
+
+    /// <summary>
+    ///     结构化自动化 IPC（v1 JSON 请求、v2 RPC 与事件管道）的总开关。
+    ///     默认开启；关闭只影响结构化通道，<c>ShowMainWindow</c>/<c>Restart</c>/<c>Url:</c>
+    ///     这类无返回值的旧式生命周期转发仍然保留，因此"第二次启动转到已运行实例"不会被关掉。
+    /// </summary>
+    [ObservableProperty] private bool _automationIpcEnabled = true;
 
     // Stored separately from the user-facing switches so a disabled size setting retains its last size.
     [ObservableProperty] private double _mainWindowWidth = 1200;

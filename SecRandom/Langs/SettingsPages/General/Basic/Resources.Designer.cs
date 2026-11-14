@@ -292,7 +292,24 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
                 return ResourceManager.GetString("S_Behavior_UrlProtocol", resourceCulture);
             }
         }
-
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 自动化 IPC 服务.
+        /// </summary>
+        public static string S_Behavior_AutomationIpc {
+            get {
+                return ResourceManager.GetString("S_Behavior_AutomationIpc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 允许本机同一用户的其他程序通过命名管道读取状态并执行受保护操作.
+        /// </summary>
+        public static string S_Behavior_AutomationIpc_D {
+            get {
+                return ResourceManager.GetString("S_Behavior_AutomationIpc_D", resourceCulture);
+            }
+        }
         /// <summary>
         ///   Looks up a localized string similar to 注册自定义 URL 协议 (secrandom://)，并启用 IPC 通信，支持链接启动与外部联动.
         /// </summary>

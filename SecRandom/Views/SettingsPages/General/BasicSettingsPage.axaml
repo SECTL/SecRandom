@@ -106,6 +106,16 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_Behavior_AutomationIpc"
+                                    Header="{x:Static lsb:Resources.S_Behavior_AutomationIpc}"
+                                    Description="{x:Static lsb:Resources.S_Behavior_AutomationIpc_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi DeveloperBoardFilled}}"
+                                    IsVisible="{Binding IsDesktop}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.AutomationIpcEnabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_Behavior_CrashRecovery"
                                     Header="{x:Static lsb:Resources.S_Behavior_CrashRecovery}"
                                     Description="{x:Static lsb:Resources.S_Behavior_CrashRecovery_D}"

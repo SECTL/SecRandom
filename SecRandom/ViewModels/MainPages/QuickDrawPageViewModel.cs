@@ -153,7 +153,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     public FontFamily ResultFontFamily => BuildResultFontFamily();
     public bool AnimationEnabled => AnimationSettings.Animation != AnimationMode.NoAnimation;
     public DrawAnimationStyleMode AnimationStyle => AnimationSettings.AnimationStyle;
-    public string PluginAnimationId => AnimationSettings.PluginAnimationId;
+    
+public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     public int AnimationDuration => 250;
     public int PreviewAnimationDuration => AnimationSettings.Animation == AnimationMode.AutoPlay
         ? Math.Clamp(AnimationSettings.AnimationInterval, 1, 10000)
@@ -495,10 +496,15 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     ///         与"为什么没抽成"——旧控制台只按 ok/原因码判读，这一层不影响它们。
     ///     </para>
     /// </remarks>
-    public async Task<RemoteDrawOutcome> StartRemoteDrawAsync(CancellationToken cancellationToken = default)
+    public async Task<RemoteDrawOutcome> StartRemoteDrawAsync(
+        CancellationToken cancellationToken = default,
+        bool allowInteractiveVerification = false)
     {
         SecurityOperation[] operations = [SecurityOperation.QuickDrawStart, SecurityOperation.LinkageAction];
-        if (ControlDrawGateRejections.From(_linkageDrawCoordinator.EvaluateGate(operations)) is { } rejection)
+        var gate = _linkageDrawCoordinator.EvaluateGate(operations);
+        if (gate == LinkageDrawGate.RequiresLocalVerification && allowInteractiveVerification)
+            gate = LinkageDrawGate.Allowed;
+        if (ControlDrawGateRejections.From(gate) is { } rejection)
             return rejection;
 
         if (IsDrawing)

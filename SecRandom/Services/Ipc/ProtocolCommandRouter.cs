@@ -26,7 +26,8 @@ public sealed class ProtocolCommandRouter(
     QuickDrawPageViewModel quickDraw,
     IProfileQueryService profileQuery,
     ISecurityService security,
-    IFeatureAvailabilityService featureAvailability)
+    IFeatureAvailabilityService featureAvailability,
+    PageRouteResolver pageRoutes)
 {
     private static readonly Dictionary<string, string> MainPages = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -63,8 +64,13 @@ public sealed class ProtocolCommandRouter(
     {
         if (isUrlActivation && !configHandler.Data.General.Basic.UrlProtocol)
             return Failure("url", "protocol_disabled", LR.M_Disabled);
+        if (!isUrlActivation && !configHandler.Data.General.Basic.AutomationIpcEnabled)
+            return Failure("url", "ipc_disabled", "自动化 IPC 已在设置中关闭。");
         if (!ProtocolRequestParser.TryParse(value, isUrlActivation, out var request, out var failure))
             return Failure("url", failure!.Code, failure.Message);
+
+        if (isUrlActivation && IsActivationForbidden(request!.Route))
+            return Failure("url", "url_activation_forbidden", "该命令不允许通过 URL 激活执行，请使用 IPC。");
 
         if (request!.Route.StartsWith("data/", StringComparison.Ordinal))
         {
@@ -76,6 +82,15 @@ public sealed class ProtocolCommandRouter(
         return await Dispatcher.UIThread.InvokeAsync(
             () => HandleOnUiThreadAsync(request, cancellationToken), DispatcherPriority.Normal).ConfigureAwait(false);
     }
+
+    /// <summary>
+///     URL 激活默认只承担"打开界面"；抽取、重启、退出必须走 IPC 的授权路径，
+///     否则网页里一个 <c>secrandom://</c> 链接就能在教室里开始抽取或关掉应用。
+/// </summary>
+    private static bool IsActivationForbidden(string route) =>
+        route.StartsWith("roll_call/", StringComparison.Ordinal)
+        || route.StartsWith("lottery/", StringComparison.Ordinal)
+        || route is "tray/restart" or "tray/exit";
 
     private async Task<IpcResponseEnvelope> HandleOnUiThreadAsync(ParsedProtocolRequest request, CancellationToken cancellationToken)
     {
@@ -112,13 +127,18 @@ public sealed class ProtocolCommandRouter(
     private async Task<IpcResponseEnvelope> HandleMainWindowAsync(IReadOnlyList<ProtocolQueryItem> query, CancellationToken token)
     {
         var page = ProtocolRequestParser.GetLast(query, "page", "page_name", "name", "value");
-        if (page is not null && !MainPages.TryGetValue(page, out page))
-            return Failure("url", "invalid_parameter", LR.M_InvalidMainPage);
-        // 简洁模式只保留点名主页，其余主页路由直接拒绝
-        if (featureAvailability.IsSimpleModeEnabled && page is not null && !SimpleModePolicy.IsMainPageAllowed(page))
-            return Failure("url", "feature_disabled", "简洁模式下仅支持点名功能。", true);
-        if (page == "main.lottery" && !featureAvailability.IsLotteryEnabled)
-            return Failure("url", "feature_disabled", "抽奖功能已关闭。", true);
+        if (page is not null)
+        {
+            var resolved = pageRoutes.Resolve(PageRouteKind.Main, page);
+            if (!resolved.Success)
+                return Failure(
+                    "url",
+                    resolved.ErrorCode == "feature_disabled" ? "feature_disabled" : "invalid_parameter",
+                    resolved.Message ?? LR.M_InvalidMainPage,
+                    resolved.ErrorCode == "feature_disabled");
+            page = resolved.PageId;
+        }
+
         var action = ParseAction(query, page is null ? "toggle" : "show");
         if (action is null) return Failure("url", "invalid_parameter", LR.M_InvalidWindowAction);
         return await RunAuthorizedAsync(SecurityOperation.ToggleMainWindow, () =>
@@ -131,11 +151,18 @@ public sealed class ProtocolCommandRouter(
     private async Task<IpcResponseEnvelope> HandleSettingsWindowAsync(IReadOnlyList<ProtocolQueryItem> query, CancellationToken token)
     {
         var page = ProtocolRequestParser.GetLast(query, "page", "page_name", "name", "value");
-        if (page is not null && !SettingsPages.TryGetValue(page, out page))
-            return Failure("url", "invalid_parameter", LR.M_InvalidSettingsPage);
-        // 简洁模式只保留基础/外观/名单等少量设置页，其余设置路由直接拒绝
-        if (featureAvailability.IsSimpleModeEnabled && page is not null && !SimpleModePolicy.IsSettingsPageAllowed(page))
-            return Failure("url", "feature_disabled", "简洁模式下该设置页不可用。", true);
+        if (page is not null)
+        {
+            var resolved = pageRoutes.Resolve(PageRouteKind.Settings, page);
+            if (!resolved.Success)
+                return Failure(
+                    "url",
+                    resolved.ErrorCode == "feature_disabled" ? "feature_disabled" : "invalid_parameter",
+                    resolved.Message ?? LR.M_InvalidSettingsPage,
+                    resolved.ErrorCode == "feature_disabled");
+            page = resolved.PageId;
+        }
+
         var action = ParseAction(query, "toggle");
         if (action is null) return Failure("url", "invalid_parameter", LR.M_InvalidWindowAction);
         if (action == "hide")

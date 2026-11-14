@@ -24,9 +24,12 @@ public sealed class SingleInstanceService : IDisposable
     private const string AppId = "SecRandom_3F2A1B0E";
     private const string MutexName = $"SecRandom_SingleInstance_{AppId}";
     public const string IpcPipeName = $"SecRandom_IPC_{AppId}";
+    public const string EventPipeName = $"SecRandom_IPC_Events_{AppId}";
     private static readonly TimeSpan FrameReadTimeout = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan ResponseReadTimeout = TimeSpan.FromSeconds(30);
     private const int MaxConcurrentConnections = 8;
+    /// <summary>v2 allows a whole roster in one frame; v1 stays capped by its 8 KB parser.</summary>
+    public const int MaxAutomationFrameLength = 256 * 1024;
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
 
     private Mutex? _mutex;
@@ -59,6 +62,12 @@ public sealed class SingleInstanceService : IDisposable
     /// </summary>
     public event Action<string>? CommandReceived;
     public event Func<IpcRequestEnvelope, CancellationToken, Task<IpcResponseEnvelope>>? RequestReceived;
+    /// <summary>
+    ///     v2 automation frame handler. Receives the raw one-line JSON envelope and returns
+    ///     the raw one-line response (already serialized), so the Core transport stays
+    ///     independent of the app-layer command registry.
+    /// </summary>
+    public event Func<string, CancellationToken, Task<string?>>? AutomationRequestReceived;
 
     private static readonly JsonSerializerOptions IpcJsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -227,7 +236,7 @@ public sealed class SingleInstanceService : IDisposable
 
     private static async Task<string?> ReadRequestLineAsync(StreamReader reader, CancellationToken cancellationToken)
     {
-        var buffer = new char[ProtocolRequestParser.MaxRequestLength + 1];
+        var buffer = new char[MaxAutomationFrameLength + 1];
         var length = 0;
         while (length < buffer.Length)
         {
@@ -280,6 +289,58 @@ public sealed class SingleInstanceService : IDisposable
             return;
         }
 
+        if (TryReadFrameVersion(frame, out var frameVersion, out var frameType))
+        {
+            if (frameVersion == 2 &&
+                (string.Equals(frameType, "rpc", StringComparison.Ordinal) ||
+                 string.Equals(frameType, "hello", StringComparison.Ordinal)))
+            {
+                var automationHandler = AutomationRequestReceived;
+                if (automationHandler is null)
+                {
+                    await WriteAutomationLineAsync(writer, IpcV2ResponseEnvelope.Failure(
+                        null,
+                        IpcV2ErrorEnvelope.Create(
+                            AutomationErrorCodes.PipeUnavailable,
+                            "SecRandom 尚未准备好处理 IPC 请求。",
+                            retryable: true))).ConfigureAwait(false);
+                    return;
+                }
+
+                string? automationResponse;
+                try
+                {
+                    automationResponse = await automationHandler(frame, cancellationToken).ConfigureAwait(false);
+                }
+                catch
+                {
+                    automationResponse = null;
+                }
+
+                if (string.IsNullOrWhiteSpace(automationResponse))
+                {
+                    await WriteAutomationLineAsync(writer, IpcV2ResponseEnvelope.Failure(
+                        null,
+                        IpcV2ErrorEnvelope.Create(
+                            AutomationErrorCodes.InternalError,
+                            "IPC 请求处理失败。",
+                            retryable: true))).ConfigureAwait(false);
+                    return;
+                }
+
+                await writer.WriteLineAsync(automationResponse).ConfigureAwait(false);
+                await writer.FlushAsync().ConfigureAwait(false);
+                return;
+            }
+        }
+
+        if (frame.Length > ProtocolRequestParser.MaxRequestLength)
+        {
+            await WriteResponseAsync(writer,
+                IpcResponseEnvelope.TransportFailure("unknown", "invalid_request", "IPC 请求超出长度限制。")).ConfigureAwait(false);
+            return;
+        }
+
         IpcRequestEnvelope? request;
         try
         {
@@ -319,6 +380,35 @@ public sealed class SingleInstanceService : IDisposable
         }
 
         await WriteResponseAsync(writer, response).ConfigureAwait(false);
+    }
+
+    private static bool TryReadFrameVersion(string frame, out int version, out string? type)
+    {
+        version = 0;
+        type = null;
+        try
+        {
+            using var document = JsonDocument.Parse(frame);
+            if (document.RootElement.ValueKind != JsonValueKind.Object)
+                return false;
+
+            if (document.RootElement.TryGetProperty("version", out var versionElement))
+                versionElement.TryGetInt32(out version);
+            if (document.RootElement.TryGetProperty("type", out var typeElement) &&
+                typeElement.ValueKind == JsonValueKind.String)
+                type = typeElement.GetString();
+            return true;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
+
+    private static async Task WriteAutomationLineAsync(StreamWriter writer, IpcV2ResponseEnvelope response)
+    {
+        await writer.WriteLineAsync(JsonSerializer.Serialize(response, IpcJsonOptions)).ConfigureAwait(false);
+        await writer.FlushAsync().ConfigureAwait(false);
     }
 
     private static async Task WriteResponseAsync(StreamWriter writer, IpcResponseEnvelope response)

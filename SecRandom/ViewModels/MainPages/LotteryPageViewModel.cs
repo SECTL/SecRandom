@@ -217,7 +217,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     public FontFamily ResultFontFamily => BuildResultFontFamily();
     public bool AnimationEnabled => AnimationSettings.Animation != AnimationMode.NoAnimation;
     public DrawAnimationStyleMode AnimationStyle => AnimationSettings.AnimationStyle;
-    public string PluginAnimationId => AnimationSettings.PluginAnimationId;
+    
+public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     public int AnimationDuration => 250;
     public int PreviewAnimationDuration => AnimationSettings.Animation == AnimationMode.AutoPlay
         ? Math.Clamp(AnimationSettings.AnimationInterval, 1, 10000)
@@ -837,7 +838,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     /// </remarks>
     public async Task<RemoteDrawOutcome> StartRemoteDrawAsync(
         ControlDrawTriggerRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool allowInteractiveVerification = false)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -845,7 +847,10 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
             return RemoteDrawOutcome.Denied("lottery_disabled");
 
         SecurityOperation[] operations = [SecurityOperation.LotteryStart, SecurityOperation.LinkageAction];
-        if (ControlDrawGateRejections.From(_linkageDrawCoordinator.EvaluateGate(operations)) is { } rejection)
+        var gate = _linkageDrawCoordinator.EvaluateGate(operations);
+        if (gate == LinkageDrawGate.RequiresLocalVerification && allowInteractiveVerification)
+            gate = LinkageDrawGate.Allowed;
+        if (ControlDrawGateRejections.From(gate) is { } rejection)
             return rejection;
 
         if (IsDrawing)
