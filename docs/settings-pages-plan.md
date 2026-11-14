@@ -44,6 +44,8 @@
     - 点名提醒设置 RollCall
     - 闪抽提醒设置 QuickDraw
     - 抽奖提醒设置 Lottery
+    - 内置通知浮窗 FloatingWindow
+    - 全屏通知 Fullscreen
 
 ---
 

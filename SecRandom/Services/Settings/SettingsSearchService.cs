@@ -44,12 +44,10 @@ public class SettingsSearchService
             },
             ["Notification"] = new HashSet<string>
             {
-                "S_Common_BasicSettings", "S_Common_EnabledMonitor", "S_Common_FloatingWindow",
-                "S_Common_FloatingWindowAutoCloseTime", "S_Common_FloatingWindowEnabledMonitor",
-                "S_Common_FloatingWindowOffset", "S_Common_FloatingWindowPosition",
-                "S_Common_FloatingWindowTransparency", "S_Common_NotificationService",
+                "S_Common_BasicSettings",
+                "S_Common_NotificationService",
                 "S_Common_NotificationServiceFailureFallback", "S_Common_NotificationServiceType",
-                "S_Common_NotificationWindowSettings", "S_Common_OverridableSettings"
+                "S_Common_OverridableSettings"
             },
             ["Picking"] = new HashSet<string> { "S_MusicFadeInOut", "S_MusicVolume" },
             ["Voice"] = new HashSet<string>
@@ -261,6 +259,9 @@ public class SettingsSearchService
         // 全屏结果渠道的设置与文案库在各自页面上，控件名与资源键同名，不能再改写成浮窗的 S_Default_*。
         if (settingId.StartsWith(@"S_Fullscreen", StringComparison.Ordinal)) return settingId;
 
+        // 内置通知浮窗有独立页面，S_FloatingWindow_* 就是该页控件名。
+        if (settingId.StartsWith(@"S_FloatingWindow", StringComparison.Ordinal)) return settingId;
+
         if (category || settingId == @"S_Default") return settingId;
         return @"S_Default_" + settingId[(settingId.IndexOf('_') + 1)..];
     }
@@ -273,12 +274,9 @@ public class SettingsSearchService
 
         if (settingId.StartsWith(@"S_Fullscreen", StringComparison.Ordinal)) return settingId;
 
-        return settingId.EndsWith("_WindowPosition", StringComparison.Ordinal)
-               || settingId.EndsWith("_EnabledMonitor", StringComparison.Ordinal)
-               || settingId.EndsWith("_Offset", StringComparison.Ordinal)
-               || settingId.EndsWith("_Transparency", StringComparison.Ordinal)
-            ? @"S_Default_NotificationWindowSettings"
-            : settingId.EndsWith("_NotificationServiceType", StringComparison.Ordinal)
+        if (settingId.StartsWith(@"S_FloatingWindow", StringComparison.Ordinal)) return settingId;
+
+        return settingId.EndsWith("_NotificationServiceType", StringComparison.Ordinal)
               || settingId.EndsWith("_NotificationServiceFailureFallback", StringComparison.Ordinal)
               || settingId.EndsWith("_DisplayDuration", StringComparison.Ordinal)
               || settingId.EndsWith("_UseMainWindowWhenExceedThreshold", StringComparison.Ordinal)
@@ -323,6 +321,7 @@ public class SettingsSearchService
                 @"S_RollCall" => @"RollCallNotificationSettingsPage",
                 @"S_QuickDraw" => @"QuickDrawNotificationSettingsPage",
                 @"S_Lottery" => @"LotteryNotificationSettingsPage",
+                @"S_FloatingWindow" => @"NotificationFloatingWindowSettingsPage",
                 _ when rootSettingId.StartsWith(@"S_Fullscreen", StringComparison.Ordinal) =>
                     @"FullscreenNotificationSettingsPage",
                 _ => @"DefaultNotificationSettingsPage"
