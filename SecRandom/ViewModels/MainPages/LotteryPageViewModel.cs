@@ -146,10 +146,27 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         Config.EffectiveDefaultDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.EffectiveMoreSettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.EffectiveHistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
+        Config.RandomNumberSettings.PropertyChanged += RandomNumberSettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged += SettingsOnPropertyChanged;
         RefreshPrizeLists();
         RefreshStudentLists();
         RefreshCounts();
+        ApplyRandomNumberDefaults();
+    }
+
+    private void RandomNumberSettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(RandomNumberSettingsConfig.LotteryRangeStart)
+            or nameof(RandomNumberSettingsConfig.LotteryRangeEnd))
+            ApplyRandomNumberDefaults();
+    }
+
+    private void ApplyRandomNumberDefaults()
+    {
+        var settings = Config.EffectiveRandomNumberSettings;
+        var start = Math.Max(0, settings.LotteryRangeStart);
+        NumberRangeStart = start;
+        NumberRangeEnd = RosterSelection.ClampEnd(start, settings.LotteryRangeEnd);
     }
 
     public ObservableCollection<string> PrizeListNames { get; } = [];
@@ -777,7 +794,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             _lotteryDrawService.ResetNumbers(
                 IsStudentAssignmentEnabled ? SelectedStudentListName : string.Empty,
                 CurrentGroupScope,
-                CurrentGenderScope);
+                CurrentGenderScope,
+                Config.EffectiveRandomNumberSettings.ResetBehavior);
         else
             _lotteryDrawService.Reset(
                 IsStudentAssignmentEnabled ? SelectedStudentListName : string.Empty,

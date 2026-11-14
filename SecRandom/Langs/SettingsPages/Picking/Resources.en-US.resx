@@ -89,4 +89,28 @@
   <data name="S_QuickDrawHistoryGroup_D" xml:space="preserve"><value>When a group is picked, Quick Draw computes weights from that group's history alone and writes this draw's records into it as well; pick Default record group to count only ungrouped records</value></data>
   <data name="O_HistoryGroupDefault" xml:space="preserve"><value>Default record group</value></data>
   <data name="S_HistoryGroup_Disabled" xml:space="preserve"><value>Record groups are not enabled; turn them on in History management</value></data>
+  <data name="Page_RandomNumber" xml:space="preserve"><value>Random numbers</value></data>
+  <data name="Section_RandomNumber_Defaults" xml:space="preserve"><value>Default ranges</value></data>
+  <data name="S_RandomNumber_RollCallRange" xml:space="preserve"><value>Roll-call default range</value></data>
+  <data name="S_RandomNumber_RollCallRange_D" xml:space="preserve"><value>Number range applied when the roll-call page opens</value></data>
+  <data name="S_RandomNumber_RollCallCount" xml:space="preserve"><value>Roll-call default count</value></data>
+  <data name="S_RandomNumber_RollCallCount_D" xml:space="preserve"><value>Number of values drawn by default when the roll-call page opens</value></data>
+  <data name="S_RandomNumber_LotteryRange" xml:space="preserve"><value>Lottery default range</value></data>
+  <data name="S_RandomNumber_LotteryRange_D" xml:space="preserve"><value>Number range applied when the lottery page opens</value></data>
+  <data name="S_RandomNumber_LotteryCount" xml:space="preserve"><value>Lottery default count</value></data>
+  <data name="S_RandomNumber_LotteryCount_D" xml:space="preserve"><value>Number of values drawn by default when the lottery page opens</value></data>
+  <data name="C_RandomNumber_To" xml:space="preserve"><value>to</value></data>
+  <data name="S_RandomNumber_ResetBehavior" xml:space="preserve"><value>What reset clears</value></data>
+  <data name="S_RandomNumber_ResetBehavior_D" xml:space="preserve"><value>Reset only affects drawn numbers and random-number statistics; roll-call and lottery roster history is always kept</value></data>
+  <data name="O_RandomNumber_ResetTemporaryOnly" xml:space="preserve"><value>Drawn numbers only</value></data>
+  <data name="O_RandomNumber_ResetTemporaryAndStatistics" xml:space="preserve"><value>Drawn numbers and random-number statistics</value></data>
+  <data name="Section_RandomNumber_Rules" xml:space="preserve"><value>Draw Rules</value></data>
+  <data name="M_RandomNumber_Rules" xml:space="preserve"><value>Every number is drawn with equal probability, repeat rules follow the current roll-call or lottery page, the span limit is 200, and roster history is never changed by a random-number reset</value></data>
+  <data name="Section_RandomNumber_Statistics" xml:space="preserve"><value>Random-number Statistics</value></data>
+  <data name="S_RandomNumber_Statistics" xml:space="preserve"><value>Cumulative statistics</value></data>
+  <data name="S_RandomNumber_Statistics_D" xml:space="preserve"><value>Only committed number draws are counted; the most recent 100 records are kept</value></data>
+  <data name="M_RandomNumber_TotalRounds" xml:space="preserve"><value>Total rounds</value></data>
+  <data name="M_RandomNumber_TotalDrawnCount" xml:space="preserve"><value>Total numbers</value></data>
+  <data name="C_RandomNumber_ClearStatistics" xml:space="preserve"><value>Clear statistics</value></data>
+  <data name="M_RandomNumber_NoStatistics" xml:space="preserve"><value>No statistics yet</value></data>
 </root>

@@ -19,13 +19,13 @@
     <value>概览</value>
   </data>
   <data name="Page_Description" xml:space="preserve">
-    <value>查看点名名单与抽奖奖池的累计统计</value>
+    <value>查看点名名单、抽奖奖池与随机数抽取的累计统计</value>
   </data>
   <data name="S_Overview" xml:space="preserve">
     <value>概览</value>
   </data>
   <data name="S_Overview_D" xml:space="preserve">
-    <value>查看点名名单与抽奖奖池的累计统计</value>
+    <value>查看点名名单、抽奖奖池与随机数抽取的累计统计</value>
   </data>
   <data name="C_RollCall" xml:space="preserve">
     <value>点名</value>
@@ -80,5 +80,41 @@
   </data>
   <data name="M_YesterdayAt" xml:space="preserve">
     <value>昨天 {0}</value>
+  </data>
+  <data name="C_RandomNumbers" xml:space="preserve">
+    <value>随机数</value>
+  </data>
+  <data name="C_RandomNumberTotalRounds" xml:space="preserve">
+    <value>累计轮次</value>
+  </data>
+  <data name="C_RandomNumberTotalDrawnCount" xml:space="preserve">
+    <value>累计数字</value>
+  </data>
+  <data name="C_RandomNumberLastDraw" xml:space="preserve">
+    <value>最近抽取</value>
+  </data>
+  <data name="C_RandomNumberTime" xml:space="preserve">
+    <value>时间</value>
+  </data>
+  <data name="C_RandomNumberSource" xml:space="preserve">
+    <value>入口</value>
+  </data>
+  <data name="C_RandomNumberRange" xml:space="preserve">
+    <value>范围</value>
+  </data>
+  <data name="C_RandomNumberCount" xml:space="preserve">
+    <value>个数</value>
+  </data>
+  <data name="C_RandomNumberResult" xml:space="preserve">
+    <value>结果</value>
+  </data>
+  <data name="M_NoRandomNumberRecords" xml:space="preserve">
+    <value>暂无随机数抽取记录</value>
+  </data>
+  <data name="O_RandomNumberRollCall" xml:space="preserve">
+    <value>点名</value>
+  </data>
+  <data name="O_RandomNumberLottery" xml:space="preserve">
+    <value>抽奖</value>
   </data>
 </root>

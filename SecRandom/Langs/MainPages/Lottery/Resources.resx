@@ -34,7 +34,7 @@
     <value>关闭</value>
   </data>
   <data name="O_NoList" xml:space="preserve">
-    <value>不使用名单</value>
+    <value>随机数</value>
   </data>
   <data name="O_NoStudentAssignment" xml:space="preserve">
     <value>不抽取成员</value>

@@ -39,7 +39,7 @@
   <data name="S_DefaultClass_D" xml:space="preserve"><value>打开页面或执行闪抽时默认使用的名单</value></data>
   <data name="S_DefaultPool" xml:space="preserve"><value>默认抽奖名单</value></data>
   <data name="S_DefaultPool_D" xml:space="preserve"><value>打开抽奖页时默认使用的奖池</value></data>
-  <data name="O_NoList" xml:space="preserve"><value>不使用名单</value></data>
+  <data name="O_NoList" xml:space="preserve"><value>随机数</value></data>
   <data name="S_DisableAfterClick" xml:space="preserve"><value>点击后禁用时间</value></data>
   <data name="S_DisableAfterClick_D" xml:space="preserve"><value>点击一次闪抽后禁用按钮的秒数</value></data>
   <data name="S_ShowDrawingStatus" xml:space="preserve"><value>显示抽取中状态</value></data>
@@ -308,5 +308,77 @@
   </data>
   <data name="S_HistoryGroup_Disabled" xml:space="preserve">
     <value>历史记录组功能未启用，可在「历史记录管理」里打开</value>
+  </data>
+  <data name="Page_RandomNumber" xml:space="preserve">
+    <value>随机数抽取</value>
+  </data>
+  <data name="Section_RandomNumber_Defaults" xml:space="preserve">
+    <value>默认范围</value>
+  </data>
+  <data name="S_RandomNumber_RollCallRange" xml:space="preserve">
+    <value>点名默认范围</value>
+  </data>
+  <data name="S_RandomNumber_RollCallRange_D" xml:space="preserve">
+    <value>打开点名页时默认使用的数字范围</value>
+  </data>
+  <data name="S_RandomNumber_RollCallCount" xml:space="preserve">
+    <value>点名默认个数</value>
+  </data>
+  <data name="S_RandomNumber_RollCallCount_D" xml:space="preserve">
+    <value>打开点名页时默认抽取的数字个数</value>
+  </data>
+  <data name="S_RandomNumber_LotteryRange" xml:space="preserve">
+    <value>抽奖默认范围</value>
+  </data>
+  <data name="S_RandomNumber_LotteryRange_D" xml:space="preserve">
+    <value>打开抽奖页时默认使用的数字范围</value>
+  </data>
+  <data name="S_RandomNumber_LotteryCount" xml:space="preserve">
+    <value>抽奖默认个数</value>
+  </data>
+  <data name="S_RandomNumber_LotteryCount_D" xml:space="preserve">
+    <value>打开抽奖页时默认抽取的数字个数</value>
+  </data>
+  <data name="C_RandomNumber_To" xml:space="preserve">
+    <value>至</value>
+  </data>
+  <data name="S_RandomNumber_ResetBehavior" xml:space="preserve">
+    <value>重置时清除什么</value>
+  </data>
+  <data name="S_RandomNumber_ResetBehavior_D" xml:space="preserve">
+    <value>重置只处理随机数抽取的已抽数字和统计，点名与抽奖名单历史始终保留</value>
+  </data>
+  <data name="O_RandomNumber_ResetTemporaryOnly" xml:space="preserve">
+    <value>只清除已抽数字</value>
+  </data>
+  <data name="O_RandomNumber_ResetTemporaryAndStatistics" xml:space="preserve">
+    <value>同时清除随机数统计</value>
+  </data>
+  <data name="Section_RandomNumber_Rules" xml:space="preserve">
+    <value>抽取规则</value>
+  </data>
+  <data name="M_RandomNumber_Rules" xml:space="preserve">
+    <value>每个数字等概率抽取，重复规则沿用点名或抽奖页当前设置，范围跨度上限 200，名单历史不受随机数重置影响</value>
+  </data>
+  <data name="Section_RandomNumber_Statistics" xml:space="preserve">
+    <value>随机数统计</value>
+  </data>
+  <data name="S_RandomNumber_Statistics" xml:space="preserve">
+    <value>累计统计</value>
+  </data>
+  <data name="S_RandomNumber_Statistics_D" xml:space="preserve">
+    <value>只统计提交成功的数字抽取，最多保留最近 100 次记录</value>
+  </data>
+  <data name="M_RandomNumber_TotalRounds" xml:space="preserve">
+    <value>累计轮次</value>
+  </data>
+  <data name="M_RandomNumber_TotalDrawnCount" xml:space="preserve">
+    <value>累计数字</value>
+  </data>
+  <data name="C_RandomNumber_ClearStatistics" xml:space="preserve">
+    <value>清除统计</value>
+  </data>
+  <data name="M_RandomNumber_NoStatistics" xml:space="preserve">
+    <value>暂无统计</value>
   </data>
 </root>

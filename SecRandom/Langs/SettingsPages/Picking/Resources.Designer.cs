@@ -1788,5 +1788,221 @@ namespace SecRandom.Langs.SettingsPages.Picking {
             }
         }
 
+        /// <summary>
+        ///   Looks up a localized string similar to 随机数抽取.
+        /// </summary>
+        public static string Page_RandomNumber {
+            get {
+                return ResourceManager.GetString("Page_RandomNumber", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 默认范围与个数.
+        /// </summary>
+        public static string Section_RandomNumber_Defaults {
+            get {
+                return ResourceManager.GetString("Section_RandomNumber_Defaults", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 点名默认范围.
+        /// </summary>
+        public static string S_RandomNumber_RollCallRange {
+            get {
+                return ResourceManager.GetString("S_RandomNumber_RollCallRange", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 打开点名页时默认使用的数字范围，起点不小于 0，跨度最多 200.
+        /// </summary>
+        public static string S_RandomNumber_RollCallRange_D {
+            get {
+                return ResourceManager.GetString("S_RandomNumber_RollCallRange_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 点名默认个数.
+        /// </summary>
+        public static string S_RandomNumber_RollCallCount {
+            get {
+                return ResourceManager.GetString("S_RandomNumber_RollCallCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 打开点名页时默认抽取的数字个数.
+        /// </summary>
+        public static string S_RandomNumber_RollCallCount_D {
+            get {
+                return ResourceManager.GetString("S_RandomNumber_RollCallCount_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 抽奖默认范围.
+        /// </summary>
+        public static string S_RandomNumber_LotteryRange {
+            get {
+                return ResourceManager.GetString("S_RandomNumber_LotteryRange", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 打开抽奖页时默认使用的数字范围，起点不小于 0，跨度最多 200.
+        /// </summary>
+        public static string S_RandomNumber_LotteryRange_D {
+            get {
+                return ResourceManager.GetString("S_RandomNumber_LotteryRange_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 抽奖默认个数.
+        /// </summary>
+        public static string S_RandomNumber_LotteryCount {
+            get {
+                return ResourceManager.GetString("S_RandomNumber_LotteryCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 打开抽奖页时默认抽取的数字个数.
+        /// </summary>
+        public static string S_RandomNumber_LotteryCount_D {
+            get {
+                return ResourceManager.GetString("S_RandomNumber_LotteryCount_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 至.
+        /// </summary>
+        public static string C_RandomNumber_To {
+            get {
+                return ResourceManager.GetString("C_RandomNumber_To", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 重置行为.
+        /// </summary>
+        public static string S_RandomNumber_ResetBehavior {
+            get {
+                return ResourceManager.GetString("S_RandomNumber_ResetBehavior", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 重置随机数抽取时如何处理统计.
+        /// </summary>
+        public static string S_RandomNumber_ResetBehavior_D {
+            get {
+                return ResourceManager.GetString("S_RandomNumber_ResetBehavior_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 只清临时剩余.
+        /// </summary>
+        public static string O_RandomNumber_ResetTemporaryOnly {
+            get {
+                return ResourceManager.GetString("O_RandomNumber_ResetTemporaryOnly", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 同时清除统计.
+        /// </summary>
+        public static string O_RandomNumber_ResetTemporaryAndStatistics {
+            get {
+                return ResourceManager.GetString("O_RandomNumber_ResetTemporaryAndStatistics", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 抽取规则.
+        /// </summary>
+        public static string Section_RandomNumber_Rules {
+            get {
+                return ResourceManager.GetString("Section_RandomNumber_Rules", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 每个数字等概率抽取，重复规则沿用点名或抽奖页当前设置，范围跨度上限 200，名单历史不受随机数重置影响.
+        /// </summary>
+        public static string M_RandomNumber_Rules {
+            get {
+                return ResourceManager.GetString("M_RandomNumber_Rules", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 随机数统计.
+        /// </summary>
+        public static string Section_RandomNumber_Statistics {
+            get {
+                return ResourceManager.GetString("Section_RandomNumber_Statistics", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 累计统计.
+        /// </summary>
+        public static string S_RandomNumber_Statistics {
+            get {
+                return ResourceManager.GetString("S_RandomNumber_Statistics", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 只统计提交成功的数字抽取，最多保留最近 100 次记录.
+        /// </summary>
+        public static string S_RandomNumber_Statistics_D {
+            get {
+                return ResourceManager.GetString("S_RandomNumber_Statistics_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 累计轮次.
+        /// </summary>
+        public static string M_RandomNumber_TotalRounds {
+            get {
+                return ResourceManager.GetString("M_RandomNumber_TotalRounds", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 累计数字.
+        /// </summary>
+        public static string M_RandomNumber_TotalDrawnCount {
+            get {
+                return ResourceManager.GetString("M_RandomNumber_TotalDrawnCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 清除统计.
+        /// </summary>
+        public static string C_RandomNumber_ClearStatistics {
+            get {
+                return ResourceManager.GetString("C_RandomNumber_ClearStatistics", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 暂无统计.
+        /// </summary>
+        public static string M_RandomNumber_NoStatistics {
+            get {
+                return ResourceManager.GetString("M_RandomNumber_NoStatistics", resourceCulture);
+            }
+        }
+
     }
 }

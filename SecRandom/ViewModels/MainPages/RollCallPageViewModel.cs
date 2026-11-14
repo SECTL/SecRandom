@@ -143,11 +143,28 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         Config.EffectiveDefaultDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.EffectiveMoreSettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.EffectiveHistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
+        Config.RandomNumberSettings.PropertyChanged += RandomNumberSettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged += SettingsOnPropertyChanged;
 
         RefreshLists();
         RefreshFilterOptions();
         RefreshCounts();
+        ApplyRandomNumberDefaults();
+    }
+
+    private void RandomNumberSettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName is nameof(RandomNumberSettingsConfig.RollCallRangeStart)
+            or nameof(RandomNumberSettingsConfig.RollCallRangeEnd))
+            ApplyRandomNumberDefaults();
+    }
+
+    private void ApplyRandomNumberDefaults()
+    {
+        var settings = Config.EffectiveRandomNumberSettings;
+        var start = Math.Max(0, settings.RollCallRangeStart);
+        NumberRangeStart = start;
+        NumberRangeEnd = RosterSelection.ClampEnd(start, settings.RollCallRangeEnd);
     }
 
     public ObservableCollection<string> StudentListNames { get; } = [];
@@ -442,7 +459,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         _lastResultStudents.Clear();
         ResultItems.Clear();
         if (IsNumberMode)
-            _rollCallDrawService.ResetNumbers();
+            _rollCallDrawService.ResetNumbers(Config.EffectiveRandomNumberSettings.ResetBehavior);
         else
             _rollCallDrawService.Reset(CurrentGroupScope, CurrentGenderScope);
         IsResultVisible = false;

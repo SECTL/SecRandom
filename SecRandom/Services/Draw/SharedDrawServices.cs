@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Abstraction.Services.Messaging;
@@ -9,6 +10,7 @@ using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services.Profiles;
+using SecRandom.Core.Services.Stats;
 using SecRandom.Services.Verification;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Models.Profile;
@@ -72,7 +74,8 @@ public sealed class RollCallDrawService(
     PlatformUsageReportService usageReport,
     ILogger<RollCallDrawService> logger,
     IDrawPipelineService? pipeline = null,
-    IPluginEventBus? eventBus = null)
+    IPluginEventBus? eventBus = null,
+    IRandomNumberStatisticsService? randomNumberStatistics = null)
 {
     public RollCallDrawSnapshot GetSnapshot(string group, string gender)
     {
@@ -238,6 +241,11 @@ public sealed class RollCallDrawService(
             logger.LogWarning(exception, "数字点名已提交，但抽取证明发布失败，证明将保持待发布状态。ProofId={ProofId}", outcome.Proof.ProofId);
         }
 
+        randomNumberStatistics?.Record(
+            "roll_call",
+            request.RangeStart,
+            request.RangeEnd,
+            ExtractNumbers(outcome.Winners));
         usageReport.RecordRollCall();
         eventBus?.Publish(new HostEvents.DrawCompleted(
             DrawPresentationChannel.RollCall,
@@ -251,7 +259,13 @@ public sealed class RollCallDrawService(
         return new RollCallNumberDrawResult(outcome.Winners, outcome.Proof.ProofId, drawRoundId, outcome.FrozenWeights);
     }
 
-    public void ResetNumbers() => temporaryRecords.ClearStudentScope(NumberListName, string.Empty, string.Empty);
+    public void ResetNumbers(
+        RandomNumberResetBehavior behavior = RandomNumberResetBehavior.TemporaryOnly)
+    {
+        temporaryRecords.ClearStudentScope(NumberListName, string.Empty, string.Empty);
+        if (behavior == RandomNumberResetBehavior.TemporaryAndStatistics)
+            randomNumberStatistics?.Clear();
+    }
 
     private DrawPipelineContext BuildRollCallContext(string group, string gender, string courseName, int requestedCount) =>
         new(DrawPresentationChannel.RollCall,
@@ -274,6 +288,13 @@ public sealed class RollCallDrawService(
             .Distinct(StringComparer.CurrentCulture).OrderBy(value => value, StringComparer.CurrentCulture).ToArray();
 
     private string GetListName() => profileService.StudentListConfig?.Name ?? "default";
+
+    private static IReadOnlyList<int> ExtractNumbers(IEnumerable<Student> students) =>
+        students.Select(student => ParseNumber(student.Name)).Where(number => number is not null)
+            .Select(number => number!.Value).ToArray();
+
+    private static int? ParseNumber(string? value) =>
+        int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) ? number : null;
 }
 
 public sealed record LotteryDrawSnapshot(
@@ -344,7 +365,8 @@ public sealed class LotteryDrawService(
     PlatformUsageReportService usageReport,
     ILogger<LotteryDrawService> logger,
     IDrawPipelineService? pipeline = null,
-    IPluginEventBus? eventBus = null)
+    IPluginEventBus? eventBus = null,
+    IRandomNumberStatisticsService? randomNumberStatistics = null)
 {
     public LotteryDrawSnapshot GetSnapshot(string studentListName, string group, string gender)
     {
@@ -557,6 +579,11 @@ public sealed class LotteryDrawService(
         if (assignedOutcome is not null)
             PublishProof(assignedOutcome);
 
+        randomNumberStatistics?.Record(
+            "lottery",
+            request.RangeStart,
+            request.RangeEnd,
+            ExtractNumbers(prizes.Winners));
         usageReport.RecordLottery();
         eventBus?.Publish(new HostEvents.DrawCompleted(
             DrawPresentationChannel.Lottery,
@@ -570,11 +597,14 @@ public sealed class LotteryDrawService(
         return new LotteryNumberDrawResult(prizes.Winners, assigned, prizes.Proof.ProofId, drawRoundId);
     }
 
-    public void ResetNumbers(string studentListName, string group, string gender)
+    public void ResetNumbers(string studentListName, string group, string gender,
+        RandomNumberResetBehavior behavior = RandomNumberResetBehavior.TemporaryOnly)
     {
         temporaryRecords.ClearPrizeList(NumberPrizePoolName);
         if (!string.IsNullOrWhiteSpace(studentListName))
-            temporaryRecords.ClearStudentScope(GetStudentListName(), gender, group);
+            temporaryRecords.ClearStudentScope(studentListName, gender, group);
+        if (behavior == RandomNumberResetBehavior.TemporaryAndStatistics)
+            randomNumberStatistics?.Clear();
     }
 
     private DrawPipelineContext BuildLotteryContext(string group, string gender, string courseName, int requestedCount) =>
@@ -617,4 +647,11 @@ public sealed class LotteryDrawService(
 
     private string GetPrizePoolName() => profileService.PrizeListConfig?.Name ?? "default";
     private string GetStudentListName() => profileService.StudentListConfig?.Name ?? "default";
+
+    private static IReadOnlyList<int> ExtractNumbers(IEnumerable<Prize> prizes) =>
+        prizes.Select(prize => ParseNumber(prize.Name)).Where(number => number is not null)
+            .Select(number => number!.Value).ToArray();
+
+    private static int? ParseNumber(string? value) =>
+        int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number) ? number : null;
 }

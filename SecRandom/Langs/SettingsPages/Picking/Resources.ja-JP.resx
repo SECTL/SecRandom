@@ -88,7 +88,7 @@
     <value>くじ引きページを開くときに使う景品プール</value>
   </data>
   <data name="O_NoList" xml:space="preserve">
-    <value>名簿なし</value>
+    <value>乱数</value>
   </data>
   <data name="S_DisableAfterClick" xml:space="preserve">
     <value>クリック後の無効時間</value>
@@ -536,5 +536,77 @@
   </data>
   <data name="S_HistoryGroup_Disabled" xml:space="preserve">
     <value>履歴記録グループ機能が有効になっていません、「履歴記録の管理」で有効にできます</value>
+  </data>
+  <data name="Page_RandomNumber" xml:space="preserve">
+    <value>乱数抽選</value>
+  </data>
+  <data name="Section_RandomNumber_Defaults" xml:space="preserve">
+    <value>既定の範囲</value>
+  </data>
+  <data name="S_RandomNumber_RollCallRange" xml:space="preserve">
+    <value>点呼の既定範囲</value>
+  </data>
+  <data name="S_RandomNumber_RollCallRange_D" xml:space="preserve">
+    <value>点呼ページを開くときの既定の数値範囲</value>
+  </data>
+  <data name="S_RandomNumber_RollCallCount" xml:space="preserve">
+    <value>点呼の既定個数</value>
+  </data>
+  <data name="S_RandomNumber_RollCallCount_D" xml:space="preserve">
+    <value>点呼ページを開くときに既定で抽選する数値の個数</value>
+  </data>
+  <data name="S_RandomNumber_LotteryRange" xml:space="preserve">
+    <value>抽選の既定範囲</value>
+  </data>
+  <data name="S_RandomNumber_LotteryRange_D" xml:space="preserve">
+    <value>抽選ページを開くときの既定の数値範囲</value>
+  </data>
+  <data name="S_RandomNumber_LotteryCount" xml:space="preserve">
+    <value>抽選の既定個数</value>
+  </data>
+  <data name="S_RandomNumber_LotteryCount_D" xml:space="preserve">
+    <value>抽選ページを開くときに既定で抽選する数値の個数</value>
+  </data>
+  <data name="C_RandomNumber_To" xml:space="preserve">
+    <value>から</value>
+  </data>
+  <data name="S_RandomNumber_ResetBehavior" xml:space="preserve">
+    <value>リセットで消去する内容</value>
+  </data>
+  <data name="S_RandomNumber_ResetBehavior_D" xml:space="preserve">
+    <value>リセットは乱数抽選の抽選済み数字と統計だけを対象にし、点呼と抽選の名簿履歴は常に保持します</value>
+  </data>
+  <data name="O_RandomNumber_ResetTemporaryOnly" xml:space="preserve">
+    <value>抽選済みの数字のみ</value>
+  </data>
+  <data name="O_RandomNumber_ResetTemporaryAndStatistics" xml:space="preserve">
+    <value>抽選済みの数字と乱数統計</value>
+  </data>
+  <data name="Section_RandomNumber_Rules" xml:space="preserve">
+    <value>抽選ルール</value>
+  </data>
+  <data name="M_RandomNumber_Rules" xml:space="preserve">
+    <value>各数値は等確率で抽選され、重複ルールは現在の点呼または抽選ページの設定に従い、範囲の幅の上限は 200 です、名簿履歴は乱数抽選のリセットでは変更されません</value>
+  </data>
+  <data name="Section_RandomNumber_Statistics" xml:space="preserve">
+    <value>乱数の統計</value>
+  </data>
+  <data name="S_RandomNumber_Statistics" xml:space="preserve">
+    <value>累計統計</value>
+  </data>
+  <data name="S_RandomNumber_Statistics_D" xml:space="preserve">
+    <value>コミットされた数値抽選だけを集計し、直近 100 件まで保持します</value>
+  </data>
+  <data name="M_RandomNumber_TotalRounds" xml:space="preserve">
+    <value>累計回数</value>
+  </data>
+  <data name="M_RandomNumber_TotalDrawnCount" xml:space="preserve">
+    <value>累計数値</value>
+  </data>
+  <data name="C_RandomNumber_ClearStatistics" xml:space="preserve">
+    <value>統計を消去</value>
+  </data>
+  <data name="M_RandomNumber_NoStatistics" xml:space="preserve">
+    <value>統計はまだありません</value>
   </data>
 </root>

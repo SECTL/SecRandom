@@ -18,6 +18,7 @@ using FairDrawSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.FairDraw
 using LotterySettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.LotterySettingsConfig;
 using OverridableDrawSettings = SecRandom.Core.Models.SubConfigs.Picking.OverridableDrawSettings;
 using QuickDrawSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.QuickDrawSettingsConfig;
+using RandomNumberSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.RandomNumberSettingsConfig;
 using RollCallSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.RollCallSettingsConfig;
 
 namespace SecRandom.Core.Models;
@@ -38,6 +39,7 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
     [ObservableProperty] private RollCallSettingsConfig _rollCallSettings = new();
     [ObservableProperty] private QuickDrawSettingsConfig _quickDrawSettings = new();
     [ObservableProperty] private LotterySettingsConfig _lotterySettings = new();
+    [ObservableProperty] private RandomNumberSettingsConfig _randomNumberSettings = new();
 
     [ObservableProperty] private FloatingWindowSettingsConfig _floatingWindowSettings = new();
     private NotificationSettingsConfig _notificationSettings = new();
@@ -92,6 +94,10 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
     [JsonIgnore]
     public LotterySettingsConfig EffectiveLotterySettings =>
         SimpleModeEnabled ? SimpleModeDefaults.LotterySettings : LotterySettings;
+
+    [JsonIgnore]
+    public RandomNumberSettingsConfig EffectiveRandomNumberSettings =>
+        SimpleModeEnabled ? SimpleModeDefaults.RandomNumberSettings : RandomNumberSettings;
 
     [JsonIgnore]
     public FairDrawSettingsConfig EffectiveFairDrawSettings =>

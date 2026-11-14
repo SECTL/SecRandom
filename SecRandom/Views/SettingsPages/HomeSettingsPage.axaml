@@ -191,6 +191,88 @@
                                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                 </StackPanel>
             </Border>
+
+            <Border Classes="overview-section">
+                <StackPanel Spacing="8">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Grid.Column="0" Text="{x:Static langs:Resources.C_RandomNumbers}"
+                                   FontSize="20" FontWeight="SemiBold" />
+
+                        <TextBlock Grid.Column="1" Text="{x:Static langs:Resources.C_HistorySummary}"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </Grid>
+
+                    <Grid ColumnDefinitions="2.2*,2.4*,2*">
+                        <Border Grid.Column="0" Classes="overview-metric" BorderThickness="0">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{x:Static langs:Resources.C_RandomNumberTotalRounds}"
+                                           TextWrapping="NoWrap"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding RandomNumberTotalRounds}" FontSize="28"
+                                           FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="1" Classes="overview-metric">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{x:Static langs:Resources.C_RandomNumberTotalDrawnCount}"
+                                           TextWrapping="NoWrap"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding RandomNumberTotalDrawnCount}" FontSize="28"
+                                           FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+                        <Border Grid.Column="2" Classes="overview-metric">
+                            <StackPanel Spacing="6">
+                                <TextBlock Text="{x:Static langs:Resources.C_RandomNumberLastDraw}"
+                                           TextWrapping="NoWrap"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock Text="{Binding RandomNumberLastDraw}" FontSize="20"
+                                           FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <DataGrid IsVisible="{Binding HasRandomNumberRecords}"
+                              ItemsSource="{Binding RandomNumberRecords}"
+                              AutoGenerateColumns="False"
+                              CanUserResizeColumns="False"
+                              CanUserSortColumns="False"
+                              CanUserReorderColumns="False"
+                              IsReadOnly="True"
+                              BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                              BorderThickness="0 1 0 0">
+                        <DataGrid.Styles>
+                            <Style Selector="DataGridColumnHeader">
+                                <Setter Property="Background" Value="Transparent" />
+                                <Setter Property="AreSeparatorsVisible" Value="False" />
+                            </Style>
+                        </DataGrid.Styles>
+
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Width="1.6*" MinWidth="150"
+                                                Header="{x:Static langs:Resources.C_RandomNumberTime}"
+                                                Binding="{Binding Time}" />
+                            <DataGridTextColumn Width="*" MinWidth="90"
+                                                Header="{x:Static langs:Resources.C_RandomNumberSource}"
+                                                Binding="{Binding Source}" />
+                            <DataGridTextColumn Width="*" MinWidth="100"
+                                                Header="{x:Static langs:Resources.C_RandomNumberRange}"
+                                                Binding="{Binding Range}" />
+                            <DataGridTextColumn Width="*" MinWidth="70"
+                                                Header="{x:Static langs:Resources.C_RandomNumberCount}"
+                                                Binding="{Binding Count}" />
+                            <DataGridTextColumn Width="2.4*" MinWidth="220"
+                                                Header="{x:Static langs:Resources.C_RandomNumberResult}"
+                                                Binding="{Binding Result}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Text="{x:Static langs:Resources.M_NoRandomNumberRecords}"
+                               IsVisible="{Binding HasNoRandomNumberRecords}"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </Border>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

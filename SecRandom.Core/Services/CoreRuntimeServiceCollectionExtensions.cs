@@ -6,6 +6,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services.HistoryQuery;
 using SecRandom.Core.Services.Profiles;
+using SecRandom.Core.Services.Stats;
 
 namespace SecRandom.Core.Services;
 
@@ -19,6 +20,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         services.AddSingleton<MainConfigHandler>();
         services.AddSingleton<IProfileService, ProfileService>();
         services.AddSingleton<IHistoryGroupCatalog, HistoryGroupCatalog>();
+        services.AddSingleton<IRandomNumberStatisticsService, RandomNumberStatisticsService>();
         services.AddSingleton<IProfileCatalogEditor, ProfileCatalogEditor>();
         services.AddSingleton<IProfileCatalogManager, ProfileCatalogManager>();
         services.AddSingleton<IDrawTemporaryRecordService, DrawTemporaryRecordService>();

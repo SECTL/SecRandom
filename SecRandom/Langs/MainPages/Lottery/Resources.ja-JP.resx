@@ -10,7 +10,7 @@
   <data name="C_ShowRemainingList" xml:space="preserve"><value>残りのリストを表示</value></data>
   <data name="C_RemainingListTitle" xml:space="preserve"><value>残りの賞品</value></data>
   <data name="C_Close" xml:space="preserve"><value>閉じる</value></data>
-  <data name="O_NoList" xml:space="preserve"><value>名簿なし</value></data>
+  <data name="O_NoList" xml:space="preserve"><value>乱数</value></data>
   <data name="O_NoStudentAssignment" xml:space="preserve"><value>メンバーを抽選しない</value></data>
   <data name="O_AllGroups" xml:space="preserve"><value>すべてのメンバーから抽選</value></data>
   <data name="O_AllGenders" xml:space="preserve"><value>すべての性別から抽選</value></data>

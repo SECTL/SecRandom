@@ -67,6 +67,9 @@ public static class SimpleModeDefaults
     /// <summary>简洁模式下抽奖设置使用的默认值。</summary>
     public static LotterySettingsConfig LotterySettings => Model.LotterySettings;
 
+    /// <summary>简洁模式下随机数抽取使用的默认值。</summary>
+    public static RandomNumberSettingsConfig RandomNumberSettings => Model.RandomNumberSettings;
+
     /// <summary>简洁模式下抽取设置使用的默认「公平抽取设置」。</summary>
     public static FairDrawSettingsConfig FairDrawSettings => Model.FairDrawSettings;
 
