@@ -52,7 +52,6 @@ public class SettingsSearchService
                 "S_Common_NotificationWindowSettings", "S_Common_OverridableSettings"
             },
             ["Picking"] = new HashSet<string> { "S_MusicFadeInOut", "S_MusicVolume" },
-            ["Update"] = new HashSet<string> { "S_Strategy_Source" },
             ["Voice"] = new HashSet<string>
             {
                 "S_Playback_EdgeTtsVoice", "S_SystemVolume", "S_SystemVolume_Control", "S_SystemVolume_Size",

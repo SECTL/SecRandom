@@ -9,6 +9,7 @@ using Avalonia.Platform;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Crypto.Signers;
 using SecRandom.Core;
+using SecRandom.Core.Services.Config;
 using SecRandom.Shared.Updates;
 using YamlDotNet.Serialization;
 using SecRandom.Mobile;
@@ -17,7 +18,7 @@ using LR = SecRandom.Langs.Mobile.Resources;
 
 namespace SecRandom.Services.Mobile;
 
-public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInstaller installer) : INotifyPropertyChanged
+public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInstaller installer, MainConfigHandler configHandler) : INotifyPropertyChanged
 {
     private const string Repository = "SECTL/SecRandom";
     private const string ManifestFileName = "SecRandom-update-manifest.json";
@@ -26,9 +27,8 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
     private const int MaxManifestBytes = 4 * 1024 * 1024;
     private const int MaxSignatureBytes = 64;
     private const int MaxArtifactBytes = 512 * 1024 * 1024;
-    private static readonly Uri MetadataUri = new("https://raw.githubusercontent.com/SECTL/SecRandom/master/metadata.yaml");
-    private static readonly Uri MirrorPrefix = new("https://ghproxy.sectl.cn/");
     private readonly IDeserializer _yaml = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
+    private readonly UpdateSourceResolver _sourceResolver = new(httpClient);
     private UpdateArtifact? _artifact;
     private string _availableVersion = string.Empty;
     private string _status = string.Empty;
@@ -121,15 +121,13 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
 
     private async Task<(string Tag, UpdateManifest Manifest)> GetManifestAsync(CancellationToken cancellationToken)
     {
-        foreach (var source in GetSources())
+        foreach (var source in await GetSourcesAsync(cancellationToken))
         {
             try
             {
-                var metadata = Encoding.UTF8.GetString(await BoundedContentReader.GetAsync(httpClient, GetMetadataUri(source), MaxMetadataBytes, cancellationToken));
-                var document = _yaml.Deserialize<MetadataDocument>(metadata) ?? throw new InvalidDataException(LR.M_EmptyMetadata);
-                var tag = document.Channels?.GetValueOrDefault("release")?.Tag;
+                var tag = await GetReleaseTagAsync(source, cancellationToken);
                 if (string.IsNullOrWhiteSpace(tag))
-                    throw new InvalidDataException(LR.M_MissingReleaseChannel);
+                    continue;
 
                 var manifestBytes = await DownloadAsync(source, tag, ManifestFileName, MaxManifestBytes, cancellationToken);
                 var signatureBytes = await DownloadAsync(source, tag, SignatureFileName, MaxSignatureBytes, cancellationToken);
@@ -149,13 +147,11 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
 
     private async Task<byte[]> DownloadWithFallbackAsync(string assetName, int maxBytes, CancellationToken cancellationToken)
     {
-        foreach (var source in GetSources())
+        foreach (var source in await GetSourcesAsync(cancellationToken))
         {
             try
             {
-                var metadata = Encoding.UTF8.GetString(await BoundedContentReader.GetAsync(httpClient, GetMetadataUri(source), MaxMetadataBytes, cancellationToken));
-                var document = _yaml.Deserialize<MetadataDocument>(metadata) ?? throw new InvalidDataException(LR.M_EmptyMetadata);
-                var tag = document.Channels?.GetValueOrDefault("release")?.Tag;
+                var tag = await GetReleaseTagAsync(source, cancellationToken);
                 if (!string.IsNullOrWhiteSpace(tag))
                     return await DownloadAsync(source, tag, assetName, maxBytes, cancellationToken);
             }
@@ -167,16 +163,36 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
         throw new InvalidOperationException(LR.M_PackageUnavailable);
     }
 
-    private static IEnumerable<UpdateSource> GetSources() => [UpdateSource.GitHubMirror, UpdateSource.GitHub];
+    // 手机端通道仍固定 release（stable）；更新源跟随同一份设置，自动模式按探测结果排序。
+    private async Task<IReadOnlyList<UpdateSource>> GetSourcesAsync(CancellationToken cancellationToken) =>
+        await _sourceResolver.ResolveAsync(
+            configHandler.Data.UpdateSettings.UpdateSource, forceProbe: false, cancellationToken);
+
+    private async Task<string?> GetReleaseTagAsync(UpdateSource source, CancellationToken cancellationToken)
+    {
+        if (source == UpdateSource.Sectl)
+        {
+            var json = await BoundedContentReader.GetAsync(httpClient, SectlSoftwareApi.LatestTag(UpdateChannel.Release), MaxMetadataBytes, cancellationToken);
+            return SectlSoftwareApi.ReadTag(json);
+        }
+
+        var metadata = Encoding.UTF8.GetString(await BoundedContentReader.GetAsync(httpClient, GetMetadataUri(source), MaxMetadataBytes, cancellationToken));
+        var document = _yaml.Deserialize<MetadataDocument>(metadata) ?? throw new InvalidDataException(LR.M_EmptyMetadata);
+        var tag = document.Channels?.GetValueOrDefault("release")?.Tag;
+        return string.IsNullOrWhiteSpace(tag) ? throw new InvalidDataException(LR.M_MissingReleaseChannel) : tag;
+    }
 
     private static Uri GetMetadataUri(UpdateSource source) => source == UpdateSource.GitHub
-        ? MetadataUri
-        : new Uri($"{MirrorPrefix}{MetadataUri.AbsoluteUri}");
+        ? UpdateSourceResolver.GitHubRawMetadataUri
+        : UpdateSourceResolver.MirroredMetadataUri();
 
     private Task<byte[]> DownloadAsync(UpdateSource source, string tag, string assetName, int maxBytes, CancellationToken cancellationToken)
     {
+        if (source == UpdateSource.Sectl)
+            return BoundedContentReader.GetAsync(httpClient, SectlSoftwareApi.UpdateFile(tag, assetName), maxBytes, cancellationToken);
+
         var direct = $"https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(assetName)}";
-        var uri = source == UpdateSource.GitHub ? new Uri(direct) : new Uri($"{MirrorPrefix}{direct}");
+        var uri = source == UpdateSource.GitHub ? new Uri(direct) : new Uri($"{UpdateSourceResolver.GitHubMirrorPrefix}{direct}");
         return BoundedContentReader.GetAsync(httpClient, uri, maxBytes, cancellationToken);
     }
 

@@ -9,8 +9,11 @@ public enum UpdateChannel
 
 public enum UpdateSource
 {
-    GitHub,
-    GitHubMirror
+    // 只有 UpdateSourceResolver 会解析这个值；实际取数/验签只接受下面的具体源。
+    Auto,
+    Sectl,
+    GitHubMirror,
+    GitHub
 }
 
 public enum UpdatePackageKind

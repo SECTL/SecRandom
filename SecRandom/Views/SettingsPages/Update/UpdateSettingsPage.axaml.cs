@@ -35,6 +35,12 @@ public partial class UpdateSettingsPage : UserControl
         set => Settings.UpdateChannel = Enum.IsDefined((UpdateChannel)value) ? (UpdateChannel)value : UpdateChannel.Release;
     }
 
+    public int SelectedSourceIndex
+    {
+        get => (int)Settings.UpdateSource;
+        set => Settings.UpdateSource = Enum.IsDefined((UpdateSource)value) ? (UpdateSource)value : UpdateSource.Auto;
+    }
+
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
 
     private async void CheckForUpdates(object? sender, RoutedEventArgs e)

@@ -89,6 +89,20 @@
                                            IsClickEnabled="True"
                                            Click="ForceCheckForUpdates" />
             </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Strategy_Source"
+                                   Header="{x:Static lsp:Resources.S_Strategy_Source}"
+                                   Description="{x:Static lsp:Resources.S_Strategy_Source_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi CloudFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding SelectedSourceIndex}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_Auto}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_Sectl}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_GitHubMirror}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_UpdateSource_GitHub}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

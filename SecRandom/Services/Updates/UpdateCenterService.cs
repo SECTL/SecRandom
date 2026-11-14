@@ -41,8 +41,6 @@ public sealed class UpdateCenterService(
     private const int MaxManifestBytes = 4 * 1024 * 1024;
     private const int MaxSignatureBytes = 64;
     private const int MaxArtifactBytes = 512 * 1024 * 1024;
-    private static readonly Uri GitHubRawMetadataUri = new("https://raw.githubusercontent.com/SECTL/SecRandom/master/metadata.yaml");
-    private static readonly Uri GitHubMirrorPrefix = new("https://ghproxy.sectl.cn/");
     private readonly HttpClient _httpClient = httpClient;
     private readonly IDeserializer _yamlDeserializer = new DeserializerBuilder()
         .IgnoreUnmatchedProperties()
@@ -54,6 +52,8 @@ public sealed class UpdateCenterService(
     private UpdateArtifact? _selectedArtifact;
     private UpdateSource _activeSource;
     private string? _downloadedPackagePath;
+    private readonly UpdateSourceResolver _sourceResolver = new(httpClient);
+    private IReadOnlyList<UpdateSource> _sources = UpdateSourceResolver.DefaultOrder;
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -114,6 +114,8 @@ public sealed class UpdateCenterService(
             StatusMessage = Text("M_StatusChecking");
             RecordCheckAttempt();
             var channel = GetChannel();
+            _sources = await _sourceResolver.ResolveAsync(
+                configHandler.Data.UpdateSettings.UpdateSource, force, cancellationToken);
             var (source, manifest) = await GetManifestAsync(channel, cancellationToken);
             _activeSource = source;
             if (!force && !UpdateVersionComparer.IsNewer(manifest.Version, GlobalConstants.Version))
@@ -258,11 +260,17 @@ public sealed class UpdateCenterService(
         configHandler.Save();
     }
 
-    private async Task<string> GetChannelTagAsync(UpdateSource source, UpdateChannel channel, CancellationToken cancellationToken)
+    private async Task<string?> GetChannelTagAsync(UpdateSource source, UpdateChannel channel, CancellationToken cancellationToken)
     {
+        if (source == UpdateSource.Sectl)
+        {
+            var json = await BoundedContentReader.GetAsync(_httpClient, SectlSoftwareApi.LatestTag(channel), MaxMetadataBytes, cancellationToken);
+            return SectlSoftwareApi.ReadTag(json);
+        }
+
         var metadataUri = source == UpdateSource.GitHub
-            ? GitHubRawMetadataUri
-            : new Uri($"{GitHubMirrorPrefix}{GitHubRawMetadataUri.AbsoluteUri}");
+            ? UpdateSourceResolver.GitHubRawMetadataUri
+            : UpdateSourceResolver.MirroredMetadataUri();
         var metadataBytes = await BoundedContentReader.GetAsync(_httpClient, metadataUri, MaxMetadataBytes, cancellationToken);
         var yaml = Encoding.UTF8.GetString(metadataBytes);
         var metadata = _yamlDeserializer.Deserialize<MetadataDocument>(yaml) ?? throw new InvalidDataException(Text("M_MetadataEmpty"));
@@ -279,7 +287,8 @@ public sealed class UpdateCenterService(
         Uri uri = source switch
         {
             UpdateSource.GitHub => new Uri($"https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(assetName)}"),
-            UpdateSource.GitHubMirror => new Uri($"{GitHubMirrorPrefix}https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(assetName)}"),
+            UpdateSource.GitHubMirror => new Uri($"{UpdateSourceResolver.GitHubMirrorPrefix}https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(assetName)}"),
+            UpdateSource.Sectl => SectlSoftwareApi.UpdateFile(tag, assetName),
             _ => throw new ArgumentOutOfRangeException(nameof(source))
         };
         return await BoundedContentReader.GetAsync(_httpClient, uri, maxBytes, cancellationToken);
@@ -479,11 +488,17 @@ public sealed class UpdateCenterService(
         UpdateChannel channel, CancellationToken cancellationToken)
     {
         Exception? lastException = null;
-        foreach (var source in GetSources())
+        foreach (var source in _sources)
         {
             try
             {
                 var tag = await GetChannelTagAsync(source, channel, cancellationToken);
+                if (tag is null)
+                {
+                    logger.LogInformation("更新源 {Source} 在该通道暂无版本。", source);
+                    continue;
+                }
+
                 var manifestBytes = await DownloadAssetAsync(source, tag, ManifestFileName, MaxManifestBytes, cancellationToken);
                 var signatureBytes = await DownloadAssetAsync(source, tag, SignatureFileName, MaxSignatureBytes, cancellationToken);
                 return (source, VerifyAndDeserializeManifest(manifestBytes, signatureBytes, tag, channel));
@@ -508,15 +523,10 @@ public sealed class UpdateCenterService(
         throw lastException ?? new InvalidOperationException(Text("M_NoUpdateSourceAvailable"));
     }
 
-    private static IEnumerable<UpdateSource> GetSources()
-    {
-        return [UpdateSource.GitHubMirror, UpdateSource.GitHub];
-    }
-
     private async Task<byte[]> DownloadAssetWithFallbackAsync(string tag, string assetName, int maxBytes, CancellationToken cancellationToken)
     {
         Exception? lastException = null;
-        foreach (var source in GetSources().OrderBy(source => source == _activeSource ? 0 : 1))
+        foreach (var source in _sources.OrderBy(source => source == _activeSource ? 0 : 1))
         {
             try
             {

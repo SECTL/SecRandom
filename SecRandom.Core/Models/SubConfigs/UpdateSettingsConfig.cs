@@ -12,6 +12,7 @@ public partial class UpdateSettingsConfig : ObservableObject, IJsonOnDeserialize
     [ObservableProperty] private int _autoUpdateMode = 3;
     [ObservableProperty] private int _updateModeVersion = 1;
     [ObservableProperty] private UpdateChannel _updateChannel = UpdateChannel.Release;
+    [ObservableProperty] private UpdateSource _updateSource = UpdateSource.Auto;
     [ObservableProperty]
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     private DateTime? _lastCheckTime;

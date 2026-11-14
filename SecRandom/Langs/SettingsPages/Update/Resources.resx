@@ -61,7 +61,7 @@
     <value>更新来源</value>
   </data>
   <data name="S_Strategy_Source_D" xml:space="preserve">
-    <value>自动选择会依次尝试思拓创联官方、GitHub 镜像和 GitHub</value>
+    <value>自动选择会挑选延迟最低的更新源，手动选择失败时依次回退</value>
   </data>
   <data name="O_UpdateSource_OfficialMirror" xml:space="preserve">
     <value>官方镜像</value>
