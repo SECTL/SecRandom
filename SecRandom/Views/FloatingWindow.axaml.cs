@@ -77,9 +77,10 @@ public partial class FloatingWindow : Window
     ///     创建一扇悬浮窗。
     /// </summary>
     /// <param name="isSecondary">
-    ///     为 <c>true</c> 时是"左右两侧显示"开启后出现在右边缘的副窗。副窗与主窗共用同一套按钮、
-    ///     停靠与联动逻辑，但只保存自己的纵向锚点：横向位置永远由角色决定（主窗在左、副窗在右），
-    ///     不写共享的 <see cref="FloatPositionConfig" />，否则两扇窗会互相覆盖位置。
+    ///     为 <c>true</c> 时是"左右两侧显示"开启后补在另一侧的那扇窗；主窗则留在它原本所在的那一侧。
+    ///     副窗与主窗共用同一套按钮、停靠与联动逻辑，但只保存自己的纵向锚点：横向位置永远由角色
+    ///     （主窗在哪侧、副窗就在另一侧）决定，不写共享的 <see cref="FloatPositionConfig" />，
+    ///     否则两扇窗会互相覆盖位置。
     /// </param>
     public FloatingWindow(bool isSecondary)
     {
@@ -142,6 +143,35 @@ public partial class FloatingWindow : Window
     public bool IsSecondary => _isSecondary;
     public bool IsEdgePinned => _edgePinned;
 
+    /// <summary>
+    ///     窗口此刻所在的横向半区：<c>true</c> 表示所在屏幕的左半区。
+    /// </summary>
+    /// <remarks>
+    ///     "左右两侧同时显示"靠它决定主窗留在哪一侧：用户原本把单扇浮窗放在左边，开启两侧显示后
+    ///     主窗就不该跳到右边，否则关掉开关后窗口会停在与原来相反的一侧。钉边/停靠状态优先，
+    ///     因为这两种状态下窗口已经被强制贴在自己那一侧；其余情况按窗口中心与该屏工作区中心比较，
+    ///     与停靠判定用的是同一条中线规则。
+    /// </remarks>
+    public bool IsOnLeftSide
+    {
+        get
+        {
+            if (_edgePinned)
+                return _pinnedOnLeft;
+
+            if (_isDocked)
+                return _isDockedOnLeft;
+
+            var width = Math.Max(1, (int)Math.Ceiling(Bounds.Width * RenderScaling));
+            var height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * RenderScaling));
+            var workingArea = GetScreenForWindow(Position, width, height)?.WorkingArea;
+            if (workingArea is not { } area)
+                return false;
+
+            return Position.X + width / 2 <= area.Center.X;
+        }
+    }
+
     /// <summary>当前窗口中心的屏幕 Y 坐标；停靠态用停靠锚点。</summary>
     public int AnchorCenterY
     {
@@ -170,9 +200,9 @@ public partial class FloatingWindow : Window
     /// <param name="pinned">是否钉边。</param>
     /// <param name="onLeft">钉在哪一侧；解除钉住时忽略。</param>
     /// <remarks>
-    ///     钉边是"左右两侧显示"的交互约束：开启后主窗固定在右边缘、副窗固定在左边缘，
+    ///     钉边是"左右两侧显示"的交互约束：开启后主窗钉在它原本那一侧、副窗钉在另一侧，
     ///     用户只能纵向移动，不能被拖到屏幕中间或换到另一侧。解除钉住后恢复原来的吸附/自由拖动行为。
-    ///     主窗固定在右侧，是因为关掉"左右两侧同时显示"后要保留的就是右侧那扇主窗。
+    ///     主窗留在自己原本那一侧（而不是固定右侧），这样关掉"左右两侧同时显示"后窗口才回得到原来那一侧。
     /// </remarks>
     public void SetEdgePinned(bool pinned, bool onLeft)
     {
@@ -1470,8 +1500,8 @@ public partial class FloatingWindow : Window
         var unifiedAnchor = settings.ShowOnBothSides && settings.SyncBothSidesAnchor;
         var anchorCenterY = AnchorCenterY;
 
-        // 副窗只记住自己的纵向锚点：横向位置由"副窗在右"这个角色决定，写共享的 FloatPosition
-        // 会让两扇窗在下次启动时抢同一个坐标。
+        // 副窗只记住自己的纵向锚点：横向位置由"主窗在哪侧、副窗就在另一侧"这个角色决定，
+        // 写共享的 FloatPosition 会让两扇窗在下次启动时抢同一个坐标。
         if (_isSecondary)
         {
             settings.SecondaryAnchorCenterY = anchorCenterY;

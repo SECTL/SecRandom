@@ -8,7 +8,8 @@ public partial class FloatingWindowSettingsConfig : ObservableObject
     [ObservableProperty] private bool _startupDisplayFloatingWindow = true;
 
     /// <summary>
-    ///     在屏幕左右两侧各显示一扇悬浮窗。开启后两扇窗分别钉在左/右边缘，只能纵向移动。
+    ///     在屏幕左右两侧各显示一扇悬浮窗。开启后主窗钉在它原本那一侧、另一侧补一扇副窗，
+    ///     两扇窗分别钉在各自边缘，只能纵向移动。
     /// </summary>
     [ObservableProperty] private bool _showOnBothSides = false;
 
@@ -23,7 +24,7 @@ public partial class FloatingWindowSettingsConfig : ObservableObject
     [ObservableProperty] private bool _syncBothSidesAnchor = true;
 
     /// <summary>
-    ///     右侧副窗的纵向锚点（屏幕坐标里窗口中心 Y）。为 <c>null</c> 时副窗跟随主窗的纵向位置。
+    ///     另一侧副窗的纵向锚点（屏幕坐标里窗口中心 Y）。为 <c>null</c> 时副窗跟随主窗的纵向位置。
     /// </summary>
     /// <remarks>
     ///     用可空整数是为了让"还没记住过"与"记住的是 0"可区分；控制面目录按类型归类，
