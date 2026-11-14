@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Data;
 using Avalonia.Layout;
+using Avalonia.Media;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Controls;
 
@@ -39,8 +40,12 @@ internal static class FloatingWindowIconPicker
         };
         list.Columns.Add(new DataGridTemplateColumn
         {
-            Header = FloatingWindowButtonUi.Text("C_Icon"),
-            Width = new DataGridLength(64),
+            Header = new TextBlock
+            {
+                Text = FloatingWindowButtonUi.Text("C_Icon"),
+                TextWrapping = TextWrapping.NoWrap
+            },
+            Width = new DataGridLength(72),
             CellTemplate = new FuncDataTemplate<IconChoice>((choice, _) => choice is null
                 ? null
                 : new FluentIcon(choice.Glyph, 20)

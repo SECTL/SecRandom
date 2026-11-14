@@ -240,26 +240,11 @@
   <data name="O_StickDisplay_Arrow" xml:space="preserve">
     <value>箭头</value>
   </data>
-  <data name="S_Display_CustomText" xml:space="preserve">
-    <value>自定义文字</value>
-  </data>
-  <data name="S_Display_CustomText_D" xml:space="preserve">
-    <value>在悬浮窗按钮上方显示一行自定义文字，过长时自动省略（最多 120 字）</value>
-  </data>
-  <data name="S_Display_CustomTextSize" xml:space="preserve">
-    <value>自定义文字字号</value>
-  </data>
-  <data name="S_Display_CustomTextSize_D" xml:space="preserve">
-    <value>自定义文字的像素字号，0 表示跟随悬浮窗尺寸自动缩放</value>
-  </data>
 <data name="S_Dock_Text" xml:space="preserve">
     <value>手柄文字</value>
   </data>
   <data name="S_Dock_Text_D" xml:space="preserve">
     <value>收纳手柄上显示的文字，中文只允许一个字，其它语言最多四个字符</value>
-  </data>
-  <data name="S_Dock_Text_Placeholder" xml:space="preserve">
-    <value>留空则使用默认文字</value>
   </data>
   <data name="S_Dock_Text_Limit" xml:space="preserve">
     <value>当前语言最多 {0} 个字符</value>
