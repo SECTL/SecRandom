@@ -76,13 +76,19 @@ public partial class StorageSettingsPage : UserControl, INotifyPropertyChanged
                 return;
 
             _modeIndex = value;
+            // The target follows the selected mode, so switching away from a custom folder and back
+            // restores the folder the user picked instead of reusing another mode's default path.
+            _targetPath = DefaultRootForMode(value);
             OnPropertyChanged();
+            OnPropertyChanged(nameof(IsCustomMode));
             OnPropertyChanged(nameof(IsTargetReadOnly));
             OnPropertyChanged(nameof(CanBrowse));
             OnPropertyChanged(nameof(TargetPath));
             OnPropertyChanged(nameof(IsReadyToMigrate));
         }
     }
+
+    public bool IsCustomMode => _modeIndex == 2;
 
     public string TargetPath
     {

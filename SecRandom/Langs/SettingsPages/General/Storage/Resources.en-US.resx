@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 
 <root>
     <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
@@ -161,5 +161,8 @@
     </data>
     <data name="Src_Unknown" xml:space="preserve">
         <value>Unknown</value>
+    </data>
+    <data name="S_Migrate_D" xml:space="preserve">
+        <value>Copies the current data to the new location, then switches to it and restarts after verification</value>
     </data>
 </root>

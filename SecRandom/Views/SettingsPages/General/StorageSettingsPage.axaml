@@ -1,4 +1,4 @@
-﻿<UserControl xmlns="https://github.com/avaloniaui"
+<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -72,25 +72,33 @@
                                    Header="{x:Static lsp:Resources.S_Target}"
                                    Description="{x:Static lsp:Resources.S_Target_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi FolderOpenFilled}}"
-                                   IsVisible="{Binding IsDesktop}">
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <TextBox Grid.Column="0"
-                             Text="{Binding TargetPath}"
-                             IsReadOnly="{Binding IsTargetReadOnly}"
-                             PlaceholderText="{x:Static lsp:Resources.S_Target}" />
-                    <Button Grid.Column="1"
-                            Content="{x:Static lsp:Resources.C_Browse}"
-                            Click="Browse_OnClick"
-                            IsEnabled="{Binding CanBrowse}" />
-                </Grid>
+                                   IsVisible="{Binding IsCustomMode}">
+                <fa:FASettingsExpander.Footer>
+                    <Grid ColumnDefinitions="280,Auto" ColumnSpacing="8">
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding TargetPath}"
+                                 IsReadOnly="{Binding IsTargetReadOnly}"
+                                 PlaceholderText="{x:Static lsp:Resources.S_Target}" />
+                        <Button Grid.Column="1"
+                                Content="{x:Static lsp:Resources.C_Browse}"
+                                Click="Browse_OnClick"
+                                IsEnabled="{Binding CanBrowse}" />
+                    </Grid>
+                </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <Button Content="{x:Static lsp:Resources.C_Migrate}"
-                    Click="Migrate_OnClick"
-                    Classes="accent"
-                    Margin="0 12 0 0"
-                    IsEnabled="{Binding IsReadyToMigrate}"
-                    IsVisible="{Binding IsDesktop}" />
+            <fa:FASettingsExpander x:Name="S_Migrate"
+                                   Header="{x:Static lsp:Resources.C_Migrate}"
+                                   Description="{x:Static lsp:Resources.S_Migrate_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}"
+                                   IsVisible="{Binding IsDesktop}">
+                <fa:FASettingsExpander.Footer>
+                    <Button Content="{x:Static lsp:Resources.C_Migrate}"
+                            Click="Migrate_OnClick"
+                            Classes="accent"
+                            IsEnabled="{Binding IsReadyToMigrate}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
 
             <TextBlock Text="{Binding StatusText}"
                        TextWrapping="Wrap"
