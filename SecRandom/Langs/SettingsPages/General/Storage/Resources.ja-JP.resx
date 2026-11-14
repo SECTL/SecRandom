@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+                id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true">
+
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <data name="Page_Title" xml:space="preserve">
+        <value>データ保存</value>
+    </data>
+    <data name="S_Location" xml:space="preserve">
+        <value>データフォルダー</value>
+    </data>
+    <data name="S_Location_D" xml:space="preserve">
+        <value>設定、名簿、履歴、証明、画像はすべてこのフォルダーに保存されます。</value>
+    </data>
+    <data name="S_CurrentRoot" xml:space="preserve">
+        <value>現在のフォルダー</value>
+    </data>
+    <data name="S_CurrentRoot_D" xml:space="preserve">
+        <value>現在使用中のデータフォルダーです。変更は移行または再起動後に反映されます。</value>
+    </data>
+    <data name="S_Source" xml:space="preserve">
+        <value>選択の由来</value>
+    </data>
+    <data name="S_Source_D" xml:space="preserve">
+        <value>このフォルダーが起動オプション、環境変数、保存された記録、旧既定位置のどれで選ばれたかを示します。</value>
+    </data>
+    <data name="S_AnchorPath" xml:space="preserve">
+        <value>位置記録ファイル</value>
+    </data>
+    <data name="S_AnchorPath_D" xml:space="preserve">
+        <value>選択したデータフォルダーを記録するアンカーファイルです。データフォルダーの外にあるため、アプリの更新で上書きされません。</value>
+    </data>
+    <data name="S_Change" xml:space="preserve">
+        <value>保存場所を変更</value>
+    </data>
+    <data name="S_Change_D" xml:space="preserve">
+        <value>場所を切り替えると、既存データを新しいフォルダーへ複製し、検証後に位置記録を書き込んで自動的に再起動します。元のフォルダーは名前を変えて残るので、確認後に手動で削除できます。</value>
+    </data>
+    <data name="S_Mode" xml:space="preserve">
+        <value>場所の種類</value>
+    </data>
+    <data name="S_Mode_D" xml:space="preserve">
+        <value>ポータブルパッケージ内はパッケージに追従します。システム標準の場所はプログラムフォルダーと分離されます。カスタムは任意の場所を指定します。</value>
+    </data>
+    <data name="O_Mode_Package" xml:space="preserve">
+        <value>ポータブルパッケージ内（既定）</value>
+    </data>
+    <data name="O_Mode_Standard" xml:space="preserve">
+        <value>システム標準の場所（推奨）</value>
+    </data>
+    <data name="O_Mode_Custom" xml:space="preserve">
+        <value>カスタムフォルダー</value>
+    </data>
+    <data name="S_Target" xml:space="preserve">
+        <value>移行先フォルダー</value>
+    </data>
+    <data name="S_Target_D" xml:space="preserve">
+        <value>移行先は空であるか、まだ存在しない必要があります。アプリのインストール先フォルダー内は指定できません。</value>
+    </data>
+    <data name="C_Browse" xml:space="preserve">
+        <value>選択…</value>
+    </data>
+    <data name="C_Migrate" xml:space="preserve">
+        <value>移行して再起動</value>
+    </data>
+    <data name="S_OtherRoots" xml:space="preserve">
+        <value>見つかった他のデータフォルダー</value>
+    </data>
+    <data name="S_OtherRoots_D" xml:space="preserve">
+        <value>これらのフォルダーにもデータがありますが、現在は使用されていません。誤った統合を避けるため、自動的な移行や削除は行いません。確認後に手動で整理してください。</value>
+    </data>
+    <data name="M_LegacyNotice" xml:space="preserve">
+        <value>データがまだプログラムフォルダーに保存されています。アプリの更新でこのフォルダーが置き換わるため、システム標準の場所への移行を推奨します。</value>
+    </data>
+    <data name="M_NoOtherRoots" xml:space="preserve">
+        <value>他のデータフォルダーは見つかりませんでした。</value>
+    </data>
+    <data name="M_DesktopOnly" xml:space="preserve">
+        <value>モバイルではデータフォルダーはシステムに固定され、変更できません。</value>
+    </data>
+    <data name="M_RestartTitle" xml:space="preserve">
+        <value>移行して再起動</value>
+    </data>
+    <data name="M_RestartContent" xml:space="preserve">
+        <value>現在のデータを次の場所へ複製します:&#10;{0}&#10;&#10;複製後に検証して切り替え、自動的に再起動します。元のフォルダーは名前を変えて残ります。</value>
+    </data>
+    <data name="M_Start" xml:space="preserve">
+        <value>移行を開始</value>
+    </data>
+    <data name="C_Cancel" xml:space="preserve">
+        <value>キャンセル</value>
+    </data>
+    <data name="M_Err_SourceMissing" xml:space="preserve">
+        <value>現在のデータフォルダーが存在しないため移行できません。</value>
+    </data>
+    <data name="M_Err_TargetInvalid" xml:space="preserve">
+        <value>移行先フォルダーが無効です。別の場所を選択してください。</value>
+    </data>
+    <data name="M_Err_SameRoot" xml:space="preserve">
+        <value>移行先が現在のデータフォルダーと同じです。</value>
+    </data>
+    <data name="M_Err_Nested" xml:space="preserve">
+        <value>移行先は現在のデータフォルダーを含む、またはその中にある場所にできません。</value>
+    </data>
+    <data name="M_Err_InsideApp" xml:space="preserve">
+        <value>移行先はアプリのインストール先フォルダー内にできません。更新時にデータが失われます。</value>
+    </data>
+    <data name="M_Err_NotEmpty" xml:space="preserve">
+        <value>移行先は空であるか、まだ存在しない必要があります。</value>
+    </data>
+    <data name="M_Err_NotWritable" xml:space="preserve">
+        <value>移行先に書き込めません。権限を確認するか別の場所を選択してください。</value>
+    </data>
+    <data name="M_Err_Journal" xml:space="preserve">
+        <value>移行記録を書き込めません。アプリのデータフォルダーの権限を確認してください。</value>
+    </data>
+    <data name="M_Err_Unknown" xml:space="preserve">
+        <value>移行を開始できません: {0}</value>
+    </data>
+    <data name="M_RootUnavailable" xml:space="preserve">
+        <value>現在のデータフォルダーを利用できません。先に起動の問題を解決してください。</value>
+    </data>
+    <data name="Src_CommandLine" xml:space="preserve">
+        <value>起動オプション</value>
+    </data>
+    <data name="Src_Environment" xml:space="preserve">
+        <value>環境変数</value>
+    </data>
+    <data name="Src_Anchor" xml:space="preserve">
+        <value>位置記録</value>
+    </data>
+    <data name="Src_Legacy" xml:space="preserve">
+        <value>旧既定位置</value>
+    </data>
+    <data name="Src_Repaired" xml:space="preserve">
+        <value>旧レイアウト修復</value>
+    </data>
+    <data name="Src_Default" xml:space="preserve">
+        <value>既定位置</value>
+    </data>
+    <data name="Src_Unknown" xml:space="preserve">
+        <value>未記録</value>
+    </data>
+</root>

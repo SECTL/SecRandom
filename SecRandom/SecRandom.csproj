@@ -76,6 +76,11 @@
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
 
+        <EmbeddedResource Update="Langs\DataRootMigration\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
         <EmbeddedResource Update="Langs\FirstRunOobe\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -132,6 +137,11 @@
         </EmbeddedResource>
 
         <EmbeddedResource Update="Langs\SettingsPages\General\Backup\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
+        <EmbeddedResource Update="Langs\SettingsPages\General\Storage\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
@@ -285,6 +295,12 @@
             <DependentUpon>Resources.resx</DependentUpon>
         </Compile>
 
+        <Compile Update="Langs\DataRootMigration\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+
         <Compile Update="Langs\FirstRunOobe\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
@@ -340,6 +356,12 @@
         </Compile>
 
         <Compile Update="Langs\SettingsPages\General\Backup\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+
+        <Compile Update="Langs\SettingsPages\General\Storage\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>

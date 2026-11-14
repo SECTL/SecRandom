@@ -133,6 +133,17 @@
     <data name="C_Close" xml:space="preserve">
         <value>关闭</value>
     </data>
+    <data name="M_DataRootUnavailableTitle" xml:space="preserve">
+        <value>无法使用数据目录</value>
+    </data>
+    <data name="M_DataRootUnavailableContent" xml:space="preserve">
+        <value>SecRandom 无法创建或写入当前数据目录，因此无法继续启动
+
+数据目录: {0}
+错误: {1}
+
+请检查该目录的权限，或使用 --data-root 指定其他位置</value>
+    </data>
     <data name="M_PortableDataDirectoryUnavailableTitle" xml:space="preserve">
         <value>无法写入便携版数据目录</value>
     </data>

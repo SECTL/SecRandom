@@ -214,6 +214,29 @@ namespace SecRandom.Langs.Common {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to SecRandom 无法创建或写入当前数据目录，因此无法继续启动
+        ///
+        ///数据目录: {0}
+        ///错误: {1}
+        ///
+        ///请检查该目录的权限，或使用 --data-root 指定其他位置.
+        /// </summary>
+        public static string M_DataRootUnavailableContent {
+            get {
+                return ResourceManager.GetString("M_DataRootUnavailableContent", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 无法使用数据目录.
+        /// </summary>
+        public static string M_DataRootUnavailableTitle {
+            get {
+                return ResourceManager.GetString("M_DataRootUnavailableTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to SecRandom 便携版必须能够写入其所在目录中的 data 文件夹
         ///
         ///数据目录: {0}

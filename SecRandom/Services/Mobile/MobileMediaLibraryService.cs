@@ -4,6 +4,7 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
+using SecRandom.Shared.DataRoot;
 using SecRandom.Shared.Extensions;
 
 namespace SecRandom.Services.Mobile;
@@ -245,10 +246,10 @@ public sealed class MobileMediaLibraryService(
             var list = load(name);
             if (list is null)
                 continue;
-            if (records(list).Any(record => string.Equals(
+            if (records(list).Any(record => DataPathReference.RefersToSame(
                     record.GetAttachedObject<DrawImageAttachedSettings>(Guid.Parse(GlobalConstants.DrawImageAttachedSettings))?.ImagePath,
                     path,
-                    StringComparison.Ordinal)))
+                    Utils.DataRoot)))
                 return true;
         }
         return false;

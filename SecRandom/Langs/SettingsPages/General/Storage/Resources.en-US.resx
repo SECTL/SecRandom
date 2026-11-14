@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<root>
+    <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata"
+                id="root"
+                xmlns="">
+        <xsd:element name="root" msdata:IsDataSet="true">
+
+        </xsd:element>
+    </xsd:schema>
+    <resheader name="resmimetype">
+        <value>text/microsoft-resx</value>
+    </resheader>
+    <resheader name="version">
+        <value>1.3</value>
+    </resheader>
+    <resheader name="reader">
+        <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <resheader name="writer">
+        <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral,
+            PublicKeyToken=b77a5c561934e089
+        </value>
+    </resheader>
+    <data name="Page_Title" xml:space="preserve">
+        <value>Data storage</value>
+    </data>
+    <data name="S_Location" xml:space="preserve">
+        <value>Data directory</value>
+    </data>
+    <data name="S_Location_D" xml:space="preserve">
+        <value>Settings, rosters, history, proofs, and images all live in this directory.</value>
+    </data>
+    <data name="S_CurrentRoot" xml:space="preserve">
+        <value>Current directory</value>
+    </data>
+    <data name="S_CurrentRoot_D" xml:space="preserve">
+        <value>The data directory in use; a change takes effect after a migration or restart.</value>
+    </data>
+    <data name="S_Source" xml:space="preserve">
+        <value>Chosen by</value>
+    </data>
+    <data name="S_Source_D" xml:space="preserve">
+        <value>Whether this directory came from a launch option, an environment variable, the stored anchor, or an older default location.</value>
+    </data>
+    <data name="S_AnchorPath" xml:space="preserve">
+        <value>Anchor file</value>
+    </data>
+    <data name="S_AnchorPath_D" xml:space="preserve">
+        <value>Records the selected data directory. It lives outside the data directory, so updating the app never overwrites it.</value>
+    </data>
+    <data name="S_Change" xml:space="preserve">
+        <value>Change storage location</value>
+    </data>
+    <data name="S_Change_D" xml:space="preserve">
+        <value>Switching locations copies the existing data to the new directory, verifies it, writes the anchor, and restarts the app. The old directory is renamed and kept until you delete it yourself.</value>
+    </data>
+    <data name="S_Mode" xml:space="preserve">
+        <value>Location type</value>
+    </data>
+    <data name="S_Mode_D" xml:space="preserve">
+        <value>The portable package directory follows the package; the standard location keeps data out of the program directory; a custom directory is whatever you choose.</value>
+    </data>
+    <data name="O_Mode_Package" xml:space="preserve">
+        <value>Portable package directory (default)</value>
+    </data>
+    <data name="O_Mode_Standard" xml:space="preserve">
+        <value>System standard location (recommended)</value>
+    </data>
+    <data name="O_Mode_Custom" xml:space="preserve">
+        <value>Custom directory</value>
+    </data>
+    <data name="S_Target" xml:space="preserve">
+        <value>Target directory</value>
+    </data>
+    <data name="S_Target_D" xml:space="preserve">
+        <value>The target must be empty or not exist yet, and must not be inside the application directory.</value>
+    </data>
+    <data name="C_Browse" xml:space="preserve">
+        <value>Browse…</value>
+    </data>
+    <data name="C_Migrate" xml:space="preserve">
+        <value>Migrate and restart</value>
+    </data>
+    <data name="S_OtherRoots" xml:space="preserve">
+        <value>Other data directories found</value>
+    </data>
+    <data name="S_OtherRoots_D" xml:space="preserve">
+        <value>These directories also hold data but are not in use. They are never migrated or deleted automatically; review and clean them up yourself.</value>
+    </data>
+    <data name="M_LegacyNotice" xml:space="preserve">
+        <value>The data still lives in the program directory. An app update replaces that directory, so migrating to the system standard location is recommended.</value>
+    </data>
+    <data name="M_NoOtherRoots" xml:space="preserve">
+        <value>No other data directories were found.</value>
+    </data>
+    <data name="M_DesktopOnly" xml:space="preserve">
+        <value>On mobile the data directory is fixed by the system and cannot be changed.</value>
+    </data>
+    <data name="M_RestartTitle" xml:space="preserve">
+        <value>Migrate and restart</value>
+    </data>
+    <data name="M_RestartContent" xml:space="preserve">
+        <value>The current data will be copied to:&#10;{0}&#10;&#10;It is then verified, the location is switched, and the app restarts automatically. The old directory is renamed and kept.</value>
+    </data>
+    <data name="M_Start" xml:space="preserve">
+        <value>Start migration</value>
+    </data>
+    <data name="C_Cancel" xml:space="preserve">
+        <value>Cancel</value>
+    </data>
+    <data name="M_Err_SourceMissing" xml:space="preserve">
+        <value>The current data directory does not exist, so it cannot be migrated.</value>
+    </data>
+    <data name="M_Err_TargetInvalid" xml:space="preserve">
+        <value>The target directory is invalid; choose another location.</value>
+    </data>
+    <data name="M_Err_SameRoot" xml:space="preserve">
+        <value>The target directory is the current data directory.</value>
+    </data>
+    <data name="M_Err_Nested" xml:space="preserve">
+        <value>The target directory must not contain the current data directory or be inside it.</value>
+    </data>
+    <data name="M_Err_InsideApp" xml:space="preserve">
+        <value>The target directory must not be inside the application directory, or an update would lose the data.</value>
+    </data>
+    <data name="M_Err_NotEmpty" xml:space="preserve">
+        <value>The target directory must be empty or not exist yet.</value>
+    </data>
+    <data name="M_Err_NotWritable" xml:space="preserve">
+        <value>The target directory is not writable; check permissions or choose another location.</value>
+    </data>
+    <data name="M_Err_Journal" xml:space="preserve">
+        <value>The migration journal could not be written; check permissions on the application data directory.</value>
+    </data>
+    <data name="M_Err_Unknown" xml:space="preserve">
+        <value>The migration cannot start: {0}</value>
+    </data>
+    <data name="M_RootUnavailable" xml:space="preserve">
+        <value>The current data directory is unavailable; fix the startup problem first.</value>
+    </data>
+    <data name="Src_CommandLine" xml:space="preserve">
+        <value>Launch option</value>
+    </data>
+    <data name="Src_Environment" xml:space="preserve">
+        <value>Environment variable</value>
+    </data>
+    <data name="Src_Anchor" xml:space="preserve">
+        <value>Anchor file</value>
+    </data>
+    <data name="Src_Legacy" xml:space="preserve">
+        <value>Legacy default location</value>
+    </data>
+    <data name="Src_Repaired" xml:space="preserve">
+        <value>Legacy layout repair</value>
+    </data>
+    <data name="Src_Default" xml:space="preserve">
+        <value>Default location</value>
+    </data>
+    <data name="Src_Unknown" xml:space="preserve">
+        <value>Unknown</value>
+    </data>
+</root>

@@ -136,6 +136,7 @@
   <data name="M_ManifestMismatch" xml:space="preserve"><value>更新清单与所选通道不匹配</value></data>
   <data name="M_PublicKeyInvalid" xml:space="preserve"><value>内置更新公钥无效</value></data>
   <data name="M_PortableLauncherMissing" xml:space="preserve"><value>当前便携版缺少稳定 Launcher，无法自动部署版本目录，请下载一次新的全量 ZIP</value></data>
+  <data name="M_DataRootInsidePayload" xml:space="preserve"><value>数据目录位于本次更新将要替换的版本目录内，更新会使其失效。请先在“设置 → 通用 → 存储位置”中把数据目录迁移到稳定位置，再重试更新</value></data>
   <data name="M_ZipAppDirectoryMissing" xml:space="preserve"><value>完整 ZIP 缺少版本目录</value></data>
   <data name="M_ZipMarkerMissing" xml:space="preserve"><value>完整 ZIP 缺少包形态标记</value></data>
   <data name="M_ZipMismatch" xml:space="preserve"><value>完整 ZIP 与当前运行环境不匹配</value></data>

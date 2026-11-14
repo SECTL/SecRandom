@@ -34,6 +34,7 @@ using SecRandom.Services.Security;
 using SecRandom.Services.Verification;
 using SecRandom.ViewModels;
 using SecRandom.Shared;
+using SecRandom.Shared.DataRoot;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Models.Profile;
 
@@ -875,7 +876,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         if (settings is not { IsAttachSettingsEnabled: true } || string.IsNullOrWhiteSpace(settings.ImagePath))
             return null;
 
-        return DrawImageCache.Load(settings.ImagePath);
+        return DrawImageCache.Load(DataPathReference.Resolve(settings.ImagePath, Utils.DataRoot));
     }
 
     private async void StartCooldown()

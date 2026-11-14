@@ -9,6 +9,8 @@ using SecRandom.Core.Models.Notification;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Notification;
+using SecRandom.Shared;
+using SecRandom.Shared.DataRoot;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Models.Profile;
 
@@ -187,7 +189,7 @@ public static class FullscreenNotificationComposer
             if (settings is not { IsAttachSettingsEnabled: true } || string.IsNullOrWhiteSpace(settings.ImagePath))
                 return null;
 
-            return settings.ImagePath;
+            return DataPathReference.Resolve(settings.ImagePath, Utils.DataRoot);
         }
         catch (Exception)
         {

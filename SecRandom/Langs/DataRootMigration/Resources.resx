@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="W_Title" xml:space="preserve">
+    <value>数据目录迁移</value>
+  </data>
+  <data name="W_Preparing" xml:space="preserve">
+    <value>正在准备迁移…</value>
+  </data>
+  <data name="W_Copying" xml:space="preserve">
+    <value>正在复制数据（{0} / {1} 个文件）</value>
+  </data>
+  <data name="W_Verifying" xml:space="preserve">
+    <value>正在校验复制结果…</value>
+  </data>
+  <data name="W_Committing" xml:space="preserve">
+    <value>正在切换到新位置…</value>
+  </data>
+  <data name="W_Completed" xml:space="preserve">
+    <value>迁移完成</value>
+  </data>
+  <data name="W_CompletedDetail" xml:space="preserve">
+    <value>数据已迁移到：{0}</value>
+  </data>
+  <data name="W_OldDirectoryKept" xml:space="preserve">
+    <value>原数据目录已保留：{0}</value>
+  </data>
+  <data name="W_Failed" xml:space="preserve">
+    <value>迁移失败</value>
+  </data>
+  <data name="W_FailedDetail" xml:space="preserve">
+    <value>未做任何更改，或原数据目录仍然完整。
+
+{0}</value>
+  </data>
+  <data name="W_JournalMissing" xml:space="preserve">
+    <value>找不到这次迁移的记录，未做任何更改。</value>
+  </data>
+  <data name="W_Retry" xml:space="preserve">
+    <value>重试</value>
+  </data>
+  <data name="W_Restart" xml:space="preserve">
+    <value>重启应用</value>
+  </data>
+  <data name="W_Exit" xml:space="preserve">
+    <value>退出</value>
+  </data>
+</root>

@@ -1,23 +1,56 @@
 using System.ComponentModel;
-using System.Text.Json;
+using SecRandom.Shared.DataRoot;
 
 namespace SecRandom.Shared;
 
 public static class Utils
 {
     public const string PackageRootEnvironmentVariable = "SECRANDOM_PACKAGE_ROOT";
+    // Keep this a literal: the compiler rejects the cross-type const reference in this
+    // multi-targeted assembly (CS0133), while the wire value must stay identical to
+    // DataRootCommandLine.DataRootEnvironmentVariable.
+    public const string DataRootEnvironmentVariable = "SECRANDOM_DATA_ROOT";
     private const string ConfigDirectoryName = "config";
     private const string UnixHiddenEntriesFileName = ".hidden";
     private static readonly object DataRootGate = new();
     private static string? _configuredDataRoot;
     private static bool _dataRootWasRead;
     private static DesktopDataRootPreparationResult? _desktopPreparation;
+    private static DataRootMode _dataRootMode = DataRootMode.Package;
+    private static DataRootSource _dataRootSource = DataRootSource.Unknown;
+    private static string? _anchorPath;
+    private static IReadOnlyList<string> _otherDataRoots = [];
+    private static bool _isPortablePackage;
+    private static bool _needsMigrationNotice;
 
     public readonly record struct DesktopDataRootPreparationResult(
         bool IsPortablePackage,
         bool IsWritable,
         string DataRoot,
-        string? ErrorMessage);
+        string? ErrorMessage,
+        DataRootMode Mode = DataRootMode.Package,
+        DataRootSource Source = DataRootSource.Unknown,
+        string? AnchorPath = null,
+        IReadOnlyList<string>? OtherDataRoots = null,
+        bool NeedsMigrationNotice = false);
+
+    /// <summary>The mode the current data root was chosen in.</summary>
+    public static DataRootMode DataRootMode => _dataRootMode;
+
+    /// <summary>Why the current data root won; diagnostic and storage-page metadata, not a policy switch.</summary>
+    public static DataRootSource DataRootSource => _dataRootSource;
+
+    /// <summary>Anchor file that persists the current mode and root; <see langword="null" /> before preparation.</summary>
+    public static string? AnchorPath => _anchorPath;
+
+    /// <summary>Other known data locations that still hold data and were deliberately not merged.</summary>
+    public static IReadOnlyList<string> OtherDataRoots => _otherDataRoots;
+
+    /// <summary>True when the running payload belongs to a portable ZIP package.</summary>
+    public static bool IsPortablePackage => _isPortablePackage;
+
+    /// <summary>True when the current root differs from the location this mode would create on a fresh install.</summary>
+    public static bool NeedsMigrationNotice => _needsMigrationNotice;
 
     public static string PackageRoot => ResolvePackageRoot();
 
@@ -63,18 +96,28 @@ public static class Utils
     }
 
     /// <summary>
-    ///     Checks the desktop package data directory before the first persisted path is used.
-    ///     Installed packages fall back to LocalApplicationData; portable packages must remain
-    ///     beside the executable so they can be moved as one unit.
+    ///     Resolves and fixates the desktop data root. The resolution order lives in
+    ///     <see cref="DesktopDataRootResolver" />; this method only turns the pure result into the process-wide root:
+    ///     it repairs payload-local data, probes writability, and persists the anchor when the choice is worth keeping.
     /// </summary>
-    public static DesktopDataRootPreparationResult PrepareDesktopDataRoot()
+    public static DesktopDataRootPreparationResult PrepareDesktopDataRoot(
+        bool isDevelopmentBuild,
+        string? commandLineDataRoot = null)
     {
-        var packageRoot = ResolvePackageRoot();
-        return PrepareDesktopDataRoot(packageRoot, IsPortablePackage(packageRoot));
+        return PrepareDesktopDataRoot(new DesktopDataRootOptions
+        {
+            AppDirectory = Path.GetFullPath(AppContext.BaseDirectory),
+            PackageRoot = Environment.GetEnvironmentVariable(PackageRootEnvironmentVariable),
+            CommandLineDataRoot = commandLineDataRoot,
+            EnvironmentDataRoot = Environment.GetEnvironmentVariable(DataRootEnvironmentVariable),
+            IsDevelopmentBuild = isDevelopmentBuild
+        });
     }
 
-    private static DesktopDataRootPreparationResult PrepareDesktopDataRoot(string packageRoot, bool isPortablePackage)
+    public static DesktopDataRootPreparationResult PrepareDesktopDataRoot(DesktopDataRootOptions options)
     {
+        ArgumentNullException.ThrowIfNull(options);
+
         lock (DataRootGate)
         {
             if (_desktopPreparation is { } prepared)
@@ -84,38 +127,52 @@ public static class Utils
             if (_configuredDataRoot is not null)
                 throw new InvalidOperationException("The data root has already been configured.");
 
-            var packageDataRoot = Path.Combine(packageRoot, "data");
-            if (TryVerifyWritable(packageDataRoot, out var packageError))
+            var resolution = DesktopDataRootResolver.Resolve(options);
+            var payloadDataRootToRepair = resolution.PayloadDataRootToRepair;
+            var repairError = payloadDataRootToRepair is { } payloadDataRoot
+                ? RepairPayloadDataRoot(payloadDataRoot, resolution.DataRoot)
+                : null;
+            if (repairError is not null)
             {
-                _configuredDataRoot = Path.GetFullPath(packageDataRoot);
-                _dataRootWasRead = true;
-                var result = new DesktopDataRootPreparationResult(isPortablePackage, true, _configuredDataRoot, null);
-                _desktopPreparation = result;
-                return result;
+                // The repair did not finish, so the payload copy stays authoritative for this run: letting an
+                // update replace it is bad, but pointing the app at a half-copied directory is worse.
+                resolution = resolution with
+                {
+                    DataRoot = Path.GetFullPath(payloadDataRootToRepair!),
+                    PayloadDataRootToRepair = null
+                };
             }
 
-            if (isPortablePackage)
-            {
-                _configuredDataRoot = Path.GetFullPath(packageDataRoot);
-                _dataRootWasRead = true;
-                var result = new DesktopDataRootPreparationResult(true, false, _configuredDataRoot, packageError);
-                _desktopPreparation = result;
-                return result;
-            }
+            var dataRoot = Path.GetFullPath(resolution.DataRoot);
+            var writable = DataRootPaths.TryVerifyWritable(dataRoot, out var writeError);
+            var otherDataRoots = resolution.OtherDataRoots
+                .Where(candidate => !DataRootPaths.PathEquals(candidate, dataRoot))
+                .ToArray();
 
-            var fallbackRoot = GetDesktopFallbackDataRoot();
-            if (!TryVerifyWritable(fallbackRoot, out var fallbackError))
-            {
-                throw new InvalidOperationException(
-                    $"Neither the installed package data directory nor the per-user data directory is writable. " +
-                    $"Package: {packageDataRoot}; fallback: {fallbackRoot}; {fallbackError}");
-            }
-
-            _configuredDataRoot = Path.GetFullPath(fallbackRoot);
+            _configuredDataRoot = dataRoot;
             _dataRootWasRead = true;
-            var fallbackResult = new DesktopDataRootPreparationResult(false, true, _configuredDataRoot, packageError);
-            _desktopPreparation = fallbackResult;
-            return fallbackResult;
+            _dataRootMode = resolution.Mode;
+            _dataRootSource = resolution.Source;
+            _anchorPath = resolution.AnchorPath;
+            _otherDataRoots = otherDataRoots;
+            _isPortablePackage = resolution.IsPortablePackage;
+            _needsMigrationNotice = resolution.NeedsMigrationNotice;
+
+            if (writable && ShouldPersistAnchor(resolution, options))
+                DataRootAnchorStore.TryPersist(resolution with { DataRoot = dataRoot }, write: true);
+
+            var result = new DesktopDataRootPreparationResult(
+                resolution.IsPortablePackage,
+                writable,
+                dataRoot,
+                writeError ?? repairError,
+                resolution.Mode,
+                resolution.Source,
+                resolution.AnchorPath,
+                otherDataRoots,
+                resolution.NeedsMigrationNotice);
+            _desktopPreparation = result;
+            return result;
         }
     }
 
@@ -265,108 +322,92 @@ public static class Utils
 
     private static string ResolvePackageRoot()
     {
-        var appDirectory = Path.GetFullPath(AppContext.BaseDirectory);
-        var configuredRoot = Environment.GetEnvironmentVariable(PackageRootEnvironmentVariable);
-        if (IsPortablePackageRoot(configuredRoot, appDirectory))
-            return Path.GetFullPath(configuredRoot!);
-
-        var parent = Directory.GetParent(appDirectory)?.FullName;
-        return IsPortablePackageRoot(parent, appDirectory) ? Path.GetFullPath(parent!) : appDirectory;
+        return DesktopDataRootResolver.ResolvePackageRoot(
+            Path.GetFullPath(AppContext.BaseDirectory),
+            Environment.GetEnvironmentVariable(PackageRootEnvironmentVariable));
     }
 
-    private static string GetDesktopFallbackDataRoot()
+    /// <summary>An integration entry that outlives this build must only point at the launcher that accepts it.</summary>
+    private static bool IsPortablePackageRoot(string? candidate, string appDirectory)
     {
-        var localApplicationData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-        if (string.IsNullOrWhiteSpace(localApplicationData))
-            throw new InvalidOperationException("The platform does not provide a per-user data directory.");
-
-        return Path.Combine(localApplicationData, "SecRandom", "data");
-    }
-
-    private static bool IsPortablePackage(string packageRoot)
-    {
-        var appDirectory = Path.GetFullPath(AppContext.BaseDirectory);
-        return IsPortablePackageRoot(packageRoot, appDirectory)
-               && HasPortablePayloadKind(appDirectory);
+        return DataRootPaths.IsPortablePackageLayout(candidate!, appDirectory);
     }
 
     private static bool HasPortablePayloadKind(string appDirectory)
     {
-        var markerPath = Path.Combine(appDirectory, "SecRandom.package.json");
-        try
-        {
-            using var marker = JsonDocument.Parse(File.ReadAllText(markerPath));
-            return marker.RootElement.TryGetProperty("packageKind", out var packageKind)
-                   && string.Equals(packageKind.GetString(), "portable-zip", StringComparison.Ordinal);
-        }
-        catch (IOException)
-        {
-            return false;
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return false;
-        }
-        catch (JsonException)
-        {
-            return false;
-        }
+        return DataRootPaths.IsPortablePackageKind(DataRootPaths.ReadPackageKind(appDirectory));
     }
 
-    private static bool TryVerifyWritable(string directory, out string? errorMessage)
+    private static bool ShouldPersistAnchor(DesktopDataRootResolution resolution, DesktopDataRootOptions options)
     {
-        var testFile = Path.Combine(directory, $".secrandom-write-test-{Guid.NewGuid():N}.tmp");
+        // Explicit overrides are one-shot by design: a --data-root run must not silently become the permanent root.
+        if (resolution.Source is DataRootSource.CommandLine or DataRootSource.Environment)
+            return false;
+
+        // Development builds keep data beside the payload and otherwise litter bin/Debug with an anchor.
+        if (options.IsDevelopmentBuild && resolution.Mode == DataRootMode.Package)
+            return false;
+
+        return !string.IsNullOrWhiteSpace(resolution.AnchorPath);
+    }
+
+    /// <summary>
+    ///     Moves data an older layout left inside a versioned payload directory out to the stable root.
+    ///     Copy-then-delete keeps the payload copy intact when the copy fails halfway.
+    /// </summary>
+    private static string? RepairPayloadDataRoot(string payloadDataRoot, string dataRoot)
+    {
+        var source = Path.GetFullPath(payloadDataRoot);
+        var target = Path.GetFullPath(dataRoot);
+        if (DataRootPaths.PathEquals(source, target))
+            return null;
+
+        var copied = new List<string>();
         try
         {
-            Directory.CreateDirectory(directory);
-            using (var stream = new FileStream(testFile, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+            Directory.CreateDirectory(target);
+            foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
             {
-                stream.WriteByte(0);
-                stream.Flush(true);
-            }
+                var destination = Path.Combine(target, Path.GetRelativePath(source, file));
+                var directory = Path.GetDirectoryName(destination);
+                if (!string.IsNullOrEmpty(directory))
+                    Directory.CreateDirectory(directory);
+                if (File.Exists(destination))
+                    continue;
 
-            File.Delete(testFile);
-            errorMessage = null;
-            return true;
+                File.Copy(file, destination);
+                copied.Add(file);
+            }
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
-                                           NotSupportedException or ArgumentException)
+                                           NotSupportedException)
+        {
+            return exception.Message;
+        }
+
+        foreach (var file in copied)
         {
             try
             {
-                if (File.Exists(testFile))
-                    File.Delete(testFile);
+                File.Delete(file);
             }
-            catch (IOException)
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
             {
-                // The original write error is more useful to the caller.
+                // The payload copy is replaced by the next update anyway; leaving it only costs disk space.
             }
-            catch (UnauthorizedAccessException)
-            {
-                // The original write error is more useful to the caller.
-            }
-
-            errorMessage = exception.Message;
-            return false;
         }
-    }
 
-    private static bool IsPortablePackageRoot(string? candidate, string appDirectory)
-    {
-        if (string.IsNullOrWhiteSpace(candidate) || !Directory.Exists(candidate))
-            return false;
+        try
+        {
+            if (!Directory.EnumerateFileSystemEntries(source).Any())
+                Directory.Delete(source);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            // Cleanup is cosmetic; the target root already holds every file.
+        }
 
-        var root = Path.GetFullPath(candidate);
-        var normalizedAppDirectory = Path.GetFullPath(appDirectory);
-        var parent = Directory.GetParent(normalizedAppDirectory)?.FullName;
-        if (!string.Equals(root, parent, OperatingSystem.IsWindows()
-                ? StringComparison.OrdinalIgnoreCase
-                : StringComparison.Ordinal))
-            return false;
-
-        var appDirectoryName = Path.GetFileName(normalizedAppDirectory.TrimEnd(Path.DirectorySeparatorChar));
-        return appDirectoryName.StartsWith("app-", StringComparison.Ordinal)
-               && File.Exists(Path.Combine(normalizedAppDirectory, "SecRandom.package.json"));
+        return null;
     }
 
     internal static void ResetDataRootForTests()
@@ -376,6 +417,12 @@ public static class Utils
             _configuredDataRoot = null;
             _dataRootWasRead = false;
             _desktopPreparation = null;
+            _dataRootMode = DataRootMode.Package;
+            _dataRootSource = DataRootSource.Unknown;
+            _anchorPath = null;
+            _otherDataRoots = [];
+            _isPortablePackage = false;
+            _needsMigrationNotice = false;
         }
     }
 

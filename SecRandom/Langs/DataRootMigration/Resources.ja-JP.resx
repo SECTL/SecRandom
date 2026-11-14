@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="W_Title" xml:space="preserve"><value>データフォルダーの移行</value></data>
+  <data name="W_Preparing" xml:space="preserve"><value>移行を準備しています…</value></data>
+  <data name="W_Copying" xml:space="preserve"><value>データをコピーしています（{0} / {1} ファイル）</value></data>
+  <data name="W_Verifying" xml:space="preserve"><value>コピーしたデータを検証しています…</value></data>
+  <data name="W_Committing" xml:space="preserve"><value>新しい場所に切り替えています…</value></data>
+  <data name="W_Completed" xml:space="preserve"><value>移行が完了しました</value></data>
+  <data name="W_CompletedDetail" xml:space="preserve"><value>データは次の場所に移行されました：{0}</value></data>
+  <data name="W_OldDirectoryKept" xml:space="preserve"><value>元のデータフォルダーは次の場所に保持されています：{0}</value></data>
+  <data name="W_Failed" xml:space="preserve"><value>移行に失敗しました</value></data>
+  <data name="W_FailedDetail" xml:space="preserve"><value>変更は行われていないか、元のフォルダーはそのまま残っています。
+
+{0}</value></data>
+  <data name="W_JournalMissing" xml:space="preserve"><value>この移行の記録が見つかりません。変更は行われていません。</value></data>
+  <data name="W_Retry" xml:space="preserve"><value>再試行</value></data>
+  <data name="W_Restart" xml:space="preserve"><value>アプリを再起動</value></data>
+  <data name="W_Exit" xml:space="preserve"><value>終了</value></data>
+</root>

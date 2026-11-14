@@ -11,6 +11,7 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Shared;
+using SecRandom.Shared.DataRoot;
 
 namespace SecRandom.Controls.AttachedSettings;
 
@@ -68,7 +69,9 @@ public partial class DrawImageAttachedSettingsControl : AttachedSettingsControlB
         var path = files.FirstOrDefault()?.TryGetLocalPath();
         if (!string.IsNullOrWhiteSpace(path))
         {
-            ImagePath = path;
+            // Data-root-relative whenever the picture lives inside it: moving the data root must not orphan the
+            // reference, and an external picture keeps its absolute path untouched.
+            ImagePath = DataPathReference.ToStored(path, Utils.DataRoot);
             return;
         }
 
@@ -84,7 +87,7 @@ public partial class DrawImageAttachedSettingsControl : AttachedSettingsControlB
         await using var source = await file.OpenReadAsync();
         await using var target = File.Create(managedPath);
         await source.CopyToAsync(target);
-        ImagePath = managedPath;
+        ImagePath = DataPathReference.ToStored(managedPath, Utils.DataRoot);
     }
 
     private void OnPropertyChanged(string? propertyName = null)

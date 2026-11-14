@@ -55,12 +55,22 @@
     <data name="C_QuickDrawAutoCloseHint" xml:space="preserve">
         <value>Closes automatically in {0} seconds&#xA;Click 3 times in a row to close</value>
     </data>
+    <data name="C_QuickPickExit" xml:space="preserve">
+        <value>Cancel</value>
+    </data>
     <data name="C_QuickDrawManualCloseHint" xml:space="preserve">
         <value>Click 3 times in a row to close</value>
     </data>
     <data name="C_Close" xml:space="preserve">
         <value>Close</value>
     </data>
+    <data name="M_DataRootUnavailableTitle" xml:space="preserve"><value>Data directory unavailable</value></data>
+    <data name="M_DataRootUnavailableContent" xml:space="preserve"><value>SecRandom cannot create or write to its data directory, so it cannot start.
+
+Data directory: {0}
+Error: {1}
+
+Check that directory's permissions, or pass --data-root to use another location.</value></data>
     <data name="M_PortableDataDirectoryUnavailableTitle" xml:space="preserve">
         <value>Portable Data Directory Is Not Writable</value>
     </data>

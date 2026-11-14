@@ -28,6 +28,7 @@ using SecRandom.Helpers;
 using SecRandom.Platforms.Abstractions;
 using SecRandom.Services.Notification;
 using SecRandom.Shared;
+using SecRandom.Shared.DataRoot;
 using SecRandom.Views.Fullscreen;
 using FullscreenResources = SecRandom.Langs.Fullscreen.Resources;
 
@@ -1140,11 +1141,12 @@ public partial class FullscreenNotificationWindow : Window
     private Border CreateAvatar(FullscreenResultItem item, double size)
     {
         Bitmap? bitmap = null;
-        if (!string.IsNullOrWhiteSpace(item.ImagePath) && File.Exists(item.ImagePath))
+        var imagePath = DataPathReference.Resolve(item.ImagePath, Utils.DataRoot);
+        if (!string.IsNullOrWhiteSpace(imagePath) && File.Exists(imagePath))
         {
             try
             {
-                bitmap = new Bitmap(item.ImagePath);
+                bitmap = new Bitmap(imagePath);
             }
             catch (Exception)
             {

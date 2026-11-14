@@ -11,6 +11,7 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Shared;
+using SecRandom.Shared.DataRoot;
 using SecRandom.Shared.Extensions;
 using SecRandom.Shared.Interfaces;
 using SecRandom.Shared.Models.Profile;
@@ -287,7 +288,7 @@ public partial class BatchAvatarDrawer : UserControl
             row.Record.WriteAttachedObject(DrawImageSettingsId, new DrawImageAttachedSettings
             {
                 IsAttachSettingsEnabled = true,
-                ImagePath = path
+                ImagePath = DataPathReference.ToStored(path, Utils.DataRoot)
             });
             applied++;
         }

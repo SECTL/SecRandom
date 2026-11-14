@@ -21,6 +21,7 @@ using Org.BouncyCastle.Crypto.Signers;
 using SecRandom.Core;
 using SecRandom.Core.Services.Config;
 using SecRandom.Shared;
+using SecRandom.Shared.DataRoot;
 using SecRandom.Shared.Updates;
 using YamlDotNet.Serialization;
 using UpdateResources = SecRandom.Langs.SettingsPages.Update.Resources;

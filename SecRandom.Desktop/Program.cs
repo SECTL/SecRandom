@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -13,6 +13,7 @@ using SecRandom.Services.Desktop;
 using SecRandom.Services.Plugins;
 using SecRandom.Platforms;
 using SecRandom.Shared;
+using SecRandom.Shared.DataRoot;
 #if SEC_RANDOM_PLATFORM_WINDOWS
 using SecRandom.Platforms.Windows;
 #elif SEC_RANDOM_PLATFORM_LINUX
@@ -33,15 +34,44 @@ internal sealed class Program
     {
         // 版本元数据由头程序集承载；显式发布可让桌面端与移动头共用同一条解析路径
         GlobalConstants.SetVersionAssembly(typeof(Program).Assembly);
-        // UiAccess startup reads the persisted topmost setting, so data-root selection must precede it.
-        Utils.PrepareDesktopDataRoot();
-        if (!UiAccessStartup.ShouldContinue(args))
+
+        var dataRootLaunch = DataRootCommandLine.Parse(args);
+        if (dataRootLaunch.Error is { } dataRootLaunchError)
         {
-            Environment.ExitCode = UiAccessStartup.BootstrapExitCode;
+            Console.Error.WriteLine(dataRootLaunchError);
+            Environment.ExitCode = 2;
             return;
         }
 
-        args = UiAccessStartup.GetApplicationArguments(args);
+        DataRootLaunchState.MigrationId = dataRootLaunch.MigrationId;
+        if (dataRootLaunch.IsMigration)
+        {
+            // A data-root migration owns its own window and must not open the normal app, so no root is
+            // prepared and no persisted setting is read before the migration has finished.
+            args = [.. dataRootLaunch.PassThroughArguments];
+        }
+        else
+        {
+            // UiAccess startup reads the persisted topmost setting, so data-root selection must precede it.
+            var dataRootPreparation = Utils.PrepareDesktopDataRoot(
+                GlobalConstants.IsDevelopment,
+                dataRootLaunch.DataRoot);
+            if (!string.IsNullOrWhiteSpace(dataRootLaunch.DataRoot))
+            {
+                // A relaunch (UiAccess replacement or crash recovery) must inherit the same explicit root.
+                Environment.SetEnvironmentVariable(Utils.DataRootEnvironmentVariable, dataRootPreparation.DataRoot);
+            }
+
+            args = [.. dataRootLaunch.PassThroughArguments];
+            if (!UiAccessStartup.ShouldContinue(args))
+            {
+                Environment.ExitCode = UiAccessStartup.BootstrapExitCode;
+                return;
+            }
+
+            args = UiAccessStartup.GetApplicationArguments(args);
+        }
+
         ConfigurePlatformServices();
         ProtocolActivation.SetStartupArguments(args);
         CrashRecoveryRuntime.SetStartupArguments(args);
