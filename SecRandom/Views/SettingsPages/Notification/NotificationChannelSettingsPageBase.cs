@@ -147,7 +147,7 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
         // Display order is built-in / fullscreen / ClassIsland / both while the persisted values stay 0/3/1/2.
         return
         [
-            new NotificationServiceOption(0, Text("SecRandom (built-in)", "O_NotificationService_SecRandom")),
+            new NotificationServiceOption(0, Text("SecRandom (floating)", "O_NotificationService_SecRandom")),
             new NotificationServiceOption(
                 FullscreenNotificationServiceType,
                 Text("Fullscreen", "O_NotificationService_Fullscreen")),

@@ -176,7 +176,7 @@ Insider settings have lower priority than fair-draw rules. Selecting a member or
     <value>Default notification enabled</value>
   </data>
   <data name="C_BuiltInNotification" xml:space="preserve">
-    <value>Built-in notification</value>
+    <value>Floating notification</value>
   </data>
   <data name="C_ExternalNotification" xml:space="preserve">
     <value>External notification</value>

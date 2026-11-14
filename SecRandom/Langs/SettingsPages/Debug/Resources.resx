@@ -60,7 +60,7 @@
   <data name="C_DrawRestricted" xml:space="preserve"><value>抽取受限</value></data>
   <data name="C_SnapshotError" xml:space="preserve"><value>快照错误</value></data>
   <data name="C_NotificationsEnabled" xml:space="preserve"><value>通知已启用</value></data>
-  <data name="C_BuiltInNotification" xml:space="preserve"><value>内置通知</value></data>
+  <data name="C_BuiltInNotification" xml:space="preserve"><value>浮窗通知</value></data>
   <data name="C_ExternalNotification" xml:space="preserve"><value>外部通知</value></data>
   <data name="C_NotificationFallback" xml:space="preserve"><value>通知回退</value></data>
   <data name="C_DisplayDuration" xml:space="preserve"><value>显示时长</value></data>

@@ -250,13 +250,13 @@
     <value>右下</value>
   </data>
   <data name="O_NotificationService_SecRandom" xml:space="preserve">
-    <value>SecRandom 内置通知</value>
+    <value>SecRandom 浮窗通知</value>
   </data>
   <data name="O_NotificationService_ClassIsland" xml:space="preserve">
     <value>ClassIsland</value>
   </data>
   <data name="O_NotificationService_Both" xml:space="preserve">
-    <value>同时使用（ClassIsland + 内置浮窗）</value>
+    <value>同时使用（ClassIsland + 浮窗通知）</value>
   </data>
   <data name="S_Common_EnabledMonitor" xml:space="preserve">
     <value>通知显示器</value>
@@ -307,10 +307,10 @@
     <value>选择抽取结果的展示方式</value>
   </data>
   <data name="S_Common_NotificationServiceFailureFallback" xml:space="preserve">
-    <value>当前选择通知服务发送失败后，自动回退内置通知服务</value>
+    <value>当前选择通知服务发送失败后，自动回退浮窗通知</value>
   </data>
   <data name="S_Common_NotificationServiceFailureFallback_D" xml:space="preserve">
-    <value>所选外部通知服务无法投递时，使用 SecRandom 内置通知服务继续显示</value>
+    <value>所选外部通知服务无法投递时，使用 SecRandom 浮窗通知继续显示</value>
   </data>
   <data name="S_Common_BasicSettings" xml:space="preserve">
     <value>基础设置</value>
