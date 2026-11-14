@@ -31,37 +31,37 @@
         <value>データフォルダー</value>
     </data>
     <data name="S_Location_D" xml:space="preserve">
-        <value>設定、名簿、履歴、証明、画像はすべてこのフォルダーに保存されます。</value>
+        <value>設定、名簿、履歴、証明、画像はすべてこのフォルダーに保存されます</value>
     </data>
     <data name="S_CurrentRoot" xml:space="preserve">
         <value>現在のフォルダー</value>
     </data>
     <data name="S_CurrentRoot_D" xml:space="preserve">
-        <value>現在使用中のデータフォルダーです。変更は移行または再起動後に反映されます。</value>
+        <value>現在使用中のデータフォルダーで、変更は移行または再起動後に反映されます</value>
     </data>
     <data name="S_Source" xml:space="preserve">
         <value>選択の由来</value>
     </data>
     <data name="S_Source_D" xml:space="preserve">
-        <value>このフォルダーが起動オプション、環境変数、保存された記録、旧既定位置のどれで選ばれたかを示します。</value>
+        <value>このフォルダーが起動オプション、環境変数、保存された記録、旧既定位置のどれで選ばれたかを示します</value>
     </data>
     <data name="S_AnchorPath" xml:space="preserve">
         <value>位置記録ファイル</value>
     </data>
     <data name="S_AnchorPath_D" xml:space="preserve">
-        <value>選択したデータフォルダーを記録するアンカーファイルです。データフォルダーの外にあるため、アプリの更新で上書きされません。</value>
+        <value>選択したデータフォルダーを記録するアンカーファイルで、データフォルダーの外にあるためアプリの更新で上書きされません</value>
     </data>
     <data name="S_Change" xml:space="preserve">
         <value>保存場所を変更</value>
     </data>
     <data name="S_Change_D" xml:space="preserve">
-        <value>場所を切り替えると、既存データを新しいフォルダーへ複製し、検証後に位置記録を書き込んで自動的に再起動します。元のフォルダーは名前を変えて残るので、確認後に手動で削除できます。</value>
+        <value>場所を切り替えると、既存データを新しいフォルダーへ複製し、検証後に位置記録を書き込んで自動的に再起動し、元のフォルダーは名前を変えて残るので、確認後に手動で削除できます</value>
     </data>
     <data name="S_Mode" xml:space="preserve">
         <value>場所の種類</value>
     </data>
     <data name="S_Mode_D" xml:space="preserve">
-        <value>ポータブルパッケージ内はパッケージに追従します。システム標準の場所はプログラムフォルダーと分離されます。カスタムは任意の場所を指定します。</value>
+        <value>ポータブルパッケージ内はパッケージに追従し、システム標準の場所はプログラムフォルダーと分離され、カスタムは任意の場所を指定します</value>
     </data>
     <data name="O_Mode_Package" xml:space="preserve">
         <value>ポータブルパッケージ内（既定）</value>
@@ -76,7 +76,7 @@
         <value>移行先フォルダー</value>
     </data>
     <data name="S_Target_D" xml:space="preserve">
-        <value>移行先は空であるか、まだ存在しない必要があります。アプリのインストール先フォルダー内は指定できません。</value>
+        <value>移行先は空であるか、まだ存在しない必要があり、アプリのインストール先フォルダー内は指定できません</value>
     </data>
     <data name="C_Browse" xml:space="preserve">
         <value>選択…</value>
@@ -88,7 +88,7 @@
         <value>見つかった他のデータフォルダー</value>
     </data>
     <data name="S_OtherRoots_D" xml:space="preserve">
-        <value>これらのフォルダーにもデータがありますが、現在は使用されていません。誤った統合を避けるため、自動的な移行や削除は行いません。確認後に手動で整理してください。</value>
+        <value>これらのフォルダーにもデータがありますが、現在は使用されていません；誤った統合を避けるため、自動的な移行や削除は行わないので、確認後に手動で整理してください</value>
     </data>
     <data name="M_LegacyNotice" xml:space="preserve">
         <value>データがまだプログラムフォルダーに保存されています。アプリの更新でこのフォルダーが置き換わるため、システム標準の場所への移行を推奨します。</value>

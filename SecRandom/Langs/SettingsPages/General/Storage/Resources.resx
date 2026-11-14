@@ -31,37 +31,37 @@
         <value>数据目录</value>
     </data>
     <data name="S_Location_D" xml:space="preserve">
-        <value>设置、名单、历史、证明和图片都保存在这个目录里。</value>
+        <value>设置、名单、历史、证明和图片都保存在这个目录里</value>
     </data>
     <data name="S_CurrentRoot" xml:space="preserve">
         <value>当前目录</value>
     </data>
     <data name="S_CurrentRoot_D" xml:space="preserve">
-        <value>正在使用的数据目录，迁移或重启后生效。</value>
+        <value>正在使用的数据目录，迁移或重启后生效</value>
     </data>
     <data name="S_Source" xml:space="preserve">
         <value>位置来源</value>
     </data>
     <data name="S_Source_D" xml:space="preserve">
-        <value>这个目录是按启动参数、环境变量、位置记录还是旧版默认位置选出的。</value>
+        <value>这个目录是按启动参数、环境变量、位置记录还是旧版默认位置选出的</value>
     </data>
     <data name="S_AnchorPath" xml:space="preserve">
         <value>位置记录文件</value>
     </data>
     <data name="S_AnchorPath_D" xml:space="preserve">
-        <value>记录所选数据目录的锚点文件。它保存在数据目录之外，更新应用不会覆盖它。</value>
+        <value>记录所选数据目录的锚点文件，保存在数据目录之外，更新应用不会覆盖它</value>
     </data>
     <data name="S_Change" xml:space="preserve">
         <value>更改存储位置</value>
     </data>
     <data name="S_Change_D" xml:space="preserve">
-        <value>切换位置会把现有数据完整复制到新目录，校验后写入位置记录并自动重启；原目录会改名保留，确认无误后可手动删除。</value>
+        <value>切换位置会把现有数据完整复制到新目录，校验后写入位置记录并自动重启；原目录会改名保留，确认无误后可手动删除</value>
     </data>
     <data name="S_Mode" xml:space="preserve">
         <value>位置类型</value>
     </data>
     <data name="S_Mode_D" xml:space="preserve">
-        <value>便携包目录跟随便携包；系统标准位置与程序目录分离；自定义目录由你指定。</value>
+        <value>便携包目录跟随便携包；系统标准位置与程序目录分离；自定义目录由你指定</value>
     </data>
     <data name="O_Mode_Package" xml:space="preserve">
         <value>便携包目录（默认）</value>
@@ -76,7 +76,7 @@
         <value>目标目录</value>
     </data>
     <data name="S_Target_D" xml:space="preserve">
-        <value>目标必须为空或尚不存在，且不能位于应用安装目录内。</value>
+        <value>目标必须为空或尚不存在，且不能位于应用安装目录内</value>
     </data>
     <data name="C_Browse" xml:space="preserve">
         <value>选择…</value>
@@ -88,22 +88,22 @@
         <value>发现的其它数据目录</value>
     </data>
     <data name="S_OtherRoots_D" xml:space="preserve">
-        <value>这些目录里也有数据，但当前没有被使用。为避免误合并，不会自动迁移或删除，请确认后自行清理。</value>
+        <value>这些目录里也有数据，但当前没有被使用；为避免误合并，不会自动迁移或删除，请确认后自行清理</value>
     </data>
     <data name="M_LegacyNotice" xml:space="preserve">
-        <value>检测到数据仍保存在程序目录中。应用更新会替换这个目录，建议迁移到系统标准位置。</value>
+        <value>检测到数据仍保存在程序目录中，应用更新会替换这个目录，建议迁移到系统标准位置</value>
     </data>
     <data name="M_NoOtherRoots" xml:space="preserve">
-        <value>未发现其它数据目录。</value>
+        <value>未发现其它数据目录</value>
     </data>
     <data name="M_DesktopOnly" xml:space="preserve">
-        <value>移动端的数据目录由系统固定，不能更改。</value>
+        <value>移动端的数据目录由系统固定，不能更改</value>
     </data>
     <data name="M_RestartTitle" xml:space="preserve">
         <value>迁移并重启</value>
     </data>
     <data name="M_RestartContent" xml:space="preserve">
-        <value>应用会把当前数据复制到：&#10;{0}&#10;&#10;复制完成后会校验、切换并自动重启。原目录会改名保留，不会自动删除。</value>
+        <value>应用会把当前数据复制到：&#10;{0}&#10;&#10;复制完成后会校验、切换并自动重启；原目录会改名保留，不会自动删除</value>
     </data>
     <data name="M_Start" xml:space="preserve">
         <value>开始迁移</value>
@@ -112,34 +112,34 @@
         <value>取消</value>
     </data>
     <data name="M_Err_SourceMissing" xml:space="preserve">
-        <value>当前数据目录不存在，无法迁移。</value>
+        <value>当前数据目录不存在，无法迁移</value>
     </data>
     <data name="M_Err_TargetInvalid" xml:space="preserve">
-        <value>目标目录无效，请重新选择。</value>
+        <value>目标目录无效，请重新选择</value>
     </data>
     <data name="M_Err_SameRoot" xml:space="preserve">
-        <value>目标目录与当前数据目录相同。</value>
+        <value>目标目录与当前数据目录相同</value>
     </data>
     <data name="M_Err_Nested" xml:space="preserve">
-        <value>目标目录不能与当前数据目录互相包含。</value>
+        <value>目标目录不能与当前数据目录互相包含</value>
     </data>
     <data name="M_Err_InsideApp" xml:space="preserve">
-        <value>目标目录不能位于应用安装目录内，否则更新时会丢失数据。</value>
+        <value>目标目录不能位于应用安装目录内，否则更新时会丢失数据</value>
     </data>
     <data name="M_Err_NotEmpty" xml:space="preserve">
-        <value>目标目录必须为空或尚不存在。</value>
+        <value>目标目录必须为空或尚不存在</value>
     </data>
     <data name="M_Err_NotWritable" xml:space="preserve">
-        <value>目标目录不可写，请检查权限或选择其它位置。</value>
+        <value>目标目录不可写，请检查权限或选择其它位置</value>
     </data>
     <data name="M_Err_Journal" xml:space="preserve">
-        <value>无法写入迁移记录，请检查应用数据目录的权限。</value>
+        <value>无法写入迁移记录，请检查应用数据目录的权限</value>
     </data>
     <data name="M_Err_Unknown" xml:space="preserve">
         <value>迁移无法开始：{0}</value>
     </data>
     <data name="M_RootUnavailable" xml:space="preserve">
-        <value>当前数据目录不可用，请先修复启动问题。</value>
+        <value>当前数据目录不可用，请先修复启动问题</value>
     </data>
     <data name="Src_CommandLine" xml:space="preserve">
         <value>启动参数</value>

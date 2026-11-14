@@ -1,4 +1,4 @@
-<UserControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -11,31 +11,28 @@
              x:DataType="local:StorageSettingsPage">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro settings">
-            <sr:IconText x:Name="S_Location"
-                         Text="{x:Static lsp:Resources.S_Location}"
-                         Glyph="{sr:Fi HardDriveFilled}"
-                         Margin="0 0 0 4" />
-
-            <fa:FASettingsExpander x:Name="S_CurrentRoot"
-                                   Header="{x:Static lsp:Resources.S_CurrentRoot}"
+            <fa:FASettingsExpander x:Name="S_Location"
+                                   Header="{x:Static lsp:Resources.S_Location}"
                                    Description="{x:Static lsp:Resources.S_CurrentRoot_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi HardDriveFilled}}">
-                <TextBlock Text="{Binding CurrentRoot}" TextWrapping="Wrap" />
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander x:Name="S_Source"
-                                   Header="{x:Static lsp:Resources.S_Source}"
-                                   Description="{x:Static lsp:Resources.S_Source_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}">
-                <TextBlock Text="{Binding SourceText}" TextWrapping="Wrap" />
-            </fa:FASettingsExpander>
-
-            <fa:FASettingsExpander x:Name="S_AnchorPath"
-                                   Header="{x:Static lsp:Resources.S_AnchorPath}"
-                                   Description="{x:Static lsp:Resources.S_AnchorPath_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi SaveFilled}}"
-                                   IsVisible="{Binding HasAnchor}">
-                <TextBlock Text="{Binding AnchorPathText}" TextWrapping="Wrap" />
+                                   IconSource="{sr:FluentIconSource {sr:Fi HardDriveFilled}}"
+                                   IsExpanded="True">
+                <StackPanel Spacing="10">
+                    <StackPanel x:Name="S_CurrentRoot" Spacing="2">
+                        <TextBlock Text="{x:Static lsp:Resources.S_CurrentRoot}"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding CurrentRoot}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel x:Name="S_Source" Spacing="2">
+                        <TextBlock Text="{x:Static lsp:Resources.S_Source}"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding SourceText}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel x:Name="S_AnchorPath" Spacing="2" IsVisible="{Binding HasAnchor}">
+                        <TextBlock Text="{x:Static lsp:Resources.S_AnchorPath}"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding AnchorPathText}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </StackPanel>
             </fa:FASettingsExpander>
 
             <TextBlock Text="{x:Static lsp:Resources.M_LegacyNotice}"
@@ -61,12 +58,14 @@
                                    Description="{x:Static lsp:Resources.S_Mode_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}"
                                    IsVisible="{Binding IsDesktop}">
-                <ComboBox SelectedIndex="{Binding ModeIndex}" HorizontalAlignment="Stretch">
-                    <ComboBoxItem Content="{x:Static lsp:Resources.O_Mode_Package}"
-                                  IsEnabled="{Binding IsPackageModeAvailable}" />
-                    <ComboBoxItem Content="{x:Static lsp:Resources.O_Mode_Standard}" />
-                    <ComboBoxItem Content="{x:Static lsp:Resources.O_Mode_Custom}" />
-                </ComboBox>
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding ModeIndex}">
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_Mode_Package}"
+                                      IsEnabled="{Binding IsPackageModeAvailable}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_Mode_Standard}" />
+                        <ComboBoxItem Content="{x:Static lsp:Resources.O_Mode_Custom}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
             <fa:FASettingsExpander x:Name="S_Target"
@@ -78,7 +77,7 @@
                     <TextBox Grid.Column="0"
                              Text="{Binding TargetPath}"
                              IsReadOnly="{Binding IsTargetReadOnly}"
-                             Watermark="{x:Static lsp:Resources.S_Target}" />
+                             PlaceholderText="{x:Static lsp:Resources.S_Target}" />
                     <Button Grid.Column="1"
                             Content="{x:Static lsp:Resources.C_Browse}"
                             Click="Browse_OnClick"

@@ -31,37 +31,37 @@
         <value>Data directory</value>
     </data>
     <data name="S_Location_D" xml:space="preserve">
-        <value>Settings, rosters, history, proofs, and images all live in this directory.</value>
+        <value>Settings, rosters, history, proofs, and images all live in this directory</value>
     </data>
     <data name="S_CurrentRoot" xml:space="preserve">
         <value>Current directory</value>
     </data>
     <data name="S_CurrentRoot_D" xml:space="preserve">
-        <value>The data directory in use; a change takes effect after a migration or restart.</value>
+        <value>The data directory in use; a change takes effect after a migration or restart</value>
     </data>
     <data name="S_Source" xml:space="preserve">
         <value>Chosen by</value>
     </data>
     <data name="S_Source_D" xml:space="preserve">
-        <value>Whether this directory came from a launch option, an environment variable, the stored anchor, or an older default location.</value>
+        <value>Whether this directory came from a launch option, an environment variable, the stored anchor, or an older default location</value>
     </data>
     <data name="S_AnchorPath" xml:space="preserve">
         <value>Anchor file</value>
     </data>
     <data name="S_AnchorPath_D" xml:space="preserve">
-        <value>Records the selected data directory. It lives outside the data directory, so updating the app never overwrites it.</value>
+        <value>Records the selected data directory; it lives outside the data directory, so updating the app never overwrites it</value>
     </data>
     <data name="S_Change" xml:space="preserve">
         <value>Change storage location</value>
     </data>
     <data name="S_Change_D" xml:space="preserve">
-        <value>Switching locations copies the existing data to the new directory, verifies it, writes the anchor, and restarts the app. The old directory is renamed and kept until you delete it yourself.</value>
+        <value>Switching locations copies the existing data to the new directory, verifies it, writes the anchor, and restarts the app; the old directory is renamed and kept until you delete it yourself</value>
     </data>
     <data name="S_Mode" xml:space="preserve">
         <value>Location type</value>
     </data>
     <data name="S_Mode_D" xml:space="preserve">
-        <value>The portable package directory follows the package; the standard location keeps data out of the program directory; a custom directory is whatever you choose.</value>
+        <value>The portable package directory follows the package; the standard location keeps data out of the program directory; a custom directory is whatever you choose</value>
     </data>
     <data name="O_Mode_Package" xml:space="preserve">
         <value>Portable package directory (default)</value>
@@ -76,7 +76,7 @@
         <value>Target directory</value>
     </data>
     <data name="S_Target_D" xml:space="preserve">
-        <value>The target must be empty or not exist yet, and must not be inside the application directory.</value>
+        <value>The target must be empty or not exist yet, and must not be inside the application directory</value>
     </data>
     <data name="C_Browse" xml:space="preserve">
         <value>Browse…</value>
@@ -88,7 +88,7 @@
         <value>Other data directories found</value>
     </data>
     <data name="S_OtherRoots_D" xml:space="preserve">
-        <value>These directories also hold data but are not in use. They are never migrated or deleted automatically; review and clean them up yourself.</value>
+        <value>These directories also hold data but are not in use; they are never migrated or deleted automatically, so review and clean them up yourself</value>
     </data>
     <data name="M_LegacyNotice" xml:space="preserve">
         <value>The data still lives in the program directory. An app update replaces that directory, so migrating to the system standard location is recommended.</value>
