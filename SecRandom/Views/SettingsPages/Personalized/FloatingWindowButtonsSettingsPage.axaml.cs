@@ -87,7 +87,9 @@ public partial class FloatingWindowButtonsSettingsPage : UserControl, INotifyPro
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        _iconService?.Prune(Rows.Select(row => row.Config.IconImage));
+        // 收纳手柄的图标图片不属于自定义按钮，但同样存在这个目录里，清理时必须一并保留
+        _iconService?.Prune(Rows.Select(row => row.Config.IconImage)
+            .Append(Settings.StickToEdgeDisplayIconImage));
     }
 
     private void AddRow(FloatingWindowButtonConfig config)
@@ -234,7 +236,7 @@ public partial class FloatingWindowButtonsSettingsPage : UserControl, INotifyPro
         Rows.Clear();
         _selectedRow = null;
         Persist();
-        _iconService?.Prune([]);
+        _iconService?.Prune([Settings.StickToEdgeDisplayIconImage]);
         this.ShowSuccessToast(Text("M_ClearDone"));
     }
 

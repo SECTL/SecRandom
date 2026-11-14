@@ -751,5 +751,103 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
                 return ResourceManager.GetString("M_Buttons_CustomOpenFailed", resourceCulture);
             }
         }
+        /// <summary>
+        ///   Looks up a localized string similar to 图片.
+        /// </summary>
+        public static string M_DockImageType {
+            get {
+                return ResourceManager.GetString("M_DockImageType", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 无法使用这张图片.
+        /// </summary>
+        public static string M_DockIconImportFailed {
+            get {
+                return ResourceManager.GetString("M_DockIconImportFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 导入图片.
+        /// </summary>
+        public static string C_DockImportImage {
+            get {
+                return ResourceManager.GetString("C_DockImportImage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 选择图标.
+        /// </summary>
+        public static string C_DockPickIcon {
+            get {
+                return ResourceManager.GetString("C_DockPickIcon", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 恢复默认.
+        /// </summary>
+        public static string C_DockResetIcon {
+            get {
+                return ResourceManager.GetString("C_DockResetIcon", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 手柄图标.
+        /// </summary>
+        public static string S_Dock_Icon {
+            get {
+                return ResourceManager.GetString("S_Dock_Icon", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 收纳手柄上显示的图标，可以选择内置图标或导入图片.
+        /// </summary>
+        public static string S_Dock_Icon_D {
+            get {
+                return ResourceManager.GetString("S_Dock_Icon_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 手柄文字.
+        /// </summary>
+        public static string S_Dock_Text {
+            get {
+                return ResourceManager.GetString("S_Dock_Text", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 收纳手柄上显示的文字，中文只允许一个字，其它语言最多四个字符.
+        /// </summary>
+        public static string S_Dock_Text_D {
+            get {
+                return ResourceManager.GetString("S_Dock_Text_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 当前语言最多 {0} 个字符.
+        /// </summary>
+        public static string S_Dock_Text_Limit {
+            get {
+                return ResourceManager.GetString("S_Dock_Text_Limit", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 留空则使用默认文字.
+        /// </summary>
+        public static string S_Dock_Text_Placeholder {
+            get {
+                return ResourceManager.GetString("S_Dock_Text_Placeholder", resourceCulture);
+            }
+        }
     }
 }

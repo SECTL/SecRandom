@@ -440,6 +440,10 @@ public sealed class ControlSettingsCatalogTests
                      "general.basic.guide_completed",
                      "general.basic.accepted_privacy_policy_version",
                      "general.proof_retention.retention_days",
+                     // 收纳手柄的文字/图标内容是本机外观，远程改它只会让手柄变样或指向本机不存在的图片。
+                     "floating_window.stick_to_edge_display_text",
+                     "floating_window.stick_to_edge_display_icon_glyph",
+                     "floating_window.stick_to_edge_display_icon_image",
                      // 默认记录组：远程改它会让下一节课的抽取范围在无人操作时静默变化。
                      "roll_call.history_group",
                      "quick_draw.history_group",

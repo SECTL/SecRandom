@@ -1184,26 +1184,36 @@ public partial class FloatingWindow : Window
 
     private void UpdateDockButton()
     {
-        var style = EffectiveFloatingWindowSettings.StickToEdgeDisplayStyle;
-        var size = Math.Clamp(EffectiveFloatingWindowSettings.DockedWindowSize, 28, 96);
-        var glyph = _isDockedOnLeft ? ">" : "<";
-        DockButton.Content = style switch
+        var settings = EffectiveFloatingWindowSettings;
+        var size = Math.Clamp(settings.DockedWindowSize, 28, 96);
+        var text = FloatingWindowDockHandle.ResolveText(settings.StickToEdgeDisplayText,
+            Langs.Common.Resources.C_PickButtonText);
+        var textFontSize = Math.Max(12, size * FloatingWindowDockHandle.GetTextFontScale(text.Length));
+
+        DockButton.Content = settings.StickToEdgeDisplayStyle switch
         {
-            0 => new FluentIcon(FluentIcons.PeopleFilled, size * 0.62),
-            1 => new TextBlock
+            // 图标样式：没配字形/图片时回退到原来的头像图标，配了自定义图片就画图片
+            FloatingWindowDockHandle.IconStyle => CreateIconVisual(
+                string.IsNullOrWhiteSpace(settings.StickToEdgeDisplayIconGlyph)
+                    ? FloatingWindowDockHandle.DefaultIconGlyph
+                    : settings.StickToEdgeDisplayIconGlyph,
+                IAppHost.TryGetService<FloatingWindowIconService>()
+                    ?.TryLoadBitmap(settings.StickToEdgeDisplayIconImage),
+                size * 0.62),
+            // 文字样式：用户自定义（中文一个字、其它语言最多四个），未填写沿用本地化默认文字
+            FloatingWindowDockHandle.TextStyle => new TextBlock
             {
-                Text = Langs.Common.Resources.C_PickButtonText,
-                FontSize = Math.Max(12, size * 0.42),
+                Text = text,
+                FontSize = textFontSize,
                 HorizontalAlignment = HorizontalAlignment.Center,
                 VerticalAlignment = VerticalAlignment.Center
             },
-            _ => new TextBlock
-            {
-                Text = glyph,
-                FontSize = Math.Max(14, size * 0.52),
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center
-            }
+            // 箭头样式：用方向图标，不再用 “>” / “<” 字符凑出来
+            _ => new FluentIcon(
+                _isDockedOnLeft
+                    ? FloatingWindowDockHandle.LeftArrowGlyph
+                    : FloatingWindowDockHandle.RightArrowGlyph,
+                size * 0.62)
         };
         DockButton.Width = size;
         DockButton.Height = size;

@@ -243,6 +243,57 @@
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
+            <!--  文字样式才出现的自定义卡片：中文界面只允许一个字，其它语言按四个字符放宽  -->
+            <fa:FASettingsExpander x:Name="S_Dock_Text"
+                                   IsVisible="False"
+                                   Header="{x:Static lsp:Resources.S_Dock_Text}"
+                                   Description="{x:Static lsp:Resources.S_Dock_Text_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Spacing="4" Width="240">
+                        <TextBox x:Name="DockTextInput"
+                                 MaxLength="4"
+                                 Text="{Binding Settings.StickToEdgeDisplayText}"
+                                 Watermark="{x:Static lsp:Resources.S_Dock_Text_Placeholder}"
+                                 TextChanged="DockText_OnTextChanged" />
+                        <TextBlock x:Name="DockTextLimitLabel" Classes="caption" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <!--  图标样式才出现的配置卡片：内置图标选择器与自定义按钮共用同一个对话框  -->
+            <fa:FASettingsExpander x:Name="S_Dock_Icon"
+                                   IsVisible="False"
+                                   Header="{x:Static lsp:Resources.S_Dock_Icon}"
+                                   Description="{x:Static lsp:Resources.S_Dock_Icon_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ImageFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                        <Border Width="40" Height="40" CornerRadius="6" ClipToBounds="True"
+                                BorderThickness="1"
+                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                Background="{DynamicResource ControlFillColorDefaultBrush}">
+                            <Panel>
+                                <sr:FluentIcon x:Name="DockIconGlyphPreview" FontSize="24"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                <Image x:Name="DockIconImagePreview" IsVisible="False" Stretch="Uniform" />
+                            </Panel>
+                        </Border>
+                        <StackPanel Spacing="4" VerticalAlignment="Center">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button Content="{x:Static lsp:Resources.C_DockPickIcon}"
+                                        Click="DockIconPick_OnClick" />
+                                <Button Content="{x:Static lsp:Resources.C_DockImportImage}"
+                                        Click="DockIconImport_OnClick" />
+                                <Button Content="{x:Static lsp:Resources.C_DockResetIcon}"
+                                        Click="DockIconReset_OnClick" />
+                            </StackPanel>
+                            <TextBlock x:Name="DockIconStatusText" Classes="caption"
+                                       IsVisible="False" TextWrapping="Wrap" MaxWidth="320" />
+                        </StackPanel>
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

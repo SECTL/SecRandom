@@ -135,76 +135,8 @@ public partial class FloatingWindowButtonEditorView : UserControl, IDrawerCloseA
         if (topLevel is null)
             return;
 
-        var search = new TextBox
-        {
-            PlaceholderText = FloatingWindowButtonUi.Text("M_IconSearchPlaceholder"),
-            Width = 430
-        };
-
-        var count = new TextBlock { Classes = { "caption" } };
-        var list = new DataGrid
-        {
-            Height = 320,
-            Width = 430,
-            AutoGenerateColumns = false,
-            CanUserSortColumns = false,
-            CanUserReorderColumns = false,
-            CanUserResizeColumns = true,
-            GridLinesVisibility = DataGridGridLinesVisibility.Horizontal,
-            HeadersVisibility = DataGridHeadersVisibility.Column,
-            IsReadOnly = true,
-            SelectionMode = DataGridSelectionMode.Single
-        };
-        list.Columns.Add(new DataGridTemplateColumn
-        {
-            Header = FloatingWindowButtonUi.Text("C_Icon"),
-            Width = new DataGridLength(64),
-            CellTemplate = new FuncDataTemplate<IconChoice>((choice, _) => choice is null
-                ? null
-                : new SecRandom.Core.Controls.FluentIcon(choice.Glyph, 20)
-                {
-                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Center,
-                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
-                })
-        });
-        list.Columns.Add(new DataGridTextColumn
-        {
-            Header = FloatingWindowButtonUi.Text("C_Label"),
-            Width = new DataGridLength(1, DataGridLengthUnitType.Star),
-            Binding = new Avalonia.Data.Binding(nameof(IconChoice.Name))
-        });
-
-        var panel = new StackPanel
-        {
-            Spacing = 8,
-            Children = { search, count, list }
-        };
-
-        var dialog = new FluentAvalonia.UI.Controls.FAContentDialog
-        {
-            Title = FloatingWindowButtonUi.Text("M_IconPickerTitle"),
-            Content = panel,
-            PrimaryButtonText = FloatingWindowButtonUi.Text("C_UseIcon"),
-            CloseButtonText = FloatingWindowButtonUi.Text("C_Cancel"),
-            DefaultButton = FluentAvalonia.UI.Controls.FAContentDialogButton.Primary,
-            IsPrimaryButtonEnabled = false
-        };
-
-        void ApplyFilter()
-        {
-            var matches = FloatingWindowButtonUi.FilterIcons(search.Text);
-            list.ItemsSource = matches;
-            count.Text = FloatingWindowButtonUi.Format("M_IconCountFormat", matches.Count);
-        }
-
-        list.SelectionChanged += (_, _) =>
-            dialog.IsPrimaryButtonEnabled = list.SelectedItem is IconChoice;
-        search.TextChanged += (_, _) => ApplyFilter();
-        ApplyFilter();
-
-        var result = await dialog.ShowAsync(topLevel);
-        if (result != FluentAvalonia.UI.Controls.FAContentDialogResult.Primary ||
-            list.SelectedItem is not IconChoice choice)
+        var choice = await FloatingWindowIconPicker.PickBuiltInAsync(topLevel);
+        if (choice is null)
             return;
 
         _config.IconGlyph = choice.Glyph;

@@ -55,6 +55,16 @@ public partial class FloatingWindowSettingsConfig : ObservableObject
     [ObservableProperty] private int _stickToEdgeRecoverSeconds = 3;
     [ObservableProperty] private int _stickToEdgeDisplayStyle = 1;
     [ObservableProperty] private int _dockedWindowSize = 32;
+
+    // 收纳手柄的“文字”样式：空字符串等于沿用本地化默认文字（中文“抽”、英文“Go”）。
+    // 允许的语言与长度由 FloatingWindowDockHandle 决定，非中文语言不限“一个字”。
+    [ObservableProperty] private string _stickToEdgeDisplayText = string.Empty;
+
+    // 收纳手柄的“图标”样式：图标字形为空时回退到默认头像图标，要恢复默认就把这个值清空
+    [ObservableProperty] private string _stickToEdgeDisplayIconGlyph = string.Empty;
+
+    // 收纳手柄的自定义图片文件名，与 FloatingWindowIconService 管理的 PNG 同名
+    [ObservableProperty] private string _stickToEdgeDisplayIconImage = string.Empty;
     [ObservableProperty] private bool _draggable = true;
     [ObservableProperty] private int _floatingWindowSize = 56;
     // 悬浮窗自定义文字：默认关闭；空字符串等于不显示，旧配置缺字段时按默认值加载

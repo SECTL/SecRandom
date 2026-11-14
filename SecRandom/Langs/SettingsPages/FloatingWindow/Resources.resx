@@ -220,7 +220,7 @@
     <value>收纳手柄样式</value>
   </data>
   <data name="S_Interaction_StickToEdgeDisplayStyle_D" xml:space="preserve">
-    <value>选择收纳后边缘手柄显示点名图标、“抽”字或方向箭头</value>
+    <value>选择收纳手柄显示图标、文字或方向箭头，图标和文字都可以自定义</value>
   </data>
   <data name="S_Dock" xml:space="preserve">
     <value>贴边收纳</value>
@@ -251,5 +251,38 @@
   </data>
   <data name="S_Display_CustomTextSize_D" xml:space="preserve">
     <value>自定义文字的像素字号，0 表示跟随悬浮窗尺寸自动缩放</value>
+  </data>
+<data name="S_Dock_Text" xml:space="preserve">
+    <value>手柄文字</value>
+  </data>
+  <data name="S_Dock_Text_D" xml:space="preserve">
+    <value>收纳手柄上显示的文字，中文只允许一个字，其它语言最多四个字符</value>
+  </data>
+  <data name="S_Dock_Text_Placeholder" xml:space="preserve">
+    <value>留空则使用默认文字</value>
+  </data>
+  <data name="S_Dock_Text_Limit" xml:space="preserve">
+    <value>当前语言最多 {0} 个字符</value>
+  </data>
+  <data name="S_Dock_Icon" xml:space="preserve">
+    <value>手柄图标</value>
+  </data>
+  <data name="S_Dock_Icon_D" xml:space="preserve">
+    <value>收纳手柄上显示的图标，可以选择内置图标或导入图片</value>
+  </data>
+  <data name="C_DockPickIcon" xml:space="preserve">
+    <value>选择图标</value>
+  </data>
+  <data name="C_DockImportImage" xml:space="preserve">
+    <value>导入图片</value>
+  </data>
+  <data name="C_DockResetIcon" xml:space="preserve">
+    <value>恢复默认</value>
+  </data>
+  <data name="M_DockImageType" xml:space="preserve">
+    <value>图片</value>
+  </data>
+  <data name="M_DockIconImportFailed" xml:space="preserve">
+    <value>无法使用这张图片</value>
   </data>
 </root>

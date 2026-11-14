@@ -162,6 +162,12 @@ public static class ControlSettingsCatalog
         "general.basic.accepted_gpl_version",
         "general.basic.accepted_verification_notice_version",
 
+        // 收纳手柄的样式内容：文字、内置图标、导入图片都是这台机器的外观选择，
+        // 而且图片名指向本机 data/images 下的文件，远程改它只会让手柄变成别的样子或指向空文件。
+        "floating_window.stick_to_edge_display_text",
+        "floating_window.stick_to_edge_display_icon_glyph",
+        "floating_window.stick_to_edge_display_icon_image",
+
         // 默认记录组：抽取页选择器的初始值。远程改它会让下一节课的点名/抽奖在没人按按钮的情况下
         // 从"全部历史"静默变成"只算某个组的历史"，现场看到的只是一个更小的权重范围。
         "roll_call.history_group",
