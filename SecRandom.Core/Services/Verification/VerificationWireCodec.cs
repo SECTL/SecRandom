@@ -17,6 +17,7 @@ public static class VerificationWireCodec
     public const string InventoryLotteryAlgorithmId = "secrandom-inventory-permutation-chacha20/v3";
     public const string WeightedLotteryAlgorithmId = "secrandom-lottery-weighted-without-replacement-chacha20/v3";
     public const string NumberAlgorithmId = "secrandom-number-permutation-chacha20/v3";
+    public const string OrchestratedSequenceAlgorithmId = "secrandom-orchestrated-sequential-order/v3";
     public const string AlgorithmId = StudentAlgorithmId;
 
     /// <summary>
@@ -40,6 +41,25 @@ public static class VerificationWireCodec
     /// </remarks>
     public const string AlgorithmEngineVersion = "3.5.0";
 
+    /// <summary>
+    ///     Engine version that first understands orchestrated (<see cref="VerificationSamplingMode.SequentialOrder" />)
+    ///     proofs. Only orchestrated proofs carry it.
+    /// </summary>
+    /// <remarks>
+    ///     The two families are versioned apart on purpose: an already deployed 3.5.0 verifier rejects any proof
+    ///     stamped 3.6.0, so stamping ordinary draws with it would break every ordinary attestation until the
+    ///     service ships 3.6. Orchestrated proofs cannot exist on a 3.5 verifier at all — it does not know
+    ///     <c>SequentialOrder</c> or profiles 19/20 — so widening the version per sampling mode keeps the ordinary
+    ///     channel working through the rollout and makes only the new mode wait for the service deployment.
+    /// </remarks>
+    public const string OrchestratedAlgorithmEngineVersion = "3.6.0";
+
+    /// <summary>Engine version a proof of this sampling mode is stamped with.</summary>
+    public static string GetEngineVersion(VerificationSamplingMode samplingMode) =>
+        samplingMode == VerificationSamplingMode.SequentialOrder
+            ? OrchestratedAlgorithmEngineVersion
+            : AlgorithmEngineVersion;
+
     private static readonly byte[] InputMagic = "SRDI"u8.ToArray();
     private static readonly byte[] RequestMagic = "SRDQ"u8.ToArray();
     private static readonly byte[] ResponseMagic = "SRDR"u8.ToArray();
@@ -62,6 +82,7 @@ public static class VerificationWireCodec
         VerificationSamplingMode.HistoryBalancedWeighted => StudentAlgorithmId,
         VerificationSamplingMode.InventoryPermutation => InventoryLotteryAlgorithmId,
         VerificationSamplingMode.WeightedWithoutReplacement => WeightedLotteryAlgorithmId,
+        VerificationSamplingMode.SequentialOrder => OrchestratedSequenceAlgorithmId,
         _ => throw new ArgumentOutOfRangeException(nameof(samplingMode), samplingMode, "Verification sampling mode is unsupported.")
     };
 
@@ -85,6 +106,8 @@ public static class VerificationWireCodec
         VerificationAlgorithmProfile.StudentRandomInternalRuleNoRepeat => "secrandom-student-random-internal-rule-no-repeat/v3",
         VerificationAlgorithmProfile.StudentRandomInternalRuleHalfRepeat => "secrandom-student-random-internal-rule-half-repeat/v3",
         VerificationAlgorithmProfile.NumberUniformPermutation => NumberAlgorithmId,
+        VerificationAlgorithmProfile.StudentOrchestrated => "secrandom-student-orchestrated/v3",
+        VerificationAlgorithmProfile.LotteryOrchestrated => "secrandom-lottery-orchestrated/v3",
         _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, "Verification algorithm profile is unsupported.")
     };
 
@@ -108,6 +131,8 @@ public static class VerificationWireCodec
         VerificationAlgorithmProfile.StudentRandomInternalRuleNoRepeat => "点名：随机，内幕规则加权，不重复",
         VerificationAlgorithmProfile.StudentRandomInternalRuleHalfRepeat => "点名：随机，内幕规则加权，半重复",
         VerificationAlgorithmProfile.NumberUniformPermutation => "数字：范围内等概率不放回",
+        VerificationAlgorithmProfile.StudentOrchestrated => "点名：编排抽取（顺序已事先排定）",
+        VerificationAlgorithmProfile.LotteryOrchestrated => "抽奖：编排抽取（顺序已事先排定）",
         _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, "Verification algorithm profile is unsupported.")
     };
 
@@ -133,8 +158,11 @@ public static class VerificationWireCodec
             "secrandom-student-random-internal-rule-no-repeat/v3" => GetAlgorithmLabel(VerificationAlgorithmProfile.StudentRandomInternalRuleNoRepeat),
             "secrandom-student-random-internal-rule-half-repeat/v3" => GetAlgorithmLabel(VerificationAlgorithmProfile.StudentRandomInternalRuleHalfRepeat),
             NumberAlgorithmId => GetAlgorithmLabel(VerificationAlgorithmProfile.NumberUniformPermutation),
+            "secrandom-student-orchestrated/v3" => GetAlgorithmLabel(VerificationAlgorithmProfile.StudentOrchestrated),
+            "secrandom-lottery-orchestrated/v3" => GetAlgorithmLabel(VerificationAlgorithmProfile.LotteryOrchestrated),
             InventoryLotteryAlgorithmId => "按剩余数量",
             WeightedLotteryAlgorithmId => "加权无放回",
+            OrchestratedSequenceAlgorithmId => "按预定顺序取出（不消耗随机数）",
             _ => string.Empty
         };
         return !string.IsNullOrEmpty(label);
@@ -167,6 +195,12 @@ public static class VerificationWireCodec
             VerificationAlgorithmProfile.LotteryInventoryCount
                 or VerificationAlgorithmProfile.NumberUniformPermutation
                 => samplingMode == VerificationSamplingMode.InventoryPermutation,
+            // An orchestrated draw replays from the committed positions alone, so it only accepts the sequential
+            // sampler: pairing it with a weighted or history sampler would let an arranged order replay as a
+            // random draw, which is exactly the claim this profile exists to prevent.
+            VerificationAlgorithmProfile.StudentOrchestrated
+                or VerificationAlgorithmProfile.LotteryOrchestrated
+                => samplingMode == VerificationSamplingMode.SequentialOrder,
             _ => false
         };
     }
@@ -196,6 +230,10 @@ public static class VerificationWireCodec
                 => kind == VerificationDrawKind.Prize,
             VerificationAlgorithmProfile.NumberUniformPermutation
                 => kind == VerificationDrawKind.Number,
+            VerificationAlgorithmProfile.StudentOrchestrated
+                => kind == VerificationDrawKind.Student,
+            VerificationAlgorithmProfile.LotteryOrchestrated
+                => kind == VerificationDrawKind.Prize,
             _ => false
         };
     }

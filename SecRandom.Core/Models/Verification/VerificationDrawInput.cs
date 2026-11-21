@@ -10,4 +10,27 @@ public sealed class VerificationDrawInput
     public required int Count { get; init; }
     public IReadOnlyList<VerificationCandidate> Candidates { get; init; } = [];
     public byte[] AuditPayload { get; init; } = [];
+
+    /// <summary>
+    ///     The draw mode as it appears in the audit payload (<c>repeat</c>, <c>no-repeat</c>, <c>half-repeat</c>,
+    ///     <c>orchestrated</c>). Carried on the input so the proof context projects the same token instead of
+    ///     re-deriving it from the algorithm profile.
+    /// </summary>
+    public string DrawModeToken { get; init; } = string.Empty;
+
+    /// <summary>
+    ///     Which history slice the audit's per-candidate figures were read from. Only the axis name is ever
+    ///     emitted, never the course or the record group behind it.
+    /// </summary>
+    public string HistoryScope { get; init; } = "global";
+
+    // Arranged draws only; both null while the draw sampled a pool.
+    public int? OrchestrationRound { get; init; }
+    public int? OrchestrationRoundCount { get; init; }
+
+    /// <summary>
+    ///     Candidates the internal rule removed outright. The audit payload already declares it; the proof context
+    ///     repeats it in readable form so the pool arithmetic adds up without decoding Base64.
+    /// </summary>
+    public int ExcludedCandidateCount { get; init; }
 }

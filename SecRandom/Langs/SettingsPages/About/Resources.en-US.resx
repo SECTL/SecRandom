@@ -105,4 +105,58 @@
     <data name="M_InternalSettingsActivated" xml:space="preserve">
         <value>“Internal Settings” is now shown in the Attached Settings menu at the right of each member or prize in List Management. It is available only for this run and is hidden automatically after the app restarts.&#xA;&#xA;Internal settings affect candidate weights and are not appropriate for fair, public, or auditable draws in activities or organizations. When a selected person has internal settings enabled, uploading the verifiable file to the verification website shows a notice; this can expose the setting.&#xA;&#xA;Internal settings have lower priority than fair-draw rules. A member or prize with internal settings that is selected now is not guaranteed to be selected next time</value>
     </data>
+    <data name="S_Machine" xml:space="preserve">
+        <value>This Device</value>
+    </data>
+    <data name="S_Machine_D" xml:space="preserve">
+        <value>System, runtime, and directory information of the device running SecRandom</value>
+    </data>
+    <data name="C_CopyMachine" xml:space="preserve">
+        <value>Copy Device Info</value>
+    </data>
+    <data name="M_MachineCopied" xml:space="preserve">
+        <value>Device info copied to the clipboard</value>
+    </data>
+    <data name="M_MachineCopyFailed" xml:space="preserve">
+        <value>Unable to copy device info</value>
+    </data>
+    <data name="S_Machine_Host" xml:space="preserve">
+        <value>Computer Name</value>
+    </data>
+    <data name="S_Machine_System" xml:space="preserve">
+        <value>Operating System</value>
+    </data>
+    <data name="S_Machine_Architecture" xml:space="preserve">
+        <value>System Architecture</value>
+    </data>
+    <data name="S_Machine_Architecture_Value" xml:space="preserve">
+        <value>{0} (process {1})</value>
+    </data>
+    <data name="S_Machine_Runtime" xml:space="preserve">
+        <value>Runtime</value>
+    </data>
+    <data name="S_Machine_Processor" xml:space="preserve">
+        <value>Logical Processors</value>
+    </data>
+    <data name="S_Machine_Processor_Value" xml:space="preserve">
+        <value>{0}</value>
+    </data>
+    <data name="S_Machine_Version" xml:space="preserve">
+        <value>Program Version</value>
+    </data>
+    <data name="S_Machine_AppDirectory" xml:space="preserve">
+        <value>Program Directory</value>
+    </data>
+    <data name="S_Machine_DataDirectory" xml:space="preserve">
+        <value>Data Directory</value>
+    </data>
+    <data name="S_DrawModes" xml:space="preserve">
+        <value>Draw Modes</value>
+    </data>
+    <data name="S_DrawModes_D" xml:space="preserve">
+        <value>Built-in draw algorithms ship with the app, so the right side shows the algorithm engine version used for proof replay</value>
+    </data>
+    <data name="S_DrawModes_Engine" xml:space="preserve">
+        <value>Algorithm engine {0}</value>
+    </data>
 </root>

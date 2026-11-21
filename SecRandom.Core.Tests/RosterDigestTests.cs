@@ -49,6 +49,38 @@ public sealed class RosterDigestTests
     }
 
     [Fact]
+    public void SaltMakesTheSameRosterDigestDifferentPerProof()
+    {
+        var student = new Student { RecordId = Guid.Parse("11111111-1111-1111-1111-111111111111"), Id = "01", Name = "张三" };
+        StudentList list = new() { Students = [student] };
+        byte[] firstSalt = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
+        byte[] secondSalt = [16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+
+        var first = RosterDigest.Compute(list, firstSalt);
+        var second = RosterDigest.Compute(list, secondSalt);
+
+        // Cross-proof joinability is exactly what the salt removes: two draws from one list must not look like
+        // the same roster to someone holding both files.
+        Assert.NotEqual(first, second);
+        // The digest stays recomputable, because the salt ships inside the proof.
+        Assert.Equal(first, RosterDigest.Compute(list, firstSalt));
+        // And it still follows the mapping rather than the salt alone.
+        student.Name = "李四";
+        Assert.NotEqual(first, RosterDigest.Compute(list, firstSalt));
+    }
+
+    [Fact]
+    public void UnsaltedDigestStaysTheLegacyV3Format()
+    {
+        var student = new Student { RecordId = Guid.Parse("11111111-1111-1111-1111-111111111111"), Id = "01", Name = "张三" };
+        StudentList list = new() { Students = [student] };
+
+        // v3 proofs already on disk carry this value; the overload without a salt must keep deriving it.
+        Assert.Equal(RosterDigest.Compute(list), RosterDigest.Compute(list, []));
+        Assert.NotEqual(RosterDigest.Compute(list), RosterDigest.Compute(list, [0]));
+    }
+
+    [Fact]
     public void StudentAndPrizeRostersDoNotShareADigest()
     {
         Assert.NotEqual(

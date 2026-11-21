@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
@@ -13,6 +14,7 @@ using SecRandom.Core.Models.Verification;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services.Draw.Exceptions;
+using SecRandom.Core.Services.Orchestration;
 using SecRandom.Core.Services.Verification;
 using SecRandom.Shared.Models.Profile;
 using SecRandom.Shared.Models.Verification;
@@ -44,15 +46,17 @@ public sealed class VerificationDrawCoordinator(
         Guid? parentProofId = null,
         string courseName = "",
         string? historyGroup = null,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        DrawMode? drawModeOverride = null,
+        string? channel = null)
     {
         var verificationMode = configHandler.Data.General.Verification.Mode;
         var includeInternalRules = verificationMode != VerificationMode.FormalNotarized;
-        var rosterDigest = ComputeStudentRosterDigest(exportContext.ListName, profileService.StudentListConfig);
+        var roster = CommitStudentRoster(exportContext.ListName);
         VerificationDrawInput input;
         try
         {
-            input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName, includeInternalRules, rosterDigest, historyGroup);
+            input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName, includeInternalRules, roster.Digest, historyGroup, drawModeOverride);
         }
         catch (NoEligibleCandidatesException exception)
         {
@@ -62,7 +66,14 @@ public sealed class VerificationDrawCoordinator(
             return null;
         }
 
-        return await DrawAsync(input, candidates, exportContext, parentProofId, verificationMode, cancellationToken)
+        return await DrawAsync(input, candidates, exportContext, parentProofId, verificationMode,
+                new DrawProofSealContext(
+                    channel ?? ResolveStudentChannel(drawSettingsType),
+                    ResolveDrawSettingsTypeToken(drawSettingsType),
+                    roster.EntryCount,
+                    roster.Digest,
+                    roster.Salt),
+                cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -79,11 +90,11 @@ public sealed class VerificationDrawCoordinator(
     {
         var verificationMode = configHandler.Data.General.Verification.Mode;
         var includeInternalRules = verificationMode != VerificationMode.FormalNotarized;
-        var rosterDigest = ComputePrizeRosterDigest(exportContext.ListName, profileService.PrizeListConfig);
+        var roster = CommitPrizeRoster(exportContext.ListName);
         VerificationDrawInput input;
         try
         {
-            input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts, includeInternalRules, rosterDigest, historyGroup);
+            input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts, includeInternalRules, roster.Digest, historyGroup);
         }
         catch (NoEligibleCandidatesException exception)
         {
@@ -93,7 +104,61 @@ public sealed class VerificationDrawCoordinator(
             return null;
         }
 
-        return await DrawAsync(input, prizes, exportContext, null, verificationMode, cancellationToken)
+        return await DrawAsync(input, prizes, exportContext, null, verificationMode,
+                new DrawProofSealContext("lottery", "lottery", roster.EntryCount, roster.Digest, roster.Salt), cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Verifies an arranged round: the drawn order is the schedule itself, so the proof commits positions
+    ///     (student orchestrated + sequential order) instead of sampling a weighted pool.
+    /// </summary>
+    public async Task<VerificationDrawOutcome<Student>?> DrawOrchestratedStudentsAsync(
+        IReadOnlyList<Student> ordered,
+        int round,
+        int roundCount,
+        DrawProofExportContext exportContext,
+        string courseName = "",
+        string? historyGroup = null,
+        CancellationToken cancellationToken = default,
+        string channel = "roll-call")
+    {
+        ArgumentNullException.ThrowIfNull(ordered);
+        if (ordered.Count == 0)
+            return null;
+
+        var verificationMode = configHandler.Data.General.Verification.Mode;
+        var roster = CommitStudentRoster(exportContext.ListName);
+        var history = new Dictionary<Guid, (int Count, DateTime? LastDrawn)>(ordered.Count);
+        foreach (var entry in drawEngine.GetStudentHistoryFigures(ordered, courseName, historyGroup))
+            history[entry.Key] = (entry.Value.Count, entry.Value.LastDrawn);
+        var input = OrchestrationVerification.CreateStudentInput(
+            ordered, round, roundCount, history, roster.Digest, courseName, historyGroup);
+        return await DrawAsync(input, ordered, exportContext, null, verificationMode,
+                new DrawProofSealContext(channel, ResolveOrchestratedSettingsType(channel), roster.EntryCount, roster.Digest, roster.Salt),
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Prize-side counterpart of <see cref="DrawOrchestratedStudentsAsync" />.
+    /// </summary>
+    public async Task<VerificationDrawOutcome<Prize>?> DrawOrchestratedPrizesAsync(
+        IReadOnlyList<Prize> ordered,
+        int round,
+        int roundCount,
+        DrawProofExportContext exportContext,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(ordered);
+        if (ordered.Count == 0)
+            return null;
+
+        var verificationMode = configHandler.Data.General.Verification.Mode;
+        var roster = CommitPrizeRoster(exportContext.ListName);
+        var input = OrchestrationVerification.CreatePrizeInput(ordered, round, roundCount, rosterDigest: roster.Digest);
+        return await DrawAsync(input, ordered, exportContext, null, verificationMode,
+                new DrawProofSealContext("lottery", "lottery", roster.EntryCount, roster.Digest, roster.Salt), cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -111,7 +176,8 @@ public sealed class VerificationDrawCoordinator(
     {
         var verificationMode = configHandler.Data.General.Verification.Mode;
         var input = drawEngine.CreateNumberVerificationInput(count, rangeStart, rangeEnd);
-        return await DrawAsync(input, tickets, exportContext, null, verificationMode, cancellationToken)
+        return await DrawAsync(input, tickets, exportContext, null, verificationMode,
+                new DrawProofSealContext("number", "number", 0), cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -128,7 +194,8 @@ public sealed class VerificationDrawCoordinator(
     {
         var verificationMode = configHandler.Data.General.Verification.Mode;
         var input = drawEngine.CreateNumberVerificationInput(count, rangeStart, rangeEnd);
-        return await DrawAsync(input, tickets, exportContext, null, verificationMode, cancellationToken)
+        return await DrawAsync(input, tickets, exportContext, null, verificationMode,
+                new DrawProofSealContext("number", "number", 0), cancellationToken)
             .ConfigureAwait(false);
     }
 
@@ -139,32 +206,187 @@ public sealed class VerificationDrawCoordinator(
     ///     and an omission is always logged, because a proof without a digest cannot be told apart from one
     ///     that was never meant to carry it.
     /// </summary>
-    private string ComputeStudentRosterDigest(string listName, StudentListConfig? config)
+    /// <summary>
+    ///     Projects the frozen input into the readable, de-identified context a v2 proof commits. Everything here
+    ///     is an enumeration member, a count, a digest, or a coarse environment fact: no candidate display data,
+    ///     no list/course/group name, no device or user identity ever enters this block.
+    /// </summary>
+    private static DrawProofContext CreateProofContext(
+        VerificationDrawInput input,
+        DrawProofExportContext exportContext,
+        DrawProofSealContext seal)
     {
+        var candidates = input.Candidates;
+        return new DrawProofContext
+        {
+            Channel = seal.Channel,
+            SettingsType = seal.SettingsType,
+            DrawMode = input.DrawModeToken,
+            SamplingMode = ResolveSamplingModeToken(input.SamplingMode),
+            AlgorithmProfile = input.AlgorithmProfile.ToString(),
+            RequestedCount = input.Count,
+            Pool = new DrawProofPool
+            {
+                CandidateCount = candidates.Count,
+                DrawableCount = candidates.Count(candidate => candidate.IsGuaranteed || candidate.WeightMicros > 0),
+                ZeroWeightCount = candidates.Count(candidate => !candidate.IsGuaranteed && candidate.WeightMicros == 0),
+                GuaranteedCount = candidates.Count(candidate => candidate.IsGuaranteed),
+                ExcludedCount = input.ExcludedCandidateCount
+            },
+            Scope = new DrawProofScope
+            {
+                History = input.HistoryScope,
+                FilterKinds = DeriveFilterKinds(exportContext.FilterLabels)
+            },
+            Orchestration = input.OrchestrationRound is { } round
+                ? new DrawProofOrchestration
+                {
+                    Round = round,
+                    RoundCount = input.OrchestrationRoundCount ?? round
+                }
+                : null,
+            Roster = new DrawProofRoster
+            {
+                Kind = input.Kind switch
+                {
+                    VerificationDrawKind.Student => "student",
+                    VerificationDrawKind.Prize => "prize",
+                    _ => "number"
+                },
+                EntryCount = seal.RosterEntryCount,
+                DigestFormat = string.IsNullOrWhiteSpace(seal.RosterDigest)
+                    ? string.Empty
+                    : string.IsNullOrWhiteSpace(seal.RosterDigestSalt) ? RosterDigest.FormatV3 : RosterDigest.FormatV4,
+                Digest = seal.RosterDigest,
+                // Published so the digest stays recomputable by someone who holds the roster; absent on v3 proofs,
+                // which hashed the same material without it.
+                DigestSalt = string.IsNullOrWhiteSpace(seal.RosterDigestSalt) ? null : seal.RosterDigestSalt
+            },
+            Environment = new DrawProofEnvironment
+            {
+                AppVersion = GlobalConstants.Version,
+                PlatformFamily = ResolvePlatformFamily(),
+                TimeZoneOffsetMinutes = (int)TimeZoneInfo.Local.GetUtcOffset(DateTimeOffset.UtcNow).TotalMinutes
+            },
+            SessionId = Guid.NewGuid()
+        };
+    }
+
+    private static string ResolveStudentChannel(DrawSettingsType drawSettingsType) => drawSettingsType switch
+    {
+        DrawSettingsType.QuickDraw => "quick-draw",
+        DrawSettingsType.Lottery => "lottery",
+        _ => "roll-call"
+    };
+
+    private static string ResolveDrawSettingsTypeToken(DrawSettingsType drawSettingsType) => drawSettingsType switch
+    {
+        DrawSettingsType.QuickDraw => "quick-draw",
+        DrawSettingsType.Lottery => "lottery",
+        _ => "roll-call"
+    };
+
+    /// <summary>
+    ///     An arranged draw has no <see cref="DrawSettingsType" /> at the call site — the round belongs to a
+    ///     channel, and the channel is what names the settings it was arranged by.
+    /// </summary>
+    private static string ResolveOrchestratedSettingsType(string channel) => channel switch
+    {
+        "quick-draw" => "quick-draw",
+        "lottery" => "lottery",
+        _ => "roll-call"
+    };
+
+    private static string ResolveSamplingModeToken(VerificationSamplingMode samplingMode) => samplingMode switch
+    {
+        VerificationSamplingMode.HistoryBalancedWeighted => "history-balanced-weighted",
+        VerificationSamplingMode.InventoryPermutation => "inventory-permutation",
+        VerificationSamplingMode.WeightedWithoutReplacement => "weighted-without-replacement",
+        VerificationSamplingMode.SequentialOrder => "sequential-order",
+        _ => "unknown"
+    };
+
+    /// <summary>
+    ///     Maps the display filter labels a caller already builds for the file name onto their kinds. The values are
+    ///     discarded here on purpose: a group, a gender, and a course name are user-typed text, and only the fact
+    ///     that such a filter ran is safe to publish.
+    /// </summary>
+    private static IReadOnlyList<string> DeriveFilterKinds(IReadOnlyList<string> filterLabels)
+    {
+        List<string> kinds = [];
+        foreach (var label in filterLabels)
+        {
+            var kind = label switch
+            {
+                _ when label.StartsWith("组别=", StringComparison.Ordinal) => "group",
+                _ when label.StartsWith("性别=", StringComparison.Ordinal) => "gender",
+                _ when label.StartsWith("课程=", StringComparison.Ordinal) => "course",
+                _ when label.StartsWith("状态=", StringComparison.Ordinal) => "status",
+                _ => null
+            };
+            if (kind is not null && !kinds.Contains(kind))
+                kinds.Add(kind);
+        }
+
+        kinds.Sort(StringComparer.Ordinal);
+        return kinds;
+    }
+
+    private static string ResolvePlatformFamily() => OperatingSystem.IsWindows()
+        ? "windows"
+        : OperatingSystem.IsAndroid()
+            ? "android"
+            : OperatingSystem.IsIOS()
+                ? "ios"
+                : OperatingSystem.IsMacOS()
+                    ? "macos"
+                    : "linux";
+
+    /// <summary>
+    ///     A roster commitment carries the digest together with the per-proof salt that produced it. Both are
+    ///     published; the salt exists so two proofs taken from the same list do not share a digest and therefore
+    ///     cannot be joined into a larger picture of one class.
+    /// </summary>
+    private sealed record RosterCommitment(string Digest, string Salt, int EntryCount)
+    {
+        /// <summary>No commitment: there is no active list, or it is not the list this draw came from.</summary>
+        public static readonly RosterCommitment None = new(string.Empty, string.Empty, 0);
+    }
+
+    private RosterCommitment CommitStudentRoster(string listName)
+    {
+        var config = profileService.StudentListConfig;
         if (config is null || string.IsNullOrWhiteSpace(listName)
             || !string.Equals(config.Name, listName, StringComparison.Ordinal))
         {
             logger.LogWarning(
                 "抽取证明未绑定名单摘要：活动名单={ActiveListName}，本次抽取名单={DrawnListName}。该证明无法把中奖记录编号还原到具体成员。",
                 config?.Name, listName);
-            return string.Empty;
+            return RosterCommitment.None;
         }
 
-        return RosterDigest.Compute(config.Data);
+        return Commit(config.Data.Students.Count, salt => RosterDigest.Compute(config.Data, salt));
     }
 
-    private string ComputePrizeRosterDigest(string listName, PrizeListConfig? config)
+    private RosterCommitment CommitPrizeRoster(string listName)
     {
+        var config = profileService.PrizeListConfig;
         if (config is null || string.IsNullOrWhiteSpace(listName)
             || !string.Equals(config.Name, listName, StringComparison.Ordinal))
         {
             logger.LogWarning(
                 "抽取证明未绑定奖池摘要：活动奖池={ActiveListName}，本次抽取奖池={DrawnListName}。该证明无法把中奖记录编号还原到具体奖品。",
                 config?.Name, listName);
-            return string.Empty;
+            return RosterCommitment.None;
         }
 
-        return RosterDigest.Compute(config.Data);
+        return Commit(config.Data.Prizes.Count, salt => RosterDigest.Compute(config.Data, salt));
+    }
+
+    private static RosterCommitment Commit(int entryCount, Func<byte[], string> digest)
+    {
+        var salt = RandomNumberGenerator.GetBytes(RosterDigest.SaltLength);
+        return new RosterCommitment(digest(salt), WitnessClient.ToBase64Url(salt), entryCount);
     }
 
     private async Task<VerificationDrawOutcome<TCandidate>> DrawAsync<TCandidate>(
@@ -173,12 +395,16 @@ public sealed class VerificationDrawCoordinator(
         DrawProofExportContext exportContext,
         Guid? parentProofId,
         VerificationMode verificationMode,
+        DrawProofSealContext seal,
         CancellationToken cancellationToken)
         where TCandidate : class
     {
         cancellationToken.ThrowIfCancellationRequested();
         var recordLookup = records.ToDictionary(GetRecordId);
         var inputHash = VerificationWireCodec.ComputeInputHash(input);
+        // Built once for both evidence paths: the offline proof embeds it, and the formal request forwards it so the
+        // service can embed it into the document it signs. A single instance keeps the session id consistent.
+        var context = CreateProofContext(input, exportContext, seal);
         DrawProof proof;
         VerificationKernelResult result;
         if (verificationMode == VerificationMode.FormalNotarized)
@@ -190,7 +416,8 @@ public sealed class VerificationDrawCoordinator(
                 InputHash = WitnessClient.ToBase64Url(inputHash),
                 ZeroSeedRequest = WitnessClient.ToBase64Url(VerificationWireCodec.EncodeDrawRequest(input, new byte[32])),
                 AuditPayload = WitnessClient.ToBase64Url(input.AuditPayload),
-                ClientNonce = WitnessClient.ToBase64Url(VerificationSeedDerivation.CreateCsprngNonce())
+                ClientNonce = WitnessClient.ToBase64Url(VerificationSeedDerivation.CreateCsprngNonce()),
+                Context = context
             };
             proof = await witnessClient.NotarizeAsync(request, cancellationToken).ConfigureAwait(false);
             result = VerificationWireCodec.DecodeDrawResponse(GetResponse(proof));
@@ -203,7 +430,8 @@ public sealed class VerificationDrawCoordinator(
         {
             var seed = VerificationSeedDerivation.CreateCsprngSeed();
             result = kernel.Draw(input, seed);
-            proof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OfflineReproducible, parentProofId, null);
+            proof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OfflineReproducible, parentProofId, null,
+                context);
         }
         return Complete(records, recordLookup, result, proof, exportContext, FreezeWeights(input));
     }
@@ -248,7 +476,8 @@ public sealed class VerificationDrawCoordinator(
         VerificationKernelResult result,
         VerificationProofMode mode,
         Guid? parentProofId,
-        DrawProofWitness? witness)
+        DrawProofWitness? witness,
+        DrawProofContext? context)
     {
         var payload = VerificationWireCodec.EncodeProofPayload(input, seed, result.Winners);
         return new DrawProof
@@ -256,10 +485,11 @@ public sealed class VerificationDrawCoordinator(
             ParentProofId = parentProofId,
             Mode = mode,
             AlgorithmId = VerificationWireCodec.GetAlgorithmId(input.AlgorithmProfile),
-            AlgorithmEngineVersion = VerificationWireCodec.AlgorithmEngineVersion,
+            AlgorithmEngineVersion = VerificationWireCodec.GetEngineVersion(input.SamplingMode),
             InputHash = WitnessClient.ToBase64Url(inputHash),
             Payload = WitnessClient.ToBase64Url(payload),
             AuditPayload = WitnessClient.ToBase64Url(input.AuditPayload),
+            Context = context,
             Result = new DrawProofResult { WinnerRecordIds = result.Winners.Select(winner => winner.RecordId).ToList() },
             Witness = witness
         };
@@ -310,3 +540,15 @@ public sealed record VerificationDrawOutcome<TCandidate>(
     DrawProof Proof,
     IReadOnlyDictionary<Guid, double> FrozenWeights,
     DrawProofExportContext ExportContext);
+
+/// <summary>
+///     The channel-specific facts the caller knows and the frozen input does not: which page drew, which settings
+///     page governs it, and the roster commitment to publish beside it.
+/// </summary>
+public sealed record DrawProofSealContext(
+    string Channel,
+    string SettingsType,
+    int RosterEntryCount,
+    string RosterDigest = "",
+    /// <summary>Per-proof roster digest salt; empty for a v3 digest or when there is no commitment at all.</summary>
+    string RosterDigestSalt = "");

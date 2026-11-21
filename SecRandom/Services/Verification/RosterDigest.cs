@@ -17,12 +17,33 @@ namespace SecRandom.Services.Verification;
 /// </summary>
 public static class RosterDigest
 {
+    /// <summary>
+    ///     Length of the per-proof salt. Sixteen bytes keeps the published value short while leaving a value space
+    ///     no proof collection can collide with.
+    /// </summary>
+    public const int SaltLength = 16;
+
+    /// <summary>
+    ///     The original, unsalted digest format. Retained because files already written under it must keep both
+    ///     verifying and re-deriving.
+    /// </summary>
+    public const string FormatV3 = "v3";
+
+    /// <summary>
+    ///     Salted digest format. The digest is published together with its salt, so the salt buys unlinkability
+    ///     (one roster in two proofs no longer produces one digest) rather than secrecy.
+    /// </summary>
+    public const string FormatV4 = "v4";
+
     private static readonly byte[] DomainSeparator = Encoding.ASCII.GetBytes("SecRandomProof/v3/roster");
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    public static string Compute(StudentList list)
+    public static string Compute(StudentList list) => Compute(list, []);
+
+    public static string Compute(StudentList list, byte[] salt)
     {
         ArgumentNullException.ThrowIfNull(list);
+        ArgumentNullException.ThrowIfNull(salt);
 
         var entries = list.Students
             .OrderBy(student => student.RecordId.ToString("N"), StringComparer.Ordinal)
@@ -36,12 +57,15 @@ public static class RosterDigest
                 exists = student.Exists
             })
             .ToArray();
-        return Compute("student", entries);
+        return Compute("student", entries, salt);
     }
 
-    public static string Compute(PrizeList list)
+    public static string Compute(PrizeList list) => Compute(list, []);
+
+    public static string Compute(PrizeList list, byte[] salt)
     {
         ArgumentNullException.ThrowIfNull(list);
+        ArgumentNullException.ThrowIfNull(salt);
 
         var entries = list.Prizes
             .OrderBy(prize => prize.RecordId.ToString("N"), StringComparer.Ordinal)
@@ -55,17 +79,19 @@ public static class RosterDigest
                 weight = prize.Weight
             })
             .ToArray();
-        return Compute("prize", entries);
+        return Compute("prize", entries, salt);
     }
 
     // Entries are sorted by record id before hashing, so reordering the list is not a change while renaming,
-    // renumbering, regrouping, or disabling a record is.
-    private static string Compute<T>(string kind, T[] entries)
+    // renumbering, regrouping, or disabling a record is. The salt sits between the domain separator and the
+    // payload: it is a per-proof random value of fixed length, so no payload can be shifted into its slot.
+    private static string Compute<T>(string kind, T[] entries, byte[] salt)
     {
         var payload = JsonSerializer.SerializeToUtf8Bytes(new { kind, entries }, JsonOptions);
-        var material = new byte[DomainSeparator.Length + payload.Length];
+        var material = new byte[DomainSeparator.Length + salt.Length + payload.Length];
         DomainSeparator.CopyTo(material, 0);
-        payload.CopyTo(material, DomainSeparator.Length);
+        salt.CopyTo(material, DomainSeparator.Length);
+        payload.CopyTo(material, DomainSeparator.Length + salt.Length);
         return WitnessClient.ToBase64Url(SHA256.HashData(material));
     }
 }

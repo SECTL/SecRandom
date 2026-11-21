@@ -17,11 +17,7 @@ public sealed class DrawProofExportService(
     MainConfigHandler configHandler,
     ILogger<DrawProofExportService> logger)
 {
-    private const int MaximumFileNameLength = 240;
     private static readonly TimeZoneInfo ChinaStandardTime = GetChinaStandardTime();
-    private static readonly HashSet<char> InvalidFileNameCharacters = "<>:\"/\\|?*"
-        .Concat(Path.GetInvalidFileNameChars())
-        .ToHashSet();
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true,
@@ -36,7 +32,7 @@ public sealed class DrawProofExportService(
             "proofs",
             timestamp.ToString("yyyy-MM"),
             timestamp.ToString("yyyy-MM-dd"),
-            CreateFileName(proof, context));
+            CreateFileName(proof));
         SaveAtPath(path, proof);
         RemoveProofsOverStorageLimit(configHandler.Data.General.ProofRetention.MaximumStorageBytes, path);
         logger.LogInformation(
@@ -79,30 +75,17 @@ public sealed class DrawProofExportService(
         }
     }
 
-    public static string CreateFileName(DrawProof proof, DrawProofExportContext context)
+    /// <summary>
+    ///     Names the file by the proof's own commit-worthy facts only: the China Standard Time stamp and a prefix
+    ///     of the proof id. The roster name, the filter values, and the algorithm label used to be part of this
+    ///     name, which made the file system leakier than the document it contains — a name is visible in every
+    ///     folder listing, backup, and support screenshot, and it carried the class and the group it was drawn
+    ///     from. Older proofs keep their old names; nothing parses the name, so both shapes are read the same way.
+    /// </summary>
+    public static string CreateFileName(DrawProof proof)
     {
         var timestamp = TimeZoneInfo.ConvertTime(proof.CreatedAtUtc, ChinaStandardTime);
-        var listName = SanitizeFilePart(context.ListName, "未命名名单");
-        var filters = context.FilterLabels
-            .Where(filter => !string.IsNullOrWhiteSpace(filter))
-            .Where(filter => !filter.StartsWith("状态=", StringComparison.Ordinal))
-            .Select(filter => SanitizeFilePart(filter, string.Empty))
-            .Where(filter => !string.IsNullOrWhiteSpace(filter))
-            .ToArray();
-        if (VerificationWireCodec.TryGetAlgorithmLabel(proof.AlgorithmId, out var algorithmLabel))
-            filters = [algorithmLabel, .. filters];
-        var filterText = SanitizeFilePart(
-            filters.Length == 0 ? "全部" : string.Join("、", filters),
-            "全部");
-        var fixedLength = timestamp.ToString("yyyyMMdd_HHmmss_fff").Length
-            + proof.ProofId.ToString("N")[..8].Length
-            + ".srproof.json".Length
-            + 3;
-        var availableLength = MaximumFileNameLength - fixedLength;
-        listName = Truncate(listName, Math.Max(1, availableLength / 2));
-        filterText = Truncate(filterText, Math.Max(1, availableLength - listName.Length));
-
-        return $"{timestamp:yyyyMMdd_HHmmss_fff}_{listName}_{filterText}_{proof.ProofId.ToString("N")[..8]}.srproof.json";
+        return $"{timestamp:yyyyMMdd_HHmmss_fff}_{proof.ProofId.ToString("N")[..8]}.srproof.json";
     }
 
     private void RemoveExpiredProofs(int retentionDays)
@@ -186,33 +169,6 @@ public sealed class DrawProofExportService(
             return TimeZoneInfo.FindSystemTimeZoneById("Asia/Shanghai");
         }
     }
-
-    private static string SanitizeFilePart(string value, string fallback)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return fallback;
-
-        StringBuilder builder = new();
-        foreach (var character in value.Trim())
-        {
-            builder.Append(character switch
-            {
-                ':' or '：' or ',' or '，' or '、' => '_',
-                _ when char.IsControl(character) || InvalidFileNameCharacters.Contains(character) => '_',
-                _ => character
-            });
-        }
-
-        var sanitized = builder.ToString().Trim(' ', '.');
-        if (string.IsNullOrWhiteSpace(sanitized))
-            return fallback;
-
-        return Truncate(sanitized, 80);
-    }
-
-    private static string Truncate(string value, int maximumLength) =>
-        value.Length <= maximumLength ? value : value[..maximumLength];
-
 }
 
 public sealed record DrawProofExportResult(string Path, DrawProof Proof);

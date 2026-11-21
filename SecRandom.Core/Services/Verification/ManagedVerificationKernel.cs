@@ -23,6 +23,28 @@ public sealed class ManagedVerificationKernel : IVerificationKernel
             && candidates.Any(candidate => candidate.IsGuaranteed || candidate.WeightMicros != 1_000_000))
             throw new InvalidOperationException("Inventory permutation requires equally weighted, unrestricted tickets.");
 
+        // An orchestrated draw commits the order itself: each drawn candidate carries its 1-based position in the
+        // round's arranged order in the weight slot, so the replay returns exactly those candidates in exactly
+        // that order and consumes no random material. A sparse or duplicated position is a malformed commitment,
+        // not something to paper over by sampling.
+        if (input.SamplingMode == VerificationSamplingMode.SequentialOrder)
+        {
+            var ordered = candidates
+                .Where(candidate => candidate.WeightMicros > 0)
+                .OrderBy(candidate => candidate.WeightMicros)
+                .ToList();
+            var dense = ordered.Count == input.Count && !candidates.Any(candidate => candidate.IsGuaranteed);
+            for (var index = 0; dense && index < ordered.Count; index++)
+                dense = ordered[index].WeightMicros == index + 1;
+            if (!dense)
+                throw new InvalidOperationException("Orchestrated draws require a dense, unique committed order.");
+
+            return new VerificationKernelResult
+            {
+                Winners = ordered.Select(candidate => new VerificationWinner(candidate.RecordId, candidate.OccurrenceIndex)).ToList()
+            };
+        }
+
         var guaranteed = candidates.Where(candidate => candidate.IsGuaranteed).ToList();
         var winners = new List<VerificationWinner>(input.Count);
         var random = new VerificationChaCha20Random(seed);

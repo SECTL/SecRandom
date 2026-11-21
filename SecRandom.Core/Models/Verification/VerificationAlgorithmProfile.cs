@@ -22,5 +22,15 @@ public enum VerificationAlgorithmProfile : byte
     StudentRandomInternalRuleRepeat = 15,
     StudentRandomInternalRuleNoRepeat = 16,
     StudentRandomInternalRuleHalfRepeat = 17,
-    NumberUniformPermutation = 18
+    NumberUniformPermutation = 18,
+
+    /// <summary>
+    ///     The round's order was arranged before the draw. Replayed from the committed positions with
+    ///     <see cref="VerificationSamplingMode.SequentialOrder" />, and declared to the verifier through
+    ///     <c>fairness.repeatMode = "orchestrated"</c> plus the <c>fairness.orchestration</c> counters.
+    /// </summary>
+    StudentOrchestrated = 19,
+
+    /// <summary>Prize equivalent of <see cref="StudentOrchestrated" />.</summary>
+    LotteryOrchestrated = 20
 }

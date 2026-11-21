@@ -37,14 +37,24 @@ public partial class DrawEngine
         string courseName,
         bool includeInternalRules,
         string rosterDigest = "",
-        string? historyGroup = null)
+        string? historyGroup = null,
+        DrawMode? drawModeOverride = null)
     {
         var preparedCandidates = candidates.Where(student => student.IsCandidate).ToList();
         if (preparedCandidates.Count == 0 || count <= 0 || count > preparedCandidates.Count)
             throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.");
 
         var drawType = GetStudentDrawType(drawSettingsType);
-        var drawMode = GetStudentDrawMode(drawSettingsType);
+        // 覆盖只为一个场景存在：抽奖轮里附带的「分配学生」是这一轮自己的随机分配，点名通道即便配了编排，
+        // 也不该把那轮的点名排布塞进抽奖证明里。其它调用方一律沿用配置里的模式。
+        var drawMode = drawModeOverride ?? GetStudentDrawMode(drawSettingsType);
+        // An orchestrated draw does not sample: the participant comes from the arranged schedule, and its proof
+        // must commit those positions (StudentOrchestrated + SequentialOrder) instead of a weighted pool. Routing
+        // it through the sampled entry point would produce a proof that replays as a random draw, i.e. exactly the
+        // claim orchestration is supposed to avoid, so fail loudly until the orchestration session builds its own.
+        if (drawMode == DrawMode.Orchestrated)
+            throw new InvalidOperationException(
+                "Orchestrated draws must build their verification input from the arranged schedule.");
         var executionPolicy = StudentDrawExecutionPolicy.DesktopConfigured(drawType, ConfigData.FairDrawSettings,
             drawSettingsType switch
             {
@@ -72,16 +82,8 @@ public partial class DrawEngine
         var hasInternalRules = includeInternalRules
                                && prepared.WeightedCandidates.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
         var algorithmProfile = GetStudentAlgorithmProfile(drawType, drawMode, hasInternalRules);
-        return new VerificationDrawInput
-        {
-            Kind = VerificationDrawKind.Student,
-            SamplingMode = drawType == DrawType.Fair
-                ? VerificationSamplingMode.HistoryBalancedWeighted
-                : VerificationSamplingMode.WeightedWithoutReplacement,
-            AlgorithmProfile = algorithmProfile,
-            Count = count,
-            Candidates = frozen,
-            AuditPayload = CreateAuditPayload("student", count, frozen, prepared.WeightedCandidates, prepared.HistoryCache, includeInternalRules, new
+        var auditPayload = CreateAuditPayload("student", count, frozen, prepared.WeightedCandidates, prepared.HistoryCache,
+            includeInternalRules, new
             {
                 fairDraw = drawType == DrawType.Fair,
                 algorithmProfile = algorithmProfile.ToString(),
@@ -92,15 +94,34 @@ public partial class DrawEngine
                 // contain a class or a person's name. A narrowed scope is exactly what makes these counts legal to
                 // read as "not the whole history", so it ships with the audit payload rather than being assumed.
                 historyScope = ToHistoryScopeName(courseName, historyGroup),
-                averageGapProtectionApplied = executionPolicy.DrawType == DrawType.Fair,
+                averageGapProtectionApplied = executionPolicy.DrawType == DrawType.Fair
+                                              && executionPolicy.FairDrawSettings.Mode == FairDrawMode.UniformFirst,
                 candidateCountBeforeAverageGapProtection = preparedCandidates.Count,
                 candidateCountAfterAverageGapProtection = prepared.UsableCandidates.Count,
                 averageGapProtectionThreshold = AverageGapProtectionThreshold,
                 batchSize = count,
+                // Retained for wire compatibility with the 3.x replay service. The unified weight math no longer
+                // consumes these horizon/floor constants; they stay declared so an older reader still finds its
+                // expected keys instead of treating the payload as truncated. The zero-probability policy of the
+                // random-first mode is already visible per candidate through weightMicros = 0, which is why this
+                // block needed no new field (the service validates a fixed property allow-list).
                 shareDebtPersonalHorizonRounds = ShareDebtPersonalHorizonRounds,
                 shareDebtDimensionHorizonPerPick = ShareDebtDimensionHorizonPerPick,
                 shareDebtRandomFloor = ShareDebtRandomFloor
-            }, rosterDigest)
+            }, rosterDigest, out var excludedCandidateCount);
+        return new VerificationDrawInput
+        {
+            Kind = VerificationDrawKind.Student,
+            SamplingMode = drawType == DrawType.Fair
+                ? VerificationSamplingMode.HistoryBalancedWeighted
+                : VerificationSamplingMode.WeightedWithoutReplacement,
+            AlgorithmProfile = algorithmProfile,
+            Count = count,
+            Candidates = frozen,
+            AuditPayload = auditPayload,
+            DrawModeToken = ToAuditName(drawMode),
+            HistoryScope = ToHistoryScopeName(courseName, historyGroup),
+            ExcludedCandidateCount = excludedCandidateCount
         };
     }
 
@@ -151,9 +172,28 @@ public partial class DrawEngine
                                && weighted.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
         var lotteryDrawType = ConfigData.LotterySettings.DrawType;
         var lotteryDrawMode = ConfigData.LotterySettings.DrawMode;
+        if (lotteryDrawMode == DrawMode.Orchestrated)
+            throw new InvalidOperationException(
+                "Orchestrated draws must build their verification input from the arranged schedule.");
         var samplingMode = lotteryDrawType == LotteryDrawType.Count && !hasInternalRules
             ? VerificationSamplingMode.InventoryPermutation
             : VerificationSamplingMode.WeightedWithoutReplacement;
+        var auditPayload = CreateAuditPayload("prize", count, frozen, weighted, historyCache, includeInternalRules, new
+        {
+            samplingAlgorithm = samplingMode == VerificationSamplingMode.InventoryPermutation
+                ? "inventory-partial-permutation"
+                : "weighted-without-replacement",
+            inventoryEntriesEqualWeight = samplingMode == VerificationSamplingMode.InventoryPermutation,
+            internalRulesRequireWeightedFallback = samplingMode == VerificationSamplingMode.WeightedWithoutReplacement
+                && lotteryDrawType == LotteryDrawType.Count
+                && hasInternalRules,
+            algorithmProfile = GetLotteryAlgorithmProfile(lotteryDrawType, lotteryDrawMode, hasInternalRules).ToString(),
+            lotteryMode = lotteryDrawType == LotteryDrawType.Count ? "count" : "pan",
+            repeatMode = lotteryDrawType == LotteryDrawType.Pan ? ToAuditName(lotteryDrawMode) : null,
+            halfRepeatLimit = lotteryDrawType == LotteryDrawType.Pan && lotteryDrawMode == DrawMode.HalfRepeat
+                ? GetLotteryRepeatThreshold()
+                : (int?)null
+        }, rosterDigest, out var excludedCandidateCount);
         return new VerificationDrawInput
         {
             Kind = VerificationDrawKind.Prize,
@@ -161,22 +201,12 @@ public partial class DrawEngine
             AlgorithmProfile = GetLotteryAlgorithmProfile(lotteryDrawType, lotteryDrawMode, hasInternalRules),
             Count = count,
             Candidates = frozen,
-            AuditPayload = CreateAuditPayload("prize", count, frozen, weighted, historyCache, includeInternalRules, new
-            {
-                samplingAlgorithm = samplingMode == VerificationSamplingMode.InventoryPermutation
-                    ? "inventory-partial-permutation"
-                    : "weighted-without-replacement",
-                inventoryEntriesEqualWeight = samplingMode == VerificationSamplingMode.InventoryPermutation,
-                internalRulesRequireWeightedFallback = samplingMode == VerificationSamplingMode.WeightedWithoutReplacement
-                    && lotteryDrawType == LotteryDrawType.Count
-                    && hasInternalRules,
-                algorithmProfile = GetLotteryAlgorithmProfile(lotteryDrawType, lotteryDrawMode, hasInternalRules).ToString(),
-                lotteryMode = lotteryDrawType == LotteryDrawType.Count ? "count" : "pan",
-                repeatMode = lotteryDrawType == LotteryDrawType.Pan ? ToAuditName(lotteryDrawMode) : null,
-                halfRepeatLimit = lotteryDrawType == LotteryDrawType.Pan && lotteryDrawMode == DrawMode.HalfRepeat
-                    ? GetLotteryRepeatThreshold()
-                    : (int?)null
-            }, rosterDigest)
+            AuditPayload = auditPayload,
+            // Count-mode inventory has no repeat semantics of its own, so it declares the sampling shape instead of
+            // borrowing the configured (and unused) repeat mode.
+            DrawModeToken = lotteryDrawType == LotteryDrawType.Count ? "inventory" : ToAuditName(lotteryDrawMode),
+            HistoryScope = "global",
+            ExcludedCandidateCount = excludedCandidateCount
         };
     }
 
@@ -247,7 +277,11 @@ public partial class DrawEngine
             AlgorithmProfile = VerificationAlgorithmProfile.NumberUniformPermutation,
             Count = count,
             Candidates = candidates,
-            AuditPayload = auditPayload
+            AuditPayload = auditPayload,
+            // The audit declares "no-repeat"; the range holds every ticket exactly once, so the readable context
+            // repeats that same token rather than inventing a number-specific mode name.
+            DrawModeToken = "no-repeat",
+            HistoryScope = "global"
         };
     }
 
@@ -305,13 +339,7 @@ public partial class DrawEngine
         _ => ConfigData.RollCallSettings.DrawMode
     };
 
-    private static string ToAuditName(DrawMode drawMode) => drawMode switch
-    {
-        DrawMode.Repeat => "repeat",
-        DrawMode.NoRepeat => "no-repeat",
-        DrawMode.HalfRepeat => "half-repeat",
-        _ => "unknown"
-    };
+    private static string ToAuditName(DrawMode drawMode) => DrawModeCatalog.ToToken(drawMode);
 
     /// <summary>
     ///     Names the history scope a draw's per-candidate history counts came from, for the anonymous audit payload.
@@ -404,6 +432,11 @@ public partial class DrawEngine
         return prize.RecordId;
     }
 
+    // Midnight UTC of the local day the draw happened on. Written as a real instant rather than a date string so
+    // older readers that expect a timestamp keep parsing the audit payload.
+    private static DateTime CoarsenLastDrawn(DateTime value) =>
+        DateTime.SpecifyKind(value.ToUniversalTime().Date, DateTimeKind.Utc);
+
     private static long ToWeightMicros(double weight)
     {
         if (double.IsNaN(weight) || double.IsInfinity(weight) || weight < 0)
@@ -423,13 +456,14 @@ public partial class DrawEngine
         IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates,
         IReadOnlyDictionary<TCandidate, History> historyCache,
         bool includeInternalRules,
-        object? fairness = null,
-        string rosterDigest = "")
+        object? fairness,
+        string rosterDigest,
+        out int internalExcludedCandidateCount)
         where TCandidate : IAttachableSettingsObject
     {
+        internalExcludedCandidateCount = 0;
         var historyByRecordId = historyCache.ToDictionary(pair => GetRecordId(pair.Key), pair => pair.Value);
         Dictionary<Guid, double?> internalSettingsByRecordId = [];
-        var internalExcludedCandidateCount = 0;
         foreach (var weighted in weightedCandidates)
         {
             var recordId = GetRecordId(weighted.Candidate);
@@ -461,9 +495,13 @@ public partial class DrawEngine
                     internalSettingApplied = internalSettingsByRecordId.GetValueOrDefault(candidate.RecordId) is not null,
                     internalProbability = internalSettingsByRecordId.GetValueOrDefault(candidate.RecordId),
                     historyCount = history?.TotalCount ?? 0,
+                    // Day precision only: a candidate's exact last-drawn instant is a behavioural fingerprint that
+                    // links this record to unrelated proofs (and, with the timestamp field, to a real lesson time).
+                    // The audit needs "how stale is this count", not the minute it happened, so the clock time is
+                    // dropped here and the day survives.
                     lastDrawnUtc = history is null || history.LastDrawnTime == DateTime.MinValue
                         ? (DateTime?)null
-                        : history.LastDrawnTime.ToUniversalTime()
+                        : CoarsenLastDrawn(history.LastDrawnTime)
                 };
             })
             .ToArray();

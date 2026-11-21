@@ -36,6 +36,12 @@ public sealed class FormalNotarizationRequest
     public string AuditPayload { get; init; } = string.Empty;
     public string ClientNonce { get; init; } = string.Empty;
 
+    // Readable context for the formal proof the service builds. It is part of the request because the notarized
+    // document is signed on the server: a block added only after the response could not be covered by that
+    // signature. An older service ignores the property and answers with the v1 proof it has always produced.
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DrawProofContext? Context { get; init; }
+
     // Legacy chain position fields kept on the wire contract only: this build keeps no local proof chain,
     // so they stay null and are omitted from the request. The service never used them for locking.
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]

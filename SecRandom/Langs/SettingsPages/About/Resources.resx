@@ -105,4 +105,58 @@
     <data name="M_InternalSettingsActivated" xml:space="preserve">
         <value>已在名单管理页面每位成员或奖品右侧的“附加设置”菜单中显示“内幕设置”；此显示仅对本次运行有效，重新启动软件后会自动隐藏；&#xA;&#xA;内幕设置会影响候选项权重，不适用于需要公平、公开或可审计的活动抽取；启用内幕设置的人员若被抽中，可验证文件上传至验证网站时会显示相应提醒；这可能使设置行为被发现；&#xA;&#xA;内幕设置的优先级低于公平抽取规则；已设置内幕的成员或奖品即使本次被抽中，也不代表下次一定会被抽中</value>
     </data>
+    <data name="S_Machine" xml:space="preserve">
+        <value>本机信息</value>
+    </data>
+    <data name="S_Machine_D" xml:space="preserve">
+        <value>当前运行设备的系统、运行时与目录信息</value>
+    </data>
+    <data name="C_CopyMachine" xml:space="preserve">
+        <value>复制本机信息</value>
+    </data>
+    <data name="M_MachineCopied" xml:space="preserve">
+        <value>本机信息已复制到剪贴板</value>
+    </data>
+    <data name="M_MachineCopyFailed" xml:space="preserve">
+        <value>无法复制本机信息</value>
+    </data>
+    <data name="S_Machine_Host" xml:space="preserve">
+        <value>计算机名</value>
+    </data>
+    <data name="S_Machine_System" xml:space="preserve">
+        <value>操作系统</value>
+    </data>
+    <data name="S_Machine_Architecture" xml:space="preserve">
+        <value>系统架构</value>
+    </data>
+    <data name="S_Machine_Architecture_Value" xml:space="preserve">
+        <value>{0}（进程 {1}）</value>
+    </data>
+    <data name="S_Machine_Runtime" xml:space="preserve">
+        <value>运行时</value>
+    </data>
+    <data name="S_Machine_Processor" xml:space="preserve">
+        <value>逻辑处理器</value>
+    </data>
+    <data name="S_Machine_Processor_Value" xml:space="preserve">
+        <value>{0} 个</value>
+    </data>
+    <data name="S_Machine_Version" xml:space="preserve">
+        <value>程序版本</value>
+    </data>
+    <data name="S_Machine_AppDirectory" xml:space="preserve">
+        <value>程序目录</value>
+    </data>
+    <data name="S_Machine_DataDirectory" xml:space="preserve">
+        <value>数据目录</value>
+    </data>
+    <data name="S_DrawModes" xml:space="preserve">
+        <value>抽取模式</value>
+    </data>
+    <data name="S_DrawModes_D" xml:space="preserve">
+        <value>内置抽取算法随主程序发布，右侧显示证明重放所用的算法引擎版本</value>
+    </data>
+    <data name="S_DrawModes_Engine" xml:space="preserve">
+        <value>算法引擎 {0}</value>
+    </data>
 </root>

@@ -7,10 +7,12 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -23,8 +25,10 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core;
+using SecRandom.Core.Services.Verification;
 using SecRandom.Services;
 using SecRandom.Services.Desktop;
+using SecRandom.Shared;
 using SecRandom.Views;
 using LR = SecRandom.Langs.SettingsPages.About.Resources;
 using DebugResources = SecRandom.Langs.SettingsPages.Debug.DebugStrings;
@@ -47,6 +51,25 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
     public int OnlineUsersCount => OnlineStatusService.CachedOnlineCount;
     public Bitmap BannerSource { get; } = LoadBanner();
     public ObservableCollection<GitHubContributor> Contributors { get; } = [];
+
+    // 本机信息与模式版本在页面构造时读取一次：进程运行期间这些值不会变化，
+    // 也不需要在每次语言切换后重新求值（文案随界面刷新重新构造页面）。
+    public string MachineHostName => Environment.MachineName;
+    public string MachineOperatingSystem => RuntimeInformation.OSDescription;
+    public string MachineArchitecture => string.Format(
+        LR.S_Machine_Architecture_Value,
+        RuntimeInformation.OSArchitecture,
+        RuntimeInformation.ProcessArchitecture);
+    public string MachineRuntime => RuntimeInformation.FrameworkDescription;
+    public string MachineProcessorCount => string.Format(
+        LR.S_Machine_Processor_Value,
+        Environment.ProcessorCount);
+    public string MachineVersion => GlobalConstants.VersionLong;
+    public string MachineAppDirectory => Utils.PackageRoot;
+    public string MachineDataDirectory => Utils.DataRoot;
+
+    public string EngineVersionText => string.Format(
+        LR.S_DrawModes_Engine, VerificationWireCodec.AlgorithmEngineVersion);
 
     public bool IsRefreshingContributors
     {
@@ -126,6 +149,35 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
         };
 
         if (url != null) OpenLink(url);
+    }
+
+    private async void CopyMachineInfo_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var clipboard = TopLevel.GetTopLevel(this)?.Clipboard;
+        if (clipboard is null)
+            return;
+
+        var lines = new[]
+        {
+            $"{LR.S_Machine_Version}: {MachineVersion}",
+            $"{LR.S_Machine_Host}: {MachineHostName}",
+            $"{LR.S_Machine_System}: {MachineOperatingSystem}",
+            $"{LR.S_Machine_Architecture}: {MachineArchitecture}",
+            $"{LR.S_Machine_Runtime}: {MachineRuntime}",
+            $"{LR.S_Machine_Processor}: {MachineProcessorCount}",
+            $"{LR.S_Machine_AppDirectory}: {MachineAppDirectory}",
+            $"{LR.S_Machine_DataDirectory}: {MachineDataDirectory}"
+        };
+
+        try
+        {
+            await clipboard.SetTextAsync(string.Join(Environment.NewLine, lines));
+            this.ShowToast(LR.M_MachineCopied);
+        }
+        catch (Exception)
+        {
+            this.ShowErrorToast(LR.M_MachineCopyFailed);
+        }
     }
 
     private async void Contributors_OnClick(object? sender, RoutedEventArgs e)

@@ -7,8 +7,19 @@ namespace SecRandom.Shared.Models.Verification;
 /// </summary>
 public sealed record class DrawProof
 {
+    /// <summary>
+    ///     The original proof document: replay evidence only, no readable draw context.
+    /// </summary>
+    public const string FormatV1 = "secrandom-draw-proof/v1";
+
+    /// <summary>
+    ///     Adds <see cref="Context" /> and commits it in the attested proof hash, so a receipt covers the draw's
+    ///     channel, pool composition, and filters instead of leaving them outside the file.
+    /// </summary>
+    public const string FormatV2 = "secrandom-draw-proof/v2";
+
     [JsonPropertyName("format")]
-    public string Format { get; init; } = "secrandom-draw-proof/v1";
+    public string Format { get; init; } = FormatV2;
 
     [JsonPropertyName("proofId")]
     public Guid ProofId { get; init; } = Guid.NewGuid();
@@ -42,6 +53,11 @@ public sealed record class DrawProof
     // JSON bytes encoded as Base64Url. It contains anonymous candidate/history evidence only.
     [JsonPropertyName("auditPayload")]
     public string AuditPayload { get; init; } = string.Empty;
+
+    // Readable draw context. Absent in a v1 proof, and ignored (but hashed) in a v2 proof that has none.
+    [JsonPropertyName("context")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DrawProofContext? Context { get; init; }
 
     [JsonPropertyName("result")]
     public DrawProofResult Result { get; init; } = new();

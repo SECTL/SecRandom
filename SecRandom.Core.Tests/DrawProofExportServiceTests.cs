@@ -8,7 +8,7 @@ namespace SecRandom.Core.Tests;
 public sealed class DrawProofExportServiceTests
 {
     [Fact]
-    public void CreateFileName_UsesChinaStandardTimeListAndFilters()
+    public void CreateFileName_UsesChinaStandardTimeAndProofIdOnly()
     {
         DrawProof proof = new()
         {
@@ -16,48 +16,13 @@ public sealed class DrawProofExportServiceTests
             CreatedAtUtc = new DateTimeOffset(2026, 7, 14, 0, 30, 12, 345, TimeSpan.Zero)
         };
 
-        var fileName = DrawProofExportService.CreateFileName(
-            proof,
-            DrawProofExportContext.ForStudents("高一:一班", "A/组", "女"));
+        var fileName = DrawProofExportService.CreateFileName(proof);
 
-        Assert.Equal("20260714_083012_345_高一_一班_组别=A_组_性别=女_12345678.srproof.json", fileName);
+        Assert.Equal("20260714_083012_345_12345678.srproof.json", fileName);
     }
 
     [Fact]
-    public void CreateFileName_UsesAllScopeWhenNoStudentFilterIsSelected()
-    {
-        DrawProof proof = new()
-        {
-            ProofId = Guid.Parse("abcdef12-1234-1234-1234-123456789abc"),
-            CreatedAtUtc = new DateTimeOffset(2026, 7, 14, 0, 0, 0, TimeSpan.Zero)
-        };
-
-        var fileName = DrawProofExportService.CreateFileName(proof, DrawProofExportContext.ForStudents("默认名单"));
-
-        Assert.Contains("默认名单_全部_abcdef12", fileName);
-    }
-
-    [Fact]
-    public void CreateFileName_UsesPrizePoolAndLotteryMode()
-    {
-        DrawProof proof = new()
-        {
-            ProofId = Guid.Parse("abcdef12-1234-1234-1234-123456789abc"),
-            CreatedAtUtc = new DateTimeOffset(2026, 7, 14, 0, 0, 0, TimeSpan.Zero),
-            AlgorithmId = VerificationWireCodec.InventoryLotteryAlgorithmId
-        };
-
-        var fileName = DrawProofExportService.CreateFileName(
-            proof,
-            DrawProofExportContext.ForPrizes("期末奖池"));
-
-        Assert.Contains("期末奖池_按剩余数量_abcdef12", fileName);
-        Assert.DoesNotContain("方式=", fileName);
-        Assert.DoesNotContain("状态=", fileName);
-    }
-
-    [Fact]
-    public void CreateFileName_UsesStudentAlgorithmProfile()
+    public void CreateFileName_CarriesNoRosterFilterOrAlgorithmText()
     {
         DrawProof proof = new()
         {
@@ -66,54 +31,33 @@ public sealed class DrawProofExportServiceTests
             AlgorithmId = VerificationWireCodec.GetAlgorithmId(VerificationAlgorithmProfile.StudentRandomHalfRepeat)
         };
 
-        var fileName = DrawProofExportService.CreateFileName(
-            proof,
-            DrawProofExportContext.ForStudents("默认名单"));
+        var fileName = DrawProofExportService.CreateFileName(proof);
 
-        Assert.Contains("默认名单_点名_随机_半重复_abcdef12", fileName);
-        Assert.DoesNotContain(':', fileName);
-        Assert.DoesNotContain(',', fileName);
+        // The file name is visible in every folder listing, archive, and support screenshot, so it must not say
+        // more than the document does: the roster name, the filter values, and the readable algorithm label used
+        // to leak there while the proof body stayed de-identified.
+        Assert.DoesNotContain("高一", fileName);
+        Assert.DoesNotContain("组别", fileName);
+        Assert.DoesNotContain("性别", fileName);
+        Assert.DoesNotContain("全部", fileName);
+        Assert.DoesNotContain("点名", fileName);
         Assert.DoesNotContain('：', fileName);
-        Assert.DoesNotContain('，', fileName);
-        Assert.DoesNotContain('、', fileName);
-    }
-
-    [Theory]
-    [InlineData("secrandom-lottery-inventory-count/v3")]
-    [InlineData("secrandom-lottery-count-internal-rule/v3")]
-    [InlineData("secrandom-lottery-pan-repeat/v3")]
-    [InlineData("secrandom-lottery-pan-no-repeat/v3")]
-    [InlineData("secrandom-lottery-pan-half-repeat/v3")]
-    public void CreateFileName_RemovesPunctuationFromLotteryAlgorithmLabels(string algorithmId)
-    {
-        var proof = new DrawProof
-        {
-            ProofId = Guid.Parse("abcdef12-1234-1234-1234-123456789abc"),
-            CreatedAtUtc = new DateTimeOffset(2026, 7, 14, 0, 0, 0, TimeSpan.Zero),
-            AlgorithmId = algorithmId
-        };
-
-        var fileName = DrawProofExportService.CreateFileName(
-            proof,
-            DrawProofExportContext.ForPrizes("期末奖池"));
-
-        Assert.DoesNotContain(':', fileName);
-        Assert.DoesNotContain(',', fileName);
-        Assert.DoesNotContain('：', fileName);
-        Assert.DoesNotContain('，', fileName);
         Assert.DoesNotContain('、', fileName);
     }
 
     [Fact]
     public void CreateFileName_KeepsTheFileNameWithinWindowsLimits()
     {
-        DrawProof proof = new();
-        var context = new DrawProofExportContext(
-            new string('名', 100),
-            [new string('组', 100), new string('性', 100), new string('课', 100)]);
+        DrawProof proof = new()
+        {
+            ProofId = Guid.NewGuid(),
+            CreatedAtUtc = DateTimeOffset.UtcNow
+        };
 
-        var fileName = DrawProofExportService.CreateFileName(proof, context);
+        var fileName = DrawProofExportService.CreateFileName(proof);
 
-        Assert.True(fileName.Length <= 240);
+        // The name no longer embeds user text, so its length is fixed regardless of the roster or the filters.
+        Assert.True(fileName.Length <= 64, fileName);
+        Assert.Matches("^[0-9]{8}_[0-9]{6}_[0-9]{3}_[0-9a-f]{8}\\.srproof\\.json$", fileName);
     }
 }

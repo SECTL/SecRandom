@@ -201,7 +201,57 @@ public sealed class WitnessClient(
             AppendString(hash, winnerRecordId.ToString("N"));
         AppendString(hash, proof.Witness?.Challenge);
         AppendString(hash, proof.Witness?.KeyId);
+        // v2 commits the readable draw context, so the receipt covers what the file says the draw was, not only the
+        // replay material. The field order below is the wire contract: the service appends exactly these values in
+        // exactly this order, and a mismatch only shows up as an "attestation is not bound to this proof" failure.
+        if (string.Equals(proof.Format, DrawProof.FormatV2, StringComparison.Ordinal))
+            AppendContext(hash, proof.Context);
         return ToBase64Url(hash.GetHashAndReset());
+    }
+
+    private static void AppendContext(IncrementalHash hash, DrawProofContext? context)
+    {
+        // A v2 proof without a context still has to hash deterministically, so "no context" gets its own marker
+        // instead of silently shortening the stream (which would let a stripped block read as an older proof).
+        if (context is null)
+        {
+            AppendInt32(hash, -1);
+            return;
+        }
+
+        AppendInt32(hash, 0);
+        AppendString(hash, context.Channel);
+        AppendString(hash, context.SettingsType);
+        AppendString(hash, context.DrawMode);
+        AppendString(hash, context.SamplingMode);
+        AppendString(hash, context.AlgorithmProfile);
+        AppendInt32(hash, context.RequestedCount);
+        // Every sub-object is read null-safely and a missing one hashes as zeros, exactly like the verifier's
+        // AppendProofContext: a hand-edited file must produce the same digest on both sides, not an exception on
+        // one and a digest on the other.
+        AppendInt32(hash, context.Pool?.CandidateCount ?? 0);
+        AppendInt32(hash, context.Pool?.DrawableCount ?? 0);
+        AppendInt32(hash, context.Pool?.ZeroWeightCount ?? 0);
+        AppendInt32(hash, context.Pool?.GuaranteedCount ?? 0);
+        AppendInt32(hash, context.Pool?.ExcludedCount ?? 0);
+        AppendString(hash, context.Scope?.History);
+        AppendInt32(hash, context.Scope?.FilterKinds?.Count ?? 0);
+        foreach (var filterKind in context.Scope?.FilterKinds ?? [])
+            AppendString(hash, filterKind);
+        AppendInt32(hash, context.Orchestration?.Round ?? -1);
+        AppendInt32(hash, context.Orchestration?.RoundCount ?? -1);
+        AppendString(hash, context.Roster?.Kind);
+        AppendInt32(hash, context.Roster?.EntryCount ?? 0);
+        AppendString(hash, context.Roster?.DigestFormat);
+        AppendString(hash, context.Roster?.Digest);
+        // Appended only when present, so a v2 proof written before the salted digest existed still hashes to the
+        // same digest: v3 proofs carry no salt and therefore no extra segment at all.
+        if (!string.IsNullOrEmpty(context.Roster?.DigestSalt))
+            AppendString(hash, context.Roster.DigestSalt);
+        AppendString(hash, context.Environment?.AppVersion);
+        AppendString(hash, context.Environment?.PlatformFamily);
+        AppendInt32(hash, context.Environment?.TimeZoneOffsetMinutes ?? 0);
+        AppendString(hash, context.SessionId.ToString("N"));
     }
 
     private static void AppendString(IncrementalHash hash, string? value)

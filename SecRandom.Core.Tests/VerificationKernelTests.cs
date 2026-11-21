@@ -45,6 +45,18 @@ public sealed class VerificationKernelTests
     }
 
     [Fact]
+    public void DrawProof_VersionsTheOrchestratedGenerationSeparately()
+    {
+        // 编排放不进 3.5.0 的版本链：现网 3.5 验证器既不认识 SequentialOrder 也不认识 profile 19/20，
+        // 所以只有编排证明盖 3.6.0，普通抽取继续盖 3.5.0，普通抽取在服务端升级期间照常认证。
+        Assert.Equal("3.5.0", VerificationWireCodec.GetEngineVersion(VerificationSamplingMode.HistoryBalancedWeighted));
+        Assert.Equal("3.5.0", VerificationWireCodec.GetEngineVersion(VerificationSamplingMode.InventoryPermutation));
+        Assert.Equal("3.5.0", VerificationWireCodec.GetEngineVersion(VerificationSamplingMode.WeightedWithoutReplacement));
+        Assert.Equal("3.6.0", VerificationWireCodec.GetEngineVersion(VerificationSamplingMode.SequentialOrder));
+        Assert.Equal("3.6.0", VerificationWireCodec.OrchestratedAlgorithmEngineVersion);
+    }
+
+    [Fact]
     public void Draw_IsStableAcrossCandidateOrder()
     {
         var first = CreateInput(

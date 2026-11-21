@@ -267,6 +267,114 @@
                 </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
+            <!-- 本机信息：Support/diagnostics surface. Values are read once at page construction because
+                 the OS/runtime/paths do not change while the process runs. -->
+            <fa:FASettingsExpander x:Name="S_Machine"
+                                   Header="{x:Static lsa:Resources.S_Machine}"
+                                   Description="{x:Static lsa:Resources.S_Machine_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi DesktopFilled}}"
+                                   IsExpanded="False">
+                <fa:FASettingsExpander.Footer>
+                    <Button Content="{x:Static lsa:Resources.C_CopyMachine}"
+                            Theme="{StaticResource TransparentButton}"
+                            Click="CopyMachineInfo_OnClick" />
+                </fa:FASettingsExpander.Footer>
+
+                <fa:FASettingsExpanderItem x:Name="S_Machine_Host"
+                                           Content="{x:Static lsa:Resources.S_Machine_Host}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <TextBlock Text="{Binding MachineHostName}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem x:Name="S_Machine_System"
+                                           Content="{x:Static lsa:Resources.S_Machine_System}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <TextBlock Text="{Binding MachineOperatingSystem}"
+                                   FontSize="12"
+                                   MaxWidth="360"
+                                   TextWrapping="Wrap"
+                                   TextAlignment="Right"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem x:Name="S_Machine_Architecture"
+                                           Content="{x:Static lsa:Resources.S_Machine_Architecture}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <TextBlock Text="{Binding MachineArchitecture}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem x:Name="S_Machine_Runtime"
+                                           Content="{x:Static lsa:Resources.S_Machine_Runtime}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <TextBlock Text="{Binding MachineRuntime}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem x:Name="S_Machine_Processor"
+                                           Content="{x:Static lsa:Resources.S_Machine_Processor}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <TextBlock Text="{Binding MachineProcessorCount}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem x:Name="S_Machine_Version"
+                                           Content="{x:Static lsa:Resources.S_Machine_Version}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <TextBlock Text="{Binding MachineVersion}"
+                                   FontSize="12"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem x:Name="S_Machine_AppDirectory"
+                                           Content="{x:Static lsa:Resources.S_Machine_AppDirectory}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <SelectableTextBlock Text="{Binding MachineAppDirectory}"
+                                             FontSize="12"
+                                             MaxWidth="360"
+                                             TextWrapping="Wrap"
+                                             TextAlignment="Right"
+                                             Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem x:Name="S_Machine_DataDirectory"
+                                           Content="{x:Static lsa:Resources.S_Machine_DataDirectory}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <SelectableTextBlock Text="{Binding MachineDataDirectory}"
+                                             FontSize="12"
+                                             MaxWidth="360"
+                                             TextWrapping="Wrap"
+                                             TextAlignment="Right"
+                                             Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+            </fa:FASettingsExpander>
+
+            <!-- 抽取模式：内置抽取算法没有独立的按模式版本号，全部随主程序发布，
+                 所以这里只显示证明重放所用的算法引擎版本，不再逐条列出每个模式。 -->
+            <fa:FASettingsExpander x:Name="S_DrawModes"
+                                   Header="{x:Static lsa:Resources.S_DrawModes}"
+                                   Description="{x:Static lsa:Resources.S_DrawModes_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi CodeFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <TextBlock Text="{Binding EngineVersionText}"
+                               FontSize="12"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_Ack"
                                    Header="{x:Static lsa:Resources.S_Ack}"
                                     IconSource="{sr:FluentIconSource {sr:Fi HeartFilled}}" IsExpanded="True">
