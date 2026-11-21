@@ -11,37 +11,11 @@
              x:DataType="local:StorageSettingsPage">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro settings">
-            <fa:FASettingsExpander x:Name="S_Location"
-                                   Header="{x:Static lsp:Resources.S_Location}"
-                                   Description="{x:Static lsp:Resources.S_CurrentRoot_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi HardDriveFilled}}"
-                                   IsExpanded="True">
-                <StackPanel Spacing="10">
-                    <StackPanel x:Name="S_CurrentRoot" Spacing="2">
-                        <TextBlock Text="{x:Static lsp:Resources.S_CurrentRoot}"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <TextBlock Text="{Binding CurrentRoot}" TextWrapping="Wrap" />
-                    </StackPanel>
-                    <StackPanel x:Name="S_Source" Spacing="2">
-                        <TextBlock Text="{x:Static lsp:Resources.S_Source}"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <TextBlock Text="{Binding SourceText}" TextWrapping="Wrap" />
-                    </StackPanel>
-                    <StackPanel x:Name="S_AnchorPath" Spacing="2" IsVisible="{Binding HasAnchor}">
-                        <TextBlock Text="{x:Static lsp:Resources.S_AnchorPath}"
-                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                        <TextBlock Text="{Binding AnchorPathText}" TextWrapping="Wrap" />
-                    </StackPanel>
-                </StackPanel>
-            </fa:FASettingsExpander>
-
             <TextBlock Text="{x:Static lsp:Resources.M_LegacyNotice}"
                        TextWrapping="Wrap"
                        Foreground="{DynamicResource SystemFillColorCautionBrush}"
                        IsVisible="{Binding NeedsMigrationNotice}"
                        Margin="0 8 0 0" />
-
-            <Separator Margin="0 12 0 4" />
 
             <sr:IconText x:Name="S_Change"
                          Text="{x:Static lsp:Resources.S_Change}"
@@ -124,6 +98,30 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
+                </StackPanel>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Location"
+                                   Header="{x:Static lsp:Resources.S_Location}"
+                                   Description="{x:Static lsp:Resources.S_CurrentRoot_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi HardDriveFilled}}"
+                                   IsExpanded="True">
+                <StackPanel Spacing="10">
+                    <StackPanel x:Name="S_CurrentRoot" Spacing="2">
+                        <TextBlock Text="{x:Static lsp:Resources.S_CurrentRoot}"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding CurrentRoot}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel x:Name="S_Source" Spacing="2">
+                        <TextBlock Text="{x:Static lsp:Resources.S_Source}"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding SourceText}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <StackPanel x:Name="S_AnchorPath" Spacing="2" IsVisible="{Binding HasAnchor}">
+                        <TextBlock Text="{x:Static lsp:Resources.S_AnchorPath}"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Text="{Binding AnchorPathText}" TextWrapping="Wrap" />
+                    </StackPanel>
                 </StackPanel>
             </fa:FASettingsExpander>
         </StackPanel>

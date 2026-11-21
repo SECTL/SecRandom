@@ -28,7 +28,6 @@
   <data name="C_ResetCounts"><value>統計をリセット</value></data>
   <data name="C_SelectFile"><value>ファイルを選択</value></data>
   <data name="C_ImportSource"><value>インポート元</value></data>
-  <data name="C_TransferMode"><value>転送方式</value></data>
   <data name="C_StartScan"><value>スキャン開始</value></data>
   <data name="C_StopScan"><value>スキャン停止</value></data>
   <data name="C_JsonCountFormat"><value>{0}/{1} 文字</value></data>
@@ -58,7 +57,6 @@
   <data name="M_ImportHint"><value>インポートはライブラリ全体を置き換え、使用記録を消去します</value></data>
   <data name="M_SourceTable"><value>表ファイル</value></data>
   <data name="M_SourceJson"><value>JSON 貼り付け</value></data>
-  <data name="M_SourceTransfer"><value>QR 転送</value></data>
   <data name="M_TableHint"><value>xlsx・xls・csv に対応し、1 列目を読み取ります。見出し行は自動で飛ばします</value></data>
   <data name="M_TableReading"><value>表を読み込み中…</value></data>
   <data name="M_TableReadFailed"><value>表を読み込めませんでした</value></data>
@@ -67,10 +65,13 @@
   <data name="M_ImportFailed"><value>インポートに失敗しました</value></data>
   <data name="M_ImportDone"><value>テキスト {0} 件をインポートしました</value></data>
   <data name="M_JsonHint"><value>JSON の文字列配列、または {"texts":[...]} 形式のオブジェクトを貼り付けてください</value></data>
-  <data name="M_JsonEmpty"><value>JSON の貼り付けを待っています</value></data>
   <data name="M_JsonTooLong"><value>内容が {0} 文字の上限を超えています</value></data>
   <data name="M_JsonInvalid"><value>JSON を解析できません</value></data>
   <data name="M_JsonValid"><value>テキスト {0} 件をインポートできます</value></data>
+  <data name="M_JsonAiTitle"><value>AI でテキストを生成</value></data>
+  <data name="M_JsonAiHint"><value>下のプロンプトを AI に送ると、テキストの種類と件数を確認してから、貼り付け可能な JSON を返します</value></data>
+  <data name="C_JsonAiCopy"><value>プロンプトをコピー</value></data>
+  <data name="M_JsonAiCopied"><value>プロンプトをコピーしました</value></data>
   <data name="M_PreviewCount"><value>先頭 {0} 件をプレビュー</value></data>
   <data name="M_TransferQuickQr"><value>スキャンで高速インポート</value></data>
   <data name="M_TransferOfflineQr"><value>オフライン QR インポート</value></data>

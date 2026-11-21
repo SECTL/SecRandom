@@ -67,21 +67,44 @@
                                IsVisible="{Binding JsonStatusIsError}"
                                Foreground="Red"
                                TextWrapping="Wrap" />
+
+                    <Border Margin="0,4,0,0"
+                            Padding="10"
+                            CornerRadius="4"
+                            BorderThickness="1"
+                            Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{DynamicResource ControlElevationBorderBrush}">
+                        <StackPanel Spacing="6">
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Grid.Column="0"
+                                           VerticalAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           FontWeight="SemiBold"
+                                           Text="{x:Static lm:Resources.M_JsonAiTitle}" />
+                                <Button Grid.Column="1"
+                                        Classes="accent"
+                                        Click="CopyAiPromptButton_OnClick">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <sr:FluentIcon Glyph="{sr:Fi CopyFilled}" />
+                                        <TextBlock Text="{x:Static lm:Resources.C_JsonAiCopy}" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                            <TextBlock Text="{x:Static lm:Resources.M_JsonAiHint}"
+                                       TextWrapping="Wrap"
+                                       Opacity="0.7" />
+                            <TextBox Text="{Binding AiPromptText, Mode=OneTime}"
+                                     IsReadOnly="True"
+                                     AcceptsReturn="True"
+                                     TextWrapping="Wrap"
+                                     Height="110"
+                                     VerticalContentAlignment="Top"
+                                     FontSize="12" />
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
 
-                <StackPanel Spacing="8" IsVisible="{Binding IsTransferMode}">
-                    <GroupBox Header="{x:Static lm:Resources.C_TransferMode}">
-                        <ComboBox HorizontalAlignment="Stretch"
-                                  ItemsSource="{Binding TransferModes}"
-                                  SelectedItem="{Binding SelectedTransferModeOption, Mode=TwoWay}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="local:TextLibraryTransferModeOption">
-                                    <TextBlock Text="{Binding Label}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </GroupBox>
-
+                <StackPanel Spacing="8" IsVisible="{Binding IsQrMode}">
                     <TextBlock Text="{x:Static lm:Resources.M_QuickQrHint}"
                                IsVisible="{Binding IsQuickQrMode}"
                                TextWrapping="Wrap"
@@ -105,28 +128,30 @@
                              TextChanged="SessionCodeInput_OnTextChanged"
                              PlaceholderText="{x:Static lm:Resources.M_SessionCodePlaceholder}" />
 
-                    <Border IsVisible="{Binding IsCameraPreviewSupported}"
-                            BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="4"
-                            ClipToBounds="True"
-                            Height="180">
-                        <controls:RosterQrCameraPreview x:Name="CameraControl" />
-                    </Border>
+                    <StackPanel Spacing="8" IsVisible="{Binding IsScannerMode}">
+                        <Border IsVisible="{Binding IsCameraPreviewSupported}"
+                                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                ClipToBounds="True"
+                                Height="180">
+                            <controls:RosterQrCameraPreview x:Name="CameraControl" />
+                        </Border>
 
-                    <Button Classes="accent"
-                            HorizontalAlignment="Left"
-                            IsVisible="{Binding IsCameraPreviewSupported}"
-                            Click="ScanButton_OnClick">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <sr:FluentIcon Glyph="{sr:Fi QrCodeFilled}" />
-                            <TextBlock Text="{Binding ScanButtonText}" />
-                        </StackPanel>
-                    </Button>
-                    <TextBlock Text="{x:Static lm:Resources.M_ScanUnsupported}"
-                               IsVisible="{Binding !IsCameraPreviewSupported}"
-                               TextWrapping="Wrap"
-                               Opacity="0.7" />
+                        <Button Classes="accent"
+                                HorizontalAlignment="Left"
+                                IsVisible="{Binding IsCameraPreviewSupported}"
+                                Click="ScanButton_OnClick">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <sr:FluentIcon Glyph="{sr:Fi QrCodeFilled}" />
+                                <TextBlock Text="{Binding ScanButtonText}" />
+                            </StackPanel>
+                        </Button>
+                        <TextBlock Text="{x:Static lm:Resources.M_ScanUnsupported}"
+                                   IsVisible="{Binding !IsCameraPreviewSupported}"
+                                   TextWrapping="Wrap"
+                                   Opacity="0.7" />
+                    </StackPanel>
                 </StackPanel>
 
                 <Border IsVisible="{Binding HasPreview}"

@@ -102,6 +102,9 @@
   <data name="C_RandomNumberRange" xml:space="preserve">
     <value>范围</value>
   </data>
+  <data name="C_RandomNumberDrawCount" xml:space="preserve">
+    <value>抽取次数</value>
+  </data>
   <data name="C_RandomNumberCount" xml:space="preserve">
     <value>个数</value>
   </data>

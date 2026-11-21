@@ -20,6 +20,15 @@ public sealed class RandomNumberDrawRecord
     public List<int> Numbers { get; set; } = [];
 }
 
+/// <summary>Lifetime draw count for one configured number range.</summary>
+public sealed class RandomNumberRangeStatistics
+{
+    public int RangeStart { get; set; }
+    public int RangeEnd { get; set; }
+    public int DrawCount { get; set; }
+    public DateTime? LastDrawAt { get; set; }
+}
+
 /// <summary>Persisted random-number statistics document.</summary>
 public sealed class RandomNumberStatistics
 {
@@ -30,6 +39,7 @@ public sealed class RandomNumberStatistics
     public int TotalRounds { get; set; }
     public int TotalDrawnCount { get; set; }
     public DateTime? LastDrawAt { get; set; }
+    public List<RandomNumberRangeStatistics> Ranges { get; set; } = [];
     public List<RandomNumberDrawRecord> Recent { get; set; } = [];
 }
 
@@ -38,6 +48,7 @@ public sealed record RandomNumberStatisticsSnapshot(
     int TotalRounds,
     int TotalDrawnCount,
     DateTime? LastDrawAt,
+    IReadOnlyList<RandomNumberRangeStatistics> Ranges,
     IReadOnlyList<RandomNumberDrawRecord> Recent);
 
 /// <summary>
@@ -93,14 +104,31 @@ public sealed class RandomNumberStatisticsService : IRandomNumberStatisticsServi
             try
             {
                 var document = LoadDocument();
+                var drawTime = DateTime.Now;
                 document.TotalRounds++;
                 document.TotalDrawnCount += numbers.Count;
-                document.LastDrawAt = DateTime.Now;
+                document.LastDrawAt = drawTime;
+
+                var range = document.Ranges.FirstOrDefault(item =>
+                    item.RangeStart == rangeStart && item.RangeEnd == rangeEnd);
+                if (range is null)
+                {
+                    range = new RandomNumberRangeStatistics
+                    {
+                        RangeStart = rangeStart,
+                        RangeEnd = rangeEnd
+                    };
+                    document.Ranges.Add(range);
+                }
+
+                range.DrawCount++;
+                range.LastDrawAt = drawTime;
+
                 document.Recent.InsertRange(0,
                 [
                     new RandomNumberDrawRecord
                     {
-                        DrawTime = DateTime.Now,
+                        DrawTime = drawTime,
                         Source = source,
                         RangeStart = rangeStart,
                         RangeEnd = rangeEnd,
@@ -158,6 +186,7 @@ public sealed class RandomNumberStatisticsService : IRandomNumberStatisticsServi
                 .Where(record => record is not null)
                 .Take(RandomNumberStatistics.MaxRecentRecords)
                 .ToList();
+            document.Ranges = NormalizeRanges(document.Ranges, document.Recent);
             return document;
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
@@ -166,6 +195,62 @@ public sealed class RandomNumberStatisticsService : IRandomNumberStatisticsServi
             TryQuarantine();
             return new RandomNumberStatistics();
         }
+    }
+
+    private static List<RandomNumberRangeStatistics> NormalizeRanges(
+        List<RandomNumberRangeStatistics>? stored,
+        IReadOnlyList<RandomNumberDrawRecord> recent)
+    {
+        var ranges = new Dictionary<(int Start, int End), RandomNumberRangeStatistics>();
+        foreach (var item in stored ?? [])
+        {
+            if (item is null || item.RangeEnd < item.RangeStart || item.DrawCount <= 0)
+                continue;
+
+            var key = (item.RangeStart, item.RangeEnd);
+            if (!ranges.TryGetValue(key, out var range))
+            {
+                ranges[key] = range = new RandomNumberRangeStatistics
+                {
+                    RangeStart = item.RangeStart,
+                    RangeEnd = item.RangeEnd
+                };
+            }
+
+            range.DrawCount += item.DrawCount;
+            if (item.LastDrawAt is { } lastDrawAt
+                && (range.LastDrawAt is null || lastDrawAt > range.LastDrawAt))
+                range.LastDrawAt = lastDrawAt;
+        }
+
+        // Older documents predate per-range counters; their bounded recent list is the best available summary.
+        if (ranges.Count == 0)
+        {
+            foreach (var record in recent)
+            {
+                if (record.RangeEnd < record.RangeStart)
+                    continue;
+
+                var key = (record.RangeStart, record.RangeEnd);
+                if (!ranges.TryGetValue(key, out var range))
+                {
+                    ranges[key] = range = new RandomNumberRangeStatistics
+                    {
+                        RangeStart = record.RangeStart,
+                        RangeEnd = record.RangeEnd
+                    };
+                }
+
+                range.DrawCount++;
+                if (range.LastDrawAt is null || record.DrawTime > range.LastDrawAt)
+                    range.LastDrawAt = record.DrawTime;
+            }
+        }
+
+        return ranges.Values
+            .OrderBy(item => item.RangeStart)
+            .ThenBy(item => item.RangeEnd)
+            .ToList();
     }
 
     private void TryQuarantine()
@@ -198,7 +283,17 @@ public sealed class RandomNumberStatisticsService : IRandomNumberStatisticsServi
             document.TotalRounds,
             document.TotalDrawnCount,
             document.LastDrawAt,
+            document.Ranges.Select(Clone).ToArray(),
             document.Recent.Select(Clone).ToArray());
+
+    private static RandomNumberRangeStatistics Clone(RandomNumberRangeStatistics range) =>
+        new()
+        {
+            RangeStart = range.RangeStart,
+            RangeEnd = range.RangeEnd,
+            DrawCount = range.DrawCount,
+            LastDrawAt = range.LastDrawAt
+        };
 
     private static RandomNumberDrawRecord Clone(RandomNumberDrawRecord record) =>
         new()

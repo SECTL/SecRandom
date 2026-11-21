@@ -203,7 +203,7 @@
                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
                     </Grid>
 
-                    <Grid ColumnDefinitions="2.2*,2.4*,2*">
+                    <Grid ColumnDefinitions="*,*">
                         <Border Grid.Column="0" Classes="overview-metric" BorderThickness="0">
                             <StackPanel Spacing="6">
                                 <TextBlock Text="{x:Static langs:Resources.C_RandomNumberTotalRounds}"
@@ -215,15 +215,6 @@
                         </Border>
                         <Border Grid.Column="1" Classes="overview-metric">
                             <StackPanel Spacing="6">
-                                <TextBlock Text="{x:Static langs:Resources.C_RandomNumberTotalDrawnCount}"
-                                           TextWrapping="NoWrap"
-                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                                <TextBlock Text="{Binding RandomNumberTotalDrawnCount}" FontSize="28"
-                                           FontWeight="SemiBold" />
-                            </StackPanel>
-                        </Border>
-                        <Border Grid.Column="2" Classes="overview-metric">
-                            <StackPanel Spacing="6">
                                 <TextBlock Text="{x:Static langs:Resources.C_RandomNumberLastDraw}"
                                            TextWrapping="NoWrap"
                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
@@ -234,7 +225,7 @@
                     </Grid>
 
                     <DataGrid IsVisible="{Binding HasRandomNumberRecords}"
-                              ItemsSource="{Binding RandomNumberRecords}"
+                              ItemsSource="{Binding RandomNumberRanges}"
                               AutoGenerateColumns="False"
                               CanUserResizeColumns="False"
                               CanUserSortColumns="False"
@@ -250,21 +241,15 @@
                         </DataGrid.Styles>
 
                         <DataGrid.Columns>
-                            <DataGridTextColumn Width="1.6*" MinWidth="150"
-                                                Header="{x:Static langs:Resources.C_RandomNumberTime}"
-                                                Binding="{Binding Time}" />
-                            <DataGridTextColumn Width="*" MinWidth="90"
-                                                Header="{x:Static langs:Resources.C_RandomNumberSource}"
-                                                Binding="{Binding Source}" />
-                            <DataGridTextColumn Width="*" MinWidth="100"
+                            <DataGridTextColumn Width="1.4*" MinWidth="140"
                                                 Header="{x:Static langs:Resources.C_RandomNumberRange}"
                                                 Binding="{Binding Range}" />
-                            <DataGridTextColumn Width="*" MinWidth="70"
-                                                Header="{x:Static langs:Resources.C_RandomNumberCount}"
-                                                Binding="{Binding Count}" />
-                            <DataGridTextColumn Width="2.4*" MinWidth="220"
-                                                Header="{x:Static langs:Resources.C_RandomNumberResult}"
-                                                Binding="{Binding Result}" />
+                            <DataGridTextColumn Width="*" MinWidth="100"
+                                                Header="{x:Static langs:Resources.C_RandomNumberDrawCount}"
+                                                Binding="{Binding DrawCount}" />
+                            <DataGridTextColumn Width="1.8*" MinWidth="160"
+                                                Header="{x:Static langs:Resources.C_LastDrawn}"
+                                                Binding="{Binding LastDrawnTime}" />
                         </DataGrid.Columns>
                     </DataGrid>
 

@@ -23,7 +23,6 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
     [ObservableProperty] private bool _hasRollCallLists;
     [ObservableProperty] private bool _hasLotteryPools;
     [ObservableProperty] private int _randomNumberTotalRounds;
-    [ObservableProperty] private int _randomNumberTotalDrawnCount;
     [ObservableProperty] private string _randomNumberLastDraw = Resources.M_NoDrawHistory;
     [ObservableProperty] private bool _hasRandomNumberRecords;
 
@@ -52,7 +51,7 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
 
     public ObservableCollection<HomeProfileCard> RollCallLists { get; } = [];
     public ObservableCollection<HomeProfileCard> LotteryPools { get; } = [];
-    public ObservableCollection<RandomNumberOverviewRow> RandomNumberRecords { get; } = [];
+    public ObservableCollection<RandomNumberRangeRow> RandomNumberRanges { get; } = [];
 
     public void Refresh()
     {
@@ -117,25 +116,22 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
     {
         var snapshot = _randomNumberStatistics.Load();
         RandomNumberTotalRounds = snapshot.TotalRounds;
-        RandomNumberTotalDrawnCount = snapshot.TotalDrawnCount;
         RandomNumberLastDraw = snapshot.LastDrawAt is { } lastDraw
             ? FormatLastDrawnTime([lastDraw])
             : Resources.M_NoDrawHistory;
 
-        RandomNumberRecords.Clear();
-        foreach (var record in snapshot.Recent)
+        RandomNumberRanges.Clear();
+        foreach (var range in snapshot.Ranges)
         {
-            RandomNumberRecords.Add(new RandomNumberOverviewRow(
-                record.DrawTime.ToLocalTime().ToString("g", CultureInfo.CurrentCulture),
-                record.Source.Equals("roll_call", StringComparison.OrdinalIgnoreCase)
-                    ? Resources.O_RandomNumberRollCall
-                    : Resources.O_RandomNumberLottery,
-                $"{record.RangeStart} - {record.RangeEnd}",
-                record.Count.ToString(CultureInfo.CurrentCulture),
-                string.Join(", ", record.Numbers)));
+            RandomNumberRanges.Add(new RandomNumberRangeRow(
+                $"{range.RangeStart} - {range.RangeEnd}",
+                range.DrawCount,
+                range.LastDrawAt is { } rangeLastDraw
+                    ? FormatLastDrawnTime([rangeLastDraw])
+                    : Resources.M_NoDrawHistory));
         }
 
-        HasRandomNumberRecords = RandomNumberRecords.Count > 0;
+        HasRandomNumberRecords = RandomNumberRanges.Count > 0;
     }
 
     private static string FormatLastDrawnTime(IEnumerable<DateTime> times)
@@ -165,9 +161,7 @@ public record HomeProfileCard(
     int TotalDrawnCount,
     string LastDrawnTime);
 
-public record RandomNumberOverviewRow(
-    string Time,
-    string Source,
+public record RandomNumberRangeRow(
     string Range,
-    string Count,
-    string Result);
+    int DrawCount,
+    string LastDrawnTime);

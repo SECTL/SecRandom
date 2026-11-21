@@ -556,7 +556,7 @@ public sealed class AutomationCommandRegistry(
         }, cancellationToken);
 
     private Task<object?> DrawResultAsync(JsonElement? parameters) =>
-        OnUiAsync(() => Task.FromResult(BuildDrawResult(ReadString(parameters, "target") ?? "roll_call")));
+        OnUiAsync(() => Task.FromResult<object?>(BuildDrawResult(ReadString(parameters, "target") ?? "roll_call")));
 
     private object BuildDrawResult(string target) => target switch
     {

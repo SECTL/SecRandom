@@ -374,6 +374,11 @@ public sealed class UpdateCenterService(
         if (Utils.PackageRoot == Path.GetFullPath(AppContext.BaseDirectory))
             throw new InvalidOperationException(Text("M_PortableLauncherMissing"));
 
+        // A data root that lives inside the running version directory would be replaced or orphaned by the
+        // deployment below, so refuse to update until the user moves it somewhere stable.
+        if (DataRootPaths.IsSameOrNested(AppContext.BaseDirectory, Utils.DataRoot))
+            throw new InvalidOperationException(Text("M_DataRootInsidePayload"));
+
         var transaction = Guid.NewGuid().ToString("N");
         var stagingRoot = Utils.GetDirectoryPath("updates", "staging", transaction);
         ExtractPortableZip(packagePath, stagingRoot);

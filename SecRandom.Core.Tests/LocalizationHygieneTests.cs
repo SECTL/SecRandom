@@ -125,6 +125,33 @@ public sealed class LocalizationHygieneTests
             + string.Join(Environment.NewLine, failures));
     }
 
+    [Fact]
+    public void 文案库AI区块四键三语齐全并有生成器属性()
+    {
+        string directory = Path.Combine(LangsRoot, "SettingsPages", "Notification", "Texts");
+        var zh = Entries(Path.Combine(directory, "Resources.resx")).ToDictionary();
+        var en = Entries(Path.Combine(directory, "Resources.en-US.resx")).ToDictionary();
+        var ja = Entries(Path.Combine(directory, "Resources.ja-JP.resx")).ToDictionary();
+        var designer = File.ReadAllText(Path.Combine(directory, "Resources.Designer.cs"));
+        string[] keys = ["M_JsonAiTitle", "M_JsonAiHint", "C_JsonAiCopy", "M_JsonAiCopied"];
+
+        foreach (var key in keys)
+        {
+            Assert.True(zh.ContainsKey(key), $"Resources.resx 缺少 {key}");
+            Assert.True(en.ContainsKey(key), $"Resources.en-US.resx 缺少 {key}");
+            Assert.True(ja.ContainsKey(key), $"Resources.ja-JP.resx 缺少 {key}");
+            Assert.Contains($"public static string {key} ", designer, StringComparison.Ordinal);
+            Assert.False(string.IsNullOrWhiteSpace(zh[key]), $"{key} 的中文值为空");
+            Assert.False(string.IsNullOrWhiteSpace(en[key]), $"{key} 的英文值为空");
+            Assert.False(string.IsNullOrWhiteSpace(ja[key]), $"{key} 的日文值为空");
+        }
+
+        // 提示词正文是代码里的英文常量，不再占用 resx；这里只守住界面上的四个键。
+        Assert.False(zh.ContainsKey("M_JsonAiPrompt"), "M_JsonAiPrompt 已移入代码，resx 不应再保留");
+        Assert.False(en.ContainsKey("M_JsonAiPrompt"), "M_JsonAiPrompt 已移入代码，resx 不应再保留");
+        Assert.False(ja.ContainsKey("M_JsonAiPrompt"), "M_JsonAiPrompt 已移入代码，resx 不应再保留");
+    }
+
     private static bool IsDescriptionKey(string key) => key.EndsWith("_D", StringComparison.Ordinal);
 
     /// <summary>

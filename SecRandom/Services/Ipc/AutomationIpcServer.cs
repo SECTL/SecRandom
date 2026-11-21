@@ -20,7 +20,6 @@ namespace SecRandom.Services.Ipc;
 public sealed class AutomationIpcServer(
     SingleInstanceService singleInstance,
     AutomationCommandRegistry registry,
-    AutomationEventBus events,
     MainConfigHandler config,
     ILogger<AutomationIpcServer> logger) : IHostedService
 {
@@ -48,7 +47,13 @@ public sealed class AutomationIpcServer(
     }
 
     /// <summary>处理一帧 v2 JSON；永不抛异常，失败也折叠成一行响应。</summary>
-    public async Task<string> HandleFrameAsync(string frame, CancellationToken cancellationToken)
+    /// <remarks>
+    ///     返回类型带 <c>?</c> 是为了对齐
+    ///     <see cref="SingleInstanceService.AutomationRequestReceived" /> 的委托签名
+    ///     （<c>Task&lt;string?&gt;</c>）；本实现永远返回一帧响应，<c>null</c> 仍由
+    ///     管道侧当作"处理失败"折叠成错误帧。
+    /// </remarks>
+    public async Task<string?> HandleFrameAsync(string frame, CancellationToken cancellationToken)
     {
         if (!IpcV2RequestEnvelope.TryRead(frame, out var request, out var parseError))
         {

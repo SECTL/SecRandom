@@ -37,6 +37,17 @@ public sealed class RandomNumberStatisticsServiceTests : IDisposable
         Assert.Equal("lottery", snapshot.Recent[0].Source);
         Assert.Equal(new[] { 1, 50 }, new[] { snapshot.Recent[1].RangeStart, snapshot.Recent[1].RangeEnd });
         Assert.Equal(new[] { 7, 9 }, snapshot.Recent[1].Numbers);
+        Assert.Collection(snapshot.Ranges,
+            range =>
+            {
+                Assert.Equal((1, 50), (range.RangeStart, range.RangeEnd));
+                Assert.Equal(1, range.DrawCount);
+            },
+            range =>
+            {
+                Assert.Equal((10, 20), (range.RangeStart, range.RangeEnd));
+                Assert.Equal(1, range.DrawCount);
+            });
     }
 
     [Fact]
@@ -49,6 +60,24 @@ public sealed class RandomNumberStatisticsServiceTests : IDisposable
         var snapshot = service.Load();
         Assert.Equal(0, snapshot.TotalRounds);
         Assert.Empty(snapshot.Recent);
+    }
+
+    [Fact]
+    public void SameRangeCountsEveryDrawWithoutKeepingTheResults()
+    {
+        var service = CreateService();
+
+        service.Record("roll_call", 1, 50, [7, 9]);
+        service.Record("lottery", 1, 50, [42]);
+        service.Record("roll_call", 10, 20, [12]);
+
+        var snapshot = service.Load();
+
+        Assert.Equal(3, snapshot.TotalRounds);
+        Assert.Equal(2, snapshot.Ranges.Count);
+        Assert.Equal(2, snapshot.Ranges[0].DrawCount);
+        Assert.Equal((1, 50), (snapshot.Ranges[0].RangeStart, snapshot.Ranges[0].RangeEnd));
+        Assert.Equal(1, snapshot.Ranges[1].DrawCount);
     }
 
     [Fact]

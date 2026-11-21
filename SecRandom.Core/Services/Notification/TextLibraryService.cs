@@ -13,8 +13,8 @@ namespace SecRandom.Core.Services.Notification;
 /// <remarks>
 ///     <para>
 ///         落盘位置是 <c>data/texts/library.json</c>，刻意不在 <c>data/config/</c> 下：
-///         备份归档会把 <c>config/</c> 里除 device-uuid 之外的路径折叠成 <c>config/settings.json</c>，
-///         放进去等于让文案库在备份/还原里被静默吞掉。
+///         备份归档会把 <c>config/</c> 里的路径折叠成 <c>config/settings.json</c>（只有 device-uuid 与
+///         orchestration 另有自己的段），放进去等于让文案库在备份/还原里被静默吞掉。
 ///     </para>
 ///     <para>
 ///         计数是"尽力而为"的公平性辅助量，不是账本：文件损坏时整库重建默认 30 条并保存，

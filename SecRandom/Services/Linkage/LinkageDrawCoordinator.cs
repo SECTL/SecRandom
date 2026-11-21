@@ -52,9 +52,14 @@ public sealed class LinkageDrawCoordinator(
         if (!IsLinkageRestricted)
             return await securityService.AuthorizeAsync(operations, action, cancellationToken).ConfigureAwait(false);
 
-        if (!linkageService.Settings.VerificationRequired)
+        // 「允许验证后继续」只有在真的能验证时才成立。SecurityService 在安全保护未启用
+        // （或没有任何已配置的验证方式）时对 BypassClassTimeRestriction 也返回“无需验证”，
+        // 随后直接执行 action —— 把联动限制交给它就会 fail-open，课间禁令与严格限制都形同虚设。
+        // 这种情况按硬拒绝处理，与关闭「允许验证后继续」完全一致。
+        if (!linkageService.Settings.VerificationRequired
+            || !securityService.RequiresVerification(SecurityOperation.BypassClassTimeRestriction))
         {
-            // 不允许验证绕过时这里是课程联动唯一的人机拒绝点：页面调用方拿到 false 只会静默收手，
+            // 这里是课程联动唯一的人机拒绝点：页面调用方拿到 false 只会静默收手，
             // 所以提示必须在这里发，否则用户点了按钮毫无反应。
             ClassTimeDrawRestrictionNotice.Show(linkageService.Snapshot);
             return false;
@@ -89,7 +94,10 @@ public sealed class LinkageDrawCoordinator(
                 ? LinkageDrawGate.RequiresLocalVerification
                 : LinkageDrawGate.Allowed;
 
-        if (!linkageService.Settings.VerificationRequired)
+        // 与 AuthorizeAsync 同一判定：宿主没有可用的验证手段时，这条路径实际会硬拒绝，
+        // 对控制台/手机就必须报 BlockedByClassTime，而不是让远端以为“本机弹个框就能继续”。
+        if (!linkageService.Settings.VerificationRequired
+            || !securityService.RequiresVerification(SecurityOperation.BypassClassTimeRestriction))
             return LinkageDrawGate.BlockedByClassTime;
 
         // 联动限制后的抽取要额外过 BypassClassTimeRestriction，而它永远需要当场验证。

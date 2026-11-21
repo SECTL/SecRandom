@@ -93,9 +93,6 @@
   <data name="C_ImportSource" xml:space="preserve">
     <value>导入来源</value>
   </data>
-  <data name="C_TransferMode" xml:space="preserve">
-    <value>传输方式</value>
-  </data>
   <data name="C_StartScan" xml:space="preserve">
     <value>开始扫描</value>
   </data>
@@ -183,9 +180,6 @@
   <data name="M_SourceJson" xml:space="preserve">
     <value>JSON 粘贴</value>
   </data>
-  <data name="M_SourceTransfer" xml:space="preserve">
-    <value>扫码传输</value>
-  </data>
   <data name="M_TableHint" xml:space="preserve">
     <value>支持 xlsx、xls 与 csv，读取第一列；首列为表头时会自动跳过</value>
   </data>
@@ -210,9 +204,6 @@
   <data name="M_JsonHint" xml:space="preserve">
     <value>粘贴 JSON 字符串数组，或 {"texts":[...]} 形式的对象</value>
   </data>
-  <data name="M_JsonEmpty" xml:space="preserve">
-    <value>等待粘贴 JSON</value>
-  </data>
   <data name="M_JsonTooLong" xml:space="preserve">
     <value>内容超过 {0} 个字符上限</value>
   </data>
@@ -221,6 +212,18 @@
   </data>
   <data name="M_JsonValid" xml:space="preserve">
     <value>可导入 {0} 条文案</value>
+  </data>
+  <data name="M_JsonAiTitle" xml:space="preserve">
+    <value>让 AI 生成文案</value>
+  </data>
+  <data name="M_JsonAiHint" xml:space="preserve">
+    <value>把下面的提示词发给 AI，它会先询问文案类型和数量，再返回可直接粘贴的 JSON</value>
+  </data>
+  <data name="C_JsonAiCopy" xml:space="preserve">
+    <value>复制提示词</value>
+  </data>
+  <data name="M_JsonAiCopied" xml:space="preserve">
+    <value>提示词已复制</value>
   </data>
   <data name="M_PreviewCount" xml:space="preserve">
     <value>预览前 {0} 条文案</value>

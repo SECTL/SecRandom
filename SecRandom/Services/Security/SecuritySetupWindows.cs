@@ -111,8 +111,10 @@ internal static class SecuritySetupDialogs
 
     public static async Task<UsbBindingResult?> ShowUsbBindingAsync(TopLevel xamlRoot, IReadOnlyList<UsbDeviceInfo> devices)
     {
-        var bindableDevices = devices.Where(device => !device.IsBound).ToList();
-        var boundDevices = devices.Where(device => device.IsBound).ToList();
+        // 已保存的绑定记录即使设备当前不在线也要留在「解绑」页签里，
+        // 否则离线记录会落到「绑定」页签，用户既不能解绑它，绑定时也找不到设备
+        var bindableDevices = devices.Where(device => device.BindingId is null).ToList();
+        var boundDevices = devices.Where(device => device.BindingId is not null).ToList();
         var bindList = CreateUsbDeviceList(bindableDevices);
         var unbindList = CreateUsbDeviceList(boundDevices);
         var tabs = new TabControl
@@ -152,8 +154,8 @@ internal static class SecuritySetupDialogs
             action.Text = isBinding ? SR.C_Bind : SR.C_Unbind;
             action.DialogResult = isBinding ? "bind" : "unbind";
             action.IsEnabled = isBinding
-                ? bindList.SelectedItem is UsbDeviceInfo
-                : unbindList.SelectedItem is UsbDeviceInfo;
+                ? bindList.SelectedItem is UsbDeviceInfo { BindingId: null }
+                : unbindList.SelectedItem is UsbDeviceInfo { BindingId: not null };
         }
 
         tabs.SelectionChanged += (_, _) => UpdateActions();
@@ -164,16 +166,16 @@ internal static class SecuritySetupDialogs
         UpdateActions();
         dialog.Closing += (_, args) =>
         {
-            if (Equals(args.Result, "bind") && bindList.SelectedItem is not UsbDeviceInfo)
+            if (Equals(args.Result, "bind") && bindList.SelectedItem is not UsbDeviceInfo { BindingId: null })
                 args.Cancel = true;
-            if (Equals(args.Result, "unbind") && unbindList.SelectedItem is not UsbDeviceInfo)
+            if (Equals(args.Result, "unbind") && unbindList.SelectedItem is not UsbDeviceInfo { BindingId: not null })
                 args.Cancel = true;
         };
 
         return await dialog.ShowAsync() switch
         {
             "unbind" when unbindList.SelectedItem is UsbDeviceInfo { BindingId: not null } device => new UsbBindingResult(null, device.BindingId),
-            "bind" when bindList.SelectedItem is UsbDeviceInfo device => new UsbBindingResult(device.DeviceId, null),
+            "bind" when bindList.SelectedItem is UsbDeviceInfo { BindingId: null } device => new UsbBindingResult(device.DeviceId, null),
             _ => null
         };
     }
@@ -216,7 +218,11 @@ internal static class SecuritySetupDialogs
                     ColumnSpacing = 8,
                     RowSpacing = 3
                 };
-                AddUsbField(fields, 0, SR.C_UsbDriveLetter, device.DriveLetter);
+                AddUsbField(
+                    fields,
+                    0,
+                    SR.C_UsbDriveLetter,
+                    device.IsPresent ? device.DriveLetter : SR.C_UsbDisconnected);
                 AddUsbField(fields, 1, SR.C_UsbDiskName, device.DisplayName);
                 var deviceIdentifier = string.IsNullOrWhiteSpace(device.HardwareName)
                     ? FormatUsbDeviceId(device.DeviceId)

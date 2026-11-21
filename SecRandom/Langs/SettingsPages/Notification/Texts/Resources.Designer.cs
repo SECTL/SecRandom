@@ -294,15 +294,6 @@ namespace SecRandom.Langs.SettingsPages.Notification.Texts {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 传输方式.
-        /// </summary>
-        public static string C_TransferMode {
-            get {
-                return ResourceManager.GetString("C_TransferMode", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 开始扫描.
         /// </summary>
         public static string C_StartScan {
@@ -564,15 +555,6 @@ namespace SecRandom.Langs.SettingsPages.Notification.Texts {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to SR 传输.
-        /// </summary>
-        public static string M_SourceTransfer {
-            get {
-                return ResourceManager.GetString("M_SourceTransfer", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 支持 xlsx、xls 与 csv，读取第一列；首列为表头时会自动跳过.
         /// </summary>
         public static string M_TableHint {
@@ -645,15 +627,6 @@ namespace SecRandom.Langs.SettingsPages.Notification.Texts {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 等待粘贴 JSON.
-        /// </summary>
-        public static string M_JsonEmpty {
-            get {
-                return ResourceManager.GetString("M_JsonEmpty", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 内容超过 {0} 个字符上限.
         /// </summary>
         public static string M_JsonTooLong {
@@ -677,6 +650,42 @@ namespace SecRandom.Langs.SettingsPages.Notification.Texts {
         public static string M_JsonValid {
             get {
                 return ResourceManager.GetString("M_JsonValid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 让 AI 生成文案.
+        /// </summary>
+        public static string M_JsonAiTitle {
+            get {
+                return ResourceManager.GetString("M_JsonAiTitle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 把下面的提示词发给 AI，它会先询问文案类型和数量，再返回可直接粘贴的 JSON.
+        /// </summary>
+        public static string M_JsonAiHint {
+            get {
+                return ResourceManager.GetString("M_JsonAiHint", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 复制提示词.
+        /// </summary>
+        public static string C_JsonAiCopy {
+            get {
+                return ResourceManager.GetString("C_JsonAiCopy", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 提示词已复制.
+        /// </summary>
+        public static string M_JsonAiCopied {
+            get {
+                return ResourceManager.GetString("M_JsonAiCopied", resourceCulture);
             }
         }
         

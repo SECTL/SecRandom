@@ -59,6 +59,7 @@ namespace SecRandom.Langs.SettingsPages.Home {
         public static string C_RandomNumberTime => ResourceManager.GetString("C_RandomNumberTime", resourceCulture);
         public static string C_RandomNumberSource => ResourceManager.GetString("C_RandomNumberSource", resourceCulture);
         public static string C_RandomNumberRange => ResourceManager.GetString("C_RandomNumberRange", resourceCulture);
+        public static string C_RandomNumberDrawCount => ResourceManager.GetString("C_RandomNumberDrawCount", resourceCulture);
         public static string C_RandomNumberCount => ResourceManager.GetString("C_RandomNumberCount", resourceCulture);
         public static string C_RandomNumberResult => ResourceManager.GetString("C_RandomNumberResult", resourceCulture);
         public static string M_NoRandomNumberRecords => ResourceManager.GetString("M_NoRandomNumberRecords", resourceCulture);

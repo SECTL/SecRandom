@@ -342,6 +342,7 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
         {
             yield return "config/settings.json";
             yield return "config/device-uuid.json";
+            yield return "config/orchestration";
         }
         if (Settings.IncludeList) yield return "list";
         if (Settings.IncludeHistory) yield return "history";

@@ -35,7 +35,7 @@ SecRandom/Services/Linkage/
 |------|----------|-------|
 | 课间/课下禁令是否在生效 | `CourseLinkageService.IsConfirmedNonClassTime` | `InstantDrawDisable` 开 **且** `IsConfirmedBreakTime`（快照确认 `CourseTimeState.Breaking`、且不在课前解禁/课后延迟窗口内）。 |
 | 数据源是否给不出判定 | `CourseScheduleSnapshot.IsAvailable` / `Unavailable(...)` | ClassIsland 断连、计时器停、课表未加载、CSES 课表缺失都会返回 `IsAvailable == false` 的快照；`IsConfirmedBreakTime` 因此恒为假，禁令自动放行。 |
-| 为什么点不动 | `LinkageDrawCoordinator.AuthorizeAsync` | `VerificationRequired == false` 时课间是硬拒绝，拒绝前调 `ClassTimeDrawRestrictionNotice.Show(snapshot)` 发提示。 |
+| 为什么点不动 | `LinkageDrawCoordinator.AuthorizeAsync` | 受限时若 `VerificationRequired == false`，或宿主根本没有可用验证（`ISecurityService.RequiresVerification(BypassClassTimeRestriction) == false`），一律硬拒绝，拒绝前调 `ClassTimeDrawRestrictionNotice.Show(snapshot)` 发提示。后者是防 fail-open 的关键：`SecurityService.AuthorizeAsync` 在无验证手段时会直接执行 action。 |
 | 远程命令的判定 | `LinkageDrawCoordinator.EvaluateGate` | 无交互判定，**刻意不弹提示**：教室机可能无人，弹窗会让远程命令挂死。`BlockedByClassTime` 由 `ControlDrawTriggerHandler` 转成 `denied(blocked_by_class_time)`。 |
 | 上下课事件 | `ClassIslandIpcConnection` | 订阅 `OnClassNotifyId` / `OnBreakingTimeNotifyId` / `OnAfterSchoolNotifyId`，`StateChanged` → 两个源 → `CourseLinkageService.RefreshAsync`。 |
 | 课前重置 | `CourseLinkageHostedService.TryPerformPreClassReset` | `IsPreClassResetDue` 给出的 key 去重，清临时记录并让三个页面 `ResetForCourseLinkage()`。 |
@@ -47,9 +47,15 @@ SecRandom/Services/Linkage/
   `ClassIslandScheduleSource`（IPC 状态映射）里做，别在调用点重算时间窗。
 - 课间禁令的开关是 `LinkageSettingsConfig.InstantDrawDisable`（默认 `false`），
   与之配套的 `VerificationRequired`（默认 `true`）决定课间是"验证后放行"还是"直接阻止"。
+  "验证后放行"只在**真的能验证**时成立：`SecurityService.RequiresVerification` 在未启用安全保护
+  （或没有任何已配置的验证方式）时对 `BypassClassTimeRestriction` 也返回 false，并把 action 直接执行；
+  所以闸门必须先问 `RequiresVerification(BypassClassTimeRestriction)`，否则课间禁令与
+  `RestrictWhenUnavailable`（严格限制）会整体 fail-open。
   新增开关一律默认关闭，并在 `LinkageSettingsPage` 与三语资源同步暴露。
-- 数据源不可用（`CourseScheduleSnapshot.Unavailable`）必须放行。断连不是下课，
-  把不可用当禁课会让人在教室外白等一整天——这条在 issue 里被反复踩过。
+- 数据源不可用（`CourseScheduleSnapshot.Unavailable`）默认必须放行。断连不是下课，
+  把不可用当禁课会让人在教室外白等一整天——这条在 issue 里被反复踩过。唯一例外是用户显式打开
+  `LinkageSettingsConfig.RestrictWhenUnavailable`（严格限制）：这时已选择数据源且快照不可用即受限，
+  由 `CourseLinkageService.IsClassTimeRestrictionActive` 判定，闸门不再区分"不可用"与"课间"。
 - 用户可见的拦截文案放 `SecRandom/Langs/SettingsPages/Linkage/Resources*.resx`：
   `M_ClassTimeDrawBlocked`（带下一节课与分钟数）与 `M_ClassTimeDrawBlockedGeneric`。
   取值走 `Resources.ResourceManager.GetString(key, Resources.Culture)`，不要手改

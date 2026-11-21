@@ -2,12 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
@@ -28,6 +30,11 @@ namespace SecRandom.Views.SettingsPages.Notification;
 /// Imports fullscreen result templates from a spreadsheet column, pasted JSON, or another SecRandom device
 /// through the shared roster transfer channels (quick QR, offline QR, session code).
 /// </summary>
+/// <remarks>
+///     The three transfer channels are flat entries of the one source picker, exactly like the export drawer's
+///     modes, so choosing "扫码快速导入 / 无网扫码导入 / 会话码导入" takes one click instead of selecting a
+///     transfer category and then a second "传输方式" combo box inside it.
+/// </remarks>
 public partial class TextLibraryImportDrawer : UserControl, INotifyPropertyChanged, IDrawerCloseAware
 {
     private const string TableFileTypeName = "TextLibraryTable";
@@ -41,7 +48,6 @@ public partial class TextLibraryImportDrawer : UserControl, INotifyPropertyChang
     private readonly SettingsTransferQrService _settingsQrService = new();
 
     private TextLibraryImportModeOption _selectedImportModeOption;
-    private TextLibraryTransferModeOption _selectedTransferModeOption;
     private IReadOnlyList<string> _pendingTemplates = [];
     private SettingsTransferQrService.SettingsTransferQrImportAccumulator? _offlineQrImport;
     private IRosterQrCameraCapture? _qrCameraCapture;
@@ -68,17 +74,11 @@ public partial class TextLibraryImportDrawer : UserControl, INotifyPropertyChang
         [
             new TextLibraryImportModeOption(TextLibraryImportMode.Table, Text("M_SourceTable")),
             new TextLibraryImportModeOption(TextLibraryImportMode.Json, Text("M_SourceJson")),
-            new TextLibraryImportModeOption(TextLibraryImportMode.Transfer, Text("M_SourceTransfer"))
-        ];
-        TransferModes =
-        [
-            new TextLibraryTransferModeOption(TextLibraryTransferMode.QuickQr, Text("M_TransferQuickQr")),
-            new TextLibraryTransferModeOption(TextLibraryTransferMode.OfflineQr, Text("M_TransferOfflineQr")),
-            new TextLibraryTransferModeOption(TextLibraryTransferMode.SessionCode, Text("M_TransferSessionCode"))
+            new TextLibraryImportModeOption(TextLibraryImportMode.QuickQr, Text("M_TransferQuickQr")),
+            new TextLibraryImportModeOption(TextLibraryImportMode.OfflineQr, Text("M_TransferOfflineQr")),
+            new TextLibraryImportModeOption(TextLibraryImportMode.SessionCode, Text("M_TransferSessionCode"))
         ];
         _selectedImportModeOption = ImportModes[0];
-        _selectedTransferModeOption = TransferModes[0];
-        _statusText = Text("M_ImportHint");
         DataContext = this;
         InitializeComponent();
     }
@@ -93,8 +93,6 @@ public partial class TextLibraryImportDrawer : UserControl, INotifyPropertyChang
 
     public IReadOnlyList<TextLibraryImportModeOption> ImportModes { get; }
 
-    public IReadOnlyList<TextLibraryTransferModeOption> TransferModes { get; }
-
     public TextLibraryImportModeOption SelectedImportModeOption
     {
         get => _selectedImportModeOption;
@@ -106,22 +104,16 @@ public partial class TextLibraryImportDrawer : UserControl, INotifyPropertyChang
             _selectedImportModeOption = value;
             OnPropertyChanged(nameof(SelectedImportModeOption));
             NotifyModeChanged();
-            _ = StopQrScannerAsync();
-        }
-    }
-
-    public TextLibraryTransferModeOption SelectedTransferModeOption
-    {
-        get => _selectedTransferModeOption;
-        set
-        {
-            if (value is null || ReferenceEquals(value, _selectedTransferModeOption) ||
-                value.Value == _selectedTransferModeOption.Value)
-                return;
-            _selectedTransferModeOption = value;
-            OnPropertyChanged(nameof(SelectedTransferModeOption));
-            NotifyTransferModeChanged();
-            _ = StopQrScannerAsync();
+            // Every source produces its own preview, so a leftover preview from the previous source must not
+            // stay importable after switching (the 导入 button would otherwise import a source that is no longer
+            // on screen). Transfer modes also own scan/session-code work that has to stop on the way out, and a
+            // half-received offline QR session must not leak into the next attempt.
+            ClearPendingTemplates();
+            CancelSessionCodeVerification();
+            _offlineQrImport = null;
+            NotifyOfflineQrStats();
+            StatusText = string.Empty;
+            _ = StopQrScannerAsync(keepStatus: true);
         }
     }
 
@@ -129,13 +121,17 @@ public partial class TextLibraryImportDrawer : UserControl, INotifyPropertyChang
 
     public bool IsJsonMode => _selectedImportModeOption.Value == TextLibraryImportMode.Json;
 
-    public bool IsTransferMode => _selectedImportModeOption.Value == TextLibraryImportMode.Transfer;
+    public bool IsQuickQrMode => _selectedImportModeOption.Value == TextLibraryImportMode.QuickQr;
 
-    public bool IsQuickQrMode => _selectedTransferModeOption.Value == TextLibraryTransferMode.QuickQr;
+    public bool IsOfflineQrMode => _selectedImportModeOption.Value == TextLibraryImportMode.OfflineQr;
 
-    public bool IsOfflineQrMode => _selectedTransferModeOption.Value == TextLibraryTransferMode.OfflineQr;
+    public bool IsSessionCodeMode => _selectedImportModeOption.Value == TextLibraryImportMode.SessionCode;
 
-    public bool IsSessionCodeMode => _selectedTransferModeOption.Value == TextLibraryTransferMode.SessionCode;
+    /// <summary>Any of the three device-transfer sources, i.e. the whole QR/session-code panel.</summary>
+    public bool IsQrMode => IsQuickQrMode || IsOfflineQrMode || IsSessionCodeMode;
+
+    /// <summary>The two camera-based sources; a session code is typed, not scanned.</summary>
+    public bool IsScannerMode => IsQuickQrMode || IsOfflineQrMode;
 
     public bool IsCameraPreviewSupported => _qrCameraCaptureFactory.IsPreviewSupported;
 
@@ -194,6 +190,8 @@ public partial class TextLibraryImportDrawer : UserControl, INotifyPropertyChang
 
     public string JsonCountText => string.Format(Text("C_JsonCountFormat"), _jsonText.Length,
         TextLibraryImporter.MaxJsonImportChars);
+
+    public string AiPromptText => TextLibraryPrompt.Build(LR.Culture ?? CultureInfo.CurrentUICulture);
 
     public string JsonStatusText
     {
@@ -261,14 +259,11 @@ public partial class TextLibraryImportDrawer : UserControl, INotifyPropertyChang
     {
         OnPropertyChanged(nameof(IsTableMode));
         OnPropertyChanged(nameof(IsJsonMode));
-        OnPropertyChanged(nameof(IsTransferMode));
-    }
-
-    private void NotifyTransferModeChanged()
-    {
         OnPropertyChanged(nameof(IsQuickQrMode));
         OnPropertyChanged(nameof(IsOfflineQrMode));
         OnPropertyChanged(nameof(IsSessionCodeMode));
+        OnPropertyChanged(nameof(IsQrMode));
+        OnPropertyChanged(nameof(IsScannerMode));
     }
 
     private void NotifyPreviewChanged()
@@ -300,7 +295,7 @@ public partial class TextLibraryImportDrawer : UserControl, INotifyPropertyChang
     {
         if (string.IsNullOrWhiteSpace(_jsonText))
         {
-            JsonStatusText = Text("M_JsonEmpty");
+            JsonStatusText = string.Empty;
             JsonStatusIsError = false;
             JsonErrorText = string.Empty;
             ClearPendingTemplates();
@@ -332,6 +327,23 @@ public partial class TextLibraryImportDrawer : UserControl, INotifyPropertyChang
             ? string.Empty
             : string.Join(Environment.NewLine, result.Errors.Take(6));
         SetPendingTemplates(result.Templates, string.Format(Text("M_PreviewCount"), result.Templates.Count));
+    }
+
+    private async void CopyAiPromptButton_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel?.Clipboard is null)
+            return;
+
+        try
+        {
+            await topLevel.Clipboard.SetTextAsync(AiPromptText);
+            this.ShowSuccessToast(Text("M_JsonAiCopied"));
+        }
+        catch (Exception exception)
+        {
+            this.ShowErrorToast(Text("M_OperationFailed"), exception);
+        }
     }
 
     private async void FileImportButton_OnClick(object? sender, RoutedEventArgs e)
@@ -462,7 +474,7 @@ public partial class TextLibraryImportDrawer : UserControl, INotifyPropertyChang
 
     private async void ScanButton_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (_isDrawerClosed || !IsTransferMode)
+        if (_isDrawerClosed || !IsScannerMode)
             return;
         if (IsScanning)
         {
@@ -753,16 +765,9 @@ public enum TextLibraryImportMode
 {
     Table,
     Json,
-    Transfer
-}
-
-public enum TextLibraryTransferMode
-{
     QuickQr,
     OfflineQr,
     SessionCode
 }
 
 public sealed record TextLibraryImportModeOption(TextLibraryImportMode Value, string Label);
-
-public sealed record TextLibraryTransferModeOption(TextLibraryTransferMode Value, string Label);

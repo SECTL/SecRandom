@@ -711,13 +711,17 @@ internal sealed class SecurityService(
                 });
             }
 
-            foreach (var binding in metadata.UsbBindings.Where(binding => drives.All(drive => !BindingMatchesDevice(binding, drive))))
+            // 解绑时设备不在线会留下 MarkerCleanupPending 记录，等待重新插入后清理 marker；
+            // 这类记录已经解绑，不能再作为可管理绑定出现在对话框里
+            foreach (var binding in metadata.UsbBindings.Where(binding =>
+                         !binding.MarkerCleanupPending &&
+                         drives.All(drive => !BindingMatchesDevice(binding, drive))))
             {
                 devices.Add(new UsbDeviceInfo(
                     string.Empty,
                     binding.DisplayName,
                     binding.DeviceId ?? $"unknown:{binding.Id}",
-                    IsBound: !binding.MarkerCleanupPending && IsBindingPresent(binding),
+                    IsBound: IsBindingPresent(binding),
                     binding.Id,
                     IsBindingPresent(binding)));
             }

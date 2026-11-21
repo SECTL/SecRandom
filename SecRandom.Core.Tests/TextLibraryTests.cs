@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using SecRandom.Core.Models.Notification;
 using SecRandom.Core.Services.Notification;
+using System.Globalization;
 
 namespace SecRandom.Core.Tests;
 
@@ -558,6 +559,69 @@ public sealed class TextLibraryTests : IDisposable
     {
         Assert.False(TextLibraryImporter.ParseJson(null).Success);
         Assert.False(TextLibraryImporter.ParseJson("   ").Success);
+    }
+
+    // ---- AI 提示词 ----
+
+    [Fact]
+    public void Build_WritesEnglishInstructionsInEveryInterfaceLanguage()
+    {
+        foreach (var culture in new[] { "zh-CN", "en-US", "ja-JP" })
+        {
+            string prompt = TextLibraryPrompt.Build(CultureInfo.GetCultureInfo(culture));
+
+            Assert.All(prompt, c => Assert.True(c < 128, $"{culture} 的提示词正文出现了非 ASCII 字符：{c}"));
+            Assert.DoesNotContain("__OUTPUT_LANGUAGE__", prompt, StringComparison.Ordinal);
+            Assert.Contains("SecRandom", prompt, StringComparison.Ordinal);
+            Assert.Contains("What kind of texts do you need?", prompt, StringComparison.Ordinal);
+            Assert.Contains("How many texts do you need? (1 to 500)", prompt, StringComparison.Ordinal);
+            Assert.Contains("200", prompt, StringComparison.Ordinal);
+            Assert.Contains("14000", prompt, StringComparison.Ordinal);
+            Assert.Contains("{result}", prompt, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void Build_SwitchesOnlyTheOutputLanguage()
+    {
+        string english = TextLibraryPrompt.Build(CultureInfo.GetCultureInfo("en-US"));
+        string chinese = TextLibraryPrompt.Build(CultureInfo.GetCultureInfo("zh-CN"));
+        string japanese = TextLibraryPrompt.Build(CultureInfo.GetCultureInfo("ja-JP"));
+
+        Assert.Contains("Reply to me in English.", english, StringComparison.Ordinal);
+        Assert.Contains("Reply to me in Simplified Chinese.", chinese, StringComparison.Ordinal);
+        Assert.Contains("Reply to me in Japanese.", japanese, StringComparison.Ordinal);
+        Assert.Contains("in English.", english, StringComparison.Ordinal);
+        Assert.Contains("in Simplified Chinese.", chinese, StringComparison.Ordinal);
+        Assert.Contains("in Japanese.", japanese, StringComparison.Ordinal);
+        Assert.Equal(english.Replace("in English.", "in Simplified Chinese."), chinese);
+        Assert.Equal(english.Replace("in English.", "in Japanese."), japanese);
+    }
+
+    [Fact]
+    public void Build_AcceptsNullCultureAsEnglish()
+    {
+        Assert.Equal(
+            TextLibraryPrompt.Build(CultureInfo.GetCultureInfo("en-US")),
+            TextLibraryPrompt.Build(null));
+    }
+
+    [Fact]
+    public void Build_TemplateIsPasteableJson()
+    {
+        string prompt = TextLibraryPrompt.Build(CultureInfo.GetCultureInfo("en-US"));
+        const string fence = "```";
+        int start = prompt.IndexOf("```json", StringComparison.Ordinal);
+        Assert.True(start >= 0, "提示词缺少 json 代码块");
+        start += "```json".Length;
+        int end = prompt.IndexOf(fence, start, StringComparison.Ordinal);
+        Assert.True(end > start, "提示词的 json 代码块没有闭合");
+
+        var result = TextLibraryImporter.ParseJson(prompt[start..end].Trim());
+
+        Assert.True(result.Success, string.Join(Environment.NewLine, result.Errors));
+        Assert.Equal(2, result.Templates.Count);
+        Assert.Empty(result.Warnings);
     }
 
     // ---- 清单 / 表格导入 ----
