@@ -172,4 +172,13 @@
   <data name="M_ScheduleError_ClassIslandScheduleUnloaded" xml:space="preserve"><value>ClassIsland 尚未加载当天课程表</value></data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState" xml:space="preserve"><value>ClassIsland 返回了未支持的当前状态：{0}</value></data>
   <data name="M_ScheduleError_ClassIslandReadFailed" xml:space="preserve"><value>无法读取 ClassIsland 的课程状态</value></data>
+  <data name="S_IntegrationChannels" xml:space="preserve"><value>SDK 通知渠道</value></data>
+  <data name="S_IntegrationChannels_D" xml:space="preserve"><value>经官方签名验证并获你批准的应用可以接收抽取结果</value></data>
+  <data name="C_IntegrationRemove" xml:space="preserve"><value>删除</value></data>
+  <data name="M_IntegrationApprovalTitle" xml:space="preserve"><value>保存通知渠道</value></data>
+  <data name="M_IntegrationApprovalContent" xml:space="preserve"><value>发现官方 SecRandom 集成 SDK 应用“{0}”（{1}）。是否允许它接收本体抽取结果并保存为通知渠道</value></data>
+  <data name="M_IntegrationNoChannels" xml:space="preserve"><value>暂无已保存的 SDK 通知渠道</value></data>
+  <data name="M_IntegrationRemoveTitle" xml:space="preserve"><value>删除通知渠道</value></data>
+  <data name="M_IntegrationRemoveContent" xml:space="preserve"><value>删除“{0}”后，本体不再向它发送抽取结果</value></data>
+  <data name="M_IntegrationRemoved" xml:space="preserve"><value>通知渠道已删除</value></data>
 </root>

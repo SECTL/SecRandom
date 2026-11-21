@@ -157,4 +157,13 @@
   <data name="M_ScheduleError_ClassIslandScheduleUnloaded"><value>ClassIsland has not loaded today's timetable</value></data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState"><value>ClassIsland returned an unsupported current state: {0}</value></data>
   <data name="M_ScheduleError_ClassIslandReadFailed"><value>Unable to read the ClassIsland class state</value></data>
+  <data name="S_IntegrationChannels"><value>SDK notification channels</value></data>
+  <data name="S_IntegrationChannels_D"><value>Approved applications with an official signature can receive draw results</value></data>
+  <data name="C_IntegrationRemove"><value>Remove</value></data>
+  <data name="M_IntegrationApprovalTitle"><value>Save notification channel</value></data>
+  <data name="M_IntegrationApprovalContent"><value>Official SecRandom Integration SDK application “{0}” ({1}) was found. Allow it to receive draw results and save it as a notification channel</value></data>
+  <data name="M_IntegrationNoChannels"><value>No saved SDK notification channels</value></data>
+  <data name="M_IntegrationRemoveTitle"><value>Remove notification channel</value></data>
+  <data name="M_IntegrationRemoveContent"><value>SecRandom will stop sending draw results to “{0}”</value></data>
+  <data name="M_IntegrationRemoved"><value>Notification channel removed</value></data>
 </root>

@@ -171,6 +171,36 @@
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
+
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText x:Name="S_IntegrationChannels"
+                         Text="{Binding IntegrationChannelsTitle}"
+                         Glyph="{sr:Fi PlugConnectedFilled}"
+                         Margin="0 0 0 4" />
+            <fa:FASettingsExpander Header="{Binding IntegrationChannelsTitle}"
+                                   Description="{Binding IntegrationChannelsDescription}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ShieldCheckmarkFilled}}">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{Binding IntegrationChannelsEmptyText}"
+                               IsVisible="{Binding NoIntegrationChannels}"
+                               Opacity="0.72" />
+                    <ItemsControl ItemsSource="{Binding IntegrationChannels}"
+                                  IsVisible="{Binding HasIntegrationChannels}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="local:IntegrationChannelRow">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" Margin="0 4">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Channel.DisplayName}" />
+                                        <TextBlock Text="{Binding Channel.SdkVersion}" Opacity="0.72" />
+                                    </StackPanel>
+                                    <Button Grid.Column="1" Content="{Binding RemoveLabel}"
+                                            Click="RemoveIntegrationChannel_OnClick" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </fa:FASettingsExpander>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
