@@ -78,6 +78,7 @@ using SecRandom.Services;
 using SecRandom.Services.Config;
 using SecRandom.Services.Auth;
 using SecRandom.Services.ControlNode;
+using SecRandom.Services.ControlCenter;
 using SecRandom.Services.ControlPlane;
 using SecRandom.Services.Announcements;
 using SecRandom.Services.CrashRecovery;
@@ -149,6 +150,13 @@ public partial class App : Application
 {
     private static FloatingWindow? _floatingWindow;
     private static FloatingWindow? _secondaryFloatingWindow;
+
+    /// <summary>一扇窗藏起来去同步另一扇时的重入闸，避免两窗互相触发。</summary>
+    private static bool _syncingFloatingWindowVisibility;
+
+    /// <summary>快选（长按闪抽）进行时被临时让位的另一侧悬浮窗，结束后按原意还原。</summary>
+    private static readonly List<FloatingWindow> _quickPickSuppressedWindows = [];
+    private static bool _floatingWindowsSuppressedForQuickPick;
     private static Window? _quickDrawWindow;
     private static NotificationChannelSettings? _quickDrawNotificationSettings;
     private static bool _positioningQuickDrawWindow;
@@ -671,6 +679,107 @@ public partial class App : Application
         return window;
     }
 
+    /// <summary>
+    ///     一扇悬浮窗藏起来时把另一侧也藏起来：两侧同时显示时不该剩半扇飘在桌面上。
+    /// </summary>
+    /// <remarks>
+    ///     课程联动的隐藏不走这里——它先置位 <see cref="FloatingWindow.IsHiddenByCourseLinkage" />
+    ///     再自己 <c>Hide()</c>，两扇窗各自记录"联动前是否可见"，下课后才能各自恢复。
+    /// </remarks>
+    internal static void NotifyFloatingWindowHidden(FloatingWindow source)
+    {
+        if (_syncingFloatingWindowVisibility)
+            return;
+
+        _syncingFloatingWindowVisibility = true;
+        try
+        {
+            foreach (var window in FloatingWindows())
+            {
+                if (ReferenceEquals(window, source) || !window.IsVisible)
+                    continue;
+
+                window.Hide();
+            }
+        }
+        finally
+        {
+            _syncingFloatingWindowVisibility = false;
+        }
+    }
+
+    /// <summary>按了某一侧就把另一侧收成球，只留一侧展开。</summary>
+    internal static void NotifyFloatingWindowInteraction(FloatingWindow source)
+    {
+        foreach (var window in FloatingWindows())
+        {
+            if (!ReferenceEquals(window, source))
+                window.RequestAutoDock();
+        }
+    }
+
+    /// <summary>
+    ///     长按闪抽进入快选时，先把另一侧悬浮窗藏起来：快选只在指针位置画一颗球和一条滑轨，
+    ///     另一侧那颗收纳球留在桌面上会跟它抢视线，看起来像"快选没把浮窗收干净"。
+    /// </summary>
+    /// <remarks>
+    ///     这里用 <see cref="Window.Hide" /> 而不是停靠：被让位的那扇窗保留自己的状态（它是球还是展开、
+    ///     停在哪一侧），结束后原样还原，不会被这次快选改掉用户的布置。隐藏时走的重入闸与
+    ///     <see cref="NotifyFloatingWindowHidden" /> 同一个，否则它会反过来把正在快选的这扇窗也藏掉。
+    /// </remarks>
+    internal static void NotifyQuickPickStarted(FloatingWindow source)
+    {
+        if (_floatingWindowsSuppressedForQuickPick)
+            return;
+
+        _floatingWindowsSuppressedForQuickPick = true;
+        _quickPickSuppressedWindows.Clear();
+        _syncingFloatingWindowVisibility = true;
+        try
+        {
+            foreach (var window in FloatingWindows())
+            {
+                if (ReferenceEquals(window, source) || !window.IsVisible)
+                    continue;
+
+                _quickPickSuppressedWindows.Add(window);
+                window.Hide();
+            }
+        }
+        finally
+        {
+            _syncingFloatingWindowVisibility = false;
+        }
+    }
+
+    /// <summary>快选结束，把刚才让位的另一侧悬浮窗还原回它原来的样子。</summary>
+    internal static void NotifyQuickPickFinished(FloatingWindow source)
+    {
+        if (!_floatingWindowsSuppressedForQuickPick)
+            return;
+
+        _floatingWindowsSuppressedForQuickPick = false;
+        var restore = _quickPickSuppressedWindows.ToArray();
+        _quickPickSuppressedWindows.Clear();
+
+        _syncingFloatingWindowVisibility = true;
+        try
+        {
+            foreach (var window in restore)
+            {
+                // 期间用户自己把它藏了、或课程联动接管了可见性，就让那条路径说了算。
+                if (window.IsVisible || !window.UserWantsVisible || window.IsHiddenByCourseLinkage)
+                    continue;
+
+                RestoreWithoutActivating(window);
+            }
+        }
+        finally
+        {
+            _syncingFloatingWindowVisibility = false;
+        }
+    }
+
     /// <summary>当前存在的悬浮窗（主窗在前，副窗在后）。</summary>
     private static IEnumerable<FloatingWindow> FloatingWindows()
     {
@@ -749,6 +858,15 @@ public partial class App : Application
 
             window.ApplyUnifiedAnchor(anchorCenterY);
         }
+    }
+
+    /// <summary>
+    ///     请求在下一帧重新对齐两侧悬浮窗的高度：窗口内容刚量完、尺寸变了时用，
+    ///     保证两侧不必等用户拖动就已经等高。
+    /// </summary>
+    internal static void RequestFloatingWindowAnchorAlignment()
+    {
+        Dispatcher.UIThread.Post(AlignFloatingWindowAnchors, DispatcherPriority.Render);
     }
 
     /// <summary>让两侧悬浮窗落到同一纵向高度；"两侧高度统一"关闭时什么也不做。</summary>
@@ -1340,6 +1458,7 @@ public partial class App : Application
                     services.AddSingleton<ControlSettingsPatchHandler>();
                     services.AddSingleton<ControlRosterPushHandler>();
                     services.AddSingleton<ControlRosterReadHandler>();
+                    services.AddSingleton<ControlRosterListHandler>();
                     services.AddSingleton<ControlSettingsReadHandler>();
 
                     // v2 自动化管道：与集控读/写处理器共用同一套校验与 UI 线程边界。
@@ -1387,32 +1506,29 @@ public partial class App : Application
                 services.AddSingleton<ISecurityVerificationPrompt, SecurityVerificationPrompt>();
                 services.AddSingleton<ISecurityService, SecurityService>();
 
-                // 接入令牌：自建集控的节点凭据，独立加密存放（data/config/security/control-node.json）。
-                // 注册在**共享分支**里：手机端虽然不跑节点，但远程抽取页同样要在"未登录 SECTL"时可用，
-                // 靠的就是这份接入记录；放在 RunsControlNode 分支里会让手机端永远接入不了。
+                // 接入令牌：被控节点的设备凭据，独立加密存放（data/config/security/control-node.json）。
+                // 只有桌面会写它（平板/手机不做被控节点），但注册放在共享分支：
+                // 设置页与测试都需要解析这个存储，按宿主分支注册只会让"能读不能写"变成两个实现。
                 services.AddSingleton<INodeEnrollmentStore>(provider => new FileNodeEnrollmentStore(
                     provider.GetRequiredService<ILogger<FileNodeEnrollmentStore>>()));
+                // 配对码接入通道：桌面设置页用它把本机接成被控节点；平板/手机没有这个入口。
                 services.AddSingleton(provider => new NodeEnrollmentClient(
                     provider.GetRequiredService<IHttpClientFactory>(),
                     provider.GetRequiredService<IControlPlaneEndpointStore>()));
 
-                // 控制面（集控 REST）客户端：桌面与手机共用同一份实现与同一条 Bearer 边界。
-                // 装饰顺序：未接入时 EnrolledAuthorizedApiSender 原样转交 SectlAuthorizedApiSender（今天的
-                // 行为一字不变），已接入时改出示节点令牌——**绝不再经过账号刷新逻辑**。
+                // 控制面（集控 REST）客户端：**只走 SECTL 账号的 Bearer**，且只打官方站。
+                // 已经没有"节点令牌当控制面 Bearer"这条装饰链了：v4 的节点 secret 只用于 WS hello
+                // 和 device/tree、device/assign 的请求体，控制台命令一律按账号鉴权。
                 services.AddSingleton<SectlAuthorizedApiSender>();
-                services.AddSingleton<IAuthorizedApiSender>(provider => new EnrolledAuthorizedApiSender(
-                    provider.GetRequiredService<SectlAuthorizedApiSender>(),
-                    provider.GetRequiredService<INodeEnrollmentStore>(),
-                    provider.GetRequiredService<IHttpClientFactory>()));
-                services.AddSingleton<IControlPlaneDevicePreferenceStore, FileControlPlaneDevicePreferenceStore>();
-                // 控制面基址是可配置的（自建/私有部署），但它**不进 settings.json**：这个地址每次请求都会
-                // 收到本账号的令牌，一次设置导入不该能把令牌指到别的服务器上。见 IControlPlaneEndpointStore。
+                services.AddSingleton<IAuthorizedApiSender>(provider =>
+                    provider.GetRequiredService<SectlAuthorizedApiSender>());
+                // 控制面基址**只服务于配对码节点接入**（自建/私有部署）；账号控制台固定官方站，
+                // 因此这个可配置地址不会再收到任何账号令牌。见 IControlPlaneEndpointStore。
                 services.AddSingleton<IControlPlaneEndpointStore>(provider => new FileControlPlaneEndpointStore(
                     provider.GetRequiredService<ILogger<FileControlPlaneEndpointStore>>()));
-                services.AddSingleton<IControlPlaneClient>(provider => new ControlPlaneClient(
+                services.AddSingleton<IControlCenterClient>(provider => new ControlCenterClient(
                     provider.GetRequiredService<IAuthorizedApiSender>(),
-                    provider.GetRequiredService<ILogger<ControlPlaneClient>>(),
-                    endpointStore: provider.GetRequiredService<IControlPlaneEndpointStore>()));
+                    provider.GetRequiredService<ILogger<ControlCenterClient>>()));
 
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
                 services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");
@@ -1437,27 +1553,13 @@ public partial class App : Application
                 services.AddTransient<HomeSettingsPageViewModel>();
                 services.AddTransient<RandomNumberSettingsPageViewModel>();
                 // "远程抽取"页的 ViewModel：**桌面/平板/手机三个宿主共用同一份**。它只跟协议有关，
-                // 与谁是控制端/被控端无关，因此注册在共享分支；页面每次进入都重建（FAFrame 不快取），
-                // 它自己会记住上次选中的设备，不需要做成单例。
-                // 用显式工厂而不是纯约定注册：本机节点身份只有桌面/平板有（手机没有本地节点），
-                // 传 null = 设备列表里一台都不标"本机"，而不是让容器去猜一个可选参数。
-                // 后四个参数是给手机端的**内联接入卡片**用的：手机上没有「设置 → 集控」那一页，
-                // 未接入/令牌失效时就地填接入码（复用设置页那套 NodeEnrollmentClient + 接入记录存储）。
-                // 平台名必须报真实系统（手机是 android/ios，平板与桌面也是被控端），
-                // 设备名取平台根给的显示名，取不到时 VM 回落到主机名。
+                // 与谁是控制端/被控端无关，因此注册在共享分支；页面每次进入都重建（FAFrame 不快取）。
+                // 手机/平板没有节点身份，三端都只有一条控制链：登录 SECTL 账号后调 v4 级联 API。
                 services.AddTransient(provider => new MobileRemoteDrawViewModel(
                     provider.GetRequiredService<MainConfigHandler>(),
-                    provider.GetRequiredService<IControlPlaneClient>(),
-                    provider.GetRequiredService<IControlPlaneDevicePreferenceStore>(),
+                    provider.GetRequiredService<IControlCenterClient>(),
                     provider.GetRequiredService<SectlAuthService>(),
-                    provider.GetRequiredService<ILogger<MobileRemoteDrawViewModel>>(),
-                    provider.GetService<IControlNodeStateStore>(),
-                    // 同上：手机很可能"没登录 SECTL、但接入了自建集控"，这份记录决定本页能不能直接用。
-                    provider.GetService<INodeEnrollmentStore>(),
-                    provider.GetService<NodeEnrollmentClient>(),
-                    provider.GetService<IControlPlaneEndpointStore>(),
-                    ResolveControlPlatformName(),
-                    mobilePlatform?.DeviceName));
+                    provider.GetRequiredService<ILogger<MobileRemoteDrawViewModel>>()));
                 services.AddTransient<LotteryHistoryViewModel>();
 
                 // 杂项 Views
@@ -1587,6 +1689,19 @@ public partial class App : Application
                     Langs.SettingsPages.Picking.Resources.Page_Lottery);
                 services.AddSettingsPage<RandomNumberSettingsPage>(
                     Langs.SettingsPages.Picking.Resources.Page_RandomNumber);
+                services.AddSettingsPage<OrchestrationSettingsPage>(
+                    Langs.SettingsPages.Picking.Resources.Page_Orchestration);
+                // 五份名单各自的设置页：不出现在侧栏，只能从编排总览的设置卡跳进来。
+                services.AddSettingsPage<OrchestrationExcludeSettingsPage>(
+                    Langs.SettingsPages.Picking.Resources.S_Orchestration_Exclude);
+                services.AddSettingsPage<OrchestrationWeightSettingsPage>(
+                    Langs.SettingsPages.Picking.Resources.S_Orchestration_Weight);
+                services.AddSettingsPage<OrchestrationDeferSettingsPage>(
+                    Langs.SettingsPages.Picking.Resources.S_Orchestration_Defer);
+                services.AddSettingsPage<OrchestrationOrderSettingsPage>(
+                    Langs.SettingsPages.Picking.Resources.S_Orchestration_Order);
+                services.AddSettingsPage<OrchestrationGuaranteeSettingsPage>(
+                    Langs.SettingsPages.Picking.Resources.S_Orchestration_Guarantee);
 
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_Notification, "settings.notification",
@@ -2721,9 +2836,16 @@ public partial class App : Application
         var predictedRect = TryResolveQuickDrawNotificationTargetRect(window, settings, null, out var predicted)
             ? predicted
             : (PixelRect?)null;
-        var themeTask = _quickDrawNotificationTheme is null
-            ? ResolveQuickDrawNotificationThemeAsync(window, settings)
-            : null;
+        // 同一次通知的"预览 → 结果"必须复用同一个方案：滚动动画播到一半再换前景色会闪一下。
+        // 但复用的判据不能只是"上一次算过"（那个字段在别处会被清掉、也可能被手动闪抽打断），
+        // 必须确认这份方案此刻真的还挂在正在显示的卡片上；否则桌面换到浅色 PPT/壁纸之后仍会
+        // 一直用上一次的白字，用户看到的就是"自适应前景色怎么改都不变"。
+        var reuseTheme = _quickDrawNotificationTheme is { } cached
+                         && ReferenceEquals(quickDraw.NotificationTheme, cached)
+                         && window is { IsVisible: true, Opacity: > 0.5 };
+        var themeTask = reuseTheme
+            ? null
+            : ResolveQuickDrawNotificationThemeAsync(window, settings);
 
         var fadeIn = !window.IsVisible;
         if (fadeIn)
@@ -2837,9 +2959,13 @@ public partial class App : Application
         if (sample is null || sample.PixelCount < NotificationBackdropMinimumSamples)
             return fallback;
 
+        // 卡片整体是带不透明度的（RootBorder.Opacity），桌面会按 1-不透明度 透上来，
+        // 所以合成亮度必须算这一层，否则"字色按深底选、眼睛看到的是被冲淡的浅底"。
+        var cardOpacity = Math.Clamp(settings.Transparency, 20, 100) / 100.0;
         return AdaptiveBackdropResolver.Resolve(
             BackdropLuminance.FromPercentiles(sample.P10, sample.Median, sample.P90),
-            isDarkTheme);
+            isDarkTheme,
+            cardOpacity);
     }
 
     private static async Task FadeInQuickDrawWindowAsync(Window window)
@@ -2901,6 +3027,14 @@ public partial class App : Application
         {
             _quickDrawNotificationSettings = null;
             var quickDraw = IAppHost.GetService<QuickDrawPageViewModel>();
+
+            // 上一次结果还在展示（"抽取后禁用"秒数内）：这次触发直接丢掉，别让连点顶掉结果。
+            if (!quickDraw.IsDrawing && quickDraw.IsCoolingDown)
+            {
+                transaction?.Finish(SpanStatus.Ok);
+                return;
+            }
+
             quickDraw.ClearNotificationPresentation();
             if (!quickDraw.IsDrawing && !await quickDraw.AuthorizeTriggeredDrawAsync())
             {
@@ -2914,13 +3048,13 @@ public partial class App : Application
             {
                 HideQuickDrawNotificationWindow();
                 if (!quickDraw.IsDrawing)
-                    await quickDraw.StartAuthorizedTriggeredDrawAsync();
+                    await quickDraw.StartAuthorizedTriggeredDrawAsync(count);
                 transaction?.Finish(SpanStatus.Ok);
                 return;
             }
 
             if (!quickDraw.IsDrawing)
-                await quickDraw.StartAuthorizedTriggeredDrawAsync();
+                await quickDraw.StartAuthorizedTriggeredDrawAsync(count);
             transaction?.Finish(SpanStatus.Ok);
         }
         catch (Exception ex)
@@ -2931,6 +3065,9 @@ public partial class App : Application
         }
     }
 
+    /// <summary>
+    ///     闪抽/通知窗口固定在透明窗口上画卡片：不做亚克力，卡片颜色完全由采样结果决定。
+    /// </summary>
     private static Window GetOrCreateQuickDrawWindow()
     {
         if (_quickDrawWindow is { IsLoaded: true })
@@ -2953,6 +3090,8 @@ public partial class App : Application
             CanResize = false,
             ShowInTaskbar = false,
             Background = Brushes.Transparent,
+            // 只请求透明：卡片自己画实色底并保留圆角。若请求 AcrylicBlur，DWM 材质会按系统明暗主题
+            // 重新给整窗上色，采样到的桌面亮度与前景色就对不上了（白底白字/黑底黑字）。
             TransparencyLevelHint = [WindowTransparencyLevel.Transparent]
         };
         _quickDrawWindow.Loaded += (_, _) =>
@@ -3086,18 +3225,19 @@ public partial class App : Application
             return false;
 
         var area = screen.WorkingArea;
-        var x = settings.WindowPosition switch
+        // 九宫格映射与设置页的圆点选择器共用 NotificationWindowAnchorLayout，
+        // 旧配置里 0–4 的落位与追加的四角都在这里一次算清。
+        var (horizontal, vertical) = NotificationWindowAnchorLayout.Resolve(settings.WindowPosition);
+        var x = horizontal switch
         {
-            1 or 2 => area.Center.X - width / 2,
-            3 => area.X,
-            4 => area.Right - width,
+            NotificationWindowHorizontalAnchor.Left => area.X,
+            NotificationWindowHorizontalAnchor.Right => area.Right - width,
             _ => area.Center.X - width / 2
         };
-        var y = settings.WindowPosition switch
+        var y = vertical switch
         {
-            1 => area.Y,
-            2 => area.Bottom - height,
-            3 or 4 => area.Center.Y - height / 2,
+            NotificationWindowVerticalAnchor.Top => area.Y,
+            NotificationWindowVerticalAnchor.Bottom => area.Bottom - height,
             _ => area.Center.Y - height / 2
         };
         target = new PixelRect(
@@ -3249,30 +3389,53 @@ public partial class App : Application
 
     private void RefreshSudoMenuItem()
     {
-        if (_exitSudoModeMenuItem is not null)
+        var exitSudoModeMenuItem = _exitSudoModeMenuItem;
+        if (exitSudoModeMenuItem is null)
+            return;
+
+        // 5 秒计时器把刷新投递到 UI 线程，这个投递可能落在停机流程清空 Host 之后：
+        // 此时服务容器可能已释放，取服务异常发生在 Dispatcher 上，表现就是“退出时崩溃”。
+        // 没有服务就没有 sudo 状态可展示，按隐藏处理即可，不能把异常抛回 Dispatcher。
+        var securityService = IAppHost.TryGetService<ISecurityService>();
+        if (securityService is null)
         {
-            var securityService = IAppHost.GetService<ISecurityService>();
-            var isVisible = securityService.IsSudoModeActive();
-            _exitSudoModeMenuItem.IsVisible = isVisible;
-            
-            if (_exitSudoModeSeparator is not null)
-            {
-                var menu = this.FindResource(@"AppMenu") as NativeMenu;
-                if (menu is not null)
-                {
-                    if (isVisible && !menu.Items.Contains(_exitSudoModeSeparator))
-                    {
-                        // Insert separator before Exit Sudo Mode item
-                        var index = menu.Items.IndexOf(_exitSudoModeMenuItem);
-                        if (index >= 0)
-                            menu.Items.Insert(index, _exitSudoModeSeparator);
-                    }
-                    else if (!isVisible && menu.Items.Contains(_exitSudoModeSeparator))
-                    {
-                        menu.Items.Remove(_exitSudoModeSeparator);
-                    }
-                }
-            }
+            HideSudoMenuItem();
+            return;
+        }
+
+        var isVisible = securityService.IsSudoModeActive();
+        exitSudoModeMenuItem.IsVisible = isVisible;
+        ApplySudoModeSeparatorVisibility(isVisible);
+    }
+
+    private void HideSudoMenuItem()
+    {
+        if (_exitSudoModeMenuItem is not null)
+            _exitSudoModeMenuItem.IsVisible = false;
+
+        ApplySudoModeSeparatorVisibility(false);
+    }
+
+    private void ApplySudoModeSeparatorVisibility(bool isVisible)
+    {
+        var exitSudoModeMenuItem = _exitSudoModeMenuItem;
+        if (_exitSudoModeSeparator is null || exitSudoModeMenuItem is null)
+            return;
+
+        var menu = this.FindResource(@"AppMenu") as NativeMenu;
+        if (menu is null)
+            return;
+
+        if (isVisible && !menu.Items.Contains(_exitSudoModeSeparator))
+        {
+            // Insert separator before the Exit Sudo Mode item.
+            var index = menu.Items.IndexOf(exitSudoModeMenuItem);
+            if (index >= 0)
+                menu.Items.Insert(index, _exitSudoModeSeparator);
+        }
+        else if (!isVisible && menu.Items.Contains(_exitSudoModeSeparator))
+        {
+            menu.Items.Remove(_exitSudoModeSeparator);
         }
     }
 
