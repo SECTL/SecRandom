@@ -205,13 +205,12 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     public bool IsGenderSelectorVisible => MoreSettings.LotteryGenderSelector && IsStudentAssignmentEnabled && !IsNumberPrizeMode;
 
     /// <summary>
-    ///     记录组选择器是否出现：功能总闸 + 本页显隐开关 + 指派了学生名单（没有学生名单就没有「人的历史」可隔离）。
-    ///     数字奖池没有奖品档案，也不显示其余名单控件，选择器一并隐藏。
+    ///     记录组选择器是否出现：功能总闸 + 本页显隐开关 + 真实奖池（数字奖池不写任何历史，标记无意义）。
+    ///     未指派学生名单时照样显示：此时没有「人的历史」可隔离，组名仍会作为本次奖品记录的标记写入。
     /// </summary>
     public bool IsHistoryGroupSelectorVisible =>
         Config.EffectiveHistoryGroups.Enabled
         && MoreSettings.LotteryHistoryGroupSelector
-        && IsStudentAssignmentEnabled
         && !IsNumberPrizeMode;
 
     /// <summary>剩余名单只对真实奖池有意义：数字奖池的剩余情况由计数摘要承担。</summary>
@@ -275,6 +274,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     ///     <para>
     ///         抽奖页这一项隔离的是「人」的历史而不是奖品的历史：<c>Issue #294</c> 的动机是
     ///         「上课被抽过回答问题的人在抽奖品时概率被压低」，所以按组隔离的必须是学生历史。
+    ///         未指派学生名单时没有学生历史可隔离，选择器仍显示，组名只作为本次奖品记录的标记。
     ///         组名因此按 <see cref="HistoryGroupKind.RollCall" /> 登记与统计，与点名页共用同一批组。
     ///     </para>
     ///     <para>
@@ -282,8 +282,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     ///         但奖品历史的读侧在生产路径上不参与权重（奖池权重来自会话临时计数），所以它只是标记。
     ///     </para>
     ///     <para>
-    ///         选择器不可见时一律按 <see langword="null" /> 处理：功能被关掉、显隐开关被关掉、或取消
-    ///         指派学生名单之后，隐藏起来的选择器不可能再被用户看见，若继续沿用内存里的旧选择，
+    ///         选择器不可见时一律按 <see langword="null" /> 处理：功能被关掉、显隐开关被关掉、或切到
+    ///         不写历史的数字奖池之后，隐藏起来的选择器不可能再被用户看见，若继续沿用内存里的旧选择，
     ///         抽奖就会静默落进一个用户以为已失效的组。
     ///     </para>
     /// </remarks>
@@ -410,6 +410,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         OnPropertyChanged(nameof(IsGroupSelectorVisible));
         OnPropertyChanged(nameof(IsGenderSelectorVisible));
         OnPropertyChanged(nameof(IsHistoryGroupSelectorVisible));
+        // 切回真实奖池时选择器重新出现，必须同时补上组选项（数字模式期间是空转的）。
+        RefreshHistoryGroupOptions();
         OnPropertyChanged(nameof(IsRemainingListVisible));
         OnPropertyChanged(nameof(CountSummary));
     }
@@ -1466,7 +1468,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 DrawSettingsType.RollCall,
                 DrawProofExportContext.ForStudents(SelectedStudentListName, CurrentGroupScope, CurrentGenderScope, courseName),
                 parentProofId,
-                courseName).ConfigureAwait(true);
+                courseName,
+                channel: "lottery").ConfigureAwait(true);
             if (outcome is null)
             {
                 // Every remaining student is temporarily excluded (post-draw shield); nothing is assignable.

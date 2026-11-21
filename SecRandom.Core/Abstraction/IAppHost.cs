@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting;
 
 namespace SecRandom.Core.Abstraction;
 
@@ -33,6 +33,16 @@ public interface IAppHost
     /// <returns>如果获取成功，则返回获取到的服务，否则返回null</returns>
     public static T? TryGetService<T>()
     {
-        return (T?)Host?.Services.GetService(typeof(T));
+        try
+        {
+            return (T?)Host?.Services.GetService(typeof(T));
+        }
+        catch (ObjectDisposedException)
+        {
+            // 停机流程会先释放服务容器、再清空 Host：这段窗口里解析服务会抛 ObjectDisposedException。
+            // 崩溃处理路径本身也要取服务保存配置，因此这里必须按“服务不可用”处理，
+            // 否则一次停机期的取服务会把异常处理再次打崩。
+            return default;
+        }
     }
 }

@@ -811,6 +811,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
         SecurityOperation[] operations = [SecurityOperation.RollCallStart, SecurityOperation.LinkageAction];
         var gate = _linkageDrawCoordinator.EvaluateGate(operations);
+        // 本地 IPC 的调用方就在这台机器前，可以拉起验证框；集控/手机那头没人，仍按原样拒绝。
         if (gate == LinkageDrawGate.RequiresLocalVerification && allowInteractiveVerification)
             gate = LinkageDrawGate.Allowed;
         if (ControlDrawGateRejections.From(gate) is { } rejection)
