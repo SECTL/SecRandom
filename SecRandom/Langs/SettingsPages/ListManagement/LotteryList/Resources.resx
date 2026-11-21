@@ -258,8 +258,19 @@
     <data name="M_DeletePrizeNotFound" xml:space="preserve">
         <value>该奖品已不存在，奖池已刷新</value>
     </data>
-    <data name="M_KeepOneList" xml:space="preserve">
-        <value>至少需要保留一个奖池</value>
+    <data name="M_DeletePrizeShiftContent" xml:space="preserve">
+        <value>当前编号为 {0}，其后的 {1} 个数字编号可以整体向前移动一位
+
+{2}</value>
+    </data>
+    <data name="M_DeletePrizeShiftPrimary" xml:space="preserve">
+        <value>删除并前移编号</value>
+    </data>
+    <data name="M_DeletePrizeSecondary" xml:space="preserve">
+        <value>仅删除</value>
+    </data>
+    <data name="M_DeletePrizeShiftedSuccess" xml:space="preserve">
+        <value>已删除奖品，{0} 个奖品的编号已前移</value>
     </data>
     <data name="K_IdColumns" xml:space="preserve">
         <value>ID|id|编号|序号|奖品ID|prize id|prize_id|no</value>
@@ -361,5 +372,11 @@
     </data>
     <data name="M_AddPrizeDuplicateSuccess" xml:space="preserve">
         <value>已添加奖品，编号与现有奖品重复</value>
+    </data>
+    <data name="C_NoList" xml:space="preserve">
+        <value>还没有奖池</value>
+    </data>
+    <data name="C_NoList_D" xml:space="preserve">
+        <value>还没有奖池，点击「新增奖池」创建第一个</value>
     </data>
 </root>

@@ -87,9 +87,9 @@ namespace SecRandom.Langs.SettingsPages.History {
             }
         }
         
-        public static string S_HistoryGroup_New {
+        public static string S_HistoryGroup_MoveNothing {
             get {
-                return ResourceManager.GetString("S_HistoryGroup_New", resourceCulture);
+                return ResourceManager.GetString("S_HistoryGroup_MoveNothing", resourceCulture);
             }
         }
     }

@@ -6,6 +6,14 @@ namespace SecRandom.Core.Abstraction.Services;
 ///     One logical student draw to persist: temporary records first, then history, all under a single DrawRoundId.
 ///     DrawMethod carries the channel's draw type ((int)DrawType for student channels).
 /// </summary>
+/// <remarks>
+///     <see cref="HistoryGroup" /> is the group the draw <b>read</b> its weights from, and is
+///     <see langword="null" /> whenever the caller is not scoped to one group (feature off, selector hidden).
+///     <see cref="RecordGroup" /> is the group marker the new records are <b>written</b> into and is never
+///     <see langword="null" />: a channel whose draw was not group-scoped still stamps its own configured default
+///     group, so the channels and modes can never collapse into one bucket. When it is <see langword="null" /> the
+///     coordinator falls back to <see cref="HistoryGroup" /> (byte-compatible with every pre-existing caller).
+/// </remarks>
 public sealed record StudentDrawCommit(
     IReadOnlyList<Student> Winners,
     DateTime DrawTime,
@@ -17,7 +25,8 @@ public sealed record StudentDrawCommit(
     IReadOnlyDictionary<Student, double>? Weights = null,
     string CourseName = "",
     string? DrawRoundId = null,
-    string? HistoryGroup = null);
+    string? HistoryGroup = null,
+    string? RecordGroup = null);
 
 /// <summary>
 ///     One logical lottery draw. Prizes and their assigned students share a single DrawRoundId so history
@@ -37,7 +46,9 @@ public sealed record LotteryDrawCommit(
     int StudentDrawMethod = 0,
     string CourseName = "",
     string? DrawRoundId = null,
-    string? HistoryGroup = null);
+    string? HistoryGroup = null,
+    string? RecordGroup = null,
+    string? StudentRecordGroup = null);
 
 /// <summary>
 ///     One logical "no roster" number-range draw. Number tickets are synthetic, so the commit writes temporary

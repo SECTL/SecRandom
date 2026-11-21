@@ -134,4 +134,94 @@ public sealed class ProfileSequenceNumberingTests
         Assert.DoesNotContain("7", shifted);
         Assert.Contains("7", ids);
     }
+
+    [Fact]
+    public void AnalyzeRemoval_ShiftsLaterNumbersForward()
+    {
+        var removal = ProfileSequenceNumbering.AnalyzeRemoval(["1", "2", "3", "4"], 1);
+
+        Assert.True(removal.CanShift);
+        Assert.Equal(1, removal.RemovedIndex);
+        Assert.Equal("2", removal.RemovedId);
+        Assert.Equal(2, removal.RemovedNumber);
+        Assert.Equal([2, 3], removal.ShiftEntries.Select(entry => entry.Index));
+        Assert.Equal([3L, 4L], removal.ShiftEntries.Select(entry => entry.OldNumber));
+        Assert.Equal([2L, 3L], removal.ShiftEntries.Select(entry => entry.NewNumber));
+    }
+
+    [Fact]
+    public void AnalyzeRemoval_DoesNotOfferShift_WhenRemovedNumberIsTheLastNumber()
+    {
+        var removal = ProfileSequenceNumbering.AnalyzeRemoval(["1", "2", "3"], 2);
+
+        Assert.False(removal.CanShift);
+        Assert.Equal(3, removal.RemovedNumber);
+        Assert.Empty(removal.ShiftEntries);
+    }
+
+    [Fact]
+    public void AnalyzeRemoval_DoesNotOfferShift_WhenRemovedIdIsNotNumeric()
+    {
+        var removal = ProfileSequenceNumbering.AnalyzeRemoval(["A1", "2", "3"], 0);
+
+        Assert.False(removal.CanShift);
+        Assert.Null(removal.RemovedNumber);
+        Assert.Empty(removal.ShiftEntries);
+    }
+
+    [Fact]
+    public void AnalyzeRemoval_DoesNotOfferShift_WhenAnotherMemberUsesTheSameNumber()
+    {
+        var removal = ProfileSequenceNumbering.AnalyzeRemoval(["1", "2", "2", "3"], 1);
+
+        Assert.False(removal.CanShift);
+        Assert.Equal(2, removal.RemovedNumber);
+        Assert.Empty(removal.ShiftEntries);
+    }
+
+    [Fact]
+    public void AnalyzeRemoval_DoesNotOfferShift_WhenIndexIsInvalid()
+    {
+        Assert.False(ProfileSequenceNumbering.AnalyzeRemoval(["1", "2"], -1).CanShift);
+        Assert.False(ProfileSequenceNumbering.AnalyzeRemoval(["1", "2"], 2).CanShift);
+        Assert.False(ProfileSequenceNumbering.AnalyzeRemoval(null, 0).CanShift);
+    }
+
+    [Fact]
+    public void AnalyzeRemoval_LeavesNonNumericIdsUntouched()
+    {
+        var removal = ProfileSequenceNumbering.AnalyzeRemoval(["A1", "3", "初一(3)班-07", "5"], 1);
+
+        Assert.True(removal.CanShift);
+        Assert.Equal([3], removal.ShiftEntries.Select(entry => entry.Index));
+        Assert.Equal(5L, removal.ShiftEntries[0].OldNumber);
+        Assert.Equal(4L, removal.ShiftEntries[0].NewNumber);
+    }
+
+    [Fact]
+    public void AnalyzeRemoval_KeepsShiftedNumbersUnique()
+    {
+        string[] ids = ["3", "7", "8", "12", "A"];
+        var removal = ProfileSequenceNumbering.AnalyzeRemoval(ids, 1);
+
+        var shifted = ids.ToArray();
+        foreach (var entry in removal.ShiftEntries)
+            shifted[entry.Index] = entry.NewNumber.ToString();
+
+        Assert.True(removal.CanShift);
+        Assert.Equal([7L, 11L], removal.ShiftEntries.Select(entry => entry.NewNumber));
+        Assert.Equal(shifted.Length - 1, shifted.Where((_, index) => index != 1).Distinct(StringComparer.Ordinal).Count());
+    }
+
+    [Fact]
+    public void AnalyzeRemoval_HandlesLeadingZerosAndLongNumbers()
+    {
+        var leadingZeros = ProfileSequenceNumbering.AnalyzeRemoval(["007", "008"], 0);
+        Assert.True(leadingZeros.CanShift);
+        Assert.Equal(7L, leadingZeros.ShiftEntries[0].NewNumber);
+
+        var longNumbers = ProfileSequenceNumbering.AnalyzeRemoval(["20260101001", "20260101002"], 0);
+        Assert.True(longNumbers.CanShift);
+        Assert.Equal(20260101001L, longNumbers.ShiftEntries[0].NewNumber);
+    }
 }

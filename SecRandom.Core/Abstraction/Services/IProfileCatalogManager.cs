@@ -60,13 +60,24 @@ public interface IProfileCatalogManager
     bool ClearPrizeHistory(string name);
 
     /// <summary>
-    /// Moves the named history records into the target record group ("移到另一组"). Only the
+    /// Moves the named members' history records into the target record group ("移到另一组"). Only the
     /// HistoryGroup marker changes: no new record is appended, no DrawRoundId is created, weights and
-    /// counters are untouched. Empty target means the default group. Returns how many records were
-    /// moved; throws when the history file is missing or the save fails.
+    /// counters are untouched. Empty target means the default group. <paramref name="sourceGroup" />
+    /// narrows the move to the records currently in that group (<see langword="null" /> moves every
+    /// record of the named members, an empty string the default group only), which is what a view
+    /// filtered to one group shows. Returns how many records were moved; throws when the history file
+    /// is missing or the save fails.
     /// </summary>
-    int MoveStudentHistoryGroup(string profileName, IReadOnlyCollection<string> recordIds, string targetGroup);
+    int MoveStudentHistoryGroup(
+        string profileName,
+        IReadOnlyCollection<string> recordIds,
+        string targetGroup,
+        string? sourceGroup = null);
 
     /// <inheritdoc cref="MoveStudentHistoryGroup" />
-    int MovePrizeHistoryGroup(string profileName, IReadOnlyCollection<string> recordIds, string targetGroup);
+    int MovePrizeHistoryGroup(
+        string profileName,
+        IReadOnlyCollection<string> recordIds,
+        string targetGroup,
+        string? sourceGroup = null);
 }

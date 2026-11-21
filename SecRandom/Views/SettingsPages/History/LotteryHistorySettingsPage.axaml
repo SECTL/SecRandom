@@ -77,9 +77,6 @@
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
 
-                            <TextBox Text="{Binding NewMoveTargetGroup, Mode=TwoWay}"
-                                     PlaceholderText="{x:Static hsr:Resources.S_HistoryGroup_New}" />
-
                             <Button HorizontalAlignment="Right"
                                     x:Name="MoveHistoryGroupConfirmButton"
                                     Content="{x:Static hsr:Resources.S_HistoryGroup_Move}"

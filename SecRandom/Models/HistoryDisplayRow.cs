@@ -1,5 +1,6 @@
 using System;
 using System.Globalization;
+using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Models;
 
@@ -20,7 +21,11 @@ public static class HistoryMode
 /// </summary>
 public sealed class HistoryDisplayRow
 {
-    /// <summary>历史记录自身的稳定标识；总览模式的行是汇总行，没有对应记录，因此为空。</summary>
+    /// <summary>
+    ///     记录所属成员的稳定历史键（<see cref="ProfileRecordIdentity" /> 的 RecordId）；同一成员的所有
+    ///     历史条目共享该值，因此总览行也有值——移动记录组按「成员」整体移动，总览选中同样可移动。
+    ///     逐条事件行沿用该键，个人模式因此仍能定位到具体成员。
+    /// </summary>
     public string RecordId { get; init; } = string.Empty;
 
     public string Id { get; init; } = string.Empty;

@@ -270,8 +270,19 @@
     <data name="M_DeleteMemberNotFound" xml:space="preserve">
         <value>该成员已不存在，名单已刷新</value>
     </data>
-    <data name="M_KeepOneList" xml:space="preserve">
-        <value>至少需要保留一个名单</value>
+    <data name="M_DeleteMemberShiftContent" xml:space="preserve">
+        <value>当前编号为 {0}，其后的 {1} 个数字编号可以整体向前移动一位
+
+{2}</value>
+    </data>
+    <data name="M_DeleteMemberShiftPrimary" xml:space="preserve">
+        <value>删除并前移编号</value>
+    </data>
+    <data name="M_DeleteMemberSecondary" xml:space="preserve">
+        <value>仅删除</value>
+    </data>
+    <data name="M_DeleteMemberShiftedSuccess" xml:space="preserve">
+        <value>已删除成员，{0} 个成员的编号已前移</value>
     </data>
     <data name="K_IdColumns" xml:space="preserve">
         <value>序号|序号/编号|学号|学籍号|学生ID|sequence / id|sequence|sequence id|sequence number|serial number|serial no|member id|member number|student id|student_id|student number|student no|roll no|roll number|番号 / ID|番号|番号/id|番号 / id|メンバーid|学员编号|编号|座号|座位号|sid|id|no</value>
@@ -373,5 +384,11 @@
     </data>
     <data name="M_AddMemberDuplicateSuccess" xml:space="preserve">
         <value>已添加成员，编号与现有成员重复</value>
+    </data>
+    <data name="C_NoList" xml:space="preserve">
+        <value>还没有名单</value>
+    </data>
+    <data name="C_NoList_D" xml:space="preserve">
+        <value>还没有名单，点击「新增名单」创建第一份</value>
     </data>
 </root>

@@ -236,6 +236,61 @@ public sealed class HistoryGroupMoveTests : IDisposable
         Assert.Equal("抽奖组", reloaded!.Prizes[key].Histories.Single().HistoryGroup);
     }
 
+    [Fact]
+    public void MoveStudentHistoryGroup_ScopedBySourceGroupLeavesOtherGroupsAlone()
+    {
+        using var provider = CreateProvider();
+        var manager = provider.GetRequiredService<IProfileCatalogManager>();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var (alice, _) = SeedRollCallProfile(provider, manager, profile);
+
+        var history = profile.CurrentStudentHistory!;
+        var profileName = profile.StudentHistoryConfig!.Name;
+        var key = ProfileRecordIdentity.EnsureRecordId(alice);
+        profile.RecordStudentHistory([alice], new DateTime(2026, 8, 31, 9, 0, 0), 1, historyGroup: "课堂");
+
+        // 记录组筛选停在「默认记录组」时移动：只改默认组那一条，另一条「课堂」记录原地不动。
+        Assert.Equal(1, manager.MoveStudentHistoryGroup(profileName, [key], "抽奖", sourceGroup: string.Empty));
+        Assert.Equal(["抽奖", "课堂"], history.Students[key].Histories.Select(item => item.HistoryGroup));
+        Assert.Equal(2, history.Students[key].Histories.Count);
+        Assert.Equal(2, history.Students[key].TotalCount);
+
+        // 筛选值就是目标组：该组记录已经在目标组，没有可改的标记，因此返回 0 且不写盘。
+        var path = Utils.GetFilePath("history", "roll_call_history", $"{profileName}{Utils.HistoryDatabaseExtension}");
+        var bytesBefore = File.ReadAllBytes(path);
+        Assert.Equal(0, manager.MoveStudentHistoryGroup(profileName, [key], "抽奖", sourceGroup: "抽奖"));
+        Assert.Equal(bytesBefore, File.ReadAllBytes(path));
+
+        // 不带 sourceGroup 仍是「整个成员」的旧行为：两条记录一起改。
+        Assert.Equal(1, manager.MoveStudentHistoryGroup(profileName, [key], "课堂"));
+        Assert.Equal(["课堂", "课堂"], history.Students[key].Histories.Select(item => item.HistoryGroup));
+    }
+
+    [Fact]
+    public void MovePrizeHistoryGroup_ScopedBySourceGroupLeavesOtherGroupsAlone()
+    {
+        using var provider = CreateProvider();
+        var manager = provider.GetRequiredService<IProfileCatalogManager>();
+        var profile = provider.GetRequiredService<IProfileService>();
+        Assert.True(manager.CreatePrizeList("pool-scope"));
+        profile.LoadPrizeProfile("pool-scope");
+
+        var book = new Prize { Name = "Book", Id = "A1", Count = 2, RecordId = Guid.NewGuid() };
+        profile.CurrentPrizeList!.Prizes.Add(book);
+        profile.SaveProfile();
+        profile.RecordPrizeHistory([book], new DateTime(2026, 8, 30, 8, 0, 0), 1);
+        profile.RecordPrizeHistory([book], new DateTime(2026, 8, 30, 9, 0, 0), 1, historyGroup: "抽奖组");
+
+        var history = profile.CurrentPrizeHistory!;
+        var key = ProfileRecordIdentity.EnsureRecordId(book);
+
+        Assert.Equal(1, manager.MovePrizeHistoryGroup("pool-scope", [key], "课堂", sourceGroup: string.Empty));
+        Assert.Equal(["课堂", "抽奖组"], history.Prizes[key].Histories.Select(item => item.HistoryGroup));
+
+        var reloaded = provider.GetRequiredService<IHistoryQueryService>().LoadPrizeHistory("pool-scope");
+        Assert.Equal(["课堂", "抽奖组"], reloaded!.Prizes[key].Histories.Select(item => item.HistoryGroup));
+    }
+
     public void Dispose()
     {
         ResetDataRootForTests();

@@ -30,12 +30,12 @@
     <value>別のグループへ移動…</value>
   </data>
   <data name="S_HistoryGroup_MoveHint" xml:space="preserve">
-    <value>記録グループの印だけを変更し、記録の追加や重みへの影響はありません</value>
+    <value>記録グループの印だけを変更し、記録の追加や重みへの影響はありません。概要行はメンバー単位で移動し、グループで絞り込み中はそのグループの記録だけを移動します</value>
   </data>
   <data name="S_HistoryGroup_MoveDone" xml:space="preserve">
     <value>{0} 件を移動しました</value>
   </data>
-  <data name="S_HistoryGroup_New" xml:space="preserve">
-    <value>新しいグループ…</value>
+  <data name="S_HistoryGroup_MoveNothing" xml:space="preserve">
+    <value>選択した記録はすでに移動先グループにあります</value>
   </data>
 </root>

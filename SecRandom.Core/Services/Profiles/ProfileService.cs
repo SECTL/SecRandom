@@ -28,6 +28,8 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         _configHandler = configHandler;
         _configService = configService;
 
+        SeedDefaultListsOnFirstRun();
+
         var studentListName = ResolveProfileName("list", "roll_call_list", _configHandler.Data.RollCallSettings.DefaultClass);
         var prizeListName = ResolveProfileName("list", "lottery_list", _configHandler.Data.LotterySettings.DefaultPool);
 
@@ -38,9 +40,9 @@ public static partial class CoreRuntimeServiceCollectionExtensions
 
         _logger.LogInformation(
             "已加载默认档案：学生名单={StudentListName}，学生数量={StudentCount}，奖品池={PrizeListName}，奖品数量={PrizeCount}。",
-            StudentListConfig.Name,
+            StudentListConfig?.Name ?? NoListName,
             CurrentStudentList?.Students.Count ?? 0,
-            PrizeListConfig.Name,
+            PrizeListConfig?.Name ?? NoListName,
             CurrentPrizeList?.Prizes.Count ?? 0);
     }
 
@@ -56,8 +58,14 @@ public static partial class CoreRuntimeServiceCollectionExtensions
 
     public void LoadStudentProfile(string name, bool saveCurrent = true)
     {
-        if (name == string.Empty)
+        // 空名不是"什么都不做"，而是"当前没有名单"：删掉最后一份名单后必须真的把活动档案清空，
+        // 否则内存里还留着已删除的名单，随后任何一次保存都会把它写回磁盘。
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            ClearStudentProfile(saveCurrent);
             return;
+        }
+
         ProfileConfigBase.ValidateProfileName(name);
 
         if (StudentListConfig?.Name == name && StudentHistoryConfig?.Name == name)
@@ -84,8 +92,13 @@ public static partial class CoreRuntimeServiceCollectionExtensions
 
     public void LoadPrizeProfile(string name, bool saveCurrent = true)
     {
-        if (name == string.Empty)
+        // 与 LoadStudentProfile 同理：空名代表"当前没有奖品池"，必须清空而不是保留旧档案。
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            ClearPrizeProfile(saveCurrent);
             return;
+        }
+
         ProfileConfigBase.ValidateProfileName(name);
 
         if (PrizeListConfig?.Name == name && PrizeHistoryConfig?.Name == name)
@@ -360,12 +373,84 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         PrizeHistoryConfig?.Save();
     }
 
-    private StudentListConfig CreateStudentListConfig(string name) => new(name, _logger, _configService);
-    private StudentHistoryConfig CreateStudentHistoryConfig(string name) => new(name, _logger, _configService);
-    private PrizeListConfig CreatePrizeListConfig(string name) => new(name, _logger, _configService);
-    private PrizeHistoryConfig CreatePrizeHistoryConfig(string name) => new(name, _logger, _configService);
+    private const string NoListName = "(无名单)";
 
-    private static string ResolveProfileName(string rootA, string rootB, string preferredName)
+    private StudentListConfig? CreateStudentListConfig(string? name) =>
+        string.IsNullOrWhiteSpace(name) ? null : new StudentListConfig(name, _logger, _configService);
+
+    private StudentHistoryConfig? CreateStudentHistoryConfig(string? name) =>
+        string.IsNullOrWhiteSpace(name) ? null : new StudentHistoryConfig(name, _logger, _configService);
+
+    private PrizeListConfig? CreatePrizeListConfig(string? name) =>
+        string.IsNullOrWhiteSpace(name) ? null : new PrizeListConfig(name, _logger, _configService);
+
+    private PrizeHistoryConfig? CreatePrizeHistoryConfig(string? name) =>
+        string.IsNullOrWhiteSpace(name) ? null : new PrizeHistoryConfig(name, _logger, _configService);
+
+    /// <summary>
+    ///     Detaches the active roll-call profile: after the last list is deleted there is no profile to save, record or
+    ///     reload, so every consumer must see <see langword="null" /> instead of a leftover (already deleted) file.
+    /// </summary>
+    private void ClearStudentProfile(bool saveCurrent)
+    {
+        if (StudentListConfig is null && StudentHistoryConfig is null)
+            return;
+
+        if (saveCurrent)
+        {
+            StudentListConfig?.Save();
+            StudentHistoryConfig?.Save();
+        }
+
+        StudentListConfig = null;
+        StudentHistoryConfig = null;
+        _logger.LogInformation("已清空当前点名名单档案：现在没有名单。");
+    }
+
+    /// <summary>Detaches the active prize pool for the same reason as <see cref="ClearStudentProfile" />.</summary>
+    private void ClearPrizeProfile(bool saveCurrent)
+    {
+        if (PrizeListConfig is null && PrizeHistoryConfig is null)
+            return;
+
+        if (saveCurrent)
+        {
+            PrizeListConfig?.Save();
+            PrizeHistoryConfig?.Save();
+        }
+
+        PrizeListConfig = null;
+        PrizeHistoryConfig = null;
+        _logger.LogInformation("已清空当前奖品池档案：现在没有奖品池。");
+    }
+
+    /// <summary>
+    ///     A first run (guide not completed yet) gets one blank <c>default</c> list per channel, which is what every
+    ///     build up to now produced implicitly at startup.
+    /// </summary>
+    /// <remarks>
+    ///     It only ever happens before the guide completes, because after that deleting the last list has to mean
+    ///     "there are no lists": recreating <c>default</c> on every restart would make the empty state impossible.
+    /// </remarks>
+    private void SeedDefaultListsOnFirstRun()
+    {
+        if (_configHandler.Data.General.Basic.GuideCompleted)
+            return;
+
+        if (!HasListFiles("roll_call_list"))
+            new StudentListConfig("default", _logger, _configService).Save();
+
+        if (!HasListFiles("lottery_list"))
+            new PrizeListConfig("default", _logger, _configService).Save();
+    }
+
+    private static bool HasListFiles(string directory)
+    {
+        var path = Utils.GetDirectoryPath("list", directory);
+        return Directory.Exists(path) && Directory.GetFiles(path, "*.json").Length > 0;
+    }
+
+    private static string? ResolveProfileName(string rootA, string rootB, string preferredName)
     {
         // 「不使用名单」不是真实档案名：回落到磁盘上已有的名单，绝不为哨兵创建/读取档案文件。
         if (RosterSelection.IsNone(preferredName))
@@ -382,11 +467,11 @@ public static partial class CoreRuntimeServiceCollectionExtensions
                 return preferredName;
         }
 
-        var existing = Directory.GetFiles(directory, "*.json")
+        // 目录里没有任何名单文件就是"没有名单"：不再回落到 default，否则删掉最后一份名单后重启会被凭空重建，
+        // 而"至少保留一份名单"的限制正是靠这条回落才显得存在。
+        return Directory.GetFiles(directory, "*.json")
             .Select(Path.GetFileNameWithoutExtension)
             .FirstOrDefault(ProfileConfigBase.IsValidProfileName);
-
-        return string.IsNullOrWhiteSpace(existing) ? "default" : existing;
     }
     }
 }

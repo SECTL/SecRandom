@@ -30,10 +30,17 @@
                 </StackPanel>
             </StackPanel>
 
-            <ListBox Grid.Row="1"
-                     ItemsSource="{Binding StudentListNames}"
-                     SelectedItem="{Binding SelectedStudentListName, Mode=TwoWay}"
-                     SelectionChanged="StudentListListBox_OnSelectionChanged" />
+            <StackPanel Grid.Row="1" Spacing="8">
+                <ListBox MinHeight="120"
+                         ItemsSource="{Binding StudentListNames}"
+                         SelectedItem="{Binding SelectedStudentListName, Mode=TwoWay}"
+                         SelectionChanged="StudentListListBox_OnSelectionChanged" />
+
+                <TextBlock IsVisible="{Binding !HasAnyList}"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                           Text="{x:Static lr:Resources.C_NoList_D}"
+                           TextWrapping="Wrap" />
+            </StackPanel>
         </Grid>
     </UserControl.Resources>
 
@@ -46,7 +53,7 @@
             <fa:FACommandBar DefaultLabelPosition="Right">
                 <fa:FACommandBar.PrimaryCommands>
                     <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi PeopleListFilled}}"
-                                           Label="{Binding SelectedStudentListName}"
+                                           Label="{Binding CurrentListLabel}"
                                            ToolTip.Tip="{x:Static lr:Resources.C_CurrentList_D}"
                                            Click="ChangeCurrentListButton_OnClick" />
 
@@ -76,14 +83,15 @@
                 BorderThickness="1"
                 CornerRadius="4 4 0 0"
                 ClipToBounds="True">
-            <DataGrid MinHeight="320"
-                      AutoGenerateColumns="False"
-                      CanUserSortColumns="True"
-                      CanUserResizeColumns="True"
-                      GridLinesVisibility="Horizontal"
-                      SelectionMode="Single"
-                      ItemsSource="{Binding SelectedStudentList.Students}"
-                      IsReadOnly="{Binding !#Root.IsDesktop}">
+            <Grid>
+                <DataGrid MinHeight="320"
+                          AutoGenerateColumns="False"
+                          CanUserSortColumns="True"
+                          CanUserResizeColumns="True"
+                          GridLinesVisibility="Horizontal"
+                          SelectionMode="Single"
+                          ItemsSource="{Binding SelectedStudentList.Students}"
+                          IsReadOnly="{Binding !#Root.IsDesktop}">
                 <DataGrid.Columns>
                     <DataGridTemplateColumn MinWidth="64"
                                             Header="{x:Static lr:Resources.C_Edit}"
@@ -163,7 +171,23 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                 </DataGrid.Columns>
-            </DataGrid>
+                </DataGrid>
+
+                <StackPanel IsVisible="{Binding !HasAnyList}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Spacing="6"
+                            Margin="24">
+                    <TextBlock Theme="{StaticResource SubtitleTextBlockStyle}"
+                               HorizontalAlignment="Center"
+                               Text="{x:Static lr:Resources.C_NoList}" />
+                    <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               MaxWidth="360"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               Text="{x:Static lr:Resources.C_NoList_D}" />
+                </StackPanel>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

@@ -343,6 +343,105 @@ public sealed class ProfileCatalogManagerTests : IDisposable
     }
 
     [Fact]
+    public void DeleteLastStudentList_LeavesNoActiveProfile()
+    {
+        using var provider = CreateProvider();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var manager = provider.GetRequiredService<IProfileCatalogManager>();
+        var onlyName = profile.StudentListConfig!.Name;
+        Assert.Equal([onlyName], manager.GetStudentListNames());
+
+        Assert.True(manager.DeleteStudentList(onlyName, deleteHistory: true));
+
+        // 名单可以全部删掉：删完不能再有活动档案，否则内存里会留着一份已删除的名单。
+        Assert.Empty(manager.GetStudentListNames());
+        Assert.Null(profile.StudentListConfig);
+        Assert.Null(profile.CurrentStudentList);
+        Assert.Null(profile.StudentHistoryConfig);
+        Assert.Null(profile.CurrentStudentHistory);
+        Assert.Empty(profile.StudentHistoryConfig?.Data.HistoryGroups ?? []);
+        Assert.False(File.Exists(Utils.GetFilePath("list", "roll_call_list", $"{onlyName}.json")));
+    }
+
+    [Fact]
+    public void DeleteLastPrizeList_LeavesNoActiveProfile()
+    {
+        using var provider = CreateProvider();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var manager = provider.GetRequiredService<IProfileCatalogManager>();
+        var onlyName = profile.PrizeListConfig!.Name;
+
+        Assert.True(manager.DeletePrizeList(onlyName, deleteHistory: true));
+
+        Assert.Empty(manager.GetPrizeListNames());
+        Assert.Null(profile.PrizeListConfig);
+        Assert.Null(profile.CurrentPrizeList);
+        Assert.Null(profile.PrizeHistoryConfig);
+        Assert.Null(profile.CurrentPrizeHistory);
+        Assert.False(File.Exists(Utils.GetFilePath("list", "lottery_list", $"{onlyName}.json")));
+    }
+
+    [Fact]
+    public void EmptyListState_SurvivesRestartOnceTheGuideIsCompleted()
+    {
+        using (var provider = CreateProvider())
+        {
+            var config = provider.GetRequiredService<MainConfigHandler>();
+            var manager = provider.GetRequiredService<IProfileCatalogManager>();
+            var profile = provider.GetRequiredService<IProfileService>();
+
+            // 引导完成后空目录就是「没有名单」；只有首次运行才会补一份 default。
+            config.Data.General.Basic.GuideCompleted = true;
+            config.Save();
+
+            Assert.True(manager.DeleteStudentList(profile.StudentListConfig!.Name, deleteHistory: true));
+            Assert.True(manager.DeletePrizeList(profile.PrizeListConfig!.Name, deleteHistory: true));
+        }
+
+        using (var restarted = CreateProvider())
+        {
+            var config = restarted.GetRequiredService<MainConfigHandler>();
+            var profile = restarted.GetRequiredService<IProfileService>();
+            Assert.True(config.Data.General.Basic.GuideCompleted);
+            // 重启不补建：删掉最后一份名单之后，零名单状态必须是真的零名单。
+            Assert.Null(profile.StudentListConfig);
+            Assert.Null(profile.PrizeListConfig);
+            Assert.False(File.Exists(Utils.GetFilePath("list", "roll_call_list", "default.json")));
+            Assert.False(File.Exists(Utils.GetFilePath("list", "lottery_list", "default.json")));
+        }
+    }
+
+    [Fact]
+    public void FirstRun_StillSeedsOneDefaultListPerChannel()
+    {
+        using var provider = CreateProvider();
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        var profile = provider.GetRequiredService<IProfileService>();
+
+        Assert.False(config.Data.General.Basic.GuideCompleted);
+        Assert.Equal("default", profile.StudentListConfig!.Name);
+        Assert.Equal("default", profile.PrizeListConfig!.Name);
+    }
+
+    [Fact]
+    public void SetDefaultList_AcceptsEmptyToClearADeletedList()
+    {
+        using var provider = CreateProvider();
+        var config = provider.GetRequiredService<MainConfigHandler>();
+        var manager = provider.GetRequiredService<IProfileCatalogManager>();
+
+        manager.SetDefaultStudentList("class-default");
+        manager.SetDefaultPrizePool("pool-default");
+        Assert.Equal("class-default", config.Data.RollCallSettings.DefaultClass);
+        Assert.Equal("pool-default", config.Data.LotterySettings.DefaultPool);
+
+        manager.SetDefaultStudentList(string.Empty);
+        manager.SetDefaultPrizePool(string.Empty);
+        Assert.Equal(string.Empty, config.Data.RollCallSettings.DefaultClass);
+        Assert.Equal(string.Empty, config.Data.LotterySettings.DefaultPool);
+    }
+
+    [Fact]
     public void RenameStudentList_MovesDataHistoryTemporaryRecordsAndUpdatesActiveProfile()
     {
         using var provider = CreateProvider();

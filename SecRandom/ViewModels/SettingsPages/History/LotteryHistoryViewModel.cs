@@ -38,7 +38,6 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
     [ObservableProperty] private string _selectedMode = HistoryMode.Overview;
     [ObservableProperty] private HistoryGroupOption? _selectedHistoryGroupFilter;
     [ObservableProperty] private HistoryGroupOption? _selectedMoveTargetGroup;
-    [ObservableProperty] private string _newMoveTargetGroup = string.Empty;
     [ObservableProperty] private string _moveStatus = string.Empty;
 
     public LotteryHistoryViewModel(MainConfigHandler configHandler) : base(configHandler)
@@ -221,8 +220,8 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
     }
 
     /// <summary>
-    ///     表格选中项变化时调用。只有逐条记录的行带 <see cref="HistoryDisplayRow.RecordId" />，
-    ///     总览模式的行是按奖品汇总的，没有对应记录，选中它们不会产生可移动的目标。
+    ///     表格选中项变化时调用。逐条记录的行带该条记录的 <see cref="HistoryDisplayRow.RecordId" />，
+    ///     总览行带的是这个奖品的历史键，因此总览里选中一个奖品也能整段移动。
     /// </summary>
     public void SetSelectedRows(IEnumerable<HistoryDisplayRow> rows)
     {
@@ -236,8 +235,8 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
 
     /// <summary>
     ///     「移到另一组」：只修改选中记录的记录组标记，不新增记录、不改变权重，
-    ///     因此直接调用档案目录的 Move API 而不是抽取提交流程。输入框填了组名就用输入的组名（可新建组），
-    ///     否则用下拉选中的目标组。
+    ///     因此直接调用档案目录的 Move API 而不是抽取提交流程。目标组只能从已有组里选；
+    ///     当前筛选到某个组时，只移动这个组里的记录，避免把看不见的其它组记录一起改掉。
     /// </summary>
     private void MoveSelectedHistoryGroup()
     {
@@ -246,15 +245,18 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
         if (_selectedRecordIds.Count == 0 || string.IsNullOrWhiteSpace(SelectedPoolName))
             return;
 
-        var targetGroup = NewMoveTargetGroup.Trim();
-        if (targetGroup.Length == 0)
-            targetGroup = SelectedMoveTargetGroup?.Value ?? string.Empty;
+        var targetGroup = SelectedMoveTargetGroup?.Value ?? string.Empty;
 
         try
         {
-            var moved = _catalogManager.MovePrizeHistoryGroup(SelectedPoolName, _selectedRecordIds.ToArray(), targetGroup);
-            NewMoveTargetGroup = string.Empty;
-            MoveStatus = string.Format(CultureInfo.CurrentCulture, GroupSR.S_HistoryGroup_MoveDone, moved);
+            var moved = _catalogManager.MovePrizeHistoryGroup(
+                SelectedPoolName,
+                _selectedRecordIds.ToArray(),
+                targetGroup,
+                GetSelectedHistoryGroupFilter());
+            MoveStatus = moved == 0
+                ? GroupSR.S_HistoryGroup_MoveNothing
+                : string.Format(CultureInfo.CurrentCulture, GroupSR.S_HistoryGroup_MoveDone, moved);
             Refresh();
         }
         catch (ArgumentException ex)
@@ -349,6 +351,7 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
         var history = ResolveHistory(prize);
         return new HistoryDisplayRow
         {
+            RecordId = ProfileRecordIdentity.EnsureRecordId(prize),
             Id = FormatNumericId(prize.Id, _prizeIdPadWidth),
             Name = prize.Name,
             TotalCount = GetFilteredHistoryCount(history),
@@ -386,6 +389,7 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
             var info = ResolvePrizeInfo(key);
             Rows.Add(new HistoryDisplayRow
             {
+                RecordId = key,
                 Id = FormatNumericId(info.Id, _prizeIdPadWidth),
                 Name = info.Name,
                 TotalCount = GetFilteredHistoryCount(history),

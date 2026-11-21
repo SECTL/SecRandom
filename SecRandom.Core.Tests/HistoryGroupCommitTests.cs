@@ -97,6 +97,81 @@ public sealed class HistoryGroupCommitTests : IDisposable
     }
 
     [Fact]
+    public void StudentCommit_RecordGroupOverridesTheReadScope()
+    {
+        // 读取范围可以是「不按组筛」，写入归属必须另算：两者混用会让一次按组读取的抽取把记录塞进
+        // 用户已经切走的那个组里。
+        using var provider = CreateProvider();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var student = new Student { Name = "Ada", RecordId = Guid.NewGuid() };
+        profile.CurrentStudentList!.Students.Add(student);
+        profile.SaveProfile();
+
+        provider.GetRequiredService<IDrawCommitService>().CommitStudentDraw(new StudentDrawCommit(
+            [student],
+            DateTime.Now,
+            1,
+            profile.StudentListConfig!.Name,
+            HistoryGroup: "课堂",
+            RecordGroup: "点名默认组"));
+
+        var item = profile.CurrentStudentHistory!.Students.Values.SelectMany(history => history.Histories).Single();
+        Assert.Equal("点名默认组", item.HistoryGroup);
+    }
+
+    [Fact]
+    public void StudentCommit_UnscopedReadStillStampsTheChannelsDefaultGroup()
+    {
+        // 功能关闭、选择器不可见时读取范围是 null（全部历史），但记录仍落在顶点名自己配置的默认组上：
+        // 否则点名、闪抽、抽奖会一起挤进默认组，重新打开功能就拆不回来。
+        using var provider = CreateProvider();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var student = new Student { Name = "Bo", RecordId = Guid.NewGuid() };
+        profile.CurrentStudentList!.Students.Add(student);
+        profile.SaveProfile();
+
+        provider.GetRequiredService<IDrawCommitService>().CommitStudentDraw(new StudentDrawCommit(
+            [student],
+            DateTime.Now,
+            1,
+            profile.StudentListConfig!.Name,
+            RecordGroup: "点名默认组"));
+
+        var item = profile.CurrentStudentHistory!.Students.Values.SelectMany(history => history.Histories).Single();
+        Assert.Equal("点名默认组", item.HistoryGroup);
+    }
+
+    [Fact]
+    public void LotteryCommit_StampsPrizeAndAssignedStudentGroupsSeparately()
+    {
+        // 抽奖连带抽中的学生在学生历史里是另一条通道：奖品那组的名字对学生历史不可见，
+        // 所以两边各用自己的写入归属，而不是共用 commit.HistoryGroup。
+        using var provider = CreateProvider();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var prize = new Prize { Name = "铅笔", RecordId = Guid.NewGuid(), Count = 1 };
+        var student = new Student { Name = "Cy", RecordId = Guid.NewGuid() };
+        profile.CurrentPrizeList!.Prizes.Add(prize);
+        profile.CurrentStudentList!.Students.Add(student);
+        profile.SaveProfile();
+
+        provider.GetRequiredService<IDrawCommitService>().CommitLotteryDraw(new LotteryDrawCommit(
+            [prize],
+            DateTime.Now,
+            1,
+            profile.PrizeListConfig!.Name,
+            AssignedStudents: [student],
+            StudentListName: profile.StudentListConfig!.Name,
+            RecordGroup: "奖品默认组",
+            StudentRecordGroup: "点名默认组"));
+
+        var prizeItem = profile.CurrentPrizeHistory!.Prizes.Values.SelectMany(history => history.Histories).Single();
+        var studentItem = profile.CurrentStudentHistory!.Students.Values.SelectMany(history => history.Histories).Single();
+
+        Assert.Equal("奖品默认组", prizeItem.HistoryGroup);
+        Assert.Equal("点名默认组", studentItem.HistoryGroup);
+    }
+
+    [Fact]
     public void StudentCommit_RollsBackHistoryGroupMarkersWhenHistorySaveFails()
     {
         using var provider = CreateProvider();

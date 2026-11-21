@@ -30,12 +30,12 @@
     <value>Move to another group…</value>
   </data>
   <data name="S_HistoryGroup_MoveHint" xml:space="preserve">
-    <value>Only the record group marker changes; no record is added and weights are unaffected</value>
+    <value>Only the record group marker changes: no record is added and weights are unaffected; a summary row moves its member's records, and while a group filter is active only that group's records move</value>
   </data>
   <data name="S_HistoryGroup_MoveDone" xml:space="preserve">
     <value>Moved {0} records</value>
   </data>
-  <data name="S_HistoryGroup_New" xml:space="preserve">
-    <value>New group…</value>
+  <data name="S_HistoryGroup_MoveNothing" xml:space="preserve">
+    <value>The selected records are already in the target group</value>
   </data>
 </root>

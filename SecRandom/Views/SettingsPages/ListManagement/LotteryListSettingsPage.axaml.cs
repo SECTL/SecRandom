@@ -55,10 +55,20 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
 
             _selectedPrizeListName = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(CurrentListLabel));
         }
     }
 
     public PrizeList? SelectedPrizeList { get; private set; }
+
+    /// <summary>没有奖品池是合法状态：界面据此显示"还没有名单"而不是一张空表。</summary>
+    public bool HasAnyList => PrizeListNames.Count > 0;
+
+    public bool HasSelectedList => SelectedPrizeList != null;
+
+    /// <summary>命令栏上显示的当前奖品池名；没有奖品池时显示说明文案而不是空白按钮。</summary>
+    public string CurrentListLabel =>
+        string.IsNullOrWhiteSpace(SelectedPrizeListName) ? LR.C_NoList : SelectedPrizeListName;
 
     event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
     {
@@ -78,26 +88,27 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         foreach (var name in _catalogManager.GetPrizeListNames())
             PrizeListNames.Add(name);
 
-        if (PrizeListNames.Count == 0)
-        {
-            _catalogManager.CreatePrizeList("default");
-            PrizeListNames.Add("default");
-        }
-
-        SelectedPrizeListName = PrizeListNames.Contains(selectedName) ? selectedName : PrizeListNames[0];
+        // 奖品池不再必须存在：删掉最后一份后这里就是空集合，绝不再凭空补建 default。
+        SelectedPrizeListName = PrizeListNames.Contains(selectedName)
+            ? selectedName
+            : PrizeListNames.FirstOrDefault() ?? string.Empty;
+        OnPropertyChanged(nameof(HasAnyList));
         LoadSelectedPrizeList();
     }
 
     private void LoadSelectedPrizeList()
     {
-        if (string.IsNullOrWhiteSpace(SelectedPrizeListName))
-            return;
-
         if (SelectedPrizeList != null)
             _catalogManager.SavePrizeList(SelectedPrizeList);
-        SelectedPrizeList = _catalogManager.LoadPrizeList(SelectedPrizeListName);
+
+        // 没有选中奖品池（例如刚删掉最后一份）时必须把缓存一并清空，
+        // 否则界面还挂着已删除奖品池的奖品，编辑保存还会把文件写回来。
+        SelectedPrizeList = string.IsNullOrWhiteSpace(SelectedPrizeListName)
+            ? null
+            : _catalogManager.LoadPrizeList(SelectedPrizeListName);
 
         OnPropertyChanged(nameof(SelectedPrizeList));
+        OnPropertyChanged(nameof(HasSelectedList));
     }
 
     private void SaveSelectedPrizeList()
@@ -183,10 +194,24 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
             return;
 
         var displayName = string.IsNullOrWhiteSpace(prize.Name) ? prize.Id : prize.Name;
-        if (!await ConfirmDeletePrizeAsync(displayName))
+        var prizes = SelectedPrizeList.Prizes;
+        var removal = ProfileSequenceNumbering.AnalyzeRemoval(
+            prizes.Select(item => item.Id).ToList(), prizes.IndexOf(prize));
+        var choice = await SequenceNumberRemovalPrompt.ShowAsync(this, removal, displayName,
+            SelectedPrizeListName, prizes.Select(item => item.Name).ToList(), CreateRemovalText());
+        if (choice == SequenceNumberRemovalChoice.Cancel)
             return;
 
-        if (!SelectedPrizeList.Prizes.Remove(prize))
+        var shiftedCount = 0;
+        if (choice == SequenceNumberRemovalChoice.DeleteAndShift)
+        {
+            // 先按原下标前移，再删除；反过来会让被删奖品之后的奖品下标整体错位。
+            foreach (var entry in removal.ShiftEntries)
+                prizes[entry.Index].Id = entry.NewNumber.ToString(CultureInfo.InvariantCulture);
+            shiftedCount = removal.ShiftEntries.Count;
+        }
+
+        if (!prizes.Remove(prize))
         {
             this.ShowWarningToast(LR.M_DeletePrizeNotFound);
             OnPropertyChanged(nameof(SelectedPrizeList));
@@ -195,8 +220,11 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
 
         SaveSelectedPrizeList();
         OnPropertyChanged(nameof(SelectedPrizeList));
-        _logger.LogInformation("已删除奖品池条目：奖品池={ListName}，记录={RecordId}。", SelectedPrizeListName, prize.RecordId);
-        this.ShowSuccessToast(string.Format(LR.M_DeletePrizeSuccess, displayName));
+        _logger.LogInformation("已删除奖品池条目：奖品池={ListName}，记录={RecordId}，前移编号个数={ShiftedCount}。",
+            SelectedPrizeListName, prize.RecordId, shiftedCount);
+        this.ShowSuccessToast(shiftedCount > 0
+            ? string.Format(LR.M_DeletePrizeShiftedSuccess, shiftedCount)
+            : string.Format(LR.M_DeletePrizeSuccess, displayName));
     }
 
     private void ChangeCurrentListButton_OnClick(object? sender, RoutedEventArgs e)
@@ -228,12 +256,6 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
             return;
         }
 
-        if (PrizeListNames.Count <= 1)
-        {
-            this.ShowWarningToast(LR.M_KeepOneList);
-            return;
-        }
-
         var deleteName = SelectedPrizeListName;
         if (!await ConfirmDeleteAsync(deleteName))
             return;
@@ -241,8 +263,13 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         SelectedPrizeList = null;
         _catalogManager.DeletePrizeList(deleteName, deleteHistory: true);
 
+        // 最后一份奖品池也可以删除：此时没有可切换的奖品池，页面回到"还没有奖池"的空状态。
         var nextName = PrizeListNames.FirstOrDefault(name => name != deleteName) ?? string.Empty;
         RefreshPrizeLists(nextName);
+
+        // 默认奖池不能继续指向一份已经不存在的奖品池，否则设置里会留下一个幽灵名字。
+        if (!HasAnyList)
+            _catalogManager.SetDefaultPrizePool(string.Empty);
 
         _logger.LogInformation("已删除奖品池：奖品池={ListName}。", deleteName);
         this.ShowSuccessToast(string.Format(LR.M_DeleteListSuccess, deleteName));
@@ -443,6 +470,19 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
         this.ShowSuccessToast(toastMessage);
     }
 
+    private static SequenceNumberRemovalText CreateRemovalText() => new(
+        LR.M_DeletePrizeTitle,
+        LR.M_DeletePrizeContent,
+        LR.M_DeletePrizeShiftContent,
+        LR.M_AddPrizeConflictPreviewHeader,
+        LR.M_AddPrizeConflictPreviewLine,
+        LR.M_AddPrizeConflictPreviewEllipsis,
+        LR.M_DeletePrizePrimary,
+        LR.M_DeletePrizeShiftPrimary,
+        LR.M_DeletePrizeSecondary,
+        LR.C_Cancel,
+        LR.M_AddPrizeConflictUnnamed);
+
     private static SequenceNumberConflictText CreateConflictText() => new(
         LR.M_AddPrizeConflictTitle,
         LR.M_AddPrizeConflictContent,
@@ -491,20 +531,6 @@ public partial class LotteryListSettingsPage : UserControl, INotifyPropertyChang
             Title = LR.M_DeleteListTitle,
             Content = string.Format(LR.M_DeleteListContent, listName),
             PrimaryButtonText = LR.M_DeleteListPrimary,
-            CloseButtonText = LR.C_Cancel,
-            DefaultButton = FAContentDialogButton.Close
-        }.ShowAsync(TopLevel.GetTopLevel(this));
-
-        return result == FAContentDialogResult.Primary;
-    }
-
-    private async Task<bool> ConfirmDeletePrizeAsync(string prizeName)
-    {
-        var result = await new FAContentDialog
-        {
-            Title = LR.M_DeletePrizeTitle,
-            Content = string.Format(LR.M_DeletePrizeContent, prizeName, SelectedPrizeListName),
-            PrimaryButtonText = LR.M_DeletePrizePrimary,
             CloseButtonText = LR.C_Cancel,
             DefaultButton = FAContentDialogButton.Close
         }.ShowAsync(TopLevel.GetTopLevel(this));

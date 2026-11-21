@@ -57,10 +57,20 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
 
             _selectedStudentListName = value;
             OnPropertyChanged();
+            OnPropertyChanged(nameof(CurrentListLabel));
         }
     }
 
     public StudentList? SelectedStudentList { get; private set; }
+
+    /// <summary>没有名单是合法状态：界面据此显示"还没有名单"而不是一张空表。</summary>
+    public bool HasAnyList => StudentListNames.Count > 0;
+
+    public bool HasSelectedList => SelectedStudentList != null;
+
+    /// <summary>命令栏上显示的当前名单名；没有名单时显示说明文案而不是空白按钮。</summary>
+    public string CurrentListLabel =>
+        string.IsNullOrWhiteSpace(SelectedStudentListName) ? LR.C_NoList : SelectedStudentListName;
 
     event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
     {
@@ -81,26 +91,27 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         foreach (var name in _catalogManager.GetStudentListNames())
             StudentListNames.Add(name);
 
-        if (StudentListNames.Count == 0)
-        {
-            _catalogManager.CreateStudentList("default");
-            StudentListNames.Add("default");
-        }
-
-        SelectedStudentListName = StudentListNames.Contains(selectedName) ? selectedName : StudentListNames[0];
+        // 名单不再必须存在：删掉最后一份名单后这里就是空集合，绝不再凭空补建 default。
+        SelectedStudentListName = StudentListNames.Contains(selectedName)
+            ? selectedName
+            : StudentListNames.FirstOrDefault() ?? string.Empty;
+        OnPropertyChanged(nameof(HasAnyList));
         LoadSelectedStudentList();
     }
 
     private void LoadSelectedStudentList()
     {
-        if (string.IsNullOrWhiteSpace(SelectedStudentListName))
-            return;
-
         if (SelectedStudentList != null)
             _catalogManager.SaveStudentList(SelectedStudentList);
-        SelectedStudentList = _catalogManager.LoadStudentList(SelectedStudentListName);
+
+        // 没有选中名单（例如刚删掉最后一份）时必须把缓存一并清空，
+        // 否则界面还挂着已删除名单的成员，编辑保存还会把文件写回来。
+        SelectedStudentList = string.IsNullOrWhiteSpace(SelectedStudentListName)
+            ? null
+            : _catalogManager.LoadStudentList(SelectedStudentListName);
 
         OnPropertyChanged(nameof(SelectedStudentList));
+        OnPropertyChanged(nameof(HasSelectedList));
     }
 
     private void SaveSelectedStudentList()
@@ -179,10 +190,24 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
             return;
 
         var displayName = string.IsNullOrWhiteSpace(student.Name) ? student.Id : student.Name;
-        if (!await ConfirmDeleteMemberAsync(displayName))
+        var students = SelectedStudentList.Students;
+        var removal = ProfileSequenceNumbering.AnalyzeRemoval(
+            students.Select(item => item.Id).ToList(), students.IndexOf(student));
+        var choice = await SequenceNumberRemovalPrompt.ShowAsync(this, removal, displayName,
+            SelectedStudentListName, students.Select(item => item.Name).ToList(), CreateRemovalText());
+        if (choice == SequenceNumberRemovalChoice.Cancel)
             return;
 
-        if (!SelectedStudentList.Students.Remove(student))
+        var shiftedCount = 0;
+        if (choice == SequenceNumberRemovalChoice.DeleteAndShift)
+        {
+            // 先按原下标前移，再删除；反过来会让被删成员之后的成员下标整体错位。
+            foreach (var entry in removal.ShiftEntries)
+                students[entry.Index].Id = entry.NewNumber.ToString(CultureInfo.InvariantCulture);
+            shiftedCount = removal.ShiftEntries.Count;
+        }
+
+        if (!students.Remove(student))
         {
             this.ShowWarningToast(LR.M_DeleteMemberNotFound);
             OnPropertyChanged(nameof(SelectedStudentList));
@@ -191,8 +216,11 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
 
         SaveSelectedStudentList();
         OnPropertyChanged(nameof(SelectedStudentList));
-        _logger.LogInformation("已删除点名名单成员：名单={ListName}，记录={RecordId}。", SelectedStudentListName, student.RecordId);
-        this.ShowSuccessToast(string.Format(LR.M_DeleteMemberSuccess, displayName));
+        _logger.LogInformation("已删除点名名单成员：名单={ListName}，记录={RecordId}，前移编号人数={ShiftedCount}。",
+            SelectedStudentListName, student.RecordId, shiftedCount);
+        this.ShowSuccessToast(shiftedCount > 0
+            ? string.Format(LR.M_DeleteMemberShiftedSuccess, shiftedCount)
+            : string.Format(LR.M_DeleteMemberSuccess, displayName));
     }
 
     private void ChangeCurrentListButton_OnClick(object? sender, RoutedEventArgs e)
@@ -227,12 +255,6 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
             return;
         }
 
-        if (StudentListNames.Count <= 1)
-        {
-            this.ShowWarningToast(LR.M_KeepOneList);
-            return;
-        }
-
         var deleteName = SelectedStudentListName;
         if (!await ConfirmDeleteAsync(deleteName))
             return;
@@ -240,8 +262,13 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         SelectedStudentList = null;
         _catalogManager.DeleteStudentList(deleteName, deleteHistory: true);
 
+        // 最后一份名单也可以删除：此时没有可切换的名单，页面回到"还没有名单"的空状态。
         var nextName = StudentListNames.FirstOrDefault(name => name != deleteName) ?? string.Empty;
         RefreshStudentLists(nextName);
+
+        // 默认名单不能继续指向一份已经不存在的名单，否则设置里会留下一个幽灵名字。
+        if (!HasAnyList)
+            _catalogManager.SetDefaultStudentList(string.Empty);
 
         _logger.LogInformation("已删除点名名单：名单={ListName}。", deleteName);
         this.ShowSuccessToast(string.Format(LR.M_DeleteListSuccess, deleteName));
@@ -438,6 +465,19 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
         this.ShowSuccessToast(toastMessage);
     }
 
+    private static SequenceNumberRemovalText CreateRemovalText() => new(
+        LR.M_DeleteMemberTitle,
+        LR.M_DeleteMemberContent,
+        LR.M_DeleteMemberShiftContent,
+        LR.M_AddMemberConflictPreviewHeader,
+        LR.M_AddMemberConflictPreviewLine,
+        LR.M_AddMemberConflictPreviewEllipsis,
+        LR.M_DeleteMemberPrimary,
+        LR.M_DeleteMemberShiftPrimary,
+        LR.M_DeleteMemberSecondary,
+        LR.C_Cancel,
+        LR.M_AddMemberConflictUnnamed);
+
     private static SequenceNumberConflictText CreateConflictText() => new(
         LR.M_AddMemberConflictTitle,
         LR.M_AddMemberConflictContent,
@@ -514,20 +554,6 @@ public partial class RollCallListSettingsPage : UserControl, INotifyPropertyChan
             Title = LR.M_DeleteListTitle,
             Content = string.Format(LR.M_DeleteListContent, listName),
             PrimaryButtonText = LR.M_DeleteListPrimary,
-            CloseButtonText = LR.C_Cancel,
-            DefaultButton = FAContentDialogButton.Close
-        }.ShowAsync(TopLevel.GetTopLevel(this));
-
-        return result == FAContentDialogResult.Primary;
-    }
-
-    private async Task<bool> ConfirmDeleteMemberAsync(string memberName)
-    {
-        var result = await new FAContentDialog
-        {
-            Title = LR.M_DeleteMemberTitle,
-            Content = string.Format(LR.M_DeleteMemberContent, memberName, SelectedStudentListName),
-            PrimaryButtonText = LR.M_DeleteMemberPrimary,
             CloseButtonText = LR.C_Cancel,
             DefaultButton = FAContentDialogButton.Close
         }.ShowAsync(TopLevel.GetTopLevel(this));

@@ -71,9 +71,6 @@ public sealed class DrawHistoryGroupSetting : ObservableObject
     /// <summary>下拉框的候选值：默认记录组 + 目录里的组名。</summary>
     public ObservableCollection<string> Options { get; }
 
-    /// <summary>总开关关闭时整行只显示说明，不再显示下拉框。</summary>
-    public bool IsSelectorVisible => _isFeatureEnabled();
-
     /// <summary>
     ///     下拉框按索引选择。选项里永远至少有一个「默认记录组」，所以页面刚打开、或是
     ///     <see cref="Refresh" /> 刚重建过候选值时都不会出现「一个都没选中」的空下拉框。
@@ -140,7 +137,6 @@ public sealed class DrawHistoryGroupSetting : ObservableObject
 
         OnPropertyChanged(nameof(Selected));
         OnPropertyChanged(nameof(SelectedIndex));
-        OnPropertyChanged(nameof(IsSelectorVisible));
     }
 
     /// <summary>配置里的组名被别处改了（另一页、导入、删除组），让下拉框重新取一次值。</summary>

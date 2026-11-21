@@ -81,3 +81,59 @@ public sealed class HistoryGroupDefaultScopeTests
         Assert.False(scope.ConfiguredGroupMissing);
     }
 }
+
+/// <summary>
+///     Write-side counterpart of the same decision: which group marker a new record carries. It is deliberately a
+///     separate entry point, because the feature master switch only governs whether the selector may be shown — a
+///     channel whose history is not group-scoped still writes its own configured default group. Collapsing the two
+///     would let every mode pile into the default group as soon as the feature is turned off, which cannot be undone
+///     by turning it back on.
+/// </summary>
+public sealed class HistoryRecordGroupWriteScopeTests
+{
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public void BlankConfiguration_WritesTheDefaultGroup(string? configured)
+    {
+        Assert.Equal(string.Empty, HistoryGroupScope.ResolveRecordGroup(configured, ["Class A"]));
+    }
+
+    [Fact]
+    public void ExistingGroup_IsWrittenAndTrimmed()
+    {
+        Assert.Equal("Class A", HistoryGroupScope.ResolveRecordGroup("  Class A  ", ["Class A", "Class B"]));
+    }
+
+    [Fact]
+    public void UnreadableCatalogue_KeepsTheConfiguredName()
+    {
+        // The opposite of the read side, on purpose: a name is only a marker, so keeping what the user configured is
+        // the recoverable choice, while silently folding the records into the default group is irreversible.
+        Assert.Equal("Class A", HistoryGroupScope.ResolveRecordGroup("Class A", null));
+    }
+
+    [Fact]
+    public void DeletedGroup_WritesTheDefaultGroupInsteadOfAGhostName()
+    {
+        Assert.Equal(string.Empty, HistoryGroupScope.ResolveRecordGroup("Deleted", ["Class A"]));
+    }
+
+    [Fact]
+    public void MatchingIsOrdinal()
+    {
+        Assert.Equal(string.Empty, HistoryGroupScope.ResolveRecordGroup("class a", ["Class A"]));
+    }
+
+    [Fact]
+    public void TheFeatureSwitch_IsNotPartOfTheWriteDecision()
+    {
+        // Pinned by signature: adding an `enabled` parameter here would re-introduce exactly the collapse this type
+        // exists to prevent (feature off ⇒ every mode writes the default group).
+        var method = typeof(HistoryGroupScope).GetMethod(nameof(HistoryGroupScope.ResolveRecordGroup));
+
+        Assert.NotNull(method);
+        Assert.Equal(2, method!.GetParameters().Length);
+    }
+}

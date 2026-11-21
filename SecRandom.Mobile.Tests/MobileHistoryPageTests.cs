@@ -352,8 +352,10 @@ public sealed class MobileHistoryPageTests
 
         // History record groups (#294): the mobile history page never moves records between groups,
         // so the fake answers "nothing moved" and stays a pure read-only double.
-        public int MoveStudentHistoryGroup(string profileName, IReadOnlyCollection<string> recordIds, string targetGroup) => 0;
-        public int MovePrizeHistoryGroup(string profileName, IReadOnlyCollection<string> recordIds, string targetGroup) => 0;
+        public int MoveStudentHistoryGroup(string profileName, IReadOnlyCollection<string> recordIds, string targetGroup,
+            string? sourceGroup = null) => 0;
+        public int MovePrizeHistoryGroup(string profileName, IReadOnlyCollection<string> recordIds, string targetGroup,
+            string? sourceGroup = null) => 0;
     }
 
     private sealed class EmptyProfileService : IProfileService
@@ -372,10 +374,10 @@ public sealed class MobileHistoryPageTests
         public void RecordStudentHistory(IReadOnlyList<Student> students, DateTime now, int requestedCount,
             string drawGroup = "", string drawGender = "", int drawMethod = 0,
             IReadOnlyDictionary<Student, double>? weights = null, string courseName = "", string? drawRoundId = null,
-            string historyGroup = "") { }
+            string? historyGroup = null) { }
 
         public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount,
-            int drawMethod = 0, string? drawRoundId = null, string courseName = "", string historyGroup = "") { }
+            int drawMethod = 0, string? drawRoundId = null, string courseName = "", string? historyGroup = null) { }
 
         public void ClearCurrentStudentHistory() { }
         public void ClearCurrentPrizeHistory() { }

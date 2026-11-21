@@ -45,7 +45,6 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
     [ObservableProperty] private string _selectedSubject = string.Empty;
     [ObservableProperty] private HistoryGroupOption? _selectedHistoryGroupFilter;
     [ObservableProperty] private HistoryGroupOption? _selectedMoveTargetGroup;
-    [ObservableProperty] private string _newMoveTargetGroup = string.Empty;
     [ObservableProperty] private string _moveStatus = string.Empty;
 
     public RollCallHistoryViewModel(MainConfigHandler configHandler) : base(configHandler)
@@ -219,7 +218,8 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
     /// <summary>
     ///     重建「记录组」筛选与「移到另一组」目标组的下拉项。
     ///     筛选项第一项是「全部记录组」（值为 <c>null</c>，即不过滤），第二项是「默认组」（值为空串），
-    ///     其余是现有组名；目标组没有「全部」，只有「默认组」+ 现有组 + 页面上可输入的新组名。
+    ///     其余是现有组名；目标组没有「全部」，只有「默认组」+ 现有组——新建组在历史管理设置页完成，
+    ///     移动只负责把已有记录换到已有组里。
     ///     组名来源是 <see cref="IHistoryGroupCatalog" /> 的已注册列表与当前快照里记录实际携带的值的并集，
     ///     因此即使注册信息丢失，只要记录上还有该组名，它依旧出现在下拉里。
     /// </summary>
@@ -273,8 +273,8 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
     }
 
     /// <summary>
-    ///     表格选中项变化时调用。只有逐条记录的行带 <see cref="HistoryDisplayRow.RecordId" />，
-    ///     总览模式的行是按人汇总的，没有对应记录，选中它们不会产生可移动的目标。
+    ///     表格选中项变化时调用。逐条记录的行带该条记录的 <see cref="HistoryDisplayRow.RecordId" />，
+    ///     总览行带的是这个成员的历史键，因此总览里选中一个人也能整段移动（与旧版「整段移动」语义一致）。
     /// </summary>
     public void SetSelectedRows(IEnumerable<HistoryDisplayRow> rows)
     {
@@ -288,8 +288,8 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
 
     /// <summary>
     ///     「移到另一组」：只修改选中记录的记录组标记，不新增记录、不改变权重，
-    ///     因此直接调用档案目录的 Move API 而不是抽取提交流程。输入框填了组名就用输入的组名（可新建组），
-    ///     否则用下拉选中的目标组。
+    ///     因此直接调用档案目录的 Move API 而不是抽取提交流程。目标组只能从已有组里选；
+    ///     当前筛选到某个组时，只移动这个组里的记录，避免把看不见的其它组记录一起改掉。
     /// </summary>
     private void MoveSelectedHistoryGroup()
     {
@@ -298,15 +298,18 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
         if (_selectedRecordIds.Count == 0 || string.IsNullOrWhiteSpace(SelectedClassName))
             return;
 
-        var targetGroup = NewMoveTargetGroup.Trim();
-        if (targetGroup.Length == 0)
-            targetGroup = SelectedMoveTargetGroup?.Value ?? string.Empty;
+        var targetGroup = SelectedMoveTargetGroup?.Value ?? string.Empty;
 
         try
         {
-            var moved = _catalogManager.MoveStudentHistoryGroup(SelectedClassName, _selectedRecordIds.ToArray(), targetGroup);
-            NewMoveTargetGroup = string.Empty;
-            MoveStatus = string.Format(CultureInfo.CurrentCulture, GroupSR.S_HistoryGroup_MoveDone, moved);
+            var moved = _catalogManager.MoveStudentHistoryGroup(
+                SelectedClassName,
+                _selectedRecordIds.ToArray(),
+                targetGroup,
+                GetSelectedHistoryGroupFilter());
+            MoveStatus = moved == 0
+                ? GroupSR.S_HistoryGroup_MoveNothing
+                : string.Format(CultureInfo.CurrentCulture, GroupSR.S_HistoryGroup_MoveDone, moved);
             Refresh();
         }
         catch (ArgumentException ex)
@@ -399,6 +402,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
         var history = ResolveHistory(student);
         return new HistoryDisplayRow
         {
+            RecordId = ProfileRecordIdentity.EnsureRecordId(student),
             Id = FormatNumericId(student.Id, _studentIdPadWidth),
             Name = student.Name,
             Gender = student.Gender,
@@ -440,6 +444,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
             var info = ResolveStudentInfo(key);
             Rows.Add(new HistoryDisplayRow
             {
+                RecordId = key,
                 Id = FormatNumericId(info.Id, _studentIdPadWidth),
                 Name = info.Name,
                 Gender = info.Gender,

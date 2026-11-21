@@ -68,8 +68,7 @@ public sealed class HistoryGroupLocalizationTests
             "S_LotteryHistoryGroup_D",
             "S_QuickDrawHistoryGroup",
             "S_QuickDrawHistoryGroup_D",
-            "O_HistoryGroupDefault",
-            "S_HistoryGroup_Disabled"
+            "O_HistoryGroupDefault"
         ]),
         (["SettingsPages", "More"],
         [
@@ -106,7 +105,7 @@ public sealed class HistoryGroupLocalizationTests
         "S_HistoryGroup_Move",
         "S_HistoryGroup_MoveHint",
         "S_HistoryGroup_MoveDone",
-        "S_HistoryGroup_New",
+        "S_HistoryGroup_MoveNothing",
         "S_Filter_HistoryGroup"
     ];
 

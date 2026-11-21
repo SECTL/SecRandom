@@ -48,10 +48,17 @@ public sealed class DefaultRosterSettingSource
     /// <summary>「不使用名单」的显示文案，用于把下拉框选中项映射回哨兵。</summary>
     public string NoListOption { get; }
 
+    /// <summary>
+    ///     磁盘上是否至少有一份真实档案。名单可以被全部删除，那时抽取设置里这张默认名单卡没有可选项，
+    ///     页面据此把整张卡隐藏，而不是留下一行只能选「不使用名单」的下拉框。
+    /// </summary>
+    public bool HasRosters { get; private set; }
+
     /// <summary>重建候选值，并把选中项落回配置里的默认值（未配置时落到第一份并写回配置）。</summary>
     public void Refresh(ComboBox? selector)
     {
         var names = GetListNames();
+        HasRosters = names.Count > 0;
         _syncing = true;
         try
         {

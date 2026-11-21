@@ -30,12 +30,12 @@
     <value>移到另一组…</value>
   </data>
   <data name="S_HistoryGroup_MoveHint" xml:space="preserve">
-    <value>只修改记录组标记，不新增记录、不影响权重</value>
+    <value>只修改记录组标记，不新增记录、不影响权重；总览行按成员移动，筛选到某个组时只移动该组的记录</value>
   </data>
   <data name="S_HistoryGroup_MoveDone" xml:space="preserve">
     <value>已移动 {0} 条记录</value>
   </data>
-  <data name="S_HistoryGroup_New" xml:space="preserve">
-    <value>新建组…</value>
+  <data name="S_HistoryGroup_MoveNothing" xml:space="preserve">
+    <value>所选记录已经在目标组内</value>
   </data>
 </root>

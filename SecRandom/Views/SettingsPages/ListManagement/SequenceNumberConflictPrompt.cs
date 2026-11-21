@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Media;
@@ -59,9 +58,6 @@ internal sealed record SequenceNumberConflictText(
 /// <summary>新增成员的编号冲突确认弹窗，点名名单与奖品池共用。</summary>
 internal static class SequenceNumberConflictPrompt
 {
-    private const int PreviewHeadCount = 3;
-    private const int PreviewMaxCount = 4;
-
     /// <summary>展示冲突弹窗并返回用户的选择；关闭或按 Esc 视为“返回修改”。</summary>
     public static async Task<SequenceNumberConflictChoice> ShowAsync(
         Control owner,
@@ -74,7 +70,7 @@ internal static class SequenceNumberConflictPrompt
         var collidingIndex = conflict.DuplicateIndices.Count > 0
             ? conflict.DuplicateIndices[0]
             : conflict.InsertIndex;
-        var collidingName = ResolveName(displayNames, collidingIndex, text.UnnamedMember);
+        var collidingName = SequenceNumberPreview.ResolveName(displayNames, collidingIndex, text.UnnamedMember);
 
         var dialog = new FAContentDialog
         {
@@ -90,7 +86,8 @@ internal static class SequenceNumberConflictPrompt
                     collidingName,
                     conflict.ShiftEntries.Count,
                     conflict.AppendNumber?.ToString(CultureInfo.InvariantCulture) ?? conflict.NewId,
-                    BuildPreview(conflict, displayNames, text)));
+                    SequenceNumberPreview.Build(conflict.ShiftEntries, displayNames, text.PreviewHeader,
+                        text.PreviewLine, text.PreviewEllipsis, text.UnnamedMember)));
                 dialog.PrimaryButtonText = text.ShiftPrimary;
                 dialog.SecondaryButtonText = text.AppendSecondary;
                 dialog.CloseButtonText = text.Close;
@@ -131,47 +128,4 @@ internal static class SequenceNumberConflictPrompt
         TextWrapping = TextWrapping.Wrap,
         MaxWidth = 460
     };
-
-    private static string BuildPreview(
-        SequenceNumberConflict conflict,
-        IReadOnlyList<string> displayNames,
-        SequenceNumberConflictText text)
-    {
-        var ordered = conflict.ShiftEntries.OrderBy(entry => entry.OldNumber).ToList();
-        var lines = new List<string> { text.PreviewHeader };
-
-        if (ordered.Count <= PreviewMaxCount)
-        {
-            lines.AddRange(ordered.Select(entry => FormatPreviewLine(entry, displayNames, text)));
-        }
-        else
-        {
-            lines.AddRange(ordered.Take(PreviewHeadCount).Select(entry => FormatPreviewLine(entry, displayNames, text)));
-            lines.Add(text.PreviewEllipsis);
-            lines.Add(FormatPreviewLine(ordered[^1], displayNames, text));
-        }
-
-        return string.Join('\n', lines);
-    }
-
-    private static string FormatPreviewLine(
-        SequenceNumberShiftEntry entry,
-        IReadOnlyList<string> displayNames,
-        SequenceNumberConflictText text) =>
-        string.Format(CultureInfo.CurrentCulture, text.PreviewLine,
-            entry.OldId,
-            ResolveName(displayNames, entry.Index, text.UnnamedMember),
-            entry.NewNumber.ToString(CultureInfo.InvariantCulture));
-
-    private static string ResolveName(IReadOnlyList<string> displayNames, int index, string unnamedMember)
-    {
-        if (index >= 0 && index < displayNames.Count)
-        {
-            var name = displayNames[index];
-            if (!string.IsNullOrWhiteSpace(name))
-                return name.Trim();
-        }
-
-        return unnamedMember;
-    }
 }

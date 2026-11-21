@@ -66,9 +66,8 @@ internal sealed class ProfileCatalogManager(
 
         if (string.Equals(profileService.StudentListConfig?.Name, name, StringComparison.Ordinal))
         {
-            var nextName = GetStudentListNames().FirstOrDefault();
-            if (nextName is not null)
-                profileService.LoadStudentProfile(nextName, saveCurrent: false);
+            // 删掉的正好是活动名单：有下一份就切过去，没有就把活动档案真正清空（删除最后一份名单是合法的）。
+            profileService.LoadStudentProfile(GetStudentListNames().FirstOrDefault() ?? string.Empty, saveCurrent: false);
         }
 
         logger.LogInformation("已删除点名名单：名单={ListName}，连带历史={DeleteHistory}。", name, deleteHistory);
@@ -86,9 +85,8 @@ internal sealed class ProfileCatalogManager(
 
         if (string.Equals(profileService.PrizeListConfig?.Name, name, StringComparison.Ordinal))
         {
-            var nextName = GetPrizeListNames().FirstOrDefault();
-            if (nextName is not null)
-                profileService.LoadPrizeProfile(nextName, saveCurrent: false);
+            // 与 DeleteStudentList 同理：没有剩余奖品池时清空活动档案，而不是继续指向已删除的文件。
+            profileService.LoadPrizeProfile(GetPrizeListNames().FirstOrDefault() ?? string.Empty, saveCurrent: false);
         }
 
         logger.LogInformation("已删除奖品池：奖品池={ListName}，连带历史={DeleteHistory}。", name, deleteHistory);
@@ -207,19 +205,23 @@ internal sealed class ProfileCatalogManager(
 
     public void SetDefaultStudentList(string name)
     {
-        if (string.IsNullOrWhiteSpace(name) || configHandler.Data.RollCallSettings.DefaultClass == name)
+        // 空名字代表"没有默认名单"：删掉最后一份名单后必须能把默认设置真正清掉，
+        // 否则重启会留下一个指向已删除名单的默认值。
+        var normalized = string.IsNullOrWhiteSpace(name) ? string.Empty : name;
+        if (configHandler.Data.RollCallSettings.DefaultClass == normalized)
             return;
 
-        configHandler.Data.RollCallSettings.DefaultClass = name;
+        configHandler.Data.RollCallSettings.DefaultClass = normalized;
         configHandler.Save();
     }
 
     public void SetDefaultPrizePool(string name)
     {
-        if (string.IsNullOrWhiteSpace(name) || configHandler.Data.LotterySettings.DefaultPool == name)
+        var normalized = string.IsNullOrWhiteSpace(name) ? string.Empty : name;
+        if (configHandler.Data.LotterySettings.DefaultPool == normalized)
             return;
 
-        configHandler.Data.LotterySettings.DefaultPool = name;
+        configHandler.Data.LotterySettings.DefaultPool = normalized;
         configHandler.Save();
     }
 
@@ -278,14 +280,16 @@ internal sealed class ProfileCatalogManager(
     public int MoveStudentHistoryGroup(
         string profileName,
         IReadOnlyCollection<string> recordIds,
-        string targetGroup) =>
-        MoveHistoryGroup(HistoryGroupKind.RollCall, profileName, recordIds, targetGroup);
+        string targetGroup,
+        string? sourceGroup = null) =>
+        MoveHistoryGroup(HistoryGroupKind.RollCall, profileName, recordIds, targetGroup, sourceGroup);
 
     public int MovePrizeHistoryGroup(
         string profileName,
         IReadOnlyCollection<string> recordIds,
-        string targetGroup) =>
-        MoveHistoryGroup(HistoryGroupKind.Lottery, profileName, recordIds, targetGroup);
+        string targetGroup,
+        string? sourceGroup = null) =>
+        MoveHistoryGroup(HistoryGroupKind.Lottery, profileName, recordIds, targetGroup, sourceGroup);
 
     /// <summary>
     ///     Re-marks the given records of one profile's history file as belonging to <paramref name="targetGroup" />.
@@ -297,6 +301,13 @@ internal sealed class ProfileCatalogManager(
     ///         <see cref="History.TotalCount" />, <see cref="History.LastDrawnTime" />, <see cref="History.RoundsMissed" />
     ///         or <see cref="HistoryItem.Weight" />. Those are the fairness inputs; editing them here would let a
     ///         regrouping operation rewrite the draw weights it is supposed to be orthogonal to.
+    ///     </para>
+    ///     <para>
+    ///         <b>A group filter narrows the move.</b> <paramref name="sourceGroup" /> is the record group the caller's
+    ///         view is currently filtered to (<see langword="null" /> = no filter). Passing it keeps the operation
+    ///         consistent with what the user selected: moving a member whose records are spread across several groups
+    ///         must not silently drag the group they are not looking at along. Without a filter every record of the
+    ///         named members moves, which is the pre-filter behaviour.
     ///     </para>
     ///     <para>
     ///         <b>One file, saved once, and only when something changed.</b> The save goes through the profile's own
@@ -318,7 +329,8 @@ internal sealed class ProfileCatalogManager(
         HistoryGroupKind kind,
         string profileName,
         IReadOnlyCollection<string> recordIds,
-        string targetGroup)
+        string targetGroup,
+        string? sourceGroup)
     {
         ArgumentNullException.ThrowIfNull(recordIds);
         // 档案名会参与拼路径：非法名字在这里就以 ArgumentException 拒绝，绝不落到不安全的路径拼接上。
@@ -346,7 +358,7 @@ internal sealed class ProfileCatalogManager(
         if (view is null)
             throw new InvalidOperationException(HistoryGroupName.ErrorProfileUnavailable);
 
-        var moved = MoveIntoGroup(view.Records, ids, target);
+        var moved = MoveIntoGroup(view.Records, ids, target, sourceGroup);
         if (moved == 0)
             return 0;
 
@@ -449,7 +461,8 @@ internal sealed class ProfileCatalogManager(
     private static int MoveIntoGroup(
         ObservableDictionary<string, History> records,
         HashSet<string> recordIds,
-        string target)
+        string target,
+        string? sourceGroup)
     {
         var moved = 0;
         foreach (var pair in records)
@@ -459,6 +472,12 @@ internal sealed class ProfileCatalogManager(
 
             foreach (var item in pair.Value.Histories)
             {
+                // 视图按某个组过滤时，移动只能改这个组里的记录；否则用户没看见的其它组的记录
+                // 会一起被拖走，选中行与实际改动就对不上了。
+                if (sourceGroup is not null
+                    && !string.Equals(item.HistoryGroup ?? string.Empty, sourceGroup, StringComparison.Ordinal))
+                    continue;
+
                 if (string.Equals(item.HistoryGroup ?? string.Empty, target, StringComparison.Ordinal))
                     continue;
 

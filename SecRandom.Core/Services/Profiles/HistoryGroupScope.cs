@@ -53,4 +53,43 @@ public readonly record struct HistoryGroupScope(string? Group, bool ConfiguredGr
             ? new HistoryGroupScope(name, false)
             : new HistoryGroupScope(string.Empty, true);
     }
+
+    /// <summary>
+    ///     解析「这条历史记录该盖哪个组标记」，与读取范围分开。
+    /// </summary>
+    /// <param name="configuredGroup">该抽取通道自己保存的默认记录组（空串 = 默认记录组）。</param>
+    /// <param name="availableGroupNames">当前档案里可用的组名；<see langword="null" /> = 这次读不到。</param>
+    /// <returns>
+    ///     非空组名：空串 = 默认记录组，其余 = 该具名组。这个值**永远不为 <see langword="null" />**。
+    /// </returns>
+    /// <remarks>
+    ///     <para>
+    ///         与 <see cref="Resolve" /> 的区别只有一条，但它是本质的：<b>历史记录组总开关不参与</b>。
+    ///         开关管的是「界面上能不能临时切组」，不是「记录落在哪个组」。关掉开关只是不许临时切换，
+    ///         每个抽取模式仍然按**自己**保存的默认记录组落标记——否则点名、闪抽、抽奖、编排的记录会
+    ///         一起挤进默认记录组，重新打开功能时就再也拆不回各自的组了。
+    ///     </para>
+    ///     <para>
+    ///         读取范围仍然走 <see cref="Resolve" /> 的三态：开关关掉时选择器不可见，用户看不到当前按哪批
+    ///         历史算权重，所以读取退回「全部历史」；写入却必须保留归属，两者刻意不同。
+    ///     </para>
+    ///     <para>
+    ///         目录这次读不到时返回配置里的名字而不是空串：把记录静默移进默认组是不可逆的信息丢失，
+    ///         而组名本身只是标记（组名是从记录里派生出来的），保留用户写下的名字才是可恢复的那一侧。
+    ///         名字已经不存在时才回落到默认记录组——绝不写一个用户删掉的幽灵组名。
+    ///     </para>
+    /// </remarks>
+    public static string ResolveRecordGroup(
+        string? configuredGroup,
+        IReadOnlyList<string>? availableGroupNames)
+    {
+        if (string.IsNullOrWhiteSpace(configuredGroup))
+            return string.Empty;
+
+        var name = configuredGroup.Trim();
+        if (availableGroupNames is null)
+            return name;
+
+        return availableGroupNames.Contains(name, StringComparer.Ordinal) ? name : string.Empty;
+    }
 }
