@@ -25,6 +25,9 @@ on:
 permissions:
   contents: read
 
+env:
+  SECRANDOM_INTEGRATION_PUBLIC_KEY_SPKI_BASE64: ${{ vars.SECRANDOM_INTEGRATION_PUBLIC_KEY_SPKI_BASE64 }}
+
 jobs:
   build_ios:
     name: Build_iOS

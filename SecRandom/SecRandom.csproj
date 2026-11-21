@@ -6,6 +6,7 @@
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <GenerateResourceDesigner>true</GenerateResourceDesigner>
         <HotAvaloniaIncludeExtensions>True</HotAvaloniaIncludeExtensions>
+        <IntegrationPublicKey Condition="'$(IntegrationPublicKey)' == ''">$(SECRANDOM_INTEGRATION_PUBLIC_KEY_SPKI_BASE64)</IntegrationPublicKey>
         <!-- These views are created with DI/state constructors and load AXAML into an existing instance. -->
         <NoWarn>$(NoWarn);AVLN3001</NoWarn>
     </PropertyGroup>
@@ -569,4 +570,17 @@
     </ItemGroup>
 
     <Import Project="..\Global.props" />
+
+    <Target Name="GenerateSecRandomIntegrationTrustMetadata" BeforeTargets="CoreCompile"
+            Condition="'$(IntegrationPublicKey)' != ''">
+        <PropertyGroup>
+            <_IntegrationTrustMetadataPath>$(IntermediateOutputPath)IntegrationTrustMetadata.g.cs</_IntegrationTrustMetadataPath>
+        </PropertyGroup>
+        <WriteLinesToFile File="$(_IntegrationTrustMetadataPath)"
+                          Lines="[assembly: System.Reflection.AssemblyMetadataAttribute(&quot;SecRandomIntegrationPublicKey&quot;, &quot;$(IntegrationPublicKey)&quot;)]"
+                          Overwrite="true" />
+        <ItemGroup>
+            <Compile Include="$(_IntegrationTrustMetadataPath)" />
+        </ItemGroup>
+    </Target>
 </Project>

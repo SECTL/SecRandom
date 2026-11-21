@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -8,6 +9,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
@@ -17,6 +19,7 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.Linkage;
+using SecRandom.Services.Integration;
 using SecRandom.ViewModels;
 using LR = SecRandom.Langs.SettingsPages.Linkage.Resources;
 
@@ -30,6 +33,10 @@ public partial class LinkageSettingsPage : UserControl
         AvaloniaProperty.Register<LinkageSettingsPage, string>(nameof(CsesSummary));
     public static readonly StyledProperty<bool> IsOutdoorCourseRowVisibleProperty =
         AvaloniaProperty.Register<LinkageSettingsPage, bool>(nameof(IsOutdoorCourseRowVisible));
+    public static readonly StyledProperty<bool> HasIntegrationChannelsProperty =
+        AvaloniaProperty.Register<LinkageSettingsPage, bool>(nameof(HasIntegrationChannels));
+    public static readonly StyledProperty<bool> NoIntegrationChannelsProperty =
+        AvaloniaProperty.Register<LinkageSettingsPage, bool>(nameof(NoIntegrationChannels));
 
     public LinkageSettingsPage()
     {
@@ -37,6 +44,7 @@ public partial class LinkageSettingsPage : UserControl
         DataContext = this;
         InitializeComponent();
         RefreshCsesSummary();
+        RefreshIntegrationChannels();
         IsOutdoorCourseRowVisible = Settings.DataSource == LinkageDataSource.ClassIsland;
     }
 
@@ -57,6 +65,21 @@ public partial class LinkageSettingsPage : UserControl
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private ICsesScheduleStore CsesStore { get; } = IAppHost.GetService<ICsesScheduleStore>();
+    private IntegrationChannelService? IntegrationService { get; } = IAppHost.TryGetService<IntegrationChannelService>();
+    public ObservableCollection<IntegrationChannelRow> IntegrationChannels { get; } = [];
+    public bool HasIntegrationChannels
+    {
+        get => GetValue(HasIntegrationChannelsProperty);
+        private set => SetValue(HasIntegrationChannelsProperty, value);
+    }
+    public bool NoIntegrationChannels
+    {
+        get => GetValue(NoIntegrationChannelsProperty);
+        private set => SetValue(NoIntegrationChannelsProperty, value);
+    }
+    public string IntegrationChannelsTitle => GetLinkageText("S_IntegrationChannels", "SDK notification channels");
+    public string IntegrationChannelsDescription => GetLinkageText("S_IntegrationChannels_D", "Approved SDK applications can receive draw results");
+    public string IntegrationChannelsEmptyText => GetLinkageText("M_IntegrationNoChannels", "No saved SDK notification channels");
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
@@ -65,7 +88,10 @@ public partial class LinkageSettingsPage : UserControl
         _isSubscribed = true;
         Settings.PropertyChanged += SettingsOnPropertyChanged;
         CsesStore.ScheduleChanged += CsesStoreOnScheduleChanged;
+        if (IntegrationService is not null)
+            IntegrationService.Changed += IntegrationServiceOnChanged;
         RefreshCsesSummary();
+        RefreshIntegrationChannels();
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
@@ -75,6 +101,8 @@ public partial class LinkageSettingsPage : UserControl
         _isSubscribed = false;
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
         CsesStore.ScheduleChanged -= CsesStoreOnScheduleChanged;
+        if (IntegrationService is not null)
+            IntegrationService.Changed -= IntegrationServiceOnChanged;
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -88,6 +116,41 @@ public partial class LinkageSettingsPage : UserControl
     {
         RefreshCsesSummary();
     }
+
+    private void IntegrationServiceOnChanged() => Dispatcher.UIThread.Post(RefreshIntegrationChannels);
+
+    private void RefreshIntegrationChannels()
+    {
+        IntegrationChannels.Clear();
+        foreach (var channel in IntegrationService?.Channels ?? [])
+            IntegrationChannels.Add(new IntegrationChannelRow(channel,
+                GetLinkageText("C_IntegrationRemove", "Remove")));
+        HasIntegrationChannels = IntegrationChannels.Count > 0;
+        NoIntegrationChannels = !HasIntegrationChannels;
+    }
+
+    private async void RemoveIntegrationChannel_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (IntegrationService is null || (sender as Control)?.DataContext is not IntegrationChannelRow row)
+            return;
+
+        var content = string.Format(CultureInfo.CurrentCulture,
+            GetLinkageText("M_IntegrationRemoveContent", "SecRandom will stop sending results to {0}."),
+            row.Channel.DisplayName);
+        var result = await new FAContentDialog
+        {
+            Title = GetLinkageText("M_IntegrationRemoveTitle", "Remove notification channel"),
+            Content = content,
+            PrimaryButtonText = LR.C_Confirm,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+        if (result == FAContentDialogResult.Primary && IntegrationService.Remove(row.Channel.AppId))
+            this.ShowSuccessToast(GetLinkageText("M_IntegrationRemoved", "Notification channel removed"));
+    }
+
+    private static string GetLinkageText(string key, string fallback) =>
+        LR.ResourceManager.GetString(key, LR.Culture) ?? fallback;
 
     private async void ImportCses_OnClick(object? sender, RoutedEventArgs e)
     {
@@ -211,3 +274,5 @@ public partial class LinkageSettingsPage : UserControl
             : string.Format(CultureInfo.CurrentCulture, format, argument);
     }
 }
+
+public sealed record IntegrationChannelRow(IntegrationChannel Channel, string RemoveLabel);

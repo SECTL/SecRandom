@@ -14,6 +14,9 @@ on:
 permissions:
   contents: read
 
+env:
+  SECRANDOM_INTEGRATION_PUBLIC_KEY_SPKI_BASE64: ${{ vars.SECRANDOM_INTEGRATION_PUBLIC_KEY_SPKI_BASE64 }}
+
 jobs:
   # Release publication is gated on metadata.yaml: clients resolve a channel to a release tag there
   # and reject the release manifest when its tag/channel disagree, so a stale channel entry
