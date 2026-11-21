@@ -174,7 +174,9 @@ SecRandom 以 GNU GPLv3 许可发布；GPLv3 允许您运行、研究、修改�
   <data name="M_ListNameEmpty" xml:space="preserve"><value>名称不能为空</value></data>
   <data name="M_ListNameInvalid" xml:space="preserve"><value>名称包含文件名非法字符</value></data>
   <data name="M_ListNameExists" xml:space="preserve"><value>同名名单已存在</value></data>
-  <data name="M_KeepOneList" xml:space="preserve"><value>至少需要保留一个名单</value></data>
   <data name="M_DeleteListContent" xml:space="preserve"><value>确定要删除“{0}”吗？此操作无法撤销</value></data>
   <data name="M_StepProgress" xml:space="preserve"><value>步骤 {0}/{1}</value></data>
+    <data name="M_SelectListFirst" xml:space="preserve">
+        <value>请先选择一份名单</value>
+    </data>
 </root>

@@ -220,7 +220,7 @@ public sealed class ControlSettingsStatusTests
 
     private sealed class FakeEndpointStore : IControlPlaneEndpointStore
     {
-        private string _current = ControlPlaneClient.DefaultBaseUrl;
+        private string _current = ControlPlaneDefaults.DefaultBaseUrl;
 
         public string Current => _current;
 
@@ -245,7 +245,7 @@ public sealed class ControlSettingsStatusTests
 
         public void ResetToDefault()
         {
-            _current = ControlPlaneClient.DefaultBaseUrl;
+            _current = ControlPlaneDefaults.DefaultBaseUrl;
             IsCustom = false;
             Changed?.Invoke(this, _current);
         }

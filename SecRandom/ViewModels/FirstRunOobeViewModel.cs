@@ -181,7 +181,17 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     partial void OnSelectedStudentListNameChanged(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
+        {
+            // 名单可以全部删除：选中项清空时同时把默认名单清掉，避免留下指向已删除名单的默认值。
+            if (!string.IsNullOrEmpty(_configHandler.Data.RollCallSettings.DefaultClass))
+            {
+                _configHandler.Data.RollCallSettings.DefaultClass = string.Empty;
+                _configHandler.Save();
+            }
+
+            OnPropertyChanged(nameof(SelectedStudentListCount));
             return;
+        }
 
         _profileService.LoadStudentProfile(value, saveCurrent: false);
         _configHandler.Data.RollCallSettings.DefaultClass = value;
@@ -192,7 +202,16 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     partial void OnSelectedPrizeListNameChanged(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
+        {
+            if (!string.IsNullOrEmpty(_configHandler.Data.LotterySettings.DefaultPool))
+            {
+                _configHandler.Data.LotterySettings.DefaultPool = string.Empty;
+                _configHandler.Save();
+            }
+
+            OnPropertyChanged(nameof(SelectedPrizeListCount));
             return;
+        }
 
         _profileService.LoadPrizeProfile(value, saveCurrent: false);
         _configHandler.Data.LotterySettings.DefaultPool = value;
@@ -243,7 +262,7 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
     private void OpenControlPlane()
     {
         // v4.1 起控制台是主站 SPA 的 /dashboard/control；直接打开基址会落到官网首页。
-        if (_externalLauncher.TryOpenUri(ControlPlaneClient.ConsoleUrl(_controlPlaneEndpointStore.Current)))
+        if (_externalLauncher.TryOpenUri(ControlPlaneDefaults.ConsoleUrl(_controlPlaneEndpointStore.Current)))
             return;
 
         StatusMessage = LR.M_ControlPlatformOpenFailed;
@@ -390,13 +409,11 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
             StudentListNames,
             _catalogManager.GetStudentListNames(),
             _configHandler.Data.RollCallSettings.DefaultClass,
-            name => _catalogManager.CreateStudentList(name),
             name => SelectedStudentListName = name);
         RefreshListSelector(
             PrizeListNames,
             _catalogManager.GetPrizeListNames(),
             _configHandler.Data.LotterySettings.DefaultPool,
-            name => _catalogManager.CreatePrizeList(name),
             name => SelectedPrizeListName = name);
     }
 
@@ -404,21 +421,14 @@ public sealed partial class FirstRunOobeViewModel : ViewModelBase, IDisposable
         ObservableCollection<string> names,
         IReadOnlyList<string> existingNames,
         string preferredName,
-        Action<string> createDefault,
         Action<string> select)
     {
         names.Clear();
         foreach (var name in existingNames)
             names.Add(name);
 
-        if (names.Count == 0)
-        {
-            const string defaultName = "default";
-            createDefault(defaultName);
-            names.Add(defaultName);
-        }
-
-        select(names.Contains(preferredName) ? preferredName : names[0]);
+        // 名单不再是必须存在的：清空后保持"没有名单"，删掉最后一份不会再被凭空补建回来。
+        select(names.Contains(preferredName) ? preferredName : names.FirstOrDefault() ?? string.Empty);
     }
 
     public void CreateStudentList(string name)

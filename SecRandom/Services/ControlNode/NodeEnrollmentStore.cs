@@ -176,6 +176,9 @@ public sealed class FileNodeEnrollmentStore : INodeEnrollmentStore
                     SiteName = record.SiteName,
                     ClassId = record.ClassId,
                     ClassName = record.ClassName,
+                    EnrollmentMethod = record.EnrollmentMethod,
+                    AccountUserId = record.AccountUserId,
+                    AccountName = record.AccountName,
                     EnrolledAt = record.EnrolledAt
                 },
                 JsonOptions);
@@ -297,6 +300,12 @@ public sealed class FileNodeEnrollmentStore : INodeEnrollmentStore
                 SiteName = stored.SiteName,
                 ClassId = stored.ClassId,
                 ClassName = stored.ClassName,
+                // v2 记录在明文载荷里没这几个字段（那时只有配对码通道），读到即按配对码处理。
+                EnrollmentMethod = string.IsNullOrWhiteSpace(stored.EnrollmentMethod)
+                    ? NodeEnrollmentMethods.PairCode
+                    : stored.EnrollmentMethod,
+                AccountUserId = stored.AccountUserId,
+                AccountName = stored.AccountName,
                 EnrolledAt = stored.EnrolledAt
             };
         }
@@ -337,7 +346,9 @@ public sealed class FileNodeEnrollmentStore : INodeEnrollmentStore
         SiteId = record.SiteId,
         SiteName = record.SiteName,
         ClassId = record.ClassId,
-        ClassName = record.ClassName
+        ClassName = record.ClassName,
+        EnrollmentMethod = record.EnrollmentMethod,
+        AccountName = record.AccountName
     };
 
     /// <summary>启动时读一次：成功就是已接入，失败就是"需要重新接入"。</summary>
@@ -524,6 +535,9 @@ public sealed class FileNodeEnrollmentStore : INodeEnrollmentStore
         public string? SiteName { get; set; }
         public string? ClassId { get; set; }
         public string? ClassName { get; set; }
+        public string? EnrollmentMethod { get; set; }
+        public string? AccountUserId { get; set; }
+        public string? AccountName { get; set; }
         public DateTimeOffset EnrolledAt { get; set; }
     }
 }

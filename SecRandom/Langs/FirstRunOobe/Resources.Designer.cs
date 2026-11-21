@@ -855,6 +855,12 @@ namespace SecRandom.Langs.FirstRunOobe {
             }
         }
         
+        public static string M_SelectListFirst {
+            get {
+                return ResourceManager.GetString("M_SelectListFirst", resourceCulture);
+            }
+        }
+
         public static string M_ListNameEmpty {
             get {
                 return ResourceManager.GetString("M_ListNameEmpty", resourceCulture);
@@ -870,12 +876,6 @@ namespace SecRandom.Langs.FirstRunOobe {
         public static string M_ListNameExists {
             get {
                 return ResourceManager.GetString("M_ListNameExists", resourceCulture);
-            }
-        }
-        
-        public static string M_KeepOneList {
-            get {
-                return ResourceManager.GetString("M_KeepOneList", resourceCulture);
             }
         }
         

@@ -668,7 +668,7 @@
     <data name="O_RandomMusic" xml:space="preserve"><value>ランダム再生</value></data>
     <data name="N_RemoteDraw" xml:space="preserve"><value>リモート</value></data>
     <data name="P_RemoteDraw" xml:space="preserve"><value>リモート抽選</value></data>
-    <data name="RD_Hint" xml:space="preserve"><value>教室の端末と名簿を選んで抽選します</value></data>
+    <data name="RD_Hint" xml:space="preserve"><value>SECTL アカウントでサインインし、拠点・学年・クラスを選んで抽選します。抽選は教室の端末で実行されます</value></data>
     <data name="RD_Group" xml:space="preserve"><value>グループ</value></data>
     <data name="RD_Device" xml:space="preserve"><value>端末</value></data>
     <data name="RD_Online" xml:space="preserve"><value>オンライン</value></data>
@@ -737,6 +737,7 @@
     <data name="RD_Kind" xml:space="preserve"><value>抽選の種類</value></data>
     <data name="RD_KindRollCall" xml:space="preserve"><value>点呼</value></data>
     <data name="RD_KindLottery" xml:space="preserve"><value>抽選</value></data>
+    <data name="RD_Roster" xml:space="preserve"><value>名簿</value></data>
     <data name="RD_Pool" xml:space="preserve"><value>賞品プール</value></data>
     <data name="RD_LotteryNoScope" xml:space="preserve"><value>抽選では性別とグループによる絞り込みを行いません</value></data>
     <data name="RD_DrawnPrizeCount" xml:space="preserve"><value>{0} 個の賞品を抽選しました</value></data>
@@ -767,4 +768,19 @@
     <data name="RD_EnrollClear" xml:space="preserve"><value>接続を解除</value></data>
     <data name="RD_EnrollFailed" xml:space="preserve"><value>接続に失敗しました：{0}</value></data>
     <data name="RD_EndpointInvalid" xml:space="preserve"><value>集控のアドレスが正しくありません</value></data>
-</root>
+    <data name="RD_SignInFailed" xml:space="preserve"><value>サインインが完了しませんでした。もう一度お試しください</value></data>
+    <data name="RD_NoSites" xml:space="preserve"><value>このアカウントには管理できる拠点がありません</value></data>
+    <data name="RD_SelectSite" xml:space="preserve"><value>拠点を選択してください</value></data>
+    <data name="RD_NoGrades" xml:space="preserve"><value>この拠点にはまだ学年がありません</value></data>
+    <data name="RD_SelectGrade" xml:space="preserve"><value>学年を選択してください</value></data>
+    <data name="RD_NoClasses" xml:space="preserve"><value>この学年にはまだクラスがありません</value></data>
+    <data name="RD_SelectClass" xml:space="preserve"><value>クラスを選択してください</value></data>
+    <data name="RD_NeedClass" xml:space="preserve"><value>先にクラスを選択してください</value></data>
+    <data name="RD_NoTargetDevice" xml:space="preserve"><value>このクラスを担当している SecRandom 端末がありません</value></data>
+    <data name="RD_TargetOffline" xml:space="preserve"><value>授業中の端末がオフラインです</value></data>
+    <data name="RD_NotTargetDevice" xml:space="preserve"><value>現在の担当端末ではありません</value></data>
+    <data name="RD_ClassDetail" xml:space="preserve"><value>現在のクラス：{0} · {1}</value></data>    <data name="RD_AccountHint" xml:space="preserve"><value>サインインすると管理できる拠点が表示されます</value></data>
+    <data name="RD_Site" xml:space="preserve"><value>拠点</value></data>
+    <data name="RD_Grade" xml:space="preserve"><value>学年</value></data>
+    <data name="RD_Class" xml:space="preserve"><value>クラス</value></data>
+    <data name="RD_TargetDevice" xml:space="preserve"><value>担当端末</value></data></root>

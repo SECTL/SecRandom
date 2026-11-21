@@ -6,11 +6,14 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
+using SecRandom.Services.Auth;
+using SecRandom.Services.ControlCenter;
 using SecRandom.Services.ControlNode;
 using SecRandom.Services.ControlPlane;
 using SecRandom.Services.Desktop;
 using SecRandom.Shared.Models.ControlNode;
 using SecRandom.Shared.Models.ControlNode.V4;
+using CC = SecRandom.Shared.Models.ControlCenter;
 using LR = SecRandom.Langs.SettingsPages.General.Control.Resources;
 
 namespace SecRandom.ViewModels.SettingsPages;
@@ -41,6 +44,10 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     private readonly ILogger<ControlSettingsPageViewModel> _logger;
     private readonly INodeEnrollmentStore? _enrollmentStore;
     private readonly NodeEnrollmentClient? _enrollmentClient;
+    private readonly IControlCenterClient? _controlCenterClient;
+    private readonly SectlAuthService? _auth;
+    private bool _accountSubscribed;
+    private int _accountWork;
     private bool _suppressPersist;
     private bool _suppressPairingFormat;
     private bool _suppressAutoParse;
@@ -54,7 +61,9 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         IExternalLauncher externalLauncher,
         ILogger<ControlSettingsPageViewModel> logger,
         INodeEnrollmentStore? enrollmentStore = null,
-        NodeEnrollmentClient? enrollmentClient = null) : base(configHandler)
+        NodeEnrollmentClient? enrollmentClient = null,
+        IControlCenterClient? controlCenterClient = null,
+        SectlAuthService? auth = null) : base(configHandler)
     {
         _stateStore = stateStore;
         _client = client;
@@ -64,6 +73,8 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         _logger = logger;
         _enrollmentStore = enrollmentStore;
         _enrollmentClient = enrollmentClient;
+        _controlCenterClient = controlCenterClient;
+        _auth = auth;
 
         RefreshFromState(_stateStore.Current);
         NormalizeNodeEndpoint();
@@ -78,6 +89,16 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         if (_enrollmentStore is not null)
             _enrollmentStore.Changed += OnEnrollmentStoreChanged;
 
+        if (_auth is not null)
+        {
+            _auth.StateChanged += OnAuthStateChanged;
+            _accountSubscribed = true;
+        }
+
+        RefreshAccountState();
+        if (IsAccountSignedIn)
+            _ = LoadAccountSitesAsync();
+
         // 已接入就直接把年级/班级读回来：用户打开设置页时应当看到当前绑定的班级，
         // 而不是先点一下"刷新"才出现。失败只提示，不影响其它卡片。
         if (IsEnrolled)
@@ -91,8 +112,6 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     ///     本机主界面是否显示"远程抽取"页。**默认关闭**，打开后侧栏立刻出现，关掉立刻消失（不需要重启）。
     /// </summary>
     [ObservableProperty] private bool _remoteDrawPageEnabled;
-
-    [ObservableProperty] private string _serverUrl = string.Empty;
 
     /// <summary>
     ///     控制台里显示的名称。**由用户在这台机器上填写**；留空则上报 <see cref="HostName" />。
@@ -112,22 +131,8 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     /// <summary>抽取是否被控制台的期望状态锁定。</summary>
     [ObservableProperty] private bool _drawLocked;
 
-    /// <summary>地址校验失败：仅提示，**无效地址绝不落盘**。</summary>
-    [ObservableProperty] private bool _hasEndpointError;
-
-    /// <summary>节点通道地址当前是否不是默认值（"恢复默认"按钮据此启用）。</summary>
-    [ObservableProperty] private bool _isServerUrlCustom;
-
-    /// <summary>控制台访问集控平台所用的基址。留空即回到线上默认。</summary>
-    [ObservableProperty] private string _controlPlaneEndpoint = string.Empty;
-
-    [ObservableProperty] private bool _hasControlPlaneEndpointError;
-
-    [ObservableProperty] private bool _isControlPlaneEndpointCustom;
-
+    /// <summary>集控平台按钮文案；端点文件被手工改成自建地址时仍要如实显示第三方。</summary>
     [ObservableProperty] private string _openControlPlaneLabel = string.Empty;
-
-    public string ControlPlaneEndpointDefault => ControlPlaneClient.DefaultBaseUrl;
 
     // ── 集控接入 ────────────────────────────────────────────────────────────────
 
@@ -161,6 +166,61 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     /// <summary>已绑定班级的一行文字。</summary>
     [ObservableProperty] private string _enrolledClassText = string.Empty;
 
+    /// <summary>这条接入是怎么来的（账号 / 地点码+配对码）。</summary>
+    [ObservableProperty] private string _enrollmentSourceText = string.Empty;
+
+    // ── 账号接入（控制端：桌面 / 平板） ────────────────────────────────────────
+
+    /// <summary>当前 SECTL 账号是否已登录——账号通道的唯一前提。</summary>
+    [ObservableProperty] private bool _isAccountSignedIn;
+
+    /// <summary>已登录账号的显示名。</summary>
+    [ObservableProperty] private string _accountName = string.Empty;
+
+    /// <summary>账号接入区的提示；只在账号卡里显示。</summary>
+    [ObservableProperty] private string _accountMessage = string.Empty;
+
+    /// <summary>账号区是否正在请求（登录跳转 / 拉地点年级班级 / 接入）。</summary>
+    [ObservableProperty] private bool _isAccountBusy;
+
+    [ObservableProperty] private CC.ControlCenterSite? _selectedAccountSite;
+
+    [ObservableProperty] private CC.ControlCenterGrade? _selectedAccountGrade;
+
+    [ObservableProperty] private CC.ControlCenterClass? _selectedAccountClass;
+
+    public ObservableCollection<CC.ControlCenterSite> AccountSites { get; } = [];
+
+    public ObservableCollection<CC.ControlCenterGrade> AccountGrades { get; } = [];
+
+    public ObservableCollection<CC.ControlCenterClass> AccountClasses { get; } = [];
+
+    public bool HasAccountSites => AccountSites.Count > 0;
+
+    public bool HasAccountGrades => AccountGrades.Count > 0;
+
+    public bool HasAccountClasses => AccountClasses.Count > 0;
+
+    public bool ShowAccountMessage => !string.IsNullOrEmpty(AccountMessage);
+
+    /// <summary>账号卡提示是否属于「成功」类。</summary>
+    public bool AccountMessageIsSuccess => IsSuccessMessage(AccountMessage);
+
+    public bool CanSignInAccount => _auth is not null && !IsAccountSignedIn && !IsAccountBusy;
+
+    /// <summary>
+    ///     账号接入：必须已登录，且地点、年级、班级三样都选好。
+    ///     班级不是可选项——没有班级的接入记录既不能占班，也不会被控制台当成"上课中"，
+    ///     所以"先接进来、以后再指定班级"这条路径已经关掉。
+    /// </summary>
+    public bool CanEnrollWithAccount => _enrollmentStore is not null
+                                        && _controlCenterClient is not null
+                                        && !IsAccountBusy
+                                        && IsAccountSignedIn
+                                        && SelectedAccountSite is not null
+                                        && SelectedAccountGrade is not null
+                                        && SelectedAccountClass is not null;
+
     /// <summary>年级列表。来自 <c>/control/api/device/tree</c>，与班级级联共用同一份树。</summary>
     public ObservableCollection<ControlGradeNode> GradeOptions { get; } = [];
 
@@ -184,9 +244,38 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
                              && NodeEnrollmentClient.NormalizeSiteId(SiteIdInput) is not null
                              && NodeEnrollmentClient.NormalizePairingCode(PairingCodeInput) is not null;
 
-    public bool CanClearEnrollment => _enrollmentStore is not null && (IsEnrolled || IsEnrollmentUnreadable);
+    public bool CanClearEnrollment => _enrollmentStore is not null
+                                      && !IsEnrolling
+                                      && (IsEnrolled || IsEnrollmentUnreadable);
 
-    public bool CanSaveClass => IsEnrolled && !IsTreeLoading && HasTree;
+    /// <summary>本机当前绑定在某个班上：换班前必须先解除，不允许直接覆盖。</summary>
+    public bool HasBoundClass => IsEnrolled && !string.IsNullOrEmpty(_enrollmentStore?.Status.ClassId);
+
+    /// <summary>
+    ///     保存班级：年级与班级**都必须选中**，且当前没有绑定别的班级。
+    /// </summary>
+    /// <remarks>
+    ///     只选年级不选班级就等于"不分班"，设备会哪个班都不属于 —— 集控侧既不会显示它，
+    ///     也不会把该班的抽取锁推给它。所以两个都选完才让按钮可点，不给这种半选状态。
+    ///     已绑定班级时按钮也不可点：换班要先走 <see cref="CanClearClass" /> 那一步。
+    /// </remarks>
+    public bool CanSaveClass => IsEnrolled
+                                && !IsEnrolling
+                                && !IsTreeLoading
+                                && HasTree
+                                && !HasBoundClass
+                                && SelectedGrade is not null
+                                && SelectedClass is not null;
+
+    /// <summary>解除已绑定的班级（先解除、再重新选年级和班级）。</summary>
+    public bool CanClearClass => IsEnrolled
+                                 && !IsEnrolling
+                                 && HasBoundClass
+                                 && _enrollmentClient is not null
+                                 && _enrollmentStore is not null;
+
+    /// <summary>年级/班级选择器是否可用：已绑定班级时先锁住，避免"看起来能改、其实被拒"。</summary>
+    public bool CanPickClass => !HasBoundClass && !IsTreeLoading;
 
     /// <summary>地点 ID 输入上限：整句粘贴要先能收下整句（见 <see cref="NodeEnrollmentClient.TryParseEnrollmentText" />）。</summary>
     public int SiteIdMaxLength => NodeEnrollmentClient.MaxInputTextLength;
@@ -214,12 +303,21 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         if (string.IsNullOrEmpty(message))
             return false;
 
-        var successTemplate = LR.M_Enroll_Success;
-        var placeholder = successTemplate.IndexOf("{0}", StringComparison.Ordinal);
-        var successPrefix = placeholder < 0 ? successTemplate : successTemplate[..placeholder];
-        return (!string.IsNullOrEmpty(successPrefix) && message.StartsWith(successPrefix, StringComparison.Ordinal))
+        return MatchesTemplate(message, LR.M_Enroll_Success)
+               || MatchesTemplate(message, LR.M_Account_Enrolled)
+               || MatchesTemplate(message, LR.M_Enroll_Unenrolled)
+               || MatchesTemplate(message, LR.M_Enroll_Unenroll_LocalOnly)
                || message == LR.M_Enroll_Class_Saved
+               || message == LR.M_Enroll_Class_Cleared
                || message == LR.M_Enroll_Class_None;
+
+        // 成功文案是带占位符的模板，只比较第一个占位符之前的前缀即可。
+        static bool MatchesTemplate(string message, string template)
+        {
+            var placeholder = template.IndexOf("{0}", StringComparison.Ordinal);
+            var prefix = placeholder < 0 ? template : template[..placeholder];
+            return !string.IsNullOrEmpty(prefix) && message.StartsWith(prefix, StringComparison.Ordinal);
+        }
     }
 
     partial void OnSiteIdInputChanged(string value)
@@ -285,18 +383,31 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         return true;
     }
 
-    partial void OnIsEnrollingChanged(bool value) => OnPropertyChanged(nameof(CanEnroll));
+    partial void OnIsEnrollingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanEnroll));
+        OnPropertyChanged(nameof(CanSaveClass));
+        OnPropertyChanged(nameof(CanClearClass));
+        OnPropertyChanged(nameof(CanClearEnrollment));
+    }
 
     partial void OnIsEnrolledChanged(bool value)
     {
         OnPropertyChanged(nameof(CanClearEnrollment));
         OnPropertyChanged(nameof(CanSaveClass));
+        OnPropertyChanged(nameof(CanClearClass));
+        OnPropertyChanged(nameof(HasBoundClass));
+        OnPropertyChanged(nameof(CanPickClass));
     }
 
     partial void OnIsEnrollmentUnreadableChanged(bool value) =>
         OnPropertyChanged(nameof(CanClearEnrollment));
 
-    partial void OnIsTreeLoadingChanged(bool value) => OnPropertyChanged(nameof(CanSaveClass));
+    partial void OnIsTreeLoadingChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanSaveClass));
+        OnPropertyChanged(nameof(CanPickClass));
+    }
 
     partial void OnHasTreeChanged(bool value) => OnPropertyChanged(nameof(CanSaveClass));
 
@@ -324,7 +435,11 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         SelectedClass = value.Classes.FirstOrDefault(c =>
                             string.Equals(c.Id, currentClassId, StringComparison.Ordinal))
                         ?? (value.Classes.Count == 1 ? value.Classes[0] : null);
+
+        OnPropertyChanged(nameof(CanSaveClass));
     }
+
+    partial void OnSelectedClassChanged(ControlClassNode? value) => OnPropertyChanged(nameof(CanSaveClass));
 
     public void Dispose()
     {
@@ -333,30 +448,22 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
 
         if (_enrollmentStore is not null)
             _enrollmentStore.Changed -= OnEnrollmentStoreChanged;
+
+        if (_accountSubscribed && _auth is not null)
+        {
+            _auth.StateChanged -= OnAuthStateChanged;
+            _accountSubscribed = false;
+        }
     }
 
     [RelayCommand]
     private void Reconnect() => _client.Wake();
 
     [RelayCommand]
-    private void ResetControlPlaneEndpoint()
-    {
-        _controlPlaneEndpointStore.ResetToDefault();
-        RefreshControlPlaneEndpoint();
-    }
-
-    [RelayCommand]
-    private void ResetServerUrl()
-    {
-        _stateStore.Update(state => state with { ServerUrl = ControlNodeClientOptions.DefaultEndpoint });
-        _client.Wake();
-    }
-
-    [RelayCommand]
     private void OpenControlPlane()
     {
         // v4.1 起控制台是主站 SPA 的 /dashboard/control，直接打开基址会落到官网首页。
-        var url = ControlPlaneClient.ConsoleUrl(_controlPlaneEndpointStore.Current);
+        var url = ControlPlaneDefaults.ConsoleUrl(_controlPlaneEndpointStore.Current);
         if (!_externalLauncher.TryOpenUri(url))
             _logger.LogWarning("打开集控平台失败：{Url}", url);
     }
@@ -418,15 +525,75 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         }
     }
 
-    /// <summary>清除本机设备凭据并立刻断开节点连接。</summary>
+    /// <summary>
+    ///     清除接入：先让服务端删掉这一台设备，再清本机凭据；离线时保留本地记录。
+    /// </summary>
+    /// <remarks>
+    ///     <para>
+    ///         只清本地是不够的：设备记录会留在原地点的列表里，网页上一直挂着一台"接了但没上线"
+    ///         的机器，还得管理员去删。教室机前的人通常两个身份都没有，所以这一步必须和集控协商。
+    ///     </para>
+    ///     <para>
+    ///         服务端已经不认识这台设备（401 <c>bad_secret</c> / <c>device_revoked</c> / 404
+    ///         <c>device_not_found</c>）时，本地照清不误——目的已经达成；只有网络错误或服务端
+    ///         5xx 才保留记录并提示重试，因为那时服务端可能还留着这台设备。
+    ///     </para>
+    /// </remarks>
     [RelayCommand]
-    private void ClearEnrollment()
+    private async Task ClearEnrollmentAsync()
     {
-        if (_enrollmentStore is null)
+        if (_enrollmentStore is null || IsEnrolling)
             return;
 
-        _enrollmentStore.Clear();
+        var hasCredential = _enrollmentStore.TryGetCredential(out var credential) && credential is not null;
+        if (hasCredential && !IsEnrollmentUnreadable && _enrollmentClient is not null)
+        {
+            IsEnrolling = true;
+            EnrollmentMessage = string.Empty;
+            try
+            {
+                await _enrollmentClient.UnenrollAsync(credential!, CancellationToken.None).ConfigureAwait(true);
+                ClearLocalEnrollment();
+                EnrollmentMessage = LR.M_Enroll_Unenrolled;
+                return;
+            }
+            catch (NodeEnrollmentException exception) when (IsAlreadyDetached(exception))
+            {
+                // 服务端已经删掉了（或凭据早被吊销）：本地清掉就完成了，不报错。
+                ClearLocalEnrollment();
+                EnrollmentMessage = LR.M_Enroll_Unenroll_LocalOnly;
+                return;
+            }
+            catch (NodeEnrollmentException exception)
+            {
+                _logger.LogWarning("清除集控接入失败：{Code}", exception.ServerCode ?? exception.Failure.ToString());
+                EnrollmentMessage = LR.M_Enroll_Err_Unenroll;
+                return;
+            }
+            catch (Exception exception)
+            {
+                _logger.LogWarning(exception, "清除集控接入失败。");
+                EnrollmentMessage = LR.M_Enroll_Err_Unenroll;
+                return;
+            }
+            finally
+            {
+                IsEnrolling = false;
+            }
+        }
+
+        // 没有可用凭据（或记录读不出来）：服务端那边没有能证明自己身份的东西，只能清本地。
+        ClearLocalEnrollment();
         EnrollmentMessage = string.Empty;
+    }
+
+    private static bool IsAlreadyDetached(NodeEnrollmentException exception) =>
+        exception.StatusCode == 404
+        || exception.Failure is NodeEnrollmentFailure.CodeRevoked or NodeEnrollmentFailure.CodeNotFound;
+
+    private void ClearLocalEnrollment()
+    {
+        _enrollmentStore!.Clear();
         ClassSaveMessage = string.Empty;
         IsEnrollmentUnreadable = false;
         HasTree = false;
@@ -435,12 +602,31 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         _client.Wake();
     }
 
-    /// <summary>把当前选中的班级保存到控制面；允许"不选班级"。</summary>
+    /// <summary>
+    ///     把当前选中的「年级 + 班级」保存到控制面；两个都必须选中。
+    /// </summary>
+    /// <remarks>
+    ///     已绑定班级时这里直接拒绝：换班必须先把旧班解除（<see cref="ClearClassAsync" />），
+    ///     让服务端先看到一次明确的"离开"，再看到"进入"。直接覆盖会让控制台的班级页面
+    ///     在两台设备之间反复跳，也让人分不清这台机器到底还在不在原班。
+    /// </remarks>
     [RelayCommand]
     private async Task SaveClassAsync()
     {
-        if (_enrollmentStore is null || _enrollmentClient is null || !IsEnrolled)
+        if (_enrollmentStore is null || _enrollmentClient is null || !IsEnrolled || IsEnrolling)
             return;
+
+        if (HasBoundClass)
+        {
+            ClassSaveMessage = LR.S_Enrollment_Class_ClearFirst;
+            return;
+        }
+
+        if (SelectedGrade is null || SelectedClass is null)
+        {
+            ClassSaveMessage = LR.M_Enroll_Class_NeedBoth;
+            return;
+        }
 
         if (!_enrollmentStore.TryGetCredential(out var credential) || credential is null)
         {
@@ -448,23 +634,23 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
             return;
         }
 
+        var classroom = SelectedClass;
         IsEnrolling = true;
         ClassSaveMessage = string.Empty;
         try
         {
-            var classId = SelectedClass?.Id;
-            await _enrollmentClient.AssignClassAsync(credential, classId, CancellationToken.None)
+            await _enrollmentClient.AssignClassAsync(credential, classroom.Id, CancellationToken.None)
                 .ConfigureAwait(true);
 
-            _enrollmentStore.UpdateClass(classId, SelectedClass?.Name);
+            _enrollmentStore.UpdateClass(classroom.Id, classroom.Name);
             _stateStore.Update(state => state with
             {
-                ClassId = classId,
+                ClassId = classroom.Id,
                 SiteId = credential.SiteId,
                 SiteName = credential.SiteName
             });
 
-            ClassSaveMessage = classId is null ? LR.M_Enroll_Class_None : LR.M_Enroll_Class_Saved;
+            ClassSaveMessage = LR.M_Enroll_Class_Saved;
         }
         catch (NodeEnrollmentException exception)
         {
@@ -483,6 +669,399 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
             IsEnrolling = false;
         }
     }
+
+    /// <summary>解除本机已绑定的班级：服务端、本机记录与节点状态一起清空。</summary>
+    /// <remarks>
+    ///     服务端收到空 <c>classId</c> 会把设备的 <c>class_id</c> 清掉（§2.10.1）；本机把
+    ///     <c>node-state.json</c> 的 <c>ClassId</c> 置空后，节点会话会自动发 <c>class.release</c>，
+    ///     网页上这个班立刻显示为无人。之后再选年级+班级保存即可重新绑定。
+    /// </remarks>
+    [RelayCommand]
+    private async Task ClearClassAsync()
+    {
+        if (_enrollmentStore is null || _enrollmentClient is null || !CanClearClass)
+            return;
+
+        if (!_enrollmentStore.TryGetCredential(out var credential) || credential is null)
+        {
+            ClassSaveMessage = LR.M_Enroll_Err_NoCredential;
+            return;
+        }
+
+        IsEnrolling = true;
+        ClassSaveMessage = string.Empty;
+        try
+        {
+            await _enrollmentClient.AssignClassAsync(credential, null, CancellationToken.None)
+                .ConfigureAwait(true);
+
+            _enrollmentStore.UpdateClass(null, null);
+            _stateStore.Update(state => state with
+            {
+                ClassId = null,
+                SiteId = credential.SiteId,
+                SiteName = credential.SiteName
+            });
+            SelectedClass = null;
+
+            ClassSaveMessage = LR.M_Enroll_Class_Cleared;
+        }
+        catch (NodeEnrollmentException exception)
+        {
+            ClassSaveMessage = exception.Failure == NodeEnrollmentFailure.CodeRevoked
+                ? LR.M_Enroll_Err_Revoked
+                : LR.M_Enroll_Err_Assign;
+            _logger.LogWarning("解除集控班级失败：{Code}", exception.ServerCode ?? exception.Failure.ToString());
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "解除集控班级失败。");
+            ClassSaveMessage = LR.M_Enroll_Err_Network;
+        }
+        finally
+        {
+            IsEnrolling = false;
+        }
+    }
+
+    /// <summary>
+    ///     账号通道的入口：先登录（桌面走 loopback、平板同样走官方账号），
+    ///     再把 <c>GET /control/api/me</c> 的地点列表拉回来。
+    /// </summary>
+    [RelayCommand]
+    private async Task SignInAccountAsync()
+    {
+        if (_auth is null || IsAccountBusy)
+            return;
+
+        BeginAccountWork();
+        AccountMessage = string.Empty;
+        try
+        {
+            await _auth.SignInAsync().ConfigureAwait(true);
+            RefreshAccountState();
+            if (IsAccountSignedIn)
+                await LoadAccountSitesAsync().ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "登录 SECTL 账号失败。");
+            AccountMessage = LR.M_Account_Err_Network;
+        }
+        finally
+        {
+            EndAccountWork();
+        }
+    }
+
+    /// <summary>重新拉账号能看到的地点（点错账号或刚在网页端被授权后刷新）。</summary>
+    [RelayCommand]
+    private async Task RefreshAccountAsync()
+    {
+        if (_auth is null || IsAccountBusy)
+            return;
+
+        RefreshAccountState();
+        if (IsAccountSignedIn)
+            await LoadAccountSitesAsync().ConfigureAwait(true);
+    }
+
+    /// <summary>
+    ///     用当前账号把这台电脑接进所选地点。**这是账号通道的核心动作**：
+    ///     服务端按 JWT 判成员角色，返回只出现一次的 device secret；本机把它写进
+    ///     与配对码完全相同的接入记录（仅多记来源与账号），节点连接逻辑无需改动。
+    /// </summary>
+    [RelayCommand]
+    private async Task EnrollWithAccountAsync()
+    {
+        if (_enrollmentStore is null || _controlCenterClient is null || !CanEnrollWithAccount)
+            return;
+
+        var site = SelectedAccountSite!;
+        BeginAccountWork();
+        AccountMessage = string.Empty;
+        try
+        {
+            var result = await _controlCenterClient.EnrollAccountAsync(
+                site.PublicId,
+                ControlNodeDisplayName.Resolve(_stateStore.Current.DisplayName, _options.HostName),
+                Environment.MachineName,
+                _stateStore.Current.NodeId,
+                SelectedAccountClass?.Id,
+                CancellationToken.None).ConfigureAwait(true);
+
+            var record = new NodeEnrollmentRecord
+            {
+                DeviceId = result.DeviceId,
+                Secret = result.Secret,
+                SiteId = result.SitePublicId,
+                SiteName = result.SiteName,
+                ClassId = result.ClassId,
+                ClassName = result.ClassName,
+                EnrollmentMethod = NodeEnrollmentMethods.Account,
+                AccountUserId = _auth?.User?.ResolvedUserId,
+                AccountName = _auth?.User?.ResolvedUserName,
+                EnrolledAt = DateTimeOffset.UtcNow
+            };
+
+            if (!_enrollmentStore.Save(record))
+            {
+                AccountMessage = string.Format(LR.M_Enroll_Detail, "save_failed");
+                return;
+            }
+
+            ApplyEnrollmentIdentity(record);
+            AccountMessage = string.Format(LR.M_Account_Enrolled, result.SiteName ?? site.Name);
+            await LoadTreeAsync().ConfigureAwait(true);
+        }
+        catch (ControlPlaneException exception)
+        {
+            AccountMessage = DescribeAccountFailure(exception);
+            _logger.LogWarning("账号接入集控失败：{Code}", exception.Code);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "账号接入集控失败。");
+            AccountMessage = LR.M_Account_Err_Network;
+        }
+        finally
+        {
+            EndAccountWork();
+        }
+    }
+
+    private void OnAuthStateChanged(object? sender, EventArgs args) => RunOnUiThread(() =>
+    {
+        RefreshAccountState();
+        if (IsAccountSignedIn)
+            _ = LoadAccountSitesAsync();
+        else
+            ClearAccountSelection();
+    });
+
+    private void RefreshAccountState()
+    {
+        IsAccountSignedIn = _auth?.IsSignedIn ?? false;
+        AccountName = _auth?.User?.ResolvedUserName ?? string.Empty;
+        OnPropertyChanged(nameof(CanSignInAccount));
+        OnPropertyChanged(nameof(CanEnrollWithAccount));
+    }
+
+    private void ClearAccountSelection()
+    {
+        SelectedAccountSite = null;
+        SelectedAccountGrade = null;
+        SelectedAccountClass = null;
+        AccountSites.Clear();
+        AccountGrades.Clear();
+        AccountClasses.Clear();
+        NotifyAccountCollections();
+        AccountMessage = string.Empty;
+    }
+
+    private async Task LoadAccountSitesAsync()
+    {
+        if (_controlCenterClient is null || !IsAccountSignedIn)
+            return;
+
+        BeginAccountWork();
+        try
+        {
+            var me = await _controlCenterClient.GetMeAsync(CancellationToken.None).ConfigureAwait(true);
+            AccountSites.Clear();
+            foreach (var site in me.Sites)
+                AccountSites.Add(site);
+
+            AccountGrades.Clear();
+            AccountClasses.Clear();
+            NotifyAccountCollections();
+
+            // 已接入的地点优先选中；只有一个地点时直接选它，省掉一次点击。
+            var currentSiteId = _enrollmentStore?.Status.SiteId;
+            SelectedAccountSite = AccountSites.FirstOrDefault(s =>
+                                    string.Equals(s.PublicId, currentSiteId, StringComparison.OrdinalIgnoreCase))
+                                ?? (AccountSites.Count == 1 ? AccountSites[0] : null);
+
+            if (SelectedAccountSite is null)
+                AccountMessage = LR.M_Account_NoSite;
+        }
+        catch (ControlPlaneException exception)
+        {
+            AccountMessage = DescribeAccountFailure(exception);
+            _logger.LogWarning("读取集控地点失败：{Code}", exception.Code);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "读取集控地点失败。");
+            AccountMessage = LR.M_Account_Err_Network;
+        }
+        finally
+        {
+            EndAccountWork();
+        }
+    }
+
+    private async Task LoadAccountGradesAsync(CC.ControlCenterSite site)
+    {
+        if (_controlCenterClient is null)
+            return;
+
+        BeginAccountWork();
+        try
+        {
+            var grades = await _controlCenterClient.GetGradesAsync(site.PublicId, CancellationToken.None)
+                .ConfigureAwait(true);
+
+            // 用户在请求回来前又换了地点：这批结果已经过期。
+            if (!string.Equals(SelectedAccountSite?.PublicId, site.PublicId, StringComparison.OrdinalIgnoreCase))
+                return;
+
+            AccountGrades.Clear();
+            foreach (var grade in grades)
+                AccountGrades.Add(grade);
+            AccountClasses.Clear();
+            NotifyAccountCollections();
+
+            SelectedAccountGrade = AccountGrades.Count == 1 ? AccountGrades[0] : null;
+        }
+        catch (ControlPlaneException exception)
+        {
+            AccountMessage = DescribeAccountFailure(exception);
+            _logger.LogWarning("读取集控年级失败：{Code}", exception.Code);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "读取集控年级失败。");
+            AccountMessage = LR.M_Account_Err_Network;
+        }
+        finally
+        {
+            EndAccountWork();
+        }
+    }
+
+    private async Task LoadAccountClassesAsync(CC.ControlCenterSite site, CC.ControlCenterGrade grade)
+    {
+        if (_controlCenterClient is null)
+            return;
+
+        BeginAccountWork();
+        try
+        {
+            var classes = await _controlCenterClient.GetClassesAsync(site.PublicId, grade.Id, CancellationToken.None)
+                .ConfigureAwait(true);
+
+            if (!string.Equals(SelectedAccountSite?.PublicId, site.PublicId, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(SelectedAccountGrade?.Id, grade.Id, StringComparison.Ordinal))
+                return;
+
+            AccountClasses.Clear();
+            foreach (var item in classes)
+                AccountClasses.Add(item);
+            NotifyAccountCollections();
+
+            // 已绑定的班级落在这一年级里就预选它；否则只有一个班时直接选。
+            var currentClassId = _enrollmentStore?.Status.ClassId;
+            SelectedAccountClass = AccountClasses.FirstOrDefault(c =>
+                                       string.Equals(c.Id, currentClassId, StringComparison.Ordinal))
+                                   ?? (AccountClasses.Count == 1 ? AccountClasses[0] : null);
+        }
+        catch (ControlPlaneException exception)
+        {
+            AccountMessage = DescribeAccountFailure(exception);
+            _logger.LogWarning("读取集控班级失败：{Code}", exception.Code);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "读取集控班级失败。");
+            AccountMessage = LR.M_Account_Err_Network;
+        }
+        finally
+        {
+            EndAccountWork();
+        }
+    }
+
+    private void NotifyAccountCollections()
+    {
+        OnPropertyChanged(nameof(HasAccountSites));
+        OnPropertyChanged(nameof(HasAccountGrades));
+        OnPropertyChanged(nameof(HasAccountClasses));
+        OnPropertyChanged(nameof(CanEnrollWithAccount));
+    }
+
+    private void BeginAccountWork()
+    {
+        _accountWork++;
+        IsAccountBusy = true;
+    }
+
+    private void EndAccountWork()
+    {
+        if (--_accountWork <= 0)
+        {
+            _accountWork = 0;
+            IsAccountBusy = false;
+        }
+    }
+
+    /// <summary>把账号接入的失败码翻成可操作的中文；不回显令牌、不回显 secret。</summary>
+    private string DescribeAccountFailure(ControlPlaneException exception) => exception.Code switch
+    {
+        "not_signed_in" or "unauthorized" or "not_authed" => LR.M_Account_NotSignedIn,
+        "device_already_enrolled" => LR.M_Account_AlreadyEnrolled,
+        "device_conflict" => LR.M_Account_DeviceConflict,
+        "site_not_found" or "class_not_found" => LR.M_Account_NoSite,
+        "too_many_requests" => LR.M_Account_RateLimited,
+        "forbidden" => LR.M_Account_Forbidden,
+        "network_error" => LR.M_Account_Err_Network,
+        null or "" => LR.M_Account_Err_Generic,
+        _ => string.Format(LR.M_Account_Err_Code, exception.Code)
+    };
+
+    partial void OnIsAccountSignedInChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanSignInAccount));
+        OnPropertyChanged(nameof(CanEnrollWithAccount));
+    }
+
+    partial void OnIsAccountBusyChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanSignInAccount));
+        OnPropertyChanged(nameof(CanEnrollWithAccount));
+    }
+
+    partial void OnAccountMessageChanged(string value)
+    {
+        OnPropertyChanged(nameof(ShowAccountMessage));
+        OnPropertyChanged(nameof(AccountMessageIsSuccess));
+    }
+
+    partial void OnSelectedAccountSiteChanged(CC.ControlCenterSite? value)
+    {
+        // 换地点必须把年级/班级一起作废：否则旧地点的年级会留在下拉里，接入时带着别人的班级提交。
+        // 先清选中项再清集合，两个 partial 处理器各自负责下一级的清理。
+        SelectedAccountGrade = null;
+        SelectedAccountClass = null;
+        AccountGrades.Clear();
+        AccountClasses.Clear();
+        NotifyAccountCollections();
+        if (value is not null)
+            _ = LoadAccountGradesAsync(value);
+    }
+
+    partial void OnSelectedAccountGradeChanged(CC.ControlCenterGrade? value)
+    {
+        SelectedAccountClass = null;
+        AccountClasses.Clear();
+        NotifyAccountCollections();
+        if (value is not null && SelectedAccountSite is not null)
+            _ = LoadAccountClassesAsync(SelectedAccountSite, value);
+    }
+
+    /// <summary>班级决定接入按钮是否可点，选中/清空都要重新广播一次。</summary>
+    partial void OnSelectedAccountClassChanged(CC.ControlCenterClass? value) =>
+        OnPropertyChanged(nameof(CanEnrollWithAccount));
 
     private void ApplyEnrollmentIdentity(NodeEnrollmentRecord record)
     {
@@ -533,12 +1112,24 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
                 : status.ClassName ?? status.ClassId ?? string.Empty
             : string.Empty;
 
+        EnrollmentSourceText = !status.HasCredential
+            ? string.Empty
+            : string.Equals(status.EnrollmentMethod, NodeEnrollmentMethods.Account, StringComparison.Ordinal)
+                ? string.Format(LR.M_Enroll_Source_Account, status.AccountName ?? LR.M_Enroll_UnknownAccount)
+                : LR.M_Enroll_Source_PairCode;
+
         if (!status.HasCredential)
         {
             HasTree = false;
             GradeOptions.Clear();
             ClassOptions.Clear();
         }
+
+        // 绑定/解绑都会改变这三项：按钮可用性、选择器锁定、以及"换班要先解除"的提示。
+        OnPropertyChanged(nameof(HasBoundClass));
+        OnPropertyChanged(nameof(CanSaveClass));
+        OnPropertyChanged(nameof(CanClearClass));
+        OnPropertyChanged(nameof(CanPickClass));
     }
 
     /// <summary>读取年级/班级树，并把当前绑定的班级预选出来。</summary>
@@ -562,6 +1153,16 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
             EnrolledDeviceText = tree.DeviceName ?? EnrolledDeviceText;
 
             var classId = tree.ClassId ?? credential.ClassId;
+
+            // 控制面的树是权威：本机记录跟着它走，否则"已绑定"的判断会和网页上看到的不一致。
+            if (!string.Equals(classId, credential.ClassId, StringComparison.Ordinal))
+            {
+                var boundName = tree.EnumerateClasses()
+                    .FirstOrDefault(c => string.Equals(c.ClassId, classId, StringComparison.Ordinal))
+                    .ClassName;
+                _enrollmentStore.UpdateClass(classId, boundName);
+            }
+
             SelectedGrade = tree.Grades.FirstOrDefault(g =>
                                 classId is not null && g.Classes.Any(c => c.Id == classId))
                             ?? tree.Grades.FirstOrDefault();
@@ -613,30 +1214,6 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         _ => string.Format(LR.M_Enroll_Detail, exception.ServerCode ?? exception.Failure.ToString())
     };
 
-    partial void OnControlPlaneEndpointChanged(string value)
-    {
-        if (_suppressPersist)
-            return;
-
-        var endpoint = value?.Trim() ?? string.Empty;
-        if (endpoint.Length == 0)
-        {
-            _controlPlaneEndpointStore.ResetToDefault();
-            HasControlPlaneEndpointError = false;
-            RefreshControlPlaneEndpoint();
-            return;
-        }
-
-        if (!_controlPlaneEndpointStore.TryUpdate(endpoint, out _))
-        {
-            HasControlPlaneEndpointError = true;
-            return;
-        }
-
-        HasControlPlaneEndpointError = false;
-        RefreshControlPlaneEndpoint();
-    }
-
     partial void OnRemoteControlEnabledChanged(bool value)
     {
         if (_suppressPersist)
@@ -681,31 +1258,6 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         _stateStore.Update(state => state with { ServerUrl = resolved });
     }
 
-    partial void OnServerUrlChanged(string value)
-    {
-        if (_suppressPersist)
-            return;
-
-        var endpoint = value?.Trim() ?? string.Empty;
-        if (!ControlEndpointPolicy.TryValidate(endpoint, out _, out _))
-        {
-            HasEndpointError = true;
-            RefreshServerUrlCustomFlag();
-            return;
-        }
-
-        HasEndpointError = false;
-        _stateStore.Update(state => state with { ServerUrl = endpoint });
-        _client.Wake();
-        RefreshServerUrlCustomFlag();
-    }
-
-    private void RefreshServerUrlCustomFlag() =>
-        IsServerUrlCustom = !string.Equals(
-            (ServerUrl ?? string.Empty).Trim(),
-            ControlNodeClientOptions.DefaultEndpoint,
-            StringComparison.OrdinalIgnoreCase);
-
     private void OnStateStoreChanged(object? sender, ControlNodeState state) =>
         RunOnUiThread(() => RefreshFromState(state));
 
@@ -714,20 +1266,11 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
 
     private void RefreshControlPlaneEndpoint()
     {
-        _suppressPersist = true;
-        try
-        {
-            ControlPlaneEndpoint = _controlPlaneEndpointStore.Current;
-            IsControlPlaneEndpointCustom = _controlPlaneEndpointStore.IsCustom;
-            HasControlPlaneEndpointError = false;
-            OpenControlPlaneLabel = IsControlPlaneEndpointCustom
-                ? LR.C_OpenControlPlane_ThirdParty
-                : LR.C_OpenControlPlane_Official;
-        }
-        finally
-        {
-            _suppressPersist = false;
-        }
+        // 地址不再有界面入口：这里只把按钮文案对齐到实际生效的基址，
+        // 并把节点通道地址校正到控制面的协议，避免遗留的自建端点文件连不上。
+        OpenControlPlaneLabel = _controlPlaneEndpointStore.IsCustom
+            ? LR.C_OpenControlPlane_ThirdParty
+            : LR.C_OpenControlPlane_Official;
 
         NormalizeNodeEndpoint();
     }
@@ -739,8 +1282,6 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         {
             RemoteControlEnabled = state.RemoteControlEnabled;
             RemoteDrawPageEnabled = state.RemoteDrawPageEnabled;
-            ServerUrl = state.ServerUrl;
-            RefreshServerUrlCustomFlag();
             DisplayName = state.DisplayName ?? string.Empty;
             DrawLocked = state.DrawLocked;
             RefreshEnrollment();

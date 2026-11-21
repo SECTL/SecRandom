@@ -58,15 +58,6 @@ namespace SecRandom.Langs.SettingsPages.General.Control {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 节点通道地址无效，未保存.
-        /// </summary>
-        public static string M_EndpointRejected {
-            get {
-                return ResourceManager.GetString("M_EndpointRejected", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to 该组下没有这个节点，请先在控制台注册.
         /// </summary>
         public static string M_Detail_NodeNotFound {
@@ -337,24 +328,6 @@ namespace SecRandom.Langs.SettingsPages.General.Control {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 节点通道地址.
-        /// </summary>
-        public static string S_RemoteControl_ServerUrl {
-            get {
-                return ResourceManager.GetString("S_RemoteControl_ServerUrl", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 默认使用线上节点通道；仅回环地址允许明文 ws 连接.
-        /// </summary>
-        public static string S_RemoteControl_ServerUrl_D {
-            get {
-                return ResourceManager.GetString("S_RemoteControl_ServerUrl_D", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   Looks up a localized string similar to 连接状态.
         /// </summary>
         public static string S_RemoteControl_Status {
@@ -396,51 +369,6 @@ namespace SecRandom.Langs.SettingsPages.General.Control {
         public static string S_ConnectionStatus {
             get {
                 return ResourceManager.GetString("S_ConnectionStatus", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 高级连接设置.
-        /// </summary>
-        public static string S_AdvancedConnections {
-            get {
-                return ResourceManager.GetString("S_AdvancedConnections", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 控制面地址.
-        /// </summary>
-        public static string S_ControlPlaneEndpoint {
-            get {
-                return ResourceManager.GetString("S_ControlPlaneEndpoint", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 控制台访问集控平台所用的基址，留空即回到线上默认地址.
-        /// </summary>
-        public static string S_ControlPlaneEndpoint_D {
-            get {
-                return ResourceManager.GetString("S_ControlPlaneEndpoint_D", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 恢复默认.
-        /// </summary>
-        public static string C_RestoreDefaultEndpoint {
-            get {
-                return ResourceManager.GetString("C_RestoreDefaultEndpoint", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   Looks up a localized string similar to 控制面地址无效，未保存：必须使用 https，只有回环地址允许明文 http.
-        /// </summary>
-        public static string M_ControlPlaneEndpointRejected {
-            get {
-                return ResourceManager.GetString("M_ControlPlaneEndpointRejected", resourceCulture);
             }
         }
 
@@ -614,13 +542,29 @@ namespace SecRandom.Langs.SettingsPages.General.Control {
 
         public static string S_Enrollment_Class_Ph => ResourceManager.GetString("S_Enrollment_Class_Ph", resourceCulture);
 
+        public static string S_Enrollment_Class_ClearFirst => ResourceManager.GetString("S_Enrollment_Class_ClearFirst", resourceCulture);
+
+        public static string S_Enrollment_CurrentClass => ResourceManager.GetString("S_Enrollment_CurrentClass", resourceCulture);
+
         public static string C_SaveClass => ResourceManager.GetString("C_SaveClass", resourceCulture);
+
+        public static string C_ClearClass => ResourceManager.GetString("C_ClearClass", resourceCulture);
 
         public static string M_Enroll_Success => ResourceManager.GetString("M_Enroll_Success", resourceCulture);
 
         public static string M_Enroll_UnknownSite => ResourceManager.GetString("M_Enroll_UnknownSite", resourceCulture);
 
         public static string M_Enroll_Class_Saved => ResourceManager.GetString("M_Enroll_Class_Saved", resourceCulture);
+
+        public static string M_Enroll_Class_Cleared => ResourceManager.GetString("M_Enroll_Class_Cleared", resourceCulture);
+
+        public static string M_Enroll_Class_NeedBoth => ResourceManager.GetString("M_Enroll_Class_NeedBoth", resourceCulture);
+
+        public static string M_Enroll_Unenrolled => ResourceManager.GetString("M_Enroll_Unenrolled", resourceCulture);
+
+        public static string M_Enroll_Unenroll_LocalOnly => ResourceManager.GetString("M_Enroll_Unenroll_LocalOnly", resourceCulture);
+
+        public static string M_Enroll_Err_Unenroll => ResourceManager.GetString("M_Enroll_Err_Unenroll", resourceCulture);
 
         public static string M_Enroll_Class_None => ResourceManager.GetString("M_Enroll_Class_None", resourceCulture);
 
@@ -673,5 +617,54 @@ namespace SecRandom.Langs.SettingsPages.General.Control {
         public static string C_Unlock => ResourceManager.GetString("C_Unlock", resourceCulture);
 
         public static string C_Cancel => ResourceManager.GetString("C_Cancel", resourceCulture);
+        public static string S_AccountEnrollment => ResourceManager.GetString("S_AccountEnrollment", resourceCulture);
+
+        public static string S_AccountEnrollment_D => ResourceManager.GetString("S_AccountEnrollment_D", resourceCulture);
+
+        public static string S_AccountCurrent => ResourceManager.GetString("S_AccountCurrent", resourceCulture);
+
+        public static string S_AccountNotSignedIn => ResourceManager.GetString("S_AccountNotSignedIn", resourceCulture);
+
+        public static string S_AccountSite => ResourceManager.GetString("S_AccountSite", resourceCulture);
+
+        public static string S_AccountGrade => ResourceManager.GetString("S_AccountGrade", resourceCulture);
+
+        public static string S_AccountClass => ResourceManager.GetString("S_AccountClass", resourceCulture);
+
+        public static string S_AccountClass_Optional => ResourceManager.GetString("S_AccountClass_Optional", resourceCulture);
+
+        public static string S_Enrollment_Source => ResourceManager.GetString("S_Enrollment_Source", resourceCulture);
+
+        public static string C_SignInAccount => ResourceManager.GetString("C_SignInAccount", resourceCulture);
+
+        public static string C_RefreshAccount => ResourceManager.GetString("C_RefreshAccount", resourceCulture);
+
+        public static string C_EnrollAccount => ResourceManager.GetString("C_EnrollAccount", resourceCulture);
+
+        public static string M_Account_Enrolled => ResourceManager.GetString("M_Account_Enrolled", resourceCulture);
+
+        public static string M_Account_AlreadyEnrolled => ResourceManager.GetString("M_Account_AlreadyEnrolled", resourceCulture);
+
+        public static string M_Account_NoSite => ResourceManager.GetString("M_Account_NoSite", resourceCulture);
+
+        public static string M_Account_NotSignedIn => ResourceManager.GetString("M_Account_NotSignedIn", resourceCulture);
+
+        public static string M_Account_DeviceConflict => ResourceManager.GetString("M_Account_DeviceConflict", resourceCulture);
+
+        public static string M_Account_RateLimited => ResourceManager.GetString("M_Account_RateLimited", resourceCulture);
+
+        public static string M_Account_Forbidden => ResourceManager.GetString("M_Account_Forbidden", resourceCulture);
+
+        public static string M_Account_Err_Network => ResourceManager.GetString("M_Account_Err_Network", resourceCulture);
+
+        public static string M_Account_Err_Generic => ResourceManager.GetString("M_Account_Err_Generic", resourceCulture);
+
+        public static string M_Account_Err_Code => ResourceManager.GetString("M_Account_Err_Code", resourceCulture);
+
+        public static string M_Enroll_Source_Account => ResourceManager.GetString("M_Enroll_Source_Account", resourceCulture);
+
+        public static string M_Enroll_Source_PairCode => ResourceManager.GetString("M_Enroll_Source_PairCode", resourceCulture);
+
+        public static string M_Enroll_UnknownAccount => ResourceManager.GetString("M_Enroll_UnknownAccount", resourceCulture);
     }
 }

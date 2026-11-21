@@ -13,20 +13,25 @@ namespace SecRandom.Mobile;
 ///     </para>
 ///     <list type="table">
 ///         <item><description>桌面：被控端 ✅，远程抽取页 ✅（主界面侧栏，**默认隐藏**，用户在集控页打开），解锁闸门 ❌</description></item>
-///         <item><description>平板：被控端 ✅，远程抽取页 ✅（主界面侧栏，始终显示），解锁闸门 ❌</description></item>
+///         <item><description>平板：被控端 ❌（只当控制台），远程抽取页 ✅（主界面侧栏，始终显示），解锁闸门 ✅</description></item>
 ///         <item><description>手机：被控端 ❌，远程抽取页 ✅（底部第 5 档，始终显示），解锁闸门 ✅</description></item>
 ///     </list>
+///     <para>
+///         <b>平板为什么不是被控端</b>：教室里的平板只拿来做控制台（登录账号 → 选地点/年级/班级 → 下发抽取），
+///         它自己不占班、不接配对码、也没有「设置 → 集控」那一页。把平板当节点会让同一张教室桌上出现
+///         "这台 iPad 既在等别人控制、又在控制别人"的双重身份，且配对码入口会回到移动端。
+///     </para>
 ///     <para>
 ///         <b>闸门为什么必须按宿主选</b>：<c>IControlDrawGate</c> 被 <c>LinkageDrawCoordinator</c> 在**每个宿主**上消费，
 ///         因此它永远要能解析——缺了它整台 Host 都起不来。但它表达的是"本机的集控是否锁定抽取"，
 ///         只有真的跑集控节点的宿主才有资格回答：
 ///     </para>
 ///     <list type="bullet">
-///         <item><description>有节点的宿主（桌面/平板）注册真的 <c>ControlDrawGateService</c>；</description></item>
-///         <item><description>没有节点的宿主（手机）只能注册中性的 <c>UnlockedControlDrawGate</c>——
+///         <item><description>有节点的宿主（桌面）注册真的 <c>ControlDrawGateService</c>；</description></item>
+///         <item><description>没有节点的宿主（平板/手机）只能注册中性的 <c>UnlockedControlDrawGate</c>——
 ///             它只是"本机没有集控"这个事实的占位符；</description></item>
-///         <item><description><b>反过来都不行</b>：让平板用解锁闸门＝平板上的远程锁定失效、本地抽取被静默放行；
-///             让手机用真闸门＝手机凭空多出一个它控制不了的锁。</description></item>
+///         <item><description><b>反过来都不行</b>：让平板用真闸门＝平板凭空多出一个它控制不了的锁；
+///             让桌面用解锁闸门＝桌面上的远程锁定失效、本地抽取被静默放行。</description></item>
 ///     </list>
 ///     <para>
 ///         这两个标志**互斥**（<see cref="RunsControlNode" /> 与 <see cref="UsesUnlockedDrawGate" /> 不会同时为真），
@@ -43,11 +48,11 @@ namespace SecRandom.Mobile;
 /// <param name="IsMobile">移动平台（手机或平板）。</param>
 /// <param name="UsesDesktopMainView">移动平台里用桌面主界面的那一类：平板（iPadOS / Android 平板）。</param>
 /// <param name="UsesMobileShell">用 <c>MobileRootView</c> 底部导航的那一类：手机。</param>
-/// <param name="RunsControlNode">本机跑集控节点（被控端）：桌面或平板。</param>
+/// <param name="RunsControlNode">本机跑集控节点（被控端）：只有桌面。</param>
 /// <param name="UsesRemoteDrawSidebarPage">远程抽取页作为 <c>MainView</c> 侧栏主页面注册：桌面或平板。</param>
 /// <param name="UsesRemoteDrawBottomTab">远程抽取页作为底部第 5 档 keyed 页面注册：手机。</param>
 /// <param name="RemoteDrawEntryHiddenByDefault">远程抽取入口默认隐藏、需用户在本机集控页打开：**只有桌面**。</param>
-/// <param name="UsesUnlockedDrawGate">本机没有集控节点，只能注册解锁闸门：手机。</param>
+/// <param name="UsesUnlockedDrawGate">本机没有集控节点，只能注册解锁闸门：平板或手机。</param>
 public readonly record struct AppHostShape(
     bool IsMobile,
     bool UsesDesktopMainView,
@@ -69,11 +74,11 @@ public readonly record struct AppHostShape(
             IsMobile: isMobile,
             UsesDesktopMainView: tablet,
             UsesMobileShell: isMobile && !usesDesktopMainView,
-            RunsControlNode: !isMobile || tablet,
+            RunsControlNode: !isMobile,
             UsesRemoteDrawSidebarPage: !isMobile || tablet,
             UsesRemoteDrawBottomTab: isMobile && !usesDesktopMainView,
             RemoteDrawEntryHiddenByDefault: !isMobile,
-            UsesUnlockedDrawGate: isMobile && !usesDesktopMainView);
+            UsesUnlockedDrawGate: isMobile);
     }
 
     /// <summary>

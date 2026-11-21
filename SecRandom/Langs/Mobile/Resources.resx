@@ -668,7 +668,7 @@
     <data name="O_RandomMusic" xml:space="preserve"><value>随机播放</value></data>
     <data name="N_RemoteDraw" xml:space="preserve"><value>远程抽取</value></data>
     <data name="P_RemoteDraw" xml:space="preserve"><value>远程抽取</value></data>
-    <data name="RD_Hint" xml:space="preserve"><value>选择教室设备与名单，再点抽取</value></data>
+    <data name="RD_Hint" xml:space="preserve"><value>登录 SECTL 账号后，选择地点、年级与班级，再点抽取。抽取发生在教室机</value></data>
     <data name="RD_Group" xml:space="preserve"><value>分组</value></data>
     <data name="RD_Device" xml:space="preserve"><value>目标设备</value></data>
     <data name="RD_Online" xml:space="preserve"><value>在线</value></data>
@@ -737,6 +737,7 @@
     <data name="RD_Kind" xml:space="preserve"><value>抽取类型</value></data>
     <data name="RD_KindRollCall" xml:space="preserve"><value>点名</value></data>
     <data name="RD_KindLottery" xml:space="preserve"><value>抽奖</value></data>
+    <data name="RD_Roster" xml:space="preserve"><value>名单</value></data>
     <data name="RD_Pool" xml:space="preserve"><value>奖池</value></data>
     <data name="RD_LotteryNoScope" xml:space="preserve"><value>抽奖不按性别与分组筛选</value></data>
     <data name="RD_DrawnPrizeCount" xml:space="preserve"><value>抽到 {0} 个奖品</value></data>
@@ -767,4 +768,19 @@
     <data name="RD_EnrollClear" xml:space="preserve"><value>清除接入</value></data>
     <data name="RD_EnrollFailed" xml:space="preserve"><value>接入失败：{0}</value></data>
     <data name="RD_EndpointInvalid" xml:space="preserve"><value>集控地址不合法，请检查后重试</value></data>
-</root>
+    <data name="RD_SignInFailed" xml:space="preserve"><value>登录没有完成，请重试</value></data>
+    <data name="RD_NoSites" xml:space="preserve"><value>这个账号还没有可管理的地点</value></data>
+    <data name="RD_SelectSite" xml:space="preserve"><value>请选择地点</value></data>
+    <data name="RD_NoGrades" xml:space="preserve"><value>这个地点还没有年级</value></data>
+    <data name="RD_SelectGrade" xml:space="preserve"><value>请选择年级</value></data>
+    <data name="RD_NoClasses" xml:space="preserve"><value>这个年级还没有班级</value></data>
+    <data name="RD_SelectClass" xml:space="preserve"><value>请选择班级</value></data>
+    <data name="RD_NeedClass" xml:space="preserve"><value>先选择班级</value></data>
+    <data name="RD_NoTargetDevice" xml:space="preserve"><value>这个班级没有正在上课的 SecRandom 设备</value></data>
+    <data name="RD_TargetOffline" xml:space="preserve"><value>上课设备已离线</value></data>
+    <data name="RD_NotTargetDevice" xml:space="preserve"><value>不是当前占班设备</value></data>
+    <data name="RD_ClassDetail" xml:space="preserve"><value>当前班级：{0} · {1}</value></data>    <data name="RD_AccountHint" xml:space="preserve"><value>登录后会自动列出你可以管理的地点</value></data>
+    <data name="RD_Site" xml:space="preserve"><value>地点</value></data>
+    <data name="RD_Grade" xml:space="preserve"><value>年级</value></data>
+    <data name="RD_Class" xml:space="preserve"><value>班级</value></data>
+    <data name="RD_TargetDevice" xml:space="preserve"><value>占班设备</value></data></root>

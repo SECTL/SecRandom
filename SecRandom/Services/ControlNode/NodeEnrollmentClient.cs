@@ -138,6 +138,9 @@ public sealed class NodeEnrollmentClient
     /// <summary>保存本机分班。</summary>
     public const string DeviceAssignPath = "/control/api/device/assign";
 
+    /// <summary>设备单方面退出集控：删掉服务端这一台设备的记录与凭据（§2.10.3）。</summary>
+    public const string DeviceUnenrollPath = "/control/api/device/unenroll";
+
     /// <summary>v1 接入路径（已断代，仅保留常量给旧测试/文档引用）。</summary>
     public const string LegacyEnrollPath = "/v1/node/enroll";
 
@@ -312,7 +315,13 @@ public sealed class NodeEnrollmentClient
         };
     }
 
-    /// <summary>保存本机分班。<paramref name="classId" /> 传 <c>null</c> 表示不分班。</summary>
+    /// <summary>
+    ///     保存本机分班。<paramref name="classId" /> 传 <c>null</c> 或空白表示解除班级绑定。
+    /// </summary>
+    /// <remarks>
+    ///     解除是服务端认可的正式动作（§2.10.1），不是"没选就别发请求"：换班必须先解除再绑定，
+    ///     否则控制台侧看不到这台设备离开原班的那一步。
+    /// </remarks>
     public async Task AssignClassAsync(
         NodeDeviceCredential credential,
         string? classId,
@@ -337,8 +346,33 @@ public sealed class NodeEnrollmentClient
     }
 
     /// <summary>
-    ///     把用户输入规范成 <c>SC-XXXXXX</c> 形态：允许省略 <c>SC</c> 前缀、允许小写与分隔符。
+    ///     本机单方面退出集控：服务端会吊销并删除这一台设备（§2.10.3）。
     /// </summary>
+    /// <remarks>
+    ///     教室机前的人通常既不是管理员也没有网页口令，换校、重装、交机之前必须能自己走。
+    ///     服务端先踢连接再删记录；重复退出拿到 <c>401 bad_secret</c> / <c>404 device_not_found</c>
+    ///     说明这台机器已经不在集控里，调用方应按"已完成"处理，不要把它当成失败反复重试。
+    /// </remarks>
+    public async Task UnenrollAsync(
+        NodeDeviceCredential credential,
+        CancellationToken cancellationToken = default)
+    {
+        var request = new DeviceCredentialRequest
+        {
+            DeviceId = credential.DeviceId,
+            Secret = credential.Secret
+        };
+
+        var uri = BuildUri(BaseUrl, DeviceUnenrollPath);
+        using var content = JsonContent.Create(request, options: RequestJsonOptions);
+        var response = await SendAsync(uri, content, cancellationToken).ConfigureAwait(false);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await ReadDeviceErrorAsync(response, cancellationToken).ConfigureAwait(false);
+            throw error;
+        }
+    }
     public static string? NormalizeSiteId(string? value)
     {
         if (string.IsNullOrWhiteSpace(value))

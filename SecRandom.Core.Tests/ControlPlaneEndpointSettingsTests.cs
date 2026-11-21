@@ -1,17 +1,16 @@
-using System.Net;
-using System.Text;
 using Microsoft.Extensions.Logging.Abstractions;
 using SecRandom.Services.ControlPlane;
 
 namespace SecRandom.Core.Tests;
 
 /// <summary>
-///     控制面（集控 REST）基址：校验/规范化、落盘与回落，以及客户端实际打出去的地址。
+///     控制面（集控 REST）基址：校验/规范化、落盘与回落。
 /// </summary>
 /// <remarks>
 ///     <para>
-///         这一组守的是一条**安全边界**：控制面地址每次请求都会带上本账号的 SECTL access token，
-///         因此它既不能明文出网（只允许回环），也不能因为一次设置导入而被改掉——它不在
+///         这一组守的是一条**安全边界**：这个地址曾经是账号控制台的基址，而账号控制台的每个请求
+///         都会带上本账号的 SECTL access token；现在账号控制台固定打官方域名，这里只剩配对码
+///         节点接入与设置页展示使用的地址，仍然不允许明文出网（只允许回环）。它不在
 ///         <c>settings.json</c> 里，而在 <c>data/config/control-plane/endpoint.json</c>。
 ///     </para>
 ///     <para>
@@ -77,7 +76,7 @@ public sealed class ControlPlaneEndpointSettingsTests : IDisposable
     {
         var store = CreateStore();
 
-        Assert.Equal(ControlPlaneClient.DefaultBaseUrl, store.Current);
+        Assert.Equal(ControlPlaneDefaults.DefaultBaseUrl, store.Current);
         Assert.False(store.IsCustom);
     }
 
@@ -120,9 +119,9 @@ public sealed class ControlPlaneEndpointSettingsTests : IDisposable
 
         store.ResetToDefault();
 
-        Assert.Equal(ControlPlaneClient.DefaultBaseUrl, store.Current);
+        Assert.Equal(ControlPlaneDefaults.DefaultBaseUrl, store.Current);
         Assert.False(store.IsCustom);
-        Assert.Equal(ControlPlaneClient.DefaultBaseUrl, CreateStore().Current);
+        Assert.Equal(ControlPlaneDefaults.DefaultBaseUrl, CreateStore().Current);
     }
 
     [Fact]
@@ -131,12 +130,12 @@ public sealed class ControlPlaneEndpointSettingsTests : IDisposable
         var store = CreateStore();
         Assert.True(store.TryUpdate("https://cp.example.com", out _));
 
-        Assert.True(store.TryUpdate(ControlPlaneClient.DefaultBaseUrl + "/", out var error));
+        Assert.True(store.TryUpdate(ControlPlaneDefaults.DefaultBaseUrl + "/", out var error));
 
         Assert.Null(error);
         Assert.False(store.IsCustom);
         // 文件不会留下一条"与默认逐字相同"的自定义地址：否则"恢复默认"按钮会一直亮着。
-        Assert.Equal(ControlPlaneClient.DefaultBaseUrl, CreateStore().Current);
+        Assert.Equal(ControlPlaneDefaults.DefaultBaseUrl, CreateStore().Current);
     }
 
     [Fact]
@@ -150,7 +149,7 @@ public sealed class ControlPlaneEndpointSettingsTests : IDisposable
 
         var store = CreateStore();
 
-        Assert.Equal(ControlPlaneClient.DefaultBaseUrl, store.Current);
+        Assert.Equal(ControlPlaneDefaults.DefaultBaseUrl, store.Current);
         Assert.False(store.IsCustom);
         if (File.Exists(path))
             Assert.DoesNotContain("secrandom-control", File.ReadAllText(path), StringComparison.OrdinalIgnoreCase);
@@ -166,7 +165,7 @@ public sealed class ControlPlaneEndpointSettingsTests : IDisposable
 
         Assert.Null(error);
         Assert.False(store.IsCustom);
-        Assert.Equal(ControlPlaneClient.DefaultBaseUrl, CreateStore().Current);
+        Assert.Equal(ControlPlaneDefaults.DefaultBaseUrl, CreateStore().Current);
     }
 
     [Fact]
@@ -190,7 +189,7 @@ public sealed class ControlPlaneEndpointSettingsTests : IDisposable
 
         var store = CreateStore();
 
-        Assert.Equal(ControlPlaneClient.DefaultBaseUrl, store.Current);
+        Assert.Equal(ControlPlaneDefaults.DefaultBaseUrl, store.Current);
         Assert.False(store.IsCustom);
     }
 
@@ -205,75 +204,10 @@ public sealed class ControlPlaneEndpointSettingsTests : IDisposable
 
         var store = CreateStore();
 
-        Assert.Equal(ControlPlaneClient.DefaultBaseUrl, store.Current);
+        Assert.Equal(ControlPlaneDefaults.DefaultBaseUrl, store.Current);
     }
 
-    // ---------------------------------------------------------------- 客户端真的打这个地址
-
-    [Fact]
-    public async Task 配置过的地址会用在请求上()
-    {
-        var store = CreateStore();
-        Assert.True(store.TryUpdate("https://cp.example.com/panel", out _));
-
-        var sender = new RecordingSender();
-        var client = new ControlPlaneClient(
-            sender,
-            NullLogger<ControlPlaneClient>.Instance,
-            endpointStore: store);
-
-        await client.GetGroupsAsync();
-
-        Assert.Equal("https://cp.example.com/panel/v1/groups", Assert.Single(sender.Requests).AbsoluteUri);
-    }
-
-    [Fact]
-    public async Task 没配置过时仍然打生产控制面域名()
-    {
-        var sender = new RecordingSender();
-        var client = new ControlPlaneClient(
-            sender,
-            NullLogger<ControlPlaneClient>.Instance,
-            endpointStore: CreateStore());
-
-        await client.GetGroupsAsync();
-
-        Assert.Equal("https://sectl.cn/v1/groups", Assert.Single(sender.Requests).AbsoluteUri);
-    }
-
-    [Fact]
-    public async Task 地址改完之后不需要重建客户端()
-    {
-        // 地址是可以在设置里改的；改完还要重启才生效，等于这个设置是假的。
-        var store = CreateStore();
-        var sender = new RecordingSender();
-        var client = new ControlPlaneClient(
-            sender,
-            NullLogger<ControlPlaneClient>.Instance,
-            endpointStore: store);
-
-        Assert.True(store.TryUpdate("https://cp.example.com", out _));
-        await client.GetGroupsAsync();
-
-        Assert.Equal("https://cp.example.com/v1/groups", Assert.Single(sender.Requests).AbsoluteUri);
-    }
-
-    private sealed class RecordingSender : IAuthorizedApiSender
-    {
-        public List<Uri> Requests { get; } = [];
-
-        public Task<HttpResponseMessage> SendAuthorizedAsync(
-            Func<HttpRequestMessage> createRequest,
-            HttpCompletionOption completionOption = HttpCompletionOption.ResponseContentRead,
-            CancellationToken cancellationToken = default)
-        {
-            using var request = createRequest();
-            Requests.Add(request.RequestUri!);
-
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("[]", Encoding.UTF8, "application/json")
-            });
-        }
-    }
+    // 账号控制台（ControlCenterClient）固定打官方 https://sectl.cn/control/api，
+    // 不再读取这个基址：JWT 不允许被自定义地址带走，所以原来的「客户端真的打这个地址」
+    // 三个断言随 v1 控制面一起退出；这个存储只剩配对码节点接入与设置页展示的地址。
 }

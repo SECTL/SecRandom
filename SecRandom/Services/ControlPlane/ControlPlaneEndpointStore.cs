@@ -18,7 +18,7 @@ namespace SecRandom.Services.ControlPlane;
 ///     </para>
 ///     <para>
 ///         读取一律容错：文件缺失、被截断、内容不是 JSON、地址不合法——都回落到
-///         <see cref="ControlPlaneClient.DefaultBaseUrl" />。一个记不住地址的客户端不该打不开抽取页。
+///         <see cref="ControlPlaneDefaults.DefaultBaseUrl" />。一个记不住地址的客户端不该打不开抽取页。
 ///     </para>
 /// </remarks>
 public interface IControlPlaneEndpointStore
@@ -77,7 +77,7 @@ public sealed class FileControlPlaneEndpointStore : IControlPlaneEndpointStore
         {
             lock (_gate)
             {
-                return _customEndpoint ?? ControlPlaneClient.DefaultBaseUrl;
+                return _customEndpoint ?? ControlPlaneDefaults.DefaultBaseUrl;
             }
         }
     }
@@ -105,7 +105,7 @@ public sealed class FileControlPlaneEndpointStore : IControlPlaneEndpointStore
 
         // 手输线上默认地址等于恢复默认：否则文件里会留下一条与默认逐字相同的"自定义地址"，
         // 界面上的"恢复默认"按钮也就永远亮着。
-        if (string.Equals(target, ControlPlaneClient.DefaultBaseUrl, StringComparison.OrdinalIgnoreCase))
+        if (string.Equals(target, ControlPlaneDefaults.DefaultBaseUrl, StringComparison.OrdinalIgnoreCase))
         {
             ResetToDefault();
             return true;
@@ -113,7 +113,7 @@ public sealed class FileControlPlaneEndpointStore : IControlPlaneEndpointStore
 
         // 旧默认域名同样是"恢复默认"：新集控在旧域名上没有服务，留着它只会让这台机器永远连不上，
         // 界面上还会把旧地址当成用户自定义的好地址一直显示。
-        if (ControlPlaneClient.IsLegacyDefaultBaseUrl(target))
+        if (ControlPlaneDefaults.IsLegacyDefaultBaseUrl(target))
         {
             ResetToDefault();
             return true;
@@ -147,7 +147,7 @@ public sealed class FileControlPlaneEndpointStore : IControlPlaneEndpointStore
             DeleteOrRewriteAsDefault();
         }
 
-        Changed?.Invoke(this, ControlPlaneClient.DefaultBaseUrl);
+        Changed?.Invoke(this, ControlPlaneDefaults.DefaultBaseUrl);
     }
 
     /// <summary>读文件；任何异常都当成"没配置过"。</summary>
@@ -168,17 +168,17 @@ public sealed class FileControlPlaneEndpointStore : IControlPlaneEndpointStore
 
             // 旧默认域名 = 没配置过：迁移到新默认地址，并且立刻把文件改写掉。
             // 不落盘的话下次启动又会读回旧地址，"迁移"就只对本次运行生效。
-            if (ControlPlaneClient.IsLegacyDefaultBaseUrl(normalized))
+            if (ControlPlaneDefaults.IsLegacyDefaultBaseUrl(normalized))
             {
                 _logger.LogInformation(
                     "控制面地址是旧默认域名，迁移到 {Default}：{Path}",
-                    ControlPlaneClient.DefaultBaseUrl,
+                    ControlPlaneDefaults.DefaultBaseUrl,
                     _filePath);
                 DeleteOrRewriteAsDefault();
                 return null;
             }
 
-            return string.Equals(normalized, ControlPlaneClient.DefaultBaseUrl, StringComparison.OrdinalIgnoreCase)
+            return string.Equals(normalized, ControlPlaneDefaults.DefaultBaseUrl, StringComparison.OrdinalIgnoreCase)
                 ? null
                 : normalized;
         }
@@ -210,7 +210,7 @@ public sealed class FileControlPlaneEndpointStore : IControlPlaneEndpointStore
             _logger.LogWarning(exception, "控制面地址文件无法删除，将改写为默认地址：{Path}", _filePath);
         }
 
-        Save(ControlPlaneClient.DefaultBaseUrl);
+        Save(ControlPlaneDefaults.DefaultBaseUrl);
     }
 
     private void Save(string endpoint)

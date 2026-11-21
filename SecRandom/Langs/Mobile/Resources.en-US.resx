@@ -668,7 +668,7 @@ Clearing history before fair drawing helps keep the new member’s chance from b
     <data name="O_RandomMusic" xml:space="preserve"><value>Play randomly</value></data>
     <data name="N_RemoteDraw" xml:space="preserve"><value>Remote</value></data>
     <data name="P_RemoteDraw" xml:space="preserve"><value>Remote draw</value></data>
-    <data name="RD_Hint" xml:space="preserve"><value>Pick a classroom device and a roster, then draw</value></data>
+    <data name="RD_Hint" xml:space="preserve"><value>Sign in with your SECTL account, pick a site, grade and class, then draw. The draw runs on the classroom device</value></data>
     <data name="RD_Group" xml:space="preserve"><value>Group</value></data>
     <data name="RD_Device" xml:space="preserve"><value>Device</value></data>
     <data name="RD_Online" xml:space="preserve"><value>Online</value></data>
@@ -737,6 +737,7 @@ Clearing history before fair drawing helps keep the new member’s chance from b
     <data name="RD_Kind" xml:space="preserve"><value>Draw type</value></data>
     <data name="RD_KindRollCall" xml:space="preserve"><value>Roll call</value></data>
     <data name="RD_KindLottery" xml:space="preserve"><value>Lottery</value></data>
+    <data name="RD_Roster" xml:space="preserve"><value>List</value></data>
     <data name="RD_Pool" xml:space="preserve"><value>Prize pool</value></data>
     <data name="RD_LotteryNoScope" xml:space="preserve"><value>Lottery does not filter by gender or group</value></data>
     <data name="RD_DrawnPrizeCount" xml:space="preserve"><value>Drew {0} prize(s)</value></data>
@@ -767,4 +768,19 @@ Clearing history before fair drawing helps keep the new member’s chance from b
     <data name="RD_EnrollClear" xml:space="preserve"><value>Clear enrollment</value></data>
     <data name="RD_EnrollFailed" xml:space="preserve"><value>Enrollment failed: {0}</value></data>
     <data name="RD_EndpointInvalid" xml:space="preserve"><value>The control platform address is not valid</value></data>
-</root>
+    <data name="RD_SignInFailed" xml:space="preserve"><value>Sign-in didn't finish. Try again</value></data>
+    <data name="RD_NoSites" xml:space="preserve"><value>This account has no manageable sites</value></data>
+    <data name="RD_SelectSite" xml:space="preserve"><value>Choose a site</value></data>
+    <data name="RD_NoGrades" xml:space="preserve"><value>This site has no grades yet</value></data>
+    <data name="RD_SelectGrade" xml:space="preserve"><value>Choose a grade</value></data>
+    <data name="RD_NoClasses" xml:space="preserve"><value>This grade has no classes yet</value></data>
+    <data name="RD_SelectClass" xml:space="preserve"><value>Choose a class</value></data>
+    <data name="RD_NeedClass" xml:space="preserve"><value>Choose a class first</value></data>
+    <data name="RD_NoTargetDevice" xml:space="preserve"><value>No SecRandom device is holding this class</value></data>
+    <data name="RD_TargetOffline" xml:space="preserve"><value>The class device is offline</value></data>
+    <data name="RD_NotTargetDevice" xml:space="preserve"><value>Not the class device</value></data>
+    <data name="RD_ClassDetail" xml:space="preserve"><value>Class: {0} · {1}</value></data>    <data name="RD_AccountHint" xml:space="preserve"><value>Sign in to list the sites you can manage</value></data>
+    <data name="RD_Site" xml:space="preserve"><value>Site</value></data>
+    <data name="RD_Grade" xml:space="preserve"><value>Grade</value></data>
+    <data name="RD_Class" xml:space="preserve"><value>Class</value></data>
+    <data name="RD_TargetDevice" xml:space="preserve"><value>Class device</value></data></root>

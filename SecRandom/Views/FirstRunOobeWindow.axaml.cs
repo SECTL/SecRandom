@@ -152,6 +152,12 @@ public partial class FirstRunOobeWindow : FAAppWindow
 
     private void ImportRoster_OnClick(object? sender, RoutedEventArgs e)
     {
+        if (string.IsNullOrWhiteSpace(ViewModel.SelectedStudentListName))
+        {
+            _ = ShowDialogAsync(LR.C_ListNameTitle, LR.M_SelectListFirst);
+            return;
+        }
+
         OpenImportDrawer(new SettingsPages.ListManagement.RollCallListImportView(
             ViewModel.SelectedStudentListName,
             students => _ = ImportStudentsAsync(students)));
@@ -159,6 +165,12 @@ public partial class FirstRunOobeWindow : FAAppWindow
 
     private void ImportPrizePool_OnClick(object? sender, RoutedEventArgs e)
     {
+        if (string.IsNullOrWhiteSpace(ViewModel.SelectedPrizeListName))
+        {
+            _ = ShowDialogAsync(LR.C_ListNameTitle, LR.M_SelectListFirst);
+            return;
+        }
+
         OpenImportDrawer(new SettingsPages.ListManagement.LotteryListImportView(
             ViewModel.SelectedPrizeListName,
             prizes => _ = ImportPrizesAsync(prizes)));
@@ -184,6 +196,12 @@ public partial class FirstRunOobeWindow : FAAppWindow
 
     private async void RenameStudentList_OnClick(object? sender, RoutedEventArgs e)
     {
+        if (string.IsNullOrWhiteSpace(ViewModel.SelectedStudentListName))
+        {
+            await ShowDialogAsync(LR.C_ListNameTitle, LR.M_SelectListFirst);
+            return;
+        }
+
         var name = await PromptListNameAsync(LR.C_RenameListTitle, LR.C_RenameList, ViewModel.SelectedStudentListName);
         if (name is not null && name != ViewModel.SelectedStudentListName)
             CreateList(name, ViewModel.StudentListNames, ViewModel.RenameStudentList, ViewModel.SelectedStudentListName);
@@ -191,6 +209,12 @@ public partial class FirstRunOobeWindow : FAAppWindow
 
     private async void RenamePrizeList_OnClick(object? sender, RoutedEventArgs e)
     {
+        if (string.IsNullOrWhiteSpace(ViewModel.SelectedPrizeListName))
+        {
+            await ShowDialogAsync(LR.C_ListNameTitle, LR.M_SelectListFirst);
+            return;
+        }
+
         var name = await PromptListNameAsync(LR.C_RenameListTitle, LR.C_RenameList, ViewModel.SelectedPrizeListName);
         if (name is not null && name != ViewModel.SelectedPrizeListName)
             CreateList(name, ViewModel.PrizeListNames, ViewModel.RenamePrizeList, ViewModel.SelectedPrizeListName);
@@ -198,7 +222,13 @@ public partial class FirstRunOobeWindow : FAAppWindow
 
     private async void DeleteStudentList_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (!await ConfirmDeleteListAsync(ViewModel.SelectedStudentListName, ViewModel.StudentListNames.Count))
+        if (string.IsNullOrWhiteSpace(ViewModel.SelectedStudentListName))
+        {
+            await ShowDialogAsync(LR.C_DeleteListTitle, LR.M_SelectListFirst);
+            return;
+        }
+
+        if (!await ConfirmDeleteListAsync(ViewModel.SelectedStudentListName))
             return;
 
         ViewModel.DeleteStudentList();
@@ -206,7 +236,13 @@ public partial class FirstRunOobeWindow : FAAppWindow
 
     private async void DeletePrizeList_OnClick(object? sender, RoutedEventArgs e)
     {
-        if (!await ConfirmDeleteListAsync(ViewModel.SelectedPrizeListName, ViewModel.PrizeListNames.Count))
+        if (string.IsNullOrWhiteSpace(ViewModel.SelectedPrizeListName))
+        {
+            await ShowDialogAsync(LR.C_DeleteListTitle, LR.M_SelectListFirst);
+            return;
+        }
+
+        if (!await ConfirmDeleteListAsync(ViewModel.SelectedPrizeListName))
             return;
 
         ViewModel.DeletePrizeList();
@@ -262,14 +298,9 @@ public partial class FirstRunOobeWindow : FAAppWindow
         return result == FAContentDialogResult.Primary ? input.Text?.Trim() : null;
     }
 
-    private async Task<bool> ConfirmDeleteListAsync(string listName, int listCount)
+    private async Task<bool> ConfirmDeleteListAsync(string listName)
     {
-        if (listCount <= 1)
-        {
-            await ShowDialogAsync(LR.C_DeleteListTitle, LR.M_KeepOneList);
-            return false;
-        }
-
+        // 名单可以全部删除，这里不再设置"至少保留一份"的拦截。
         var result = await new FAContentDialog
         {
             Title = LR.C_DeleteListTitle,

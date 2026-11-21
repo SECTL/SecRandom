@@ -167,7 +167,9 @@ SecRandom は GNU GPLv3 の下で公開されています。GPLv3 は、ソフ�
   <data name="M_ListNameEmpty" xml:space="preserve"><value>名前を入力してください</value></data>
   <data name="M_ListNameInvalid" xml:space="preserve"><value>名前にファイル名として使えない文字が含まれています</value></data>
   <data name="M_ListNameExists" xml:space="preserve"><value>同じ名前のリストが既に存在します</value></data>
-  <data name="M_KeepOneList" xml:space="preserve"><value>少なくとも 1 つのリストを残してください</value></data>
   <data name="M_DeleteListContent" xml:space="preserve"><value>「{0}」を削除しますか？この操作は取り消せません</value></data>
   <data name="M_StepProgress" xml:space="preserve"><value>ステップ {0}/{1}</value></data>
+    <data name="M_SelectListFirst" xml:space="preserve">
+        <value>先にリストを選択してください</value>
+    </data>
 </root>

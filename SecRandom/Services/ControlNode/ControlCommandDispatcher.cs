@@ -8,7 +8,7 @@ using SecRandom.ViewModels.MainPages;
 namespace SecRandom.Services.ControlNode;
 
 /// <summary>
-///     集控节点能执行的 11 条 v4.1 命令。
+///     集控节点能执行的 12 条 v4.5 命令。
 /// </summary>
 /// <remarks>
 ///     <para>
@@ -31,6 +31,7 @@ public sealed class ControlCommandDispatcher(
     ControlSettingsPatchHandler settingsPatch,
     ControlRosterPushHandler rosterPush,
     ControlRosterReadHandler rosterRead,
+    ControlRosterListHandler rosterList,
     ControlSettingsReadHandler settingsRead) : IControlCommandDispatcher
 {
     public IReadOnlyList<string> DeclaredCapabilities { get; } =
@@ -42,6 +43,7 @@ public sealed class ControlCommandDispatcher(
         ControlCapabilities.DrawTrigger,
         ControlCapabilities.DrawReset,
         ControlCapabilities.MediaPlay,
+        ControlCapabilities.RosterList,
         ControlCapabilities.RosterRead,
         ControlCapabilities.RosterWrite,
         ControlCapabilities.SettingsRead,
@@ -57,6 +59,7 @@ public sealed class ControlCommandDispatcher(
         ControlCapabilities.DrawTrigger => true,
         ControlCapabilities.DrawReset => true,
         ControlCapabilities.MediaPlay => true,
+        ControlCapabilities.RosterList => true,
         ControlCapabilities.RosterRead => true,
         ControlCapabilities.RosterWrite => true,
         ControlCapabilities.SettingsRead => true,
@@ -99,6 +102,8 @@ public sealed class ControlCommandDispatcher(
                 await settingsPatch.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
             ControlCapabilities.RosterWrite =>
                 await rosterPush.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
+            ControlCapabilities.RosterList =>
+                await rosterList.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
             ControlCapabilities.RosterRead =>
                 await rosterRead.ExecuteAsync(invocation.Payload, cancellationToken).ConfigureAwait(false),
             ControlCapabilities.SettingsRead =>

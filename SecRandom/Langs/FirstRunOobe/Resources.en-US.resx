@@ -167,7 +167,9 @@ No data was changed</value></data>
   <data name="M_ListNameEmpty" xml:space="preserve"><value>The name cannot be empty</value></data>
   <data name="M_ListNameInvalid" xml:space="preserve"><value>The name contains invalid filename characters</value></data>
   <data name="M_ListNameExists" xml:space="preserve"><value>A list with the same name already exists</value></data>
-  <data name="M_KeepOneList" xml:space="preserve"><value>At least one list must remain</value></data>
   <data name="M_DeleteListContent" xml:space="preserve"><value>Delete “{0}”? This action cannot be undone</value></data>
   <data name="M_StepProgress" xml:space="preserve"><value>Step {0}/{1}</value></data>
+    <data name="M_SelectListFirst" xml:space="preserve">
+        <value>Select a list first</value>
+    </data>
 </root>

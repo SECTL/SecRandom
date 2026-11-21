@@ -74,6 +74,12 @@ public static class ControlCapabilities
     public const string RosterRead = "roster.read";
 
     /// <summary>
+    ///     只列名单/奖池的**名称**（v4.5）。操作员选名单只需要知道有哪些可选项，
+    ///     成员明细仍走 <see cref="RosterRead" />（admin）。
+    /// </summary>
+    public const string RosterList = "roster.list";
+
+    /// <summary>
     ///     读设置。**只读**：按分类返回设置及其类型/范围/是否可远程写，**不含任何凭据**。
     /// </summary>
     /// <remarks>
@@ -112,6 +118,7 @@ public static class ControlCapabilities
         DrawTrigger,
         DrawReset,
         MediaPlay,
+        RosterList,
         RosterRead,
         RosterWrite,
         SettingsRead,

@@ -58,6 +58,16 @@ public sealed record NodeDeviceCredential(
     string? ClassId = null,
     string? ClassName = null);
 
+/// <summary>接入方式：决定设置页把"这台电脑是怎么接进来的"说清楚。</summary>
+public static class NodeEnrollmentMethods
+{
+    /// <summary>地点 ID + 配对码（匿名双因子，装机网管可能没有 SECTL 账号）。</summary>
+    public const string PairCode = "pairCode";
+
+    /// <summary>登录 SECTL 账号后由账号接入（桌面专属通道）。</summary>
+    public const string Account = "account";
+}
+
 /// <summary>一次接入的完整结果。v4 字段与 <c>POST /control/api/enroll</c> 的响应对应。</summary>
 /// <remarks>
 ///     <c>NodeId</c>/<c>GroupId</c>/<c>NodeToken</c> 是 v1 的兼容槽位：旧测试与移动端仍会构造它们，
@@ -65,6 +75,21 @@ public sealed record NodeDeviceCredential(
 /// </remarks>
 public sealed record NodeEnrollmentRecord
 {
+    /// <summary>
+    ///     这条记录是怎么来的（<see cref="NodeEnrollmentMethods" />）。v4.1 之前写入的记录没有这个字段，
+    ///     读出来按配对码处理——那时确实只有这一条通道。
+    /// </summary>
+    public string EnrollmentMethod { get; init; } = NodeEnrollmentMethods.PairCode;
+
+    /// <summary>账号接入时写下这条记录的 SECTL 用户 ID；配对码接入为空。</summary>
+    /// <remarks>
+    ///     只用于设置页显示"这条接入来自哪个账号"，**不参与任何网络请求**，
+    ///     也绝不会把账号令牌或刷新令牌写进接入记录。
+    /// </remarks>
+    public string? AccountUserId { get; init; }
+
+    /// <summary>账号接入时的账号显示名（可能为空）。</summary>
+    public string? AccountName { get; init; }
     /// <summary>v4：服务端分配的设备 ID（与 <see cref="NodeId" /> 同值）。</summary>
     public string DeviceId { get; init; } = string.Empty;
 
@@ -122,6 +147,12 @@ public sealed record NodeEnrollmentRecord
 /// <summary>对外暴露的接入状态：只有"有没有、接在哪、是谁"，没有 secret 真值。</summary>
 public sealed record NodeEnrollmentStatus
 {
+    /// <summary>这条接入记录怎么来的；未接入时为空。</summary>
+    public string? EnrollmentMethod { get; init; }
+
+    /// <summary>账号接入时的账号显示名。</summary>
+    public string? AccountName { get; init; }
+
     /// <summary>是否持有可用凭据。</summary>
     public bool HasCredential { get; init; }
 

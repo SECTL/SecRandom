@@ -199,7 +199,7 @@ public sealed class ControlNodeEnrollmentChannelTests
     }
 
     [Fact]
-    public async Task 分班请求携带classId_允许传null表示不分班()
+    public async Task 分班请求携带classId_空值表示解除班级()
     {
         string? captured = "not-set";
         var handler = new FakeHandler(request =>
@@ -209,14 +209,55 @@ public sealed class ControlNodeEnrollmentChannelTests
             captured = body.TryGetProperty("classId", out var classId) && classId.ValueKind != JsonValueKind.Null
                 ? classId.GetString()
                 : null;
-            return Json(HttpStatusCode.OK, """{ "ok": true }""");
+            return Json(HttpStatusCode.OK, """{ "ok": true, "device": { "id": "dev-1", "classId": "" } }""");
         });
 
         await CreateClient(handler).AssignClassAsync(Credential, "c1");
         Assert.Equal("c1", captured);
 
+        // 换班是两步：先解除（classId = null），再绑定新班级。服务端两种都收。
         await CreateClient(handler).AssignClassAsync(Credential, null);
         Assert.Null(captured);
+
+        await CreateClient(handler).AssignClassAsync(Credential, "   ");
+        Assert.Null(captured);
+    }
+
+    [Fact]
+    public async Task 解除接入走device_unenroll并携带设备凭据()
+    {
+        var handler = new FakeHandler(request =>
+        {
+            Assert.Equal(HttpMethod.Post, request.Method);
+            Assert.Equal("/control/api/device/unenroll", request.RequestUri!.AbsolutePath);
+            var body = JsonDocument.Parse(ReadBody(request)).RootElement;
+            Assert.Equal("dev-1", body.GetProperty("deviceId").GetString());
+            Assert.Equal("secret-1", body.GetProperty("secret").GetString());
+            // 解除接入只证明"我是谁"，不该顺带传班级或地点：服务端按 secret 自己解析。
+            Assert.False(body.TryGetProperty("classId", out _));
+            Assert.False(body.TryGetProperty("siteId", out _));
+            return Json(HttpStatusCode.OK, """{ "ok": true, "data": { "deviceId": "dev-1" } }""");
+        });
+
+        await CreateClient(handler).UnenrollAsync(Credential);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.Unauthorized, "bad_secret", NodeEnrollmentFailure.CodeNotFound)]
+    [InlineData(HttpStatusCode.Unauthorized, "device_revoked", NodeEnrollmentFailure.CodeRevoked)]
+    [InlineData(HttpStatusCode.NotFound, "device_not_found", NodeEnrollmentFailure.Unknown)]
+    public async Task 解除接入的失败码仍可区分(
+        HttpStatusCode status,
+        string code,
+        NodeEnrollmentFailure expected)
+    {
+        var handler = new FakeHandler(_ => Json(status, $$"""{ "code": "{{code}}" }"""));
+
+        var exception = await Assert.ThrowsAsync<NodeEnrollmentException>(() =>
+            CreateClient(handler).UnenrollAsync(Credential));
+
+        Assert.Equal(expected, exception.Failure);
+        Assert.Equal((int)status, exception.StatusCode);
     }
 
     [Fact]

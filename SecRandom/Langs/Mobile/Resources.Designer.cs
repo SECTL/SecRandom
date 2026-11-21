@@ -576,6 +576,8 @@ public class Resources
     public static string RD_Kind => ResourceManager.GetString("RD_Kind", resourceCulture)!;
     public static string RD_KindRollCall => ResourceManager.GetString("RD_KindRollCall", resourceCulture)!;
     public static string RD_KindLottery => ResourceManager.GetString("RD_KindLottery", resourceCulture)!;
+
+    public static string RD_Roster => ResourceManager.GetString("RD_Roster", resourceCulture)!;
     public static string RD_Pool => ResourceManager.GetString("RD_Pool", resourceCulture)!;
     public static string RD_LotteryNoScope => ResourceManager.GetString("RD_LotteryNoScope", resourceCulture)!;
     public static string RD_DrawnPrizeCount => ResourceManager.GetString("RD_DrawnPrizeCount", resourceCulture)!;
@@ -590,4 +592,19 @@ public class Resources
     public static string RD_Recipient => ResourceManager.GetString("RD_Recipient", resourceCulture)!;
     public static string RD_RecipientNone => ResourceManager.GetString("RD_RecipientNone", resourceCulture)!;
     public static string RD_ConditionsUnsupported => ResourceManager.GetString("RD_ConditionsUnsupported", resourceCulture)!;
-}
+    public static string RD_SignInFailed => ResourceManager.GetString("RD_SignInFailed", resourceCulture)!;
+    public static string RD_NoSites => ResourceManager.GetString("RD_NoSites", resourceCulture)!;
+    public static string RD_SelectSite => ResourceManager.GetString("RD_SelectSite", resourceCulture)!;
+    public static string RD_NoGrades => ResourceManager.GetString("RD_NoGrades", resourceCulture)!;
+    public static string RD_SelectGrade => ResourceManager.GetString("RD_SelectGrade", resourceCulture)!;
+    public static string RD_NoClasses => ResourceManager.GetString("RD_NoClasses", resourceCulture)!;
+    public static string RD_SelectClass => ResourceManager.GetString("RD_SelectClass", resourceCulture)!;
+    public static string RD_NeedClass => ResourceManager.GetString("RD_NeedClass", resourceCulture)!;
+    public static string RD_NoTargetDevice => ResourceManager.GetString("RD_NoTargetDevice", resourceCulture)!;
+    public static string RD_TargetOffline => ResourceManager.GetString("RD_TargetOffline", resourceCulture)!;
+    public static string RD_NotTargetDevice => ResourceManager.GetString("RD_NotTargetDevice", resourceCulture)!;
+    public static string RD_ClassDetail => ResourceManager.GetString("RD_ClassDetail", resourceCulture)!;    public static string RD_AccountHint => ResourceManager.GetString("RD_AccountHint", resourceCulture)!;
+    public static string RD_Site => ResourceManager.GetString("RD_Site", resourceCulture)!;
+    public static string RD_Grade => ResourceManager.GetString("RD_Grade", resourceCulture)!;
+    public static string RD_Class => ResourceManager.GetString("RD_Class", resourceCulture)!;
+    public static string RD_TargetDevice => ResourceManager.GetString("RD_TargetDevice", resourceCulture)!;}

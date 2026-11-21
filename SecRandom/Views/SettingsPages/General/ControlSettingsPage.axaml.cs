@@ -41,6 +41,9 @@ public partial class ControlSettingsPage : UserControl
             case nameof(ControlSettingsPageViewModel.ClassSaveMessage):
                 NotifyMessage(ViewModel.ClassSaveMessage, ViewModel.ClassSaveMessageIsSuccess);
                 break;
+            case nameof(ControlSettingsPageViewModel.AccountMessage):
+                NotifyMessage(ViewModel.AccountMessage, ViewModel.AccountMessageIsSuccess);
+                break;
         }
     }
 

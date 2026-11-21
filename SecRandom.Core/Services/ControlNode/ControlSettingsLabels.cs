@@ -439,6 +439,7 @@ public static class ControlSettingsLabels
         ["docked_window_size"] = R(FloatingWindow, "S_Dock_Size"),
         ["draggable"] = R(FloatingWindow, "S_Interaction_Draggable"),
         ["long_press_duration"] = R(FloatingWindow, "S_Interaction_LongPressDuration"),
+        ["enable_quick_draw_long_press"] = R(FloatingWindow, "S_Interaction_QuickDrawLongPress"),
         ["do_not_steal_focus"] = R(FloatingWindow, "S_Interaction_DoNotStealFocus"),
         ["hide_on_foreground"] = R(FloatingWindow, "S_Interaction_HideOnForeground"),
         ["hide_on_foreground_window_titles"] = R(FloatingWindow, "S_Interaction_HideOnForegroundWindowTitles"),

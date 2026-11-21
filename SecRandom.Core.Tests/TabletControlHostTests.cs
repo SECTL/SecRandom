@@ -23,6 +23,11 @@ namespace SecRandom.Core.Tests;
 ///         <c>!isMobile</c> 判断，一旦有人把某个分支改回按平台判断，这些断言先红。
 ///     </para>
 ///     <para>
+///         平板是**纯控制台**：它只登录账号、看地点/年级/班级并下发抽取，不做被控节点
+///         （不占班、不接配对码、不显示集控设置页），所以平板与手机一样走解锁闸门；
+///         这条产品边界由 <c>AppHostShape.RunsControlNode</c> 是 <c>!isMobile</c> 保证。
+///     </para>
+///     <para>
 ///         <b>为什么不真的跑一遍 <c>BuildHost</c> 再断言 DI</b>：<c>PagesRegistryService</c> 是**进程级静态**集合，
 ///         同一进程里建第二个 Host 会以"页面 id 已被占用"抛异常，而桌面/平板/手机三种形态必须各建一次；
 ///         再加上 <c>BuildHost</c> 会拉起插件管理器与整套 Avalonia 服务，单测里跑不动。
@@ -39,7 +44,7 @@ public sealed class TabletControlHostTests
     [Theory]
     //                   isMobile 桌面主界面 | 是移动 是平板 手机壳 跑节点 解锁闸门 侧栏页 底部档 默认隐藏
     [InlineData(false, false, false, false, false, true, false, true, false, true)]   // 桌面
-    [InlineData(true, true, true, true, false, true, false, true, false, false)]      // 平板
+    [InlineData(true, true, true, true, false, false, true, true, false, false)]       // 平板（纯控制台）
     [InlineData(true, false, true, false, true, false, true, false, true, false)]     // 手机
     public void 宿主形态_三种形态的角色矩阵(
         bool isMobile,
@@ -109,20 +114,21 @@ public sealed class TabletControlHostTests
     }
 
     [Fact]
-    public void 宿主形态_平板用真闸门而手机用解锁闸门()
+    public void 宿主形态_平板与手机都是纯控制台用解锁闸门()
     {
         var tablet = AppHostShape.Resolve(isMobile: true, usesDesktopMainView: true);
         var phone = AppHostShape.Resolve(isMobile: true, usesDesktopMainView: false);
         var desktop = AppHostShape.Resolve(isMobile: false, usesDesktopMainView: false);
 
-        // 硬约束：平板上有真的集控节点，因此必须用真闸门——用解锁闸门会让远程锁定失效、本地抽取被静默放行。
-        Assert.False(tablet.UsesUnlockedDrawGate);
-        Assert.True(tablet.RunsControlNode);
+        // 平板不做被控节点：没有节点就没有真闸门，否则平板上会多出一把自己控制不了的锁。
+        Assert.True(tablet.UsesUnlockedDrawGate);
+        Assert.False(tablet.RunsControlNode);
 
-        // 反过来：手机没有节点，用真闸门等于凭空多出一个自己控制不了的锁。
+        // 手机同理：没有节点，用真闸门等于凭空多出一个自己控制不了的锁。
         Assert.True(phone.UsesUnlockedDrawGate);
         Assert.False(phone.RunsControlNode);
 
+        // 桌面才是唯一被控节点，必须用真闸门——用解锁闸门会让远程锁定失效、本地抽取被静默放行。
         Assert.False(desktop.UsesUnlockedDrawGate);
         Assert.True(desktop.RunsControlNode);
     }
@@ -214,10 +220,12 @@ public sealed class TabletControlHostTests
             source,
             StringComparison.Ordinal);
 
-        // ViewModel 必须注册在**共享**分支，并且拿得到本机节点身份（手机没有节点 → GetService 返回 null，
-        // 设备列表里一台都不标"本机"）。它原来只写在 `if (isMobile)` 里，桌面因此解析不到。
+        // ViewModel 必须注册在**共享**分支：手机与平板都只有账号控制台，桌面则同时是被控节点。
+        // 它原来只写在 `if (isMobile)` 里，桌面因此解析不到；现在拿的是账号控制台客户端，
+        // 不再需要本机节点身份（设备列表只用班级占班设备，不标"本机"）。
         Assert.Contains("new MobileRemoteDrawViewModel(", source, StringComparison.Ordinal);
-        Assert.Contains("provider.GetService<IControlNodeStateStore>()", source, StringComparison.Ordinal);
+        Assert.Contains("provider.GetRequiredService<IControlCenterClient>()", source, StringComparison.Ordinal);
+        Assert.Contains("provider.GetRequiredService<SectlAuthService>()", source, StringComparison.Ordinal);
         var mobileOnlyViews = SectionOf(source, "// 杂项 Views", "// 界面 Views");
         Assert.DoesNotContain("MobileRemoteDrawViewModel", mobileOnlyViews, StringComparison.Ordinal);
     }
@@ -350,17 +358,22 @@ public sealed class TabletControlHostTests
     {
         var xaml = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/Mobile/MobileRemoteDrawPage.axaml"));
 
-        // 结构断言：结果区（DrawnMembers 所在的那个 Border）必须出现在第一个控制项之前。
+        // 结构断言：顶部结果区（DrawnMembers 所在的那个 Border）必须出现在控制区之前。
         var resultIndex = xaml.IndexOf("ViewModel.DrawnMembers", StringComparison.Ordinal);
-        var firstControlIndex = xaml.IndexOf("Resources.RD_Kind", StringComparison.Ordinal);
-        Assert.True(resultIndex > 0 && firstControlIndex > 0, "找不到结果区或第一个控制项");
+        var controlIndex = xaml.IndexOf("============ 控制区：地点", StringComparison.Ordinal);
+        Assert.True(resultIndex > 0 && controlIndex > 0, "找不到结果区或控制区");
         Assert.True(
-            resultIndex < firstControlIndex,
-            $"手机页结果区必须排在控制项之前（result={resultIndex}, firstControl={firstControlIndex}）");
+            resultIndex < controlIndex,
+            $"手机页结果区必须排在控制区之前（result={resultIndex}, control={controlIndex}）");
 
         // 结果区封顶且可滚动：结果多时不许把下面的控制项顶出屏幕。
         Assert.Contains("MaxHeight=\"200\"", xaml, StringComparison.Ordinal);
         Assert.Contains("VerticalScrollBarVisibility=\"Auto\"", xaml, StringComparison.Ordinal);
+
+        // 结果区不放刷新：刷新属于控制区，同一动作只在一个地方出现。
+        var resultArea = xaml[..controlIndex];
+        Assert.DoesNotContain("RefreshCommand", resultArea, StringComparison.Ordinal);
+        Assert.Contains("RefreshCommand", xaml[controlIndex..], StringComparison.Ordinal);
 
         // 抽取按钮下方不再重复结果/失败文案（只留进行中状态），也照样不放刷新入口。
         var drawButtonIndex = xaml.IndexOf("ViewModel.DrawCommand", StringComparison.Ordinal);
@@ -370,11 +383,6 @@ public sealed class TabletControlHostTests
         Assert.DoesNotContain("ViewModel.DrawnMembers", belowDrawButton, StringComparison.Ordinal);
         Assert.DoesNotContain("ResultPlaceholderTitle", belowDrawButton, StringComparison.Ordinal);
         Assert.Contains("ViewModel.IsBusy", belowDrawButton, StringComparison.Ordinal);
-
-        // 顶部结果区不放刷新（刷新在控制区）。
-        var resultArea = xaml[..firstControlIndex];
-        Assert.DoesNotContain("RefreshCommand", resultArea, StringComparison.Ordinal);
-        Assert.Contains("RefreshCommand", xaml[firstControlIndex..], StringComparison.Ordinal);
     }
 
     [Fact]
@@ -422,42 +430,6 @@ public sealed class TabletControlHostTests
     }
 
     [Fact]
-    public void 条件UI_两个视图都按能力闸门显示且取值来自设备派生()
-    {
-        var desktop = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/MainPages/RemoteDrawPage.axaml"));
-        var phone = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/Mobile/MobileRemoteDrawPage.axaml"));
-
-        foreach (var xaml in new[] { desktop, phone })
-        {
-            // 条件区只在**设备声明了 draw.trigger.conditions**时显示；老设备显示一句说明，绝不假装能筛。
-            Assert.Contains("IsVisible=\"{Binding ViewModel.ShowsLotteryConditions}\"", xaml, StringComparison.Ordinal);
-            Assert.Contains("ViewModel.ShowsLotteryConditionsUnsupported", xaml, StringComparison.Ordinal);
-            Assert.Contains("Resources.RD_ConditionsUnsupported", xaml, StringComparison.Ordinal);
-
-            // 取值全部来自设备已读回来的数据，没有自由文本入口。
-            Assert.Contains("ItemsSource=\"{Binding ViewModel.PrizeTags}\"", xaml, StringComparison.Ordinal);
-            Assert.Contains("ItemsSource=\"{Binding ViewModel.RecipientListNames}\"", xaml, StringComparison.Ordinal);
-            Assert.Contains("ViewModel.RecipientGenderOptions", xaml, StringComparison.Ordinal);
-            Assert.Contains("ViewModel.RecipientGroupOptions", xaml, StringComparison.Ordinal);
-            Assert.DoesNotContain("Resources.RD_LotteryNoScope", xaml, StringComparison.Ordinal);
-        }
-
-        // 三语齐全（条件区标题、标签、说明、发放对象、不指定、老设备说明）。
-        foreach (var resource in new[] { "Resources.resx", "Resources.en-US.resx", "Resources.ja-JP.resx" })
-        {
-            var text = File.ReadAllText(GetRepositoryPath(Path.Combine("SecRandom/Langs/Mobile", resource)));
-            foreach (var key in new[]
-                     {
-                         "RD_Conditions", "RD_PrizeTags", "RD_PrizeTagsHint",
-                         "RD_Recipient", "RD_RecipientNone", "RD_ConditionsUnsupported"
-                     })
-            {
-                Assert.Contains($"name=\"{key}\"", text, StringComparison.Ordinal);
-            }
-        }
-    }
-
-    [Fact]
     public void 桌面版式_结果区只绑回执派生的成员()
     {
         var xaml = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/MainPages/RemoteDrawPage.axaml"));
@@ -469,10 +441,10 @@ public sealed class TabletControlHostTests
         Assert.Contains("IsVisible=\"{Binding !ViewModel.HasResult}\"", xaml, StringComparison.Ordinal);
         Assert.Contains("IsVisible=\"{Binding ViewModel.HasEmptyState}\"", xaml, StringComparison.Ordinal);
 
-        // VM 的 DrawnMembers 只有一个来源：回执（detail.drawn）解析出来的成员。
+        // VM 的 DrawnMembers 只有一个来源：回执（payload.drawn）解析出来的成员。
         var viewModelSource = File.ReadAllText(GetRepositoryPath(@"SecRandom/ViewModels/Mobile/MobileRemoteDrawViewModel.cs"));
-        Assert.Contains("foreach (var member in finished.DrawnMembers())", viewModelSource, StringComparison.Ordinal);
-        Assert.Contains("DrawnMembers.Add(member);", viewModelSource, StringComparison.Ordinal);
+        Assert.Contains("ApplyCommandResult(result);", viewModelSource, StringComparison.Ordinal);
+        Assert.Contains("DrawnMembers.Add(new ControlDrawnMember(id, name));", viewModelSource, StringComparison.Ordinal);
     }
 
     [Fact]
