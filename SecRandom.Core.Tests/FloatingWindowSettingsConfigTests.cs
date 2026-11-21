@@ -86,4 +86,22 @@ public class FloatingWindowSettingsConfigTests
         Assert.NotNull(restored);
         Assert.False(restored.FloatingWindowSettings.SyncBothSidesAnchor);
     }
+
+    [Fact]
+    public void MainConfig_QuickDrawLongPressDefaultsOnAndRoundTrips()
+    {
+        MainConfigModel config = new();
+        Assert.True(config.FloatingWindowSettings.EnableQuickDrawLongPress);
+        Assert.Equal(500, config.FloatingWindowSettings.LongPressDuration);
+
+        config.FloatingWindowSettings.EnableQuickDrawLongPress = false;
+        config.FloatingWindowSettings.LongPressDuration = 800;
+
+        string json = JsonSerializer.Serialize(config, ConfigServiceBase.JsonOptions);
+        MainConfigModel? restored = JsonSerializer.Deserialize<MainConfigModel>(json, ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(restored);
+        Assert.False(restored.FloatingWindowSettings.EnableQuickDrawLongPress);
+        Assert.Equal(800, restored.FloatingWindowSettings.LongPressDuration);
+    }
 }

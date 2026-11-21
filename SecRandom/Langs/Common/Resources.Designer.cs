@@ -105,6 +105,15 @@ namespace SecRandom.Langs.Common {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to 取消.
+        /// </summary>
+        public static string C_QuickPickExit {
+            get {
+                return ResourceManager.GetString("C_QuickPickExit", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to {0} 秒后自动关闭
         ///连续点击 3 次关闭窗口.
         /// </summary>

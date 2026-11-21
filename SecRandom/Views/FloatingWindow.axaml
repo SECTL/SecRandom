@@ -18,7 +18,27 @@
         CanResize="False"
         ShowInTaskbar="False"
         SizeToContent="WidthAndHeight"
+        xmlns:sr="clr-namespace:SecRandom.Core.Controls;assembly=SecRandom.Core"
         Loaded="OnLoaded">
+    <Window.Resources>
+        <!-- 长按快选的颜色一律取当前主题强调色：每次弹出时由代码覆盖下面这几项，这里的值是兜底 -->
+        <SolidColorBrush x:Key="QuickPickRowBrush" Color="#1A808080" />
+    </Window.Resources>
+    <Window.Styles>
+        <!-- 滑轨行：每行是独立的圆角小芯片，选中行额外挂 active 类并由代码填强调色 -->
+        <Style Selector="Border.quick-pick-row">
+            <Setter Property="BorderThickness" Value="1.5" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+        </Style>
+        <Style Selector="TextBlock.quick-pick-label">
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Border.quick-pick-row.active TextBlock.quick-pick-label">
+            <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+            <Setter Property="FontWeight" Value="Bold" />
+        </Style>
+    </Window.Styles>
     <Grid>
         <Border x:Name="WindowBorder"
                 Background="{DynamicResource SolidBackgroundFillColorQuarternaryBrush}"
@@ -34,5 +54,52 @@
             </StackPanel>
             <Button x:Name="DockButton" IsVisible="False" Click="DockButton_OnClick" />
         </StackPanel>
+
+        <!-- 长按进度环：贴在闪抽按钮的方框边缘，只在按住时出现，不参与命中测试 -->
+        <Canvas x:Name="QuickDrawRingLayer" IsHitTestVisible="False" />
+
+        <!-- 长按完成后的快选层：只有球 + 竖向滑轨，整层不参与命中测试（指针由窗口统一换算） -->
+        <Canvas x:Name="QuickPickLayer" IsVisible="False" IsHitTestVisible="False">
+            <!-- 滑轨这一列共用一块圆角底衬（只包 6 行，不含球）：数字行不再各自成块 -->
+            <Border x:Name="QuickPickPickerSurface"
+                    CornerRadius="18"
+                    BorderThickness="1"
+                    Background="{DynamicResource SolidBackgroundFillColorQuarternaryBrush}"
+                    BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
+                    BoxShadow="0 8 22 0 #44000000" />
+            <sr:QuickPickSlider x:Name="QuickPickCountPicker" RowHeight="44" LabelFontSize="18" />
+            <Border x:Name="QuickPickOrb"
+                    CornerRadius="22"
+                    Background="{DynamicResource AccentFillColorDefaultBrush}"
+                    BorderBrush="#66FFFFFF"
+                    BorderThickness="1"
+                    BoxShadow="0 8 24 0 #66000000">
+                <Panel>
+                    <Panel x:Name="QuickPickOrbIconHost"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center" />
+                    <!-- 当前指向的人数：弹出即显示默认的 1 人，指针落到滑轨后再随行更新 -->
+                    <Border x:Name="QuickPickBadge"
+                            IsVisible="False"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Bottom"
+                            Margin="0,0,-8,-4"
+                            MinWidth="24"
+                            Height="24"
+                            Padding="6,0"
+                            CornerRadius="12"
+                            Background="{DynamicResource SolidBackgroundFillColorQuarternaryBrush}"
+                            BorderBrush="{DynamicResource SurfaceStrokeColorDefaultBrush}"
+                            BorderThickness="1">
+                        <TextBlock x:Name="QuickPickBadgeText"
+                                   Text="1"
+                                   FontSize="12"
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Border>
+                </Panel>
+            </Border>
+        </Canvas>
     </Grid>
 </Window>

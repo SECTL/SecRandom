@@ -5,6 +5,7 @@
              xmlns:vm="using:SecRandom.ViewModels.MainPages"
              xmlns:langs="using:SecRandom.Langs.MainPages.QuickDraw"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             xmlns:controls="clr-namespace:SecRandom.Core.Controls;assembly=SecRandom.Core"
              mc:Ignorable="d" d:DesignWidth="460" d:DesignHeight="320"
              x:Name="QuickDraw"
              x:Class="SecRandom.Views.MainPages.QuickDrawPage"
@@ -27,113 +28,125 @@
                                VerticalAlignment="Center"
                                FontSize="{Binding InitialFontSize}"
                                FontWeight="SemiBold"
-                               Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
+                               Foreground="{Binding TextBrush}" />
                     <!-- 插件界面插槽：快捷抽签结果区（跨两行，插件内容叠加在结果之上） -->
                 </Grid>
             </Border>
         </DataTemplate>
     </UserControl.Resources>
-    <Border x:Name="RootBorder"
-            Margin="6"
-            Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
-            BorderBrush="{DynamicResource ControlElevationBorderBrush}"
-            BorderThickness="1"
-            CornerRadius="8"
-            PointerPressed="RootBorder_OnPointerPressed"
-            PointerMoved="RootBorder_OnPointerMoved"
-            PointerReleased="RootBorder_OnPointerReleased">
-        <Grid Margin="10 8"
-              RowDefinitions="*,Auto">
-            <Grid>
-                <TextBlock Text="{Binding StatusText}"
-                           IsVisible="{Binding !IsResultVisible}"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           TextAlignment="Center"
-                           TextWrapping="Wrap"
-                           FontSize="28"
-                           FontWeight="SemiBold" />
-                <ScrollViewer IsVisible="{Binding IsResultVisible}"
-                              HorizontalScrollBarVisibility="Disabled"
-                              VerticalScrollBarVisibility="Auto"
-                              HorizontalContentAlignment="Stretch"
-                              VerticalContentAlignment="Center">
-                    <!-- 结果区必须一直占满窗口宽度：名字长短只影响单个卡片的宽度，
-                         整组由 WrapPanel 的 Center 居中，短名字不会缩到左边、长名字也不会把整组顶偏。 -->
-                    <ItemsControl x:Name="ResultPresenter"
-                                  ItemsSource="{Binding ResultItems}"
-                                  HorizontalAlignment="Stretch"
-                                  VerticalAlignment="Center">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal" HorizontalAlignment="Center" />
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="vm:QuickDrawResultItem">
-                                <Border Classes="result-animation-item" Margin="4" Padding="14 10" MinWidth="128"
-                                        CornerRadius="8" BorderThickness="1"
-                                        BorderBrush="{Binding AccentBrush}"
-                                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                                        Opacity="{Binding Opacity}">
-                                    <StackPanel Orientation="{Binding ImageLayoutOrientation}"
-                                                Spacing="4"
-                                                HorizontalAlignment="Center">
-                                        <ContentControl Content="{Binding}"
-                                                        ContentTemplate="{StaticResource QuickDrawAvatarTemplate}"
-                                                        VerticalAlignment="Center"
-                                                        IsVisible="{Binding IsImageBeforeText}" />
-                                        <StackPanel Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                            <!-- 折行宽度必须挂在文字上：卡片所在的水平 StackPanel 测量子元素时给出无限宽度，
-                                                 只在 Border 上设 MaxWidth 会让长姓名被裁切而不是换行。 -->
-                                            <TextBlock Text="{Binding DisplayText}"
-                                                       TextAlignment="Center"
-                                                       TextWrapping="Wrap"
-                                                       MaxWidth="360"
-                                                       Foreground="{Binding TextBrush}"
-                                                       FontSize="{Binding #QuickDraw.ViewModel.ResultFontSize}"
-                                                       FontFamily="{Binding #QuickDraw.ViewModel.ResultFontFamily}"
-                                                       FontWeight="SemiBold" />
-                                            <TextBlock Text="{Binding Tags}" IsVisible="{Binding IsTagsVisible}"
-                                                       Opacity="0.72" FontSize="13" />
-                                            <TextBlock Text="{Binding WeightText}" IsVisible="{Binding IsWeightVisible}"
-                                                       Opacity="0.62" FontSize="12" />
+    <Grid>
+        <Border x:Name="RootBorder"
+                Margin="6"
+                Background="{DynamicResource SolidBackgroundFillColorBaseBrush}"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                PointerPressed="RootBorder_OnPointerPressed"
+                PointerMoved="RootBorder_OnPointerMoved"
+                PointerReleased="RootBorder_OnPointerReleased">
+            <Grid Margin="10 8"
+                  RowDefinitions="*,Auto">
+                <Grid>
+                    <TextBlock x:Name="StatusTextBlock"
+                               Text="{Binding StatusText}"
+                               IsVisible="{Binding !IsResultVisible}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap"
+                               FontSize="28"
+                               FontWeight="SemiBold" />
+                    <ScrollViewer IsVisible="{Binding IsResultVisible}"
+                                  HorizontalScrollBarVisibility="Disabled"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalContentAlignment="Stretch"
+                                  VerticalContentAlignment="Center">
+                        <!-- 结果区按屏幕宽高自适应：4 个人排成 2×2，6 个人在横向屏幕上 3×2、
+                             窄高屏上 2×3；每行等宽，末行水平居中。列数决策见 QuickDrawResultGridLayout。 -->
+                        <ItemsControl x:Name="ResultPresenter"
+                                      ItemsSource="{Binding ResultItems}"
+                                      HorizontalAlignment="Stretch"
+                                      VerticalAlignment="Center">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <controls:QuickDrawResultGridPanel />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:QuickDrawResultItem">
+                                    <Border Classes="result-animation-item" Margin="4" Padding="14 10" MinWidth="128"
+                                            CornerRadius="8" BorderThickness="1"
+                                            BorderBrush="{Binding AccentBrush}"
+                                            Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                            Opacity="{Binding Opacity}">
+                                        <StackPanel Orientation="{Binding ImageLayoutOrientation}"
+                                                    Spacing="4"
+                                                    HorizontalAlignment="Center">
+                                            <ContentControl Content="{Binding}"
+                                                            ContentTemplate="{StaticResource QuickDrawAvatarTemplate}"
+                                                            VerticalAlignment="Center"
+                                                            IsVisible="{Binding IsImageBeforeText}" />
+                                            <StackPanel Spacing="4" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                <!-- 折行宽度必须挂在文字上：卡片所在的水平 StackPanel 测量子元素时给出无限宽度，
+                                                     只在 Border 上设 MaxWidth 会让长姓名被裁切而不是换行。 -->
+                                                <TextBlock Text="{Binding DisplayText}"
+                                                           TextAlignment="Center"
+                                                           TextWrapping="Wrap"
+                                                           MaxWidth="360"
+                                                           Foreground="{Binding TextBrush}"
+                                                           FontSize="{Binding #QuickDraw.ViewModel.ResultFontSize}"
+                                                           FontFamily="{Binding #QuickDraw.ViewModel.ResultFontFamily}"
+                                                           FontWeight="SemiBold" />
+                                                <TextBlock Text="{Binding Tags}" IsVisible="{Binding IsTagsVisible}"
+                                                           Foreground="{Binding TextBrush}"
+                                                           Opacity="0.72" FontSize="13" />
+                                                <TextBlock Text="{Binding WeightText}" IsVisible="{Binding IsWeightVisible}"
+                                                           Foreground="{Binding TextBrush}"
+                                                           Opacity="0.62" FontSize="12" />
+                                            </StackPanel>
+                                            <ContentControl Content="{Binding}"
+                                                            ContentTemplate="{StaticResource QuickDrawAvatarTemplate}"
+                                                            VerticalAlignment="Center"
+                                                            IsVisible="{Binding IsImageAfterText}" />
                                         </StackPanel>
-                                        <ContentControl Content="{Binding}"
-                                                        ContentTemplate="{StaticResource QuickDrawAvatarTemplate}"
-                                                        VerticalAlignment="Center"
-                                                        IsVisible="{Binding IsImageAfterText}" />
-                                    </StackPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+                <!-- 记录组提示：闪抽没有自己的选择器，锁定组时只在这里说明权重与记录的范围。
+                     两个提示都折叠时这一行高度为 0，不会挤动既有布局。 -->
+                <StackPanel Grid.Row="1" HorizontalAlignment="Center" Spacing="2">
+                    <TextBlock x:Name="AutoCloseHintTextBlock"
+                               IsVisible="{Binding IsResultVisible}"
+                               HorizontalAlignment="Center"
+                               TextAlignment="Center"
+                               Opacity="0.68"
+                               FontSize="12"
+                               Margin="0 8 0 0" />
+                    <TextBlock x:Name="HistoryGroupHintTextBlock"
+                               IsVisible="{Binding IsHistoryGroupHintVisible}"
+                               FontSize="10" Opacity="0.7" HorizontalAlignment="Center"
+                               TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                               Margin="0 0 0 2">
+                        <Run Text="{x:Static langs:Resources.M_HistoryGroupLocked}" /><Run Text=" " /><Run Text="{Binding HistoryGroupHintText}" />
+                    </TextBlock>
+                    <TextBlock x:Name="HistoryGroupMissingHintTextBlock"
+                               IsVisible="{Binding IsHistoryGroupMissingHintVisible}"
+                               FontSize="10" Opacity="0.7" HorizontalAlignment="Center"
+                               TextWrapping="Wrap" TextAlignment="Center"
+                               Margin="0 0 0 2"
+                               Text="{x:Static langs:Resources.M_HistoryGroupMissing}" />
+                </StackPanel>
+                <!-- 插件界面插槽：快捷抽签结果区（跨两行，插件内容叠加在结果之上） -->
+                <sr:UiSlotHost SlotId="main.quickdraw.result.extra" Grid.RowSpan="2" />
             </Grid>
-            <!-- 记录组提示：闪抽没有自己的选择器，锁定组时只在这里说明权重与记录的范围。
-                 两个提示都折叠时这一行高度为 0，不会挤动既有布局。 -->
-            <StackPanel Grid.Row="1" HorizontalAlignment="Center" Spacing="2">
-                <TextBlock x:Name="AutoCloseHintTextBlock"
-                           IsVisible="{Binding IsResultVisible}"
-                           HorizontalAlignment="Center"
-                           TextAlignment="Center"
-                           Opacity="0.68"
-                           FontSize="12"
-                           Margin="0 8 0 0" />
-                <TextBlock IsVisible="{Binding IsHistoryGroupHintVisible}"
-                           FontSize="10" Opacity="0.7" HorizontalAlignment="Center"
-                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
-                           Margin="0 0 0 2">
-                    <Run Text="{x:Static langs:Resources.M_HistoryGroupLocked}" /><Run Text=" " /><Run Text="{Binding HistoryGroupHintText}" />
-                </TextBlock>
-                <TextBlock IsVisible="{Binding IsHistoryGroupMissingHintVisible}"
-                           FontSize="10" Opacity="0.7" HorizontalAlignment="Center"
-                           TextWrapping="Wrap" TextAlignment="Center"
-                           Margin="0 0 0 2"
-                           Text="{x:Static langs:Resources.M_HistoryGroupMissing}" />
-            </StackPanel>
-            <!-- 插件界面插槽：快捷抽签结果区（跨两行，插件内容叠加在结果之上） -->
-            <sr:UiSlotHost SlotId="main.quickdraw.result.extra" Grid.RowSpan="2" />
-        </Grid>
-    </Border>
+        </Border>
+        <!-- 四周倒计时描边：盖在 RootBorder 的 1px 边框上，吸附鼠标事件交给 RootBorder。 -->
+        <controls:EdgeCountdownRing x:Name="CountdownRing"
+                                    Margin="6"
+                                    IsHitTestVisible="False"
+                                    IsVisible="False" />
+    </Grid>
 </UserControl>

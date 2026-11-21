@@ -16,12 +16,16 @@ using SecRandom.Core;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Interfaces;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Notification;
+using SecRandom.Core.Models.Orchestration;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Services.FloatingWindow;
+using SecRandom.Core.Services.Orchestration;
 using SecRandom.Core.Services.Presentation;
 using SecRandom.Core.Services.Profiles;
 using SecRandom.Helpers;
@@ -55,11 +59,14 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private readonly IHistoryGroupCatalog _historyGroupCatalog;
     private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
     private readonly NotificationService? _notificationService;
+    private readonly IOrchestrationStore? _orchestrationStore;
+    private readonly OrchestrationScheduler? _orchestrationScheduler;
     private bool _isDrawCommandRunning;
     private bool _isCoolingDown;
     private CancellationTokenSource? _previewCts;
     private int? _notificationAutoCloseTime;
     private HistoryGroupScope _historyGroupScope;
+    private string _recordGroup = string.Empty;
 
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
     [ObservableProperty] private string _statusText = QuickDrawResources.M_Ready;
@@ -83,7 +90,9 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         VerificationDrawCoordinator verificationDrawCoordinator,
         IHistoryGroupCatalog historyGroupCatalog,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
-        NotificationService? notificationService = null)
+        NotificationService? notificationService = null,
+        IOrchestrationStore? orchestrationStore = null,
+        OrchestrationScheduler? orchestrationScheduler = null)
         : base(configHandler)
     {
         _configHandler = configHandler;
@@ -99,6 +108,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         _historyGroupCatalog = historyGroupCatalog;
         _voiceAnnouncementService = voiceAnnouncementService;
         _notificationService = notificationService;
+        _orchestrationStore = orchestrationStore;
+        _orchestrationScheduler = orchestrationScheduler;
         ResultItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ResultFontSize));
         Config.EffectiveQuickDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.EffectiveHistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
@@ -120,6 +131,12 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         LastResultStudents.Select(FormatStudent).ToArray();
     public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && !_isCoolingDown && GetEligibleCandidates().Any());
     public string DrawButtonText => IsDrawing ? QuickDrawResources.C_Stop : QuickDrawResources.C_Start;
+
+    /// <summary>
+    ///     上一次结果还在展示（"抽取后禁用"的秒数内）。悬浮窗单击/长按触发的闪抽在这段时间里
+    ///     要直接忽略，否则连点会把刚抽出来的结果顶掉。
+    /// </summary>
+    public bool IsCoolingDown => _isCoolingDown;
 
     /// <summary>
     ///     闪抽是否真的锁定了某个具名记录组（悬浮窗只在此时显示提示）。
@@ -216,18 +233,23 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         SecurityOperation.QuickDrawStart,
         () => Task.CompletedTask);
 
-    public Task StartAuthorizedTriggeredDrawAsync()
+    /// <summary>
+    ///     触发一次闪抽；<paramref name="count" /> 是浮窗长按快选选好的人数（默认 1 人）。
+    /// </summary>
+    public Task StartAuthorizedTriggeredDrawAsync(int count = 1)
     {
         var showBuiltInNotificationAnimation = _notificationService?.UsesBuiltInNotificationService(
             NotificationSettingsType.QuickDraw) == true;
         return StartDrawCoreAsync(
             skipPreview: !showBuiltInNotificationAnimation,
-            showBuiltInNotificationAnimation: showBuiltInNotificationAnimation);
+            showBuiltInNotificationAnimation: showBuiltInNotificationAnimation,
+            count: count);
     }
 
     private async Task StartDrawCoreAsync(
         bool skipPreview = false,
-        bool showBuiltInNotificationAnimation = false)
+        bool showBuiltInNotificationAnimation = false,
+        int count = 1)
     {
         if (IsDrawing || _isDrawCommandRunning)
             return;
@@ -248,7 +270,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             return;
         }
 
-        const int count = 1;
+        // 浮窗长按快选最多一次 5 人；候选不足时按实际人数收窄，绝不向抽样层要超过池子大小的数量。
+        count = Math.Clamp(count, 1, Math.Min(QuickDrawLongPressGesture.MaxCount, candidates.Count));
         ResultItems.Clear();
         IsResultVisible = false;
         // 关闭后抽取期间不显示"正在抽取"：动画已经在动，多一行字反而会在结果落定前跳一次版
@@ -294,14 +317,29 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
             // 记录组与候选池在同一刻冻结（和点名页一致）：抽取中途改设置不会让这一轮读到另一个组的历史。
             var historyGroup = ResolveQuickDrawHistoryGroup();
-            var verificationDrawTask = _verificationDrawCoordinator.DrawStudentsAsync(
-                count,
-                candidates,
-                DrawSettingsType.QuickDraw,
-                DrawProofExportContext.ForStudents(SelectedStudentListName, courseName: courseName),
-                courseName: courseName,
-                historyGroup: historyGroup,
-                cancellationToken: default);
+            // 编排抽取不抽样：本轮的顺序事先排定，抽取只是按序取人。编排名单按当前学生名单匹配，
+            // 与点名共用同一份排布（两边本来就是同一份学生名单与临时记录）。
+            var orchestrationPlan = Config.EffectiveQuickDrawSettings.DrawMode == DrawMode.Orchestrated
+                ? PrepareOrchestration(candidates)
+                : null;
+            var verificationDrawTask = orchestrationPlan is not null
+                ? _verificationDrawCoordinator.DrawOrchestratedStudentsAsync(
+                    orchestrationPlan.Order.Take(count).ToArray(),
+                    orchestrationPlan.Round,
+                    orchestrationPlan.RoundCount,
+                    DrawProofExportContext.ForStudents(SelectedStudentListName, courseName: courseName),
+                    courseName: courseName,
+                    historyGroup: historyGroup,
+                    cancellationToken: default,
+                    channel: "quick-draw")
+                : _verificationDrawCoordinator.DrawStudentsAsync(
+                    count,
+                    candidates,
+                    DrawSettingsType.QuickDraw,
+                    DrawProofExportContext.ForStudents(SelectedStudentListName, courseName: courseName),
+                    courseName: courseName,
+                    historyGroup: historyGroup,
+                    cancellationToken: default);
             var previewTask = skipPreview
                 ? Task.CompletedTask
                 : ShowPreviewAsync(candidates, count, MusicSettings.AnimationMusic);
@@ -351,7 +389,9 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 return;
             }
 
-            var weights = BuildWeightSnapshot(drawn, drawOutcome.FrozenWeights);
+            var weights = orchestrationPlan is null
+                ? BuildWeightSnapshot(drawn, drawOutcome.FrozenWeights)
+                : drawn.ToDictionary(student => (Student)student, _ => 1d);
             _drawCommitService.CommitStudentDraw(new StudentDrawCommit(
                 drawn,
                 DateTime.Now,
@@ -360,7 +400,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 DrawMethod: (int)Config.EffectiveQuickDrawSettings.DrawType,
                 Weights: weights,
                 CourseName: courseName,
-                HistoryGroup: historyGroup));
+                HistoryGroup: historyGroup,
+                RecordGroup: historyGroup ?? _recordGroup));
             try
             {
                 _verificationDrawCoordinator.Publish(drawOutcome);
@@ -370,6 +411,10 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 _logger.LogWarning(exception, "闪抽已提交，但抽取证明发布失败，证明将保持待发布状态。ProofId={ProofId}",
                     drawOutcome.Proof.ProofId);
             }
+
+            // 一轮抽完（本轮排布已全部出场）就推进到下一轮，并清掉本轮临时记录，否则下轮开局人人都是「已抽」。
+            if (orchestrationPlan is not null && count >= orchestrationPlan.Order.Count)
+                AdvanceOrchestration(orchestrationPlan);
 
             LastDrawnStudent = drawn[0];
             _notificationAutoCloseTime = showBuiltInNotificationAnimation
@@ -443,6 +488,14 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     private void ClearHistoryCore()
     {
         _notificationAutoCloseTime = null;
+        // 编排里「重置」也算一轮：即使没抽完，也按用户的语义进入下一轮。
+        if (Config.EffectiveQuickDrawSettings.DrawMode == DrawMode.Orchestrated && _orchestrationStore is not null)
+        {
+            var profile = _orchestrationStore.FindActive(OrchestrationTarget.RollCall, SelectedStudentListName).FirstOrDefault();
+            if (profile is not null)
+                _orchestrationStore.SaveRuntime(AdvanceRuntime(profile, _orchestrationStore.GetRuntime(profile)));
+        }
+
         _temporaryRecordService.ClearStudentScope(SelectedStudentListName, string.Empty, string.Empty);
         ResultItems.Clear();
         LastDrawnStudent = null;
@@ -450,6 +503,56 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         StatusText = QuickDrawResources.M_ResetDone;
         OnPropertyChanged(nameof(CanStartDraw));
     }
+
+    private OrchestrationPlan? PrepareOrchestration(IReadOnlyList<Student> candidates)
+    {
+        if (_orchestrationStore is null || _orchestrationScheduler is null)
+            return null;
+        var profile = _orchestrationStore.FindActive(OrchestrationTarget.RollCall, SelectedStudentListName).FirstOrDefault();
+        if (profile is null)
+            return null;
+
+        var runtime = _orchestrationStore.GetRuntime(profile);
+        var drawn = new HashSet<Guid>();
+        foreach (var key in _temporaryRecordService.GetStudentCounts(SelectedStudentListName, string.Empty, string.Empty).Keys)
+        {
+            if (Guid.TryParseExact(key, "N", out var recordId))
+                drawn.Add(recordId);
+        }
+
+        var order = _orchestrationScheduler.OrderRound(
+            profile,
+            profile.GetRound(runtime.Round),
+            candidates,
+            drawn,
+            new CryptoRandomSource(),
+            _linkageDrawCoordinator.GetCourseName(),
+            ResolveQuickDrawHistoryGroup());
+        return new OrchestrationPlan(profile, runtime.Round, profile.EffectiveRoundCount, order);
+    }
+
+    private void AdvanceOrchestration(OrchestrationPlan plan)
+    {
+        if (_orchestrationStore is null)
+            return;
+
+        _orchestrationStore.SaveRuntime(AdvanceRuntime(plan.Profile, _orchestrationStore.GetRuntime(plan.Profile)));
+        // 下一轮所有人重新入池：不清掉本轮临时记录，下一轮开局就会人人被判为「已抽」。
+        _temporaryRecordService.ClearStudentScope(SelectedStudentListName, string.Empty, string.Empty);
+    }
+
+    private static OrchestrationRuntime AdvanceRuntime(OrchestrationProfile profile, OrchestrationRuntime runtime)
+    {
+        runtime.Round = runtime.Round >= profile.EffectiveRoundCount ? 1 : runtime.Round + 1;
+        runtime.UpdatedAt = DateTime.UtcNow;
+        return runtime;
+    }
+
+    private sealed record OrchestrationPlan(
+        OrchestrationProfile Profile,
+        int Round,
+        int RoundCount,
+        IReadOnlyList<Student> Order);
 
     private int? ResolveNotificationAutoCloseTime()
     {
@@ -513,7 +616,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         LastDrawnStudent = null;
         var authorized = await _linkageDrawCoordinator.AuthorizeAsync(
             operations,
-            StartAuthorizedTriggeredDrawAsync,
+            async () => await StartAuthorizedTriggeredDrawAsync(),
             cancellationToken);
 
         if (!authorized)
@@ -739,20 +842,75 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     [ObservableProperty] private double? _notificationOpacity;
 
     /// <summary>
-    ///     本次通知的自适应配色。由 App 在窗口显示前按桌面亮度算好，
+    ///     本次通知的自适应配色。由 <see cref="App" /> 在窗口显示前按桌面亮度算好，
     ///     页面据此换掉 Fluent 画笔；为 null 时沿用应用主题。
     /// </summary>
     [ObservableProperty] private AdaptiveTheme? _notificationTheme;
 
+    /// <summary>
+    ///     通知卡片实际底色对应的文字色（纯黑或纯白）。由页面在换完底色之后按"画出来的卡片有多亮"
+    ///     算好并写回，因此即使没有自适应主题（开关关闭、低配回退、采样失败）字色也依然跟着底色走，
+    ///     而不是跟着应用主题走。
+    /// </summary>
+    [ObservableProperty] private IBrush? _notificationInk;
+
     public void ApplyNotificationTheme(AdaptiveTheme? theme)
     {
+        // 建页时先写入的应用主题墨色不能盖过刚完成的桌面采样；首帧创建前就同步好两者。
+        NotificationInk = theme is { } adaptive ? new SolidColorBrush(adaptive.Foreground) : null;
         NotificationTheme = theme;
+        RefreshResultTextBrushes();
+    }
+
+    /// <summary>
+    ///     接收页面按实际卡片亮度选出的文字色，并把已显示的结果项一起换成它。
+    /// </summary>
+    public void ApplyNotificationInk(IBrush? ink)
+    {
+        NotificationInk = ink;
+        RefreshResultTextBrushes();
+    }
+
+    /// <summary>
+    ///     把已经在显示的结果项文字色换成新的通知文字色。
+    /// </summary>
+    /// <remarks>
+    ///     通知窗口会复用之前手动闪抽留下的结果项（<c>preserveQuickDrawResult</c>），这些项是按应用
+    ///     主题构造的，换背景时它们不会自己变——这正是"只换窗口颜色、不换字体颜色"的来源。
+    ///     这里用 <c>with</c> 只替换画刷，名字、头像、标记全部照旧。
+    /// </remarks>
+    private void RefreshResultTextBrushes()
+    {
+        if (ResultItems.Count == 0)
+            return;
+
+        for (var index = 0; index < ResultItems.Count; index++)
+        {
+            var item = ResultItems[index];
+            ResultItems[index] = item with { TextBrush = ResolveNotificationTextBrush(item.AccentBrush) };
+        }
+    }
+
+    /// <summary>
+    ///     通知里的一段文字该用什么颜色：优先用页面按卡片亮度算出的黑/白，其次自适应前景，
+    ///     最后（手动闪抽且没有通知装配时）才回到强调色/主题色。
+    /// </summary>
+    private IBrush ResolveNotificationTextBrush(IBrush? accentBrush)
+    {
+        if (NotificationInk is { } ink)
+            return ink;
+
+        return NotificationTheme is { } theme
+            ? DrawColorHelper.ResolveTextBrush(null, Config.Appearance.Theme, theme.Foreground)
+            : DrawColorHelper.ResolveTextBrush(accentBrush, Config.Appearance.Theme);
     }
 
     public void ClearNotificationPresentation()
     {
         NotificationOpacity = null;
         NotificationTheme = null;
+        NotificationInk = null;
+        RefreshResultTextBrushes();
     }
 
     public void ResetForCourseLinkage()
@@ -779,18 +937,13 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     {
         var weight = BuildDisplayWeight(student);
         var accentBrush = ResolveAccentBrush();
-        // 通知卡片压在桌面（用户自己的壁纸/PPT）上，强调色在这里只留给边框：
-        // 文字如果继续用强调色，浅色桌面上一个亮黄/亮青的强调色会直接消失。
-        var textBrush = NotificationTheme is { } theme
-            ? DrawColorHelper.ResolveTextBrush(null, Config.Appearance.Theme, theme.Foreground)
-            : DrawColorHelper.ResolveTextBrush(accentBrush, Config.Appearance.Theme);
         return new QuickDrawResultItem(
             FormatStudent(student),
             student.Tags,
             DisplaySettings.ShowTags && !string.IsNullOrWhiteSpace(student.Tags),
             DisplaySettings.DisplayStyle == DisplayStyleMode.Card,
             accentBrush,
-            DrawColorHelper.ResolveTextBrush(accentBrush, Config.Appearance.Theme),
+            ResolveNotificationTextBrush(accentBrush),
             DisplaySettings.ShowWeightTransparency,
             $"权重 {weight:0.##}",
             BuildResultOpacity(weight),
@@ -804,11 +957,9 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     private QuickDrawResultItem CreateNotificationResultItem(string item)
     {
         var accentBrush = ResolveAccentBrush();
-        // 通知卡片压在桌面（用户自己的壁纸/PPT）上，强调色在这里只留给边框：
-        // 文字如果继续用强调色，浅色桌面上一个亮黄/亮青的强调色会直接消失。
-        var textBrush = NotificationTheme is { } theme
-            ? DrawColorHelper.ResolveTextBrush(null, Config.Appearance.Theme, theme.Foreground)
-            : DrawColorHelper.ResolveTextBrush(accentBrush, Config.Appearance.Theme);
+        // 通知卡片压在桌面（用户自己的壁纸/PPT）上，强调色在这里只留给边框：文字如果继续用
+        // 强调色，浅色桌面上一个亮黄/亮青的强调色会直接消失。
+        var textBrush = ResolveNotificationTextBrush(accentBrush);
         return new QuickDrawResultItem(
             item,
             string.Empty,
@@ -889,9 +1040,11 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     {
         _isCoolingDown = true;
         OnPropertyChanged(nameof(CanStartDraw));
+        OnPropertyChanged(nameof(IsCoolingDown));
         await Task.Delay(Math.Clamp(Config.EffectiveQuickDrawSettings.DisableAfterClick, 0, 60) * 1000).ConfigureAwait(true);
         _isCoolingDown = false;
         OnPropertyChanged(nameof(CanStartDraw));
+        OnPropertyChanged(nameof(IsCoolingDown));
     }
 
     /// <summary>
@@ -929,6 +1082,10 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         }
 
         _historyGroupScope = HistoryGroupScope.Resolve(enabled, Config.EffectiveQuickDrawSettings.HistoryGroup, groups);
+        // 读取范围与写入归属刻意分开：闪抽不按组筛历史时（选择器不可见）仍要盖自己配置的默认记录组，
+        // 否则闪抽、点名、抽奖的记录会一起挤进默认组。
+        _recordGroup = _historyGroupScope.Group ?? HistoryGroupScope.ResolveRecordGroup(
+            Config.EffectiveQuickDrawSettings.HistoryGroup, groups);
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)

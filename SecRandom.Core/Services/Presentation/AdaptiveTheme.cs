@@ -26,7 +26,7 @@ public readonly record struct BackdropLuminance(double P10, double Median, doubl
 /// <remarks>
 ///     <see cref="Surface" /> 与 <see cref="CardSurface" /> 都带透明度：卡片压在采样到的桌面上，
 ///     而不是替换成一块不透明色，这样"自适应"才真的看得见桌面。前景色是针对合成之后的结果
-///     算出来的，所以它对 <see cref="SurfaceLuminance" /> 的对比度一定达标。
+///     算出来的；整体透明度也会淡化文字，因此低不透明度时只能选择对比度较高的黑/白，不能保证达标。
 /// </remarks>
 public sealed record AdaptiveTheme(
     bool IsDarkBackdrop,
@@ -40,6 +40,12 @@ public sealed record AdaptiveTheme(
 {
     /// <summary>卡片底色的不透明度（0–1）。</summary>
     public double SurfaceAlpha => Surface.A / 255d;
+
+    /// <summary>整块卡片（含文字）的不透明度；手动构造方案时默认不透明。</summary>
+    public double SurfaceOpacity { get; init; } = 1;
+
+    /// <summary>计算中位数处可见文字亮度所需的桌面亮度。</summary>
+    public double BackdropMedianLuminance { get; init; }
 }
 
 /// <summary>
@@ -57,7 +63,7 @@ public sealed record AdaptiveTheme(
 /// </remarks>
 public static class AdaptiveBackdropResolver
 {
-    /// <summary>正文与卡片底之间必须达到的对比度（WCAG AA 正文标准）。</summary>
+    /// <summary>正文与卡片底之间的目标对比度（WCAG AA 正文标准）；整体透明度可能使其无法达到。</summary>
     public const double MinimumContrastRatio = 4.5;
 
     /// <summary>中位数低于它就算深色背景。</summary>
@@ -82,15 +88,32 @@ public static class AdaptiveBackdropResolver
     public static AdaptiveTheme FromAppTheme(bool isDarkTheme)
     {
         var surface = isDarkTheme ? DarkSurfaceColor : LightSurfaceColor;
-        return Build(isDarkTheme, 1.0, RelativeLuminance(surface));
+        var luminance = RelativeLuminance(surface);
+        return Build(isDarkTheme, 1.0, BackdropLuminance.FromPercentiles(luminance, luminance, luminance));
     }
 
     /// <summary>
     ///     按背景亮度分布求解自适应方案。<paramref name="appThemeIsDark" /> 只在亮度中位数恰好
     ///     落在分界线上时充当平局判定，正常情况完全由桌面决定。
     /// </summary>
-    public static AdaptiveTheme Resolve(BackdropLuminance backdrop, bool appThemeIsDark)
+    /// <param name="surfaceOpacity">
+    ///     整块卡片在窗口里的实际不透明度（0–1）。通知窗的「不透明度」设置作用在卡片整体上，
+    ///     所以桌面会按 <c>1 - 不透明度</c> 的比例透上来，判定必须把这一层也算进去，否则
+    ///     低不透明度下会出现"白字压在被桌面冲淡的浅卡片上"。
+    /// </param>
+    /// <remarks>
+    ///     半透明卡片压在一张花壁纸/正在放的 PPT 上时，卡片左边缘与右边缘的最终亮度可能相差很大，
+    ///     所以前景不能只对中位数成立：它必须对 <see cref="BackdropLuminance.P10" /> 与
+    ///     <see cref="BackdropLuminance.P90" /> 合成出来的两端都尽量清晰。两端做不到就依次把底色
+    ///     压得更实，最后到底色不透明；整体透明度仍按用户设置保留，文字与底色都会被桌面冲淡，
+    ///     所以最终只能选择最差端点对比度较高的黑/白，不能承诺一定达到目标。
+    /// </remarks>
+    public static AdaptiveTheme Resolve(
+        BackdropLuminance backdrop,
+        bool appThemeIsDark,
+        double surfaceOpacity = 1)
     {
+        var opacity = NormalizeOpacity(surfaceOpacity);
         var median = backdrop.Median;
         var isDark = Math.Abs(median - DarkBackdropThreshold) < 0.0001
             ? appThemeIsDark
@@ -100,56 +123,163 @@ public static class AdaptiveBackdropResolver
             ? HighSpreadSurfaceAlpha
             : DefaultSurfaceAlpha;
 
-        var theme = Build(isDark, alpha, median);
-        if (ContrastAgainstSurface(theme) >= MinimumContrastRatio)
+        var theme = Build(isDark, alpha, backdrop, opacity);
+        var bestContrast = WorstContrastAcrossBackdrop(theme, backdrop, opacity);
+        if (bestContrast >= MinimumContrastRatio)
             return theme;
 
-        // 对比度不够只可能出现在"半透明底 + 中灰背景"的窄带上：把底压得更实再算一次，
-        // 还不够就直接不透明（此时回到应用主题的安全外观，但前景仍是按背景选的）。
-        theme = Build(isDark, ContrastGateSurfaceAlpha, median);
-        if (ContrastAgainstSurface(theme) >= MinimumContrastRatio)
-            return theme;
+        // 整体透明度会同时淡化文字；各档都不达标时保留最差端点对比度最高的方案。
+        var stronger = Build(isDark, ContrastGateSurfaceAlpha, backdrop, opacity);
+        var strongerContrast = WorstContrastAcrossBackdrop(stronger, backdrop, opacity);
+        if (strongerContrast >= MinimumContrastRatio)
+            return stronger;
+        if (strongerContrast > bestContrast)
+        {
+            theme = stronger;
+            bestContrast = strongerContrast;
+        }
 
-        return Build(isDark, 1.0, median);
+        var opaqueSurface = Build(isDark, 1.0, backdrop, opacity);
+        return WorstContrastAcrossBackdrop(opaqueSurface, backdrop, opacity) >= bestContrast ? opaqueSurface : theme;
     }
 
-    /// <summary>前景色与"卡片底合成到背景之后"的对比度。</summary>
+    /// <summary>
+    ///     按"合成之后的卡片底有多亮"选纯黑或纯白：这就是需求本身（浅底深字、深底白字），
+    ///     也保证了无论采样/透明度/主题怎么组合，字色都不会和眼睛看到的底色唱反调。
+    /// </summary>
+    public static Color SelectForeground(double surfaceLuminance) =>
+        SelectForeground(surfaceLuminance, surfaceLuminance);
+
+    /// <summary>
+    ///     卡片底在两端的亮度并不相同（<paramref name="darkestComposite" /> 到
+    ///     <paramref name="lightestComposite" />）时，取"最差那一端仍看得最清"的颜色。
+    /// </summary>
+    public static Color SelectForeground(double darkestComposite, double lightestComposite)
+    {
+        var dark = NormalizeLuminance(darkestComposite);
+        var light = Math.Max(dark, NormalizeLuminance(lightestComposite));
+
+        // 不透明黑字在暗端最吃亏，不透明白字在亮端最吃亏。
+        var blackWorst = ContrastRatio(dark, Colors.Black);
+        var whiteWorst = ContrastRatio(light, Colors.White);
+        return blackWorst >= whiteWorst ? Colors.Black : Colors.White;
+    }
+
+    /// <summary>
+    ///     一个实色底盖在给定亮度的背景上之后的亮度：<paramref name="surfaceOpacity" /> 是整块
+    ///     卡片的不透明度，<paramref name="surfaceAlpha" /> 是底色自身的透明度。
+    /// </summary>
+    public static double ComposeSurfaceLuminance(
+        Color surface,
+        double surfaceAlpha,
+        double backdropLuminance,
+        double surfaceOpacity = 1)
+    {
+        var opacity = NormalizeOpacity(surfaceOpacity);
+        var alpha = NormalizeOpacity(surfaceAlpha) * opacity;
+        return Math.Clamp(
+            alpha * RelativeLuminance(surface) + (1 - alpha) * NormalizeLuminance(backdropLuminance), 0, 1);
+    }
+
+    /// <summary>中位数处可见文字与可见卡片底的对比度，包含整块卡片的不透明度。</summary>
     public static double ContrastAgainstSurface(AdaptiveTheme theme) =>
-        ContrastRatio(theme.SurfaceLuminance, theme.Foreground);
+        ContrastRatio(
+            theme.SurfaceLuminance,
+            ComposeForegroundLuminance(theme.Foreground, theme.BackdropMedianLuminance, theme.SurfaceOpacity));
+
+    /// <summary>
+    ///     前景色在这张卡片上最差的那一处的对比度：卡片半透明时，背景的亮端与暗端会给出不同的
+    ///     最终底色，两端都要达标才算真的看得清。
+    /// </summary>
+    public static double WorstContrastAcrossBackdrop(AdaptiveTheme theme, BackdropLuminance backdrop) =>
+        WorstContrastAcrossBackdrop(theme, backdrop, theme.SurfaceOpacity);
+
+    public static double WorstContrastAcrossBackdrop(
+        AdaptiveTheme theme,
+        BackdropLuminance backdrop,
+        double surfaceOpacity)
+    {
+        var opacity = NormalizeOpacity(surfaceOpacity);
+        var darkest = ComposeSurfaceLuminance(theme.Surface, theme.SurfaceAlpha, backdrop.P10, opacity);
+        var lightest = ComposeSurfaceLuminance(theme.Surface, theme.SurfaceAlpha, backdrop.P90, opacity);
+        return Math.Min(
+            ContrastRatio(darkest, ComposeForegroundLuminance(theme.Foreground, backdrop.P10, opacity)),
+            ContrastRatio(lightest, ComposeForegroundLuminance(theme.Foreground, backdrop.P90, opacity)));
+    }
 
     /// <summary>WCAG 相对亮度（输入已经是 0–1 线性亮度）。</summary>
-    public static double ContrastRatio(double backgroundLuminance, Color foreground)
+    public static double ContrastRatio(double backgroundLuminance, Color foreground) =>
+        ContrastRatio(backgroundLuminance, RelativeLuminance(foreground));
+
+    private static double ContrastRatio(double backgroundLuminance, double foregroundLuminance)
     {
-        var foregroundLuminance = RelativeLuminance(foreground);
         var lighter = Math.Max(backgroundLuminance, foregroundLuminance);
         var darker = Math.Min(backgroundLuminance, foregroundLuminance);
         return (lighter + 0.05) / (darker + 0.05);
+    }
+
+    private static double ComposeForegroundLuminance(Color foreground, double backdropLuminance, double surfaceOpacity)
+    {
+        var opacity = NormalizeOpacity(surfaceOpacity);
+        return opacity * RelativeLuminance(foreground) + (1 - opacity) * NormalizeLuminance(backdropLuminance);
     }
 
     /// <summary>sRGB 颜色 → 线性相对亮度（WCAG 定义）。</summary>
     public static double RelativeLuminance(Color color) =>
         0.2126 * Linearize(color.R) + 0.7152 * Linearize(color.G) + 0.0722 * Linearize(color.B);
 
-    private static AdaptiveTheme Build(bool isDark, double alpha, double backdropLuminance)
+    private static AdaptiveTheme Build(
+        bool isDark,
+        double alpha,
+        BackdropLuminance backdrop,
+        double surfaceOpacity = 1)
     {
         var surfaceBase = isDark ? DarkSurfaceColor : LightSurfaceColor;
-        var foreground = isDark ? Colors.White : Colors.Black;
 
-        // 卡片底 = 半透明色"贴"在背景上；我们能知道的只有背景亮度，所以用亮度做合成，
-        // 不假装知道色相。这正是"只判黑白"在数学上成立的原因。
-        var composited = Math.Clamp(
-            alpha * RelativeLuminance(surfaceBase) + (1 - alpha) * backdropLuminance, 0, 1);
-
-        var cardAlpha = Math.Min(1.0, alpha + CardSurfaceAlphaBonus);
-        return new AdaptiveTheme(
+        // 使用实际输出的 8 位 alpha 计算，确保选色和对比度检查针对同一块底色。
+        var surface = WithAlpha(surfaceBase, (byte)Math.Round(alpha * 255));
+        var composited = ComposeSurfaceLuminance(surface, surface.A / 255d, backdrop.Median, surfaceOpacity);
+        var theme = new AdaptiveTheme(
             IsDarkBackdrop: isDark,
-            Foreground: foreground,
-            SecondaryForeground: WithAlpha(foreground, SecondaryAlpha),
-            Stroke: WithAlpha(foreground, StrokeAlpha),
-            Surface: WithAlpha(surfaceBase, (byte)Math.Round(alpha * 255)),
-            CardSurface: WithAlpha(surfaceBase, (byte)Math.Round(cardAlpha * 255)),
-            AvatarSurface: WithAlpha(foreground, AvatarAlpha),
-            SurfaceLuminance: composited);
+            Foreground: Colors.Black,
+            SecondaryForeground: default,
+            Stroke: default,
+            Surface: surface,
+            CardSurface: WithAlpha(surfaceBase, (byte)Math.Round(Math.Min(1.0, alpha + CardSurfaceAlphaBonus) * 255)),
+            AvatarSurface: default,
+            SurfaceLuminance: composited)
+        {
+            SurfaceOpacity = NormalizeOpacity(surfaceOpacity),
+            BackdropMedianLuminance = NormalizeLuminance(backdrop.Median)
+        };
+
+        // 整体透明度同时作用在字和底上。比较两种可见字色在两个端点的最差对比度。
+        var blackWorst = WorstContrastAcrossBackdrop(theme, backdrop, surfaceOpacity);
+        var whiteWorst = WorstContrastAcrossBackdrop(theme with { Foreground = Colors.White }, backdrop, surfaceOpacity);
+        var foreground = blackWorst >= whiteWorst ? Colors.Black : Colors.White;
+        return theme with
+        {
+            Foreground = foreground,
+            SecondaryForeground = WithAlpha(foreground, SecondaryAlpha),
+            Stroke = WithAlpha(foreground, StrokeAlpha),
+            AvatarSurface = WithAlpha(foreground, AvatarAlpha)
+        };
+    }
+
+    private static double NormalizeOpacity(double value)
+    {
+        if (double.IsNaN(value))
+            return 1;
+
+        return Math.Clamp(value, 0, 1);
+    }
+
+    private static double NormalizeLuminance(double value)
+    {
+        if (double.IsNaN(value))
+            return 0;
+
+        return Math.Clamp(value, 0, 1);
     }
 
     private static Color WithAlpha(Color color, byte alpha) =>

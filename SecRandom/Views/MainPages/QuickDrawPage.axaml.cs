@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Styling;
 using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Behaviors;
@@ -102,8 +103,26 @@ public partial class QuickDrawPage : UserControl
         if (theme is not { } adaptive)
         {
             RootBorder.Resources = new ResourceDictionary();
+            RootBorder.ClearValue(Border.BackgroundProperty);
+            RootBorder.ClearValue(Border.BorderBrushProperty);
+            RootBorder.Margin = new Thickness(6);
+            CountdownRing.Margin = new Thickness(6);
+            ClearNotificationTextBrushes();
+            ApplyCardInk(null);
             return;
         }
+
+        // 卡片始终是按采样色着色的实色底，窗口本身不做亚克力：窗口合成材质（DWM acrylic）的
+        // tint 由系统明暗主题决定、并不跟着桌面走，会把卡片重新染成白/黑；而前景色是按采样
+        // 亮度选的，于是出现"白底白字、黑底黑字"。直接绘制底色才能按同一合成模型计算对比度；
+        // 整体透明度仍会同时淡化文字与底色。圆角与 6px 外边距因此始终保留，画在透明窗口上。
+        RootBorder.Margin = new Thickness(6);
+        CountdownRing.Margin = new Thickness(6);
+
+        // 卡片底与边框直接写本地值，不再只靠资源键：本地值不经过任何资源查找，也不受样式表、
+        // 主题变体或模板里同名键的影响，所以"卡片是什么颜色"和"字是什么颜色"永远是同一份方案。
+        RootBorder.Background = new SolidColorBrush(adaptive.Surface);
+        RootBorder.BorderBrush = new SolidColorBrush(adaptive.Stroke);
 
         RootBorder.Resources = new ResourceDictionary
         {
@@ -115,6 +134,41 @@ public partial class QuickDrawPage : UserControl
             ["CardBackgroundFillColorDefaultBrush"] = new SolidColorBrush(adaptive.CardSurface),
             ["ControlFillColorSecondaryBrush"] = new SolidColorBrush(adaptive.AvatarSurface)
         };
+
+        // 状态文字与提示文字没有自己的 Foreground 绑定，只靠资源键替换在 Fluent 的样式里不一定生效；
+        // 这里再给本地值兜一次底，保证"换背景就一定换字色"。
+        var foreground = new SolidColorBrush(adaptive.Foreground);
+        var secondary = new SolidColorBrush(adaptive.SecondaryForeground);
+        StatusTextBlock.Foreground = foreground;
+        AutoCloseHintTextBlock.Foreground = secondary;
+        HistoryGroupHintTextBlock.Foreground = secondary;
+        HistoryGroupMissingHintTextBlock.Foreground = secondary;
+
+        ApplyCardInk(adaptive);
+    }
+
+    /// <summary>
+    ///     把"通知卡片现在这层底有多亮"换算成黑/白文字色，并推给结果项。
+    /// </summary>
+    /// <remarks>
+    ///     <paramref name="adaptive" /> 非 null 时直接用它的前景色，两者本来就是同一个判据。
+    ///     为 null（自适应关闭、低配回退、采样失败）时卡片回到应用主题底色，此时按应用主题的
+    ///     明暗取黑/白——绝不能再让结果项沿用强调色当文字色，那正是浅色桌面上"看不清"的来源。
+    /// </remarks>
+    private void ApplyCardInk(AdaptiveTheme? adaptive)
+    {
+        var isDarkTheme = Application.Current?.ActualThemeVariant == ThemeVariant.Dark;
+        var ink = adaptive?.Foreground
+                  ?? AdaptiveBackdropResolver.FromAppTheme(isDarkTheme).Foreground;
+        ViewModel.ApplyNotificationInk(new SolidColorBrush(ink));
+    }
+
+    private void ClearNotificationTextBrushes()
+    {
+        StatusTextBlock.ClearValue(TextBlock.ForegroundProperty);
+        AutoCloseHintTextBlock.ClearValue(TextBlock.ForegroundProperty);
+        HistoryGroupHintTextBlock.ClearValue(TextBlock.ForegroundProperty);
+        HistoryGroupMissingHintTextBlock.ClearValue(TextBlock.ForegroundProperty);
     }
 
     private void RootBorder_OnPointerPressed(object? sender, PointerPressedEventArgs e)
@@ -359,7 +413,8 @@ public partial class QuickDrawPage : UserControl
 
             CountdownRing.SetPalette(
                 settings.CountdownColorMode == (int)NotificationCountdownColorMode.Gradient,
-                settings.ResolvedCountdownColors);
+                settings.ResolvedCountdownStart,
+                settings.ResolvedCountdownEnd);
             CountdownRing.Progress = 1;
             CountdownRing.IsVisible = true;
             return true;

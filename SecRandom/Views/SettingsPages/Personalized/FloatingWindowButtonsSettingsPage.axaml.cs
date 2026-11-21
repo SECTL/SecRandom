@@ -10,6 +10,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
+using Avalonia.VisualTree;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
@@ -27,8 +28,9 @@ using LSP = SecRandom.Langs.SettingsPages.Personalized.FloatingWindowButtons.Res
 namespace SecRandom.Views.SettingsPages.Personalized;
 
 /// <summary>
-///     管理悬浮窗上的自定义按钮：顶部工具栏 + 只读表格展示，
-///     新增/编辑在右侧抽屉里完成。页面不出现在侧栏（由浮窗管理页的设置卡跳转进来）。
+///     管理悬浮窗上的自定义按钮：顶部工具栏 + 表格展示，
+///     新增/编辑在右侧抽屉里完成，表格里的启用开关可以直接切换。
+///     页面不出现在侧栏（由浮窗管理页的设置卡跳转进来）。
 /// </summary>
 [PageInfo("settings.personalized.floatingWindowButtons", FluentIcons.AppsListDetailFilled, "settings.personalized",
     isHide: true)]
@@ -95,7 +97,8 @@ public partial class FloatingWindowButtonsSettingsPage : UserControl, INotifyPro
     private void AddRow(FloatingWindowButtonConfig config)
     {
         var preview = _iconService?.TryLoadBitmap(config.IconImage);
-        Rows.Add(new FloatingWindowButtonRow(config, preview));
+        // 启用开关直接写进配置对象，再走 Persist 写盘并通知浮窗刷新
+        Rows.Add(new FloatingWindowButtonRow(config, preview, Persist));
     }
 
     private void NotifyListState()
@@ -131,6 +134,10 @@ public partial class FloatingWindowButtonsSettingsPage : UserControl, INotifyPro
 
     private void RowsGrid_OnDoubleTapped(object? sender, TappedEventArgs e)
     {
+        // 启用开关是行内操作，双击开关不应该被当成"编辑这一行"的手势
+        if (e.Source is Control source && source.FindAncestorOfType<ToggleSwitch>(includeSelf: true) is not null)
+            return;
+
         if ((e.Source as Control)?.DataContext is FloatingWindowButtonRow row)
             OpenEditor(row);
     }
@@ -318,13 +325,17 @@ public partial class FloatingWindowButtonsSettingsPage : UserControl, INotifyPro
         _propertyChangedHandler?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }
 
-/// <summary>只读表格里的一行：把配置投影成表格列需要的展示值。</summary>
-public sealed class FloatingWindowButtonRow
+/// <summary>表格里的一行：把配置投影成表格列需要的展示值，启用开关直接写回配置。</summary>
+public sealed class FloatingWindowButtonRow : INotifyPropertyChanged
 {
-    public FloatingWindowButtonRow(FloatingWindowButtonConfig config, Bitmap? iconPreview)
+    private readonly Action? _enabledChanged;
+
+    public FloatingWindowButtonRow(FloatingWindowButtonConfig config, Bitmap? iconPreview,
+        Action? enabledChanged = null)
     {
         Config = config;
         IconPreview = iconPreview;
+        _enabledChanged = enabledChanged;
     }
 
     public FloatingWindowButtonConfig Config { get; }
@@ -333,7 +344,19 @@ public sealed class FloatingWindowButtonRow
 
     public string IconGlyph => Config.IconGlyph;
 
-    public bool Enabled => Config.Enabled;
+    public bool Enabled
+    {
+        get => Config.Enabled;
+        set
+        {
+            if (Config.Enabled == value)
+                return;
+
+            Config.Enabled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Enabled)));
+            _enabledChanged?.Invoke();
+        }
+    }
 
     public bool HasCustomImage => IconPreview is not null;
 
@@ -344,4 +367,6 @@ public sealed class FloatingWindowButtonRow
     public string ActionLabel => FloatingWindowButtonUi.ActionLabel(Config.ActionKind);
 
     public string TargetLabel => FloatingWindowButtonUi.TargetLabel(Config.ActionKind, Config.ActionTarget);
+
+    public event PropertyChangedEventHandler? PropertyChanged;
 }

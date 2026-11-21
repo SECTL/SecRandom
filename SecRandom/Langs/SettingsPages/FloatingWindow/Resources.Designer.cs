@@ -384,6 +384,24 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
         }
 
         /// <summary>
+        ///   Looks up a localized string similar to 长按闪抽快速选人.
+        /// </summary>
+        public static string S_Interaction_QuickDrawLongPress {
+            get {
+                return ResourceManager.GetString("S_Interaction_QuickDrawLongPress", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 按住闪抽按钮可先选人数再抽取，短按仍只抽 1 人.
+        /// </summary>
+        public static string S_Interaction_QuickDrawLongPress_D {
+            get {
+                return ResourceManager.GetString("S_Interaction_QuickDrawLongPress_D", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to 长按判定时间.
         /// </summary>
         public static string S_Interaction_LongPressDuration {
@@ -715,6 +733,7 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
                 return ResourceManager.GetString("M_Buttons_CustomOpenFailed", resourceCulture);
             }
         }
+
         /// <summary>
         ///   Looks up a localized string similar to 图片.
         /// </summary>
@@ -804,6 +823,5 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
                 return ResourceManager.GetString("S_Dock_Text_Limit", resourceCulture);
             }
         }
-
     }
 }

@@ -68,6 +68,13 @@ public partial class FloatingWindowSettingsConfig : ObservableObject
     [ObservableProperty] private bool _draggable = true;
     [ObservableProperty] private int _floatingWindowSize = 56;
     [ObservableProperty] private int _longPressDuration = 500;
+
+    /// <summary>
+    ///     闪抽按钮支持长按快选：按住时按钮四周走一圈蓝→绿进度环，按住满
+    ///     <see cref="LongPressDuration" /> 毫秒后浮窗收起成球、左侧滑出 1–5 人快选滑轨，
+    ///     松手即按选中的头像开抽。关掉后闪抽按钮回到"点一下抽 1 人"的老行为。
+    /// </summary>
+    [ObservableProperty] private bool _enableQuickDrawLongPress = true;
     [ObservableProperty] private bool _doNotStealFocus = true;
     [ObservableProperty] private bool _hideOnForeground = false;
     [ObservableProperty] private string _hideOnForegroundWindowTitles = string.Empty;

@@ -74,14 +74,14 @@
                           SelectionChanged="RowsGrid_OnSelectionChanged"
                           DoubleTapped="RowsGrid_OnDoubleTapped">
                     <DataGrid.Columns>
-                        <DataGridTemplateColumn Width="64" Header="{x:Static lsp:Resources.C_Enabled}">
+                        <DataGridTemplateColumn Width="96" Header="{x:Static lsp:Resources.C_Enabled}">
                             <DataGridTemplateColumn.CellTemplate>
                                 <DataTemplate x:DataType="personalized:FloatingWindowButtonRow">
-                                    <CheckBox IsChecked="{Binding Enabled}"
-                                              IsHitTestVisible="False"
-                                              Focusable="False"
-                                              HorizontalAlignment="Center"
-                                              VerticalAlignment="Center" />
+                                    <ToggleSwitch IsChecked="{Binding Enabled, Mode=TwoWay}"
+                                                  OnContent=""
+                                                  OffContent=""
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
                                 </DataTemplate>
                             </DataGridTemplateColumn.CellTemplate>
                         </DataGridTemplateColumn>

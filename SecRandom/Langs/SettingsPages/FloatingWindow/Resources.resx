@@ -111,6 +111,12 @@
   <data name="S_Interaction_HideOnForegroundProcessNames_D" xml:space="preserve">
     <value>使用英文分号 ; 分隔，命中进程名时隐藏悬浮窗，例如 WeChat.exe</value>
   </data>
+  <data name="S_Interaction_QuickDrawLongPress" xml:space="preserve">
+    <value>长按闪抽快速选人</value>
+  </data>
+  <data name="S_Interaction_QuickDrawLongPress_D" xml:space="preserve">
+    <value>按住闪抽按钮可先选人数再抽取，短按仍只抽 1 人</value>
+  </data>
   <data name="S_Interaction_LongPressDuration" xml:space="preserve">
     <value>长按判定时间</value>
   </data>
@@ -240,7 +246,7 @@
   <data name="O_StickDisplay_Arrow" xml:space="preserve">
     <value>箭头</value>
   </data>
-<data name="S_Dock_Text" xml:space="preserve">
+  <data name="S_Dock_Text" xml:space="preserve">
     <value>手柄文字</value>
   </data>
   <data name="S_Dock_Text_D" xml:space="preserve">

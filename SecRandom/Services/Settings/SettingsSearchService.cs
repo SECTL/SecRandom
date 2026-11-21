@@ -18,8 +18,7 @@ public class SettingsSearchService
             {
                 "S_Buttons_RollCall", "S_Buttons_QuickDraw", "S_Buttons_Lottery",
                 "S_Interaction_HideOnForeground",
-                "S_Interaction_HideOnForegroundProcessNames", "S_Interaction_HideOnForegroundWindowTitles",
-                "S_Interaction_LongPressDuration"
+                "S_Interaction_HideOnForegroundProcessNames", "S_Interaction_HideOnForegroundWindowTitles"
             },
             ["General.Security"] = new HashSet<string>
             {

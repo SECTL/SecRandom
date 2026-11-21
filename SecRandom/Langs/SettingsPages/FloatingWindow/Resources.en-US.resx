@@ -30,6 +30,8 @@
   <data name="S_Interaction_DoNotStealFocus"><value>Focus-free mode</value></data>
   <data name="S_Interaction_DoNotStealFocus_D"><value>Try not to take focus from the current window when the floating window is clicked</value></data>
   <data name="S_Interaction_HideOnForegroundProcessNames_D"><value>Separate names with semicolons ; and hide the floating window when a process matches, such as WeChat.exe</value></data>
+  <data name="S_Interaction_QuickDrawLongPress"><value>Long-press quick draw picker</value></data>
+  <data name="S_Interaction_QuickDrawLongPress_D"><value>Hold the quick draw button to choose how many students to draw; a short click still draws 1</value></data>
   <data name="S_Interaction_LongPressDuration"><value>Long-press duration</value></data>
   <data name="S_Interaction_HideOnForegroundProcessNames"><value>Foreground process names</value></data>
   <data name="S_Interaction_HideOnForeground_D"><value>Automatically hide the floating window when the foreground window title or process matches</value></data>
