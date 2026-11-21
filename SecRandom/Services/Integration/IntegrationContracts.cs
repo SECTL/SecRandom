@@ -64,5 +64,13 @@ public sealed record IntegrationChannel(
     int ProcessId,
     string InstanceId,
     DateTimeOffset ApprovedAt,
-    DateTimeOffset LastSeen);
+    DateTimeOffset LastSeen)
+{
+    public string? CustomName { get; init; }
+    public bool Enabled { get; init; } = true;
+    public bool LinkageEnabled { get; init; } = true;
+
+    /// <summary>用户可改的显示名只影响设置页，不参与身份验证或 IPC 协议。</summary>
+    public string EffectiveName => string.IsNullOrWhiteSpace(CustomName) ? DisplayName : CustomName;
+}
 

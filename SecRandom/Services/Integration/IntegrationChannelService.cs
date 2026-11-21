@@ -29,25 +29,28 @@ public sealed class IntegrationChannelService(
     private const string AppId = "secrandom.app";
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private readonly object _gate = new();
+    private readonly object _saveGate = new();
     private readonly string _directory = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "SecRandom", "integrations");
     private readonly string _channelsPath = Utils.GetFilePath("config", "integration-channels.json");
     private readonly string _instanceId = Guid.NewGuid().ToString("N");
     private readonly Dictionary<string, IntegrationChannel> _channels = new(StringComparer.Ordinal);
     private readonly HashSet<string> _seenInstances = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _offlineChannels = new(StringComparer.Ordinal);
     private readonly Dictionary<string, LinkageLeaseRequest> _leases = new(StringComparer.Ordinal);
     private readonly CancellationTokenSource _cts = new();
     private IDisposable? _drawSubscription;
     private Task? _serverTask;
     private Task? _discoveryTask;
     private string? _hostManifestPath;
+    private int _discoveryRunning;
 
     public string HostPipeName { get; } = "SecRandom_Integration_Host_" + Guid.NewGuid().ToString("N");
     public event Action? Changed;
     public event Action<IntegrationChannel>? ChannelDiscovered;
     public IReadOnlyList<IntegrationChannel> Channels
     {
-        get { lock (_gate) return _channels.Values.OrderBy(x => x.DisplayName, StringComparer.CurrentCultureIgnoreCase).ToArray(); }
+        get { lock (_gate) return _channels.Values.OrderBy(x => x.EffectiveName, StringComparer.CurrentCultureIgnoreCase).ToArray(); }
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -89,45 +92,68 @@ public sealed class IntegrationChannelService(
 
     public void DiscoverNow()
     {
-        var changed = false;
-        foreach (var manifest in ReadManifests())
+        if (Interlocked.Exchange(ref _discoveryRunning, 1) != 0)
+            return;
+
+        try
         {
-            if (!VerifyOfficialManifest(manifest))
-                continue;
+            var changed = false;
+            var now = DateTimeOffset.UtcNow;
+            foreach (var manifest in ReadManifests())
+            {
+                if (!VerifyOfficialManifest(manifest))
+                    continue;
+
+                lock (_gate)
+                {
+                    if (_channels.TryGetValue(manifest.AppId, out var approved))
+                    {
+                        changed |= approved.ProcessId != manifest.ProcessId
+                                   || !string.Equals(approved.InstanceId, manifest.InstanceId, StringComparison.Ordinal)
+                                   || !string.Equals(approved.Endpoint, manifest.Endpoint, StringComparison.Ordinal)
+                                   || !string.Equals(approved.DisplayName, manifest.DisplayName, StringComparison.Ordinal)
+                                   || !string.Equals(approved.SdkVersion, manifest.SdkVersion, StringComparison.Ordinal);
+                        changed |= _offlineChannels.Remove(manifest.AppId);
+                        _channels[manifest.AppId] = approved with
+                        {
+                            DisplayName = manifest.DisplayName,
+                            Endpoint = manifest.Endpoint,
+                            ProcessId = manifest.ProcessId,
+                            InstanceId = manifest.InstanceId,
+                            SdkVersion = manifest.SdkVersion,
+                            LastSeen = now
+                        };
+                        continue;
+                    }
+
+                    if (!_seenInstances.Add(manifest.AppId + "\n" + manifest.InstanceId))
+                        continue;
+                }
+
+                var channel = new IntegrationChannel(manifest.AppId, manifest.DisplayName, manifest.SdkVersion,
+                    manifest.Endpoint, manifest.ProcessId, manifest.InstanceId, now, now);
+                ChannelDiscovered?.Invoke(channel);
+                QueueApprovalPrompt(channel);
+            }
 
             lock (_gate)
             {
-                if (_channels.TryGetValue(manifest.AppId, out var approved))
+                foreach (var channel in _channels.Values)
                 {
-                    changed |= approved.ProcessId != manifest.ProcessId
-                               || !string.Equals(approved.InstanceId, manifest.InstanceId, StringComparison.Ordinal)
-                               || !string.Equals(approved.Endpoint, manifest.Endpoint, StringComparison.Ordinal)
-                               || !string.Equals(approved.DisplayName, manifest.DisplayName, StringComparison.Ordinal)
-                               || !string.Equals(approved.SdkVersion, manifest.SdkVersion, StringComparison.Ordinal);
-                    _channels[manifest.AppId] = approved with
-                    {
-                        Endpoint = manifest.Endpoint,
-                        ProcessId = manifest.ProcessId,
-                        InstanceId = manifest.InstanceId,
-                        SdkVersion = manifest.SdkVersion,
-                        LastSeen = DateTimeOffset.UtcNow
-                    };
-                    continue;
+                    if (now - channel.LastSeen > TimeSpan.FromSeconds(8))
+                        changed |= _offlineChannels.Add(channel.AppId);
                 }
-
-                if (!_seenInstances.Add(manifest.AppId + "\n" + manifest.InstanceId))
-                    continue;
             }
 
-            var channel = new IntegrationChannel(manifest.AppId, manifest.DisplayName, manifest.SdkVersion,
-                manifest.Endpoint, manifest.ProcessId, manifest.InstanceId, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
-            ChannelDiscovered?.Invoke(channel);
-            QueueApprovalPrompt(channel);
+            if (changed)
+            {
+                SaveChannels();
+                Changed?.Invoke();
+            }
         }
-        if (changed)
+        finally
         {
-            SaveChannels();
-            Changed?.Invoke();
+            Volatile.Write(ref _discoveryRunning, 0);
         }
     }
 
@@ -142,14 +168,93 @@ public sealed class IntegrationChannelService(
     public bool Remove(string appId)
     {
         bool removed;
-        lock (_gate) removed = _channels.Remove(appId);
+        lock (_gate)
+        {
+            removed = _channels.Remove(appId);
+            _offlineChannels.Remove(appId);
+        }
         if (removed)
         {
+            ReleaseLeasesFor(appId);
             SaveChannels();
             Changed?.Invoke();
         }
         return removed;
     }
+
+    public bool SetEnabled(string appId, bool enabled)
+    {
+        var changed = false;
+        lock (_gate)
+        {
+            if (!_channels.TryGetValue(appId, out var channel))
+                return false;
+            if (channel.Enabled != enabled)
+            {
+                _channels[appId] = channel with { Enabled = enabled };
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            SaveChannels();
+            Changed?.Invoke();
+        }
+        return true;
+    }
+
+    public bool SetLinkageEnabled(string appId, bool enabled)
+    {
+        var changed = false;
+        lock (_gate)
+        {
+            if (!_channels.TryGetValue(appId, out var channel))
+                return false;
+            if (channel.LinkageEnabled != enabled)
+            {
+                _channels[appId] = channel with { LinkageEnabled = enabled };
+                changed = true;
+            }
+        }
+
+        if (!enabled)
+            ReleaseLeasesFor(appId);
+        if (changed)
+        {
+            SaveChannels();
+            Changed?.Invoke();
+        }
+        return true;
+    }
+
+    public bool SetCustomName(string appId, string? customName)
+    {
+        var changed = false;
+        lock (_gate)
+        {
+            if (!_channels.TryGetValue(appId, out var channel))
+                return false;
+
+            var normalized = NormalizeCustomName(customName);
+            if (!string.Equals(channel.CustomName, normalized, StringComparison.Ordinal))
+            {
+                _channels[appId] = channel with { CustomName = normalized };
+                changed = true;
+            }
+        }
+
+        if (changed)
+        {
+            SaveChannels();
+            Changed?.Invoke();
+        }
+        return true;
+    }
+
+    public bool IsOnline(IntegrationChannel channel) =>
+        IsProcessAlive(channel.ProcessId)
+        && DateTimeOffset.UtcNow - channel.LastSeen <= TimeSpan.FromSeconds(8);
 
     private async Task DiscoveryLoopAsync(CancellationToken cancellationToken)
     {
@@ -222,15 +327,31 @@ public sealed class IntegrationChannelService(
 
             if (request.Method == "linkage.acquire")
             {
-                if (!IsApprovedRequester(linkage) || !IsPipeClientProcess(server, linkage.ProcessId))
+                if (!IsPipeClientProcess(server, linkage.ProcessId))
                 {
                     await WriteResponseAsync(writer, request.Id, null,
                         new IntegrationError("authorization_denied", "The SDK channel is not approved.")).ConfigureAwait(false);
                     return;
                 }
 
-                lock (_gate) _leases[linkage.LeaseId] = linkage;
-                App.AcquireIntegrationLinkage(linkage.LeaseId);
+                bool approved;
+                lock (_gate)
+                {
+                    approved = IsApprovedRequester(linkage);
+                    if (approved)
+                    {
+                        _leases[linkage.LeaseId] = linkage;
+                        // Queue acquisition under the same gate as removal/revocation so their
+                        // UI dispatcher callbacks preserve the lease's state transition order.
+                        App.AcquireIntegrationLinkage(linkage.LeaseId);
+                    }
+                }
+                if (!approved)
+                {
+                    await WriteResponseAsync(writer, request.Id, null,
+                        new IntegrationError("authorization_denied", "The SDK channel is not approved.")).ConfigureAwait(false);
+                    return;
+                }
             }
             else
             {
@@ -261,7 +382,7 @@ public sealed class IntegrationChannelService(
             return;
 
         IntegrationChannel[] channels;
-        lock (_gate) channels = _channels.Values.ToArray();
+        lock (_gate) channels = _channels.Values.Where(x => x.Enabled).ToArray();
         var members = completed.Channel == DrawPresentationChannel.Lottery
             ? completed.Prizes.Select(prize => new { id = prize.RecordId.ToString("N"), name = prize.Name,
                 gender = (string?)null, group = (string?)null, enabled = prize.Exists, weight = prize.Weight }).ToArray()
@@ -420,16 +541,19 @@ public sealed class IntegrationChannelService(
 
     private void SaveChannels()
     {
-        try
+        lock (_saveGate)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(_channelsPath)!);
-            IntegrationChannel[] channels;
-            lock (_gate) channels = _channels.Values.ToArray();
-            var temporary = _channelsPath + ".tmp";
-            File.WriteAllText(temporary, JsonSerializer.Serialize(channels, IntegrationJson.Options));
-            File.Move(temporary, _channelsPath, true);
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(_channelsPath)!);
+                IntegrationChannel[] channels;
+                lock (_gate) channels = _channels.Values.ToArray();
+                var temporary = _channelsPath + ".tmp";
+                File.WriteAllText(temporary, JsonSerializer.Serialize(channels, IntegrationJson.Options));
+                File.Move(temporary, _channelsPath, true);
+            }
+            catch (IOException exception) { logger.LogWarning(exception, "Unable to save integration channels."); }
         }
-        catch (IOException exception) { logger.LogWarning(exception, "Unable to save integration channels."); }
     }
 
     private void WriteHostManifest()
@@ -455,6 +579,7 @@ public sealed class IntegrationChannelService(
             return _channels.TryGetValue(request.AppId, out var channel)
                    && channel.ProcessId == request.ProcessId
                    && string.Equals(channel.InstanceId, request.InstanceId, StringComparison.Ordinal)
+                   && channel.LinkageEnabled
                    && DateTimeOffset.UtcNow - channel.LastSeen < TimeSpan.FromSeconds(8)
                    && IsProcessAlive(request.ProcessId);
     }
@@ -466,6 +591,30 @@ public sealed class IntegrationChannelService(
                    && lease.ProcessId == request.ProcessId
                    && string.Equals(lease.AppId, request.AppId, StringComparison.Ordinal)
                    && string.Equals(lease.InstanceId, request.InstanceId, StringComparison.Ordinal);
+    }
+
+    private void ReleaseLeasesFor(string appId)
+    {
+        string[] leases;
+        lock (_gate)
+        {
+            leases = _leases.Values.Where(x => string.Equals(x.AppId, appId, StringComparison.Ordinal))
+                .Select(x => x.LeaseId)
+                .ToArray();
+            foreach (var lease in leases)
+                _leases.Remove(lease);
+        }
+
+        foreach (var lease in leases)
+            App.ReleaseIntegrationLinkage(lease);
+    }
+
+    private static string? NormalizeCustomName(string? customName)
+    {
+        var value = customName?.Trim();
+        if (string.IsNullOrEmpty(value))
+            return null;
+        return value.Length <= 64 ? value : value[..64];
     }
 
     private static bool IsPipeClientProcess(NamedPipeServerStream server, int expectedProcessId)

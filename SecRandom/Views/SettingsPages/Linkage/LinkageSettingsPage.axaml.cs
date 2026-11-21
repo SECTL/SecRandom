@@ -10,6 +10,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
+using CommunityToolkit.Mvvm.ComponentModel;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
@@ -80,6 +81,7 @@ public partial class LinkageSettingsPage : UserControl
     public string IntegrationChannelsTitle => GetLinkageText("S_IntegrationChannels", "SDK notification channels");
     public string IntegrationChannelsDescription => GetLinkageText("S_IntegrationChannels_D", "Approved SDK applications can receive draw results");
     public string IntegrationChannelsEmptyText => GetLinkageText("M_IntegrationNoChannels", "No saved SDK notification channels");
+    public string IntegrationChannelsScanLabel => GetLinkageText("C_IntegrationScan", "Scan now");
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
@@ -123,10 +125,58 @@ public partial class LinkageSettingsPage : UserControl
     {
         IntegrationChannels.Clear();
         foreach (var channel in IntegrationService?.Channels ?? [])
-            IntegrationChannels.Add(new IntegrationChannelRow(channel,
-                GetLinkageText("C_IntegrationRemove", "Remove")));
+        {
+            var online = IntegrationService?.IsOnline(channel) == true;
+            IntegrationChannels.Add(new IntegrationChannelRow(
+                channel,
+                IntegrationService!,
+                GetLinkageText("C_IntegrationRemove", "Remove"),
+                GetLinkageText("C_IntegrationRename", "Rename"),
+                online
+                    ? GetLinkageText("M_IntegrationOnline", "Online")
+                    : GetLinkageText("M_IntegrationOffline", "Offline"),
+                GetLinkageText("M_IntegrationDelivery", "Result delivery"),
+                GetLinkageText("M_IntegrationLinkage", "Floating-window linkage"),
+                GetLinkageText("M_IntegrationEnabled", "Result delivery enabled"),
+                GetLinkageText("M_IntegrationDisabled", "Result delivery disabled"),
+                GetLinkageText("M_IntegrationLinkageEnabled", "Floating-window linkage enabled"),
+                GetLinkageText("M_IntegrationLinkageDisabled", "Floating-window linkage disabled")));
+        }
         HasIntegrationChannels = IntegrationChannels.Count > 0;
         NoIntegrationChannels = !HasIntegrationChannels;
+    }
+
+    private async void DiscoverIntegrationChannels_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (IntegrationService is null)
+            return;
+
+        await Task.Run(IntegrationService.DiscoverNow);
+        RefreshIntegrationChannels();
+        this.ShowSuccessToast(GetLinkageText("M_IntegrationScanned", "Notification channels scanned"));
+    }
+
+    private async void RenameIntegrationChannel_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (IntegrationService is null || (sender as Control)?.DataContext is not IntegrationChannelRow row)
+            return;
+
+        var editor = new TextBox
+        {
+            Text = row.Channel.CustomName ?? string.Empty,
+            PlaceholderText = GetLinkageText("M_IntegrationRenamePlaceholder", "Leave empty to use the official name"),
+            MaxLength = 64
+        };
+        var result = await new FAContentDialog
+        {
+            Title = GetLinkageText("M_IntegrationRenameTitle", "Rename notification channel"),
+            Content = editor,
+            PrimaryButtonText = LR.C_Confirm,
+            CloseButtonText = LR.C_Cancel,
+            DefaultButton = FAContentDialogButton.Primary
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+        if (result == FAContentDialogResult.Primary && IntegrationService.SetCustomName(row.Channel.AppId, editor.Text))
+            this.ShowSuccessToast(GetLinkageText("M_IntegrationRenamed", "Notification channel renamed"));
     }
 
     private async void RemoveIntegrationChannel_OnClick(object? sender, RoutedEventArgs e)
@@ -136,7 +186,7 @@ public partial class LinkageSettingsPage : UserControl
 
         var content = string.Format(CultureInfo.CurrentCulture,
             GetLinkageText("M_IntegrationRemoveContent", "SecRandom will stop sending results to {0}."),
-            row.Channel.DisplayName);
+            row.Channel.EffectiveName);
         var result = await new FAContentDialog
         {
             Title = GetLinkageText("M_IntegrationRemoveTitle", "Remove notification channel"),
@@ -275,4 +325,77 @@ public partial class LinkageSettingsPage : UserControl
     }
 }
 
-public sealed record IntegrationChannelRow(IntegrationChannel Channel, string RemoveLabel);
+public sealed class IntegrationChannelRow : ObservableObject
+{
+    private readonly IntegrationChannelService _service;
+    private IntegrationChannel _channel;
+
+    public IntegrationChannelRow(
+        IntegrationChannel channel,
+        IntegrationChannelService service,
+        string removeLabel,
+        string renameLabel,
+        string statusLabel,
+        string deliveryLabel,
+        string linkageLabel,
+        string enabledLabel,
+        string disabledLabel,
+        string linkageEnabledLabel,
+        string linkageDisabledLabel)
+    {
+        _channel = channel;
+        _service = service;
+        RemoveLabel = removeLabel;
+        RenameLabel = renameLabel;
+        StatusLabel = statusLabel;
+        DeliveryLabel = deliveryLabel;
+        LinkageLabel = linkageLabel;
+        EnabledLabel = enabledLabel;
+        DisabledLabel = disabledLabel;
+        LinkageEnabledLabel = linkageEnabledLabel;
+        LinkageDisabledLabel = linkageDisabledLabel;
+    }
+
+    public IntegrationChannel Channel => _channel;
+    public string RemoveLabel { get; }
+    public string RenameLabel { get; }
+    public string StatusLabel { get; }
+    public string DeliveryLabel { get; }
+    public string LinkageLabel { get; }
+    public string EnabledLabel { get; }
+    public string DisabledLabel { get; }
+    public string LinkageEnabledLabel { get; }
+    public string LinkageDisabledLabel { get; }
+    public string Name => Channel.EffectiveName;
+    public string Details => $"{Channel.SdkVersion} | {StatusLabel}";
+    public bool IsEnabled
+    {
+        get => Channel.Enabled;
+        set => UpdateChannel(Channel with { Enabled = value }, () => _service.SetEnabled(Channel.AppId, value));
+    }
+    public bool IsLinkageEnabled
+    {
+        get => Channel.LinkageEnabled;
+        set => UpdateChannel(Channel with { LinkageEnabled = value }, () => _service.SetLinkageEnabled(Channel.AppId, value));
+    }
+    public string EnabledTooltip => Channel.Enabled ? EnabledLabel : DisabledLabel;
+    public string LinkageTooltip => Channel.LinkageEnabled ? LinkageEnabledLabel : LinkageDisabledLabel;
+
+    private void UpdateChannel(IntegrationChannel updated, Func<bool> update)
+    {
+        if (updated == Channel)
+            return;
+
+        if (!update())
+            return;
+
+        _channel = updated;
+        OnPropertyChanged(nameof(Channel));
+        OnPropertyChanged(nameof(IsEnabled));
+        OnPropertyChanged(nameof(IsLinkageEnabled));
+        OnPropertyChanged(nameof(Name));
+        OnPropertyChanged(nameof(Details));
+        OnPropertyChanged(nameof(EnabledTooltip));
+        OnPropertyChanged(nameof(LinkageTooltip));
+    }
+}
