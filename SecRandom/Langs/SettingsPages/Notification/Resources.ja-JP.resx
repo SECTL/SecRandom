@@ -88,4 +88,18 @@
   </data>
   <data name="S_FloatingWindow_AdaptiveForeground"><value>前景色の自動調整</value></data>
   <data name="S_FloatingWindow_AdaptiveForeground_D"><value>ウィンドウ背後のデスクトップの明るさから白または黒の文字と枠線を選び、どの壁紙でも結果カードを読みやすくします。低スペックモードでは強制的に無効になります</value></data>
+  <data name="S_FloatingWindow_CountdownStyle"><value>カウントダウン表示</value></data>
+  <data name="S_FloatingWindow_CountdownStyle_D"><value>内蔵通知ウィンドウが閉じる前に残り時間をどう示すかを選びます</value></data>
+  <data name="O_CountdownStyle_Text"><value>テキスト表示</value></data>
+  <data name="O_CountdownStyle_Edge"><value>四辺のアウトライン</value></data>
+  <data name="S_FloatingWindow_CountdownColorMode"><value>カラーモード</value></data>
+  <data name="S_FloatingWindow_CountdownColorMode_D"><value>アウトラインをグラデーションにするか単色にするかを選びます</value></data>
+  <data name="S_FloatingWindow_CountdownGradient"><value>グラデーションの色</value></data>
+  <data name="S_FloatingWindow_CountdownGradient_D"><value>始点と終点の2色のみを使い、残り時間に応じて始点の色から終点の色へ徐々に変化します</value></data>
+  <data name="S_FloatingWindow_CountdownSolidColor"><value>単色</value></data>
+  <data name="S_FloatingWindow_CountdownSolidColor_D"><value>アウトライン全体がこの一色になります</value></data>
+  <data name="O_CountdownColorMode_Gradient"><value>グラデーション</value></data>
+  <data name="O_CountdownColorMode_Solid"><value>単色</value></data>
+  <data name="C_CountdownColors_Gradient"><value>始点と終点の色</value></data>
+  <data name="C_CountdownColors_Preview"><value>プレビュー</value></data>
 </root>

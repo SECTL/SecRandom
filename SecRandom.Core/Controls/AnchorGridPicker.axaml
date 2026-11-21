@@ -1,0 +1,64 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core">
+    <Design.PreviewWith>
+        <Border Padding="24">
+            <sr:AnchorGridPicker Labels="左上,上,右上,左,中,右,左下,下,右下" SelectedValue="8" />
+        </Border>
+    </Design.PreviewWith>
+
+    <!-- 每一格是真正的按钮：吃掉 Fluent 按钮的底色、描边和内边距，只留点击面积与焦点环。 -->
+    <Style Selector="sr|AnchorGridPicker Button.anchor-cell">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border x:Name="CellRing"
+                        Background="Transparent"
+                        BorderBrush="Transparent"
+                        BorderThickness="2"
+                        CornerRadius="10">
+                    <ContentPresenter x:Name="PART_ContentPresenter"
+                                      HorizontalContentAlignment="Center"
+                                      VerticalContentAlignment="Center"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}" />
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="FocusAdorner" Value="{x:Null}" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.12" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <!-- 键盘焦点用主题色描一圈，鼠标点过的格子不留可见焦点环。 -->
+    <Style Selector="sr|AnchorGridPicker Button.anchor-cell:focus-visible">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+    </Style>
+
+    <Style Selector="sr|AnchorGridPicker Border.anchor-dot">
+        <Setter Property="Background" Value="{DynamicResource TextFillColorTertiaryBrush}" />
+        <Setter Property="Opacity" Value="0.45" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <DoubleTransition Property="Opacity" Duration="0:0:0.12" />
+            </Transitions>
+        </Setter>
+    </Style>
+
+    <Style Selector="sr|AnchorGridPicker Button.anchor-cell:pointerover Border.anchor-dot">
+        <Setter Property="Opacity" Value="0.7" />
+    </Style>
+
+    <Style Selector="sr|AnchorGridPicker Button.anchor-cell.selected Border.anchor-dot">
+        <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+        <Setter Property="Opacity" Value="1" />
+    </Style>
+
+    <Style Selector="sr|AnchorGridPicker Button.anchor-cell:disabled">
+        <Setter Property="Opacity" Value="0.4" />
+    </Style>
+</Styles>

@@ -64,6 +64,19 @@ public partial class FullscreenNotificationWindow : Window
     private const int MaxAvatars = 8;
 
     /// <summary>
+    ///     结果文字的固定列宽上限，同时也是内容层（Margin 56,40,56,36）内可用的最大宽度。
+    ///     焦点：打字机每吐一个字都让文本框宽度跟着变，居中容器就会每帧重新测量并把已有文字推着走，
+    ///     所以这里给文字一个**从第一帧到最后一帧都不变**的宽度。
+    /// </summary>
+    private const double ResultTextColumnMaxWidth = 1600;
+
+    /// <summary>内容层左右各 56 的内边距，共 112：结果列宽必须扣掉它，否则文字会压到边缘。</summary>
+    private const double ResultTextColumnHorizontalMargin = 112;
+
+    /// <summary>结果列宽的下限：窗口再窄也不把每一行挤成两三个字。</summary>
+    private const double ResultTextColumnMinWidth = 240;
+
+    /// <summary>
     ///     自定义图片背景上固定盖一层压暗，保证文字可读；其余背景模式不压暗。
     ///     遮罩浓度刻意不做成设置项——主题/纯色/渐变本来就是用户选的配色，再压一层只会让它们变脏。
     /// </summary>
@@ -314,7 +327,8 @@ public partial class FullscreenNotificationWindow : Window
                         settings.EffectiveTypewriterCharactersPerSecond,
                         cue,
                         cts.Token,
-                        BuildAvatarControls(snapshot));
+                        BuildAvatarControls(snapshot),
+                        ResolveResultColumnWidth());
                     break;
 
                 case FullscreenAnimationStyle.Direct:
@@ -1117,7 +1131,8 @@ public partial class FullscreenNotificationWindow : Window
             _bodyFontSize,
             _bodyColor,
             _accentColor,
-            snapshot is null ? null : BuildAvatarControls(snapshot));
+            snapshot is null ? null : BuildAvatarControls(snapshot),
+            ResolveResultColumnWidth());
     }
 
     /// <summary>
@@ -1250,6 +1265,23 @@ public partial class FullscreenNotificationWindow : Window
         if (!double.IsFinite(height) || height <= 1)
             height = double.IsFinite(Height) && Height > 1 ? Height : 1080;
         return (width, height);
+    }
+
+    /// <summary>
+    ///     结果文字的固定列宽：舞台宽度扣掉内容层左右内边距，再夹到 [240, 1600]。
+    /// </summary>
+    /// <remarks>
+    ///     打字机与直接显示共用同一个宽度，换行结果才会和动画结束时完全一致；
+    ///     同时它让文本框尺寸在整段动画里恒定，父级不再每帧测量/居中（卡顿的主因）。
+    /// </remarks>
+    private double ResolveResultColumnWidth()
+    {
+        var (width, _) = GetStageSize();
+        var available = width - ResultTextColumnHorizontalMargin;
+        if (!double.IsFinite(available) || available <= 0)
+            return ResultTextColumnMaxWidth;
+
+        return Math.Clamp(available, ResultTextColumnMinWidth, ResultTextColumnMaxWidth);
     }
 
     private static bool IsLowSpecMode()

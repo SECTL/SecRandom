@@ -489,4 +489,46 @@
   <data name="S_FloatingWindow_AdaptiveForeground_D" xml:space="preserve">
     <value>按浮窗背后的桌面亮度自动选用白色或黑色文字与描边，让结果卡片在任何壁纸上都清晰可读；低配模式下此项会被强制关闭</value>
   </data>
+  <data name="S_FloatingWindow_CountdownStyle" xml:space="preserve">
+    <value>倒计时样式</value>
+  </data>
+  <data name="S_FloatingWindow_CountdownStyle_D" xml:space="preserve">
+    <value>选择内置通知浮窗关闭前如何提示剩余时间</value>
+  </data>
+  <data name="O_CountdownStyle_Text" xml:space="preserve">
+    <value>文字提示</value>
+  </data>
+  <data name="O_CountdownStyle_Edge" xml:space="preserve">
+    <value>四周描边</value>
+  </data>
+  <data name="S_FloatingWindow_CountdownColorMode" xml:space="preserve">
+    <value>颜色模式</value>
+  </data>
+  <data name="S_FloatingWindow_CountdownColorMode_D" xml:space="preserve">
+    <value>选择四周描边用渐变还是统一纯色</value>
+  </data>
+  <data name="S_FloatingWindow_CountdownGradient" xml:space="preserve">
+    <value>渐变颜色</value>
+  </data>
+  <data name="S_FloatingWindow_CountdownGradient_D" xml:space="preserve">
+    <value>只能设置起始与终止两种颜色，剩余时间从起始色逐渐过渡到终止色</value>
+  </data>
+  <data name="S_FloatingWindow_CountdownSolidColor" xml:space="preserve">
+    <value>纯色</value>
+  </data>
+  <data name="S_FloatingWindow_CountdownSolidColor_D" xml:space="preserve">
+    <value>四周描边统一使用这一种颜色</value>
+  </data>
+  <data name="O_CountdownColorMode_Gradient" xml:space="preserve">
+    <value>渐变</value>
+  </data>
+  <data name="O_CountdownColorMode_Solid" xml:space="preserve">
+    <value>纯色</value>
+  </data>
+  <data name="C_CountdownColors_Gradient" xml:space="preserve">
+    <value>起始与终止颜色</value>
+  </data>
+  <data name="C_CountdownColors_Preview" xml:space="preserve">
+    <value>预览</value>
+  </data>
 </root>

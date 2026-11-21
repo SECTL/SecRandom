@@ -1435,5 +1435,131 @@ namespace SecRandom.Langs.SettingsPages.Notification {
             }
         }
         
+        /// <summary>
+        ///   Looks up a localized string similar to 倒计时样式.
+        /// </summary>
+        public static string S_FloatingWindow_CountdownStyle {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_CountdownStyle", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 选择内置通知浮窗关闭前如何提示剩余时间.
+        /// </summary>
+        public static string S_FloatingWindow_CountdownStyle_D {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_CountdownStyle_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 文字提示.
+        /// </summary>
+        public static string O_CountdownStyle_Text {
+            get {
+                return ResourceManager.GetString("O_CountdownStyle_Text", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 四周描边.
+        /// </summary>
+        public static string O_CountdownStyle_Edge {
+            get {
+                return ResourceManager.GetString("O_CountdownStyle_Edge", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 颜色模式.
+        /// </summary>
+        public static string S_FloatingWindow_CountdownColorMode {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_CountdownColorMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 选择四周描边用渐变还是统一纯色.
+        /// </summary>
+        public static string S_FloatingWindow_CountdownColorMode_D {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_CountdownColorMode_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 渐变颜色.
+        /// </summary>
+        public static string S_FloatingWindow_CountdownGradient {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_CountdownGradient", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 色标按顺序从右上角过渡到左下角，展开后可增删颜色.
+        /// </summary>
+        public static string S_FloatingWindow_CountdownGradient_D {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_CountdownGradient_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 纯色.
+        /// </summary>
+        public static string S_FloatingWindow_CountdownSolidColor {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_CountdownSolidColor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 四周描边统一使用这一种颜色.
+        /// </summary>
+        public static string S_FloatingWindow_CountdownSolidColor_D {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_CountdownSolidColor_D", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 渐变.
+        /// </summary>
+        public static string O_CountdownColorMode_Gradient {
+            get {
+                return ResourceManager.GetString("O_CountdownColorMode_Gradient", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 纯色.
+        /// </summary>
+        public static string O_CountdownColorMode_Solid {
+            get {
+                return ResourceManager.GetString("O_CountdownColorMode_Solid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 起始与终止颜色.
+        /// </summary>
+        public static string C_CountdownColors_Gradient {
+            get {
+                return ResourceManager.GetString("C_CountdownColors_Gradient", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to 预览.
+        /// </summary>
+        public static string C_CountdownColors_Preview {
+            get {
+                return ResourceManager.GetString("C_CountdownColors_Preview", resourceCulture);
+            }
+        }
+        
     }
 }

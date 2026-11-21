@@ -174,7 +174,7 @@ public partial class NotificationChannelSettings : ObservableObject, IJsonOnDese
     private bool _hasExplicitEnabled;
     [ObservableProperty] private bool _animation = true;
     private string _enabledMonitor = "";
-    [ObservableProperty] private int _windowPosition = 0;
+    private int _windowPosition = (int)NotificationWindowPosition.Center;
     [ObservableProperty] private int _horizontalOffset = 0;
     [ObservableProperty] private int _verticalOffset = 0;
     [ObservableProperty] private int _transparency = 80;
@@ -201,7 +201,9 @@ public partial class NotificationChannelSettings : ObservableObject, IJsonOnDese
     private int _countdownStyle = (int)NotificationCountdownStyle.Edge;
     private int _countdownColorMode = (int)NotificationCountdownColorMode.Gradient;
     private Color _countdownSolidColor = NotificationCountdownPalette.DefaultStart;
-    private List<Color> _countdownGradientColors = NotificationCountdownPalette.CreateDefaultColors();
+    private Color _countdownGradientStart = NotificationCountdownPalette.DefaultStart;
+    private Color _countdownGradientEnd = NotificationCountdownPalette.DefaultEnd;
+    private List<Color>? _legacyCountdownGradientColors;
 
     public bool UseBuiltInOnServiceFailure
     {
@@ -239,6 +241,23 @@ public partial class NotificationChannelSettings : ObservableObject, IJsonOnDese
             || string.Equals(value, "OFF", StringComparison.OrdinalIgnoreCase)
                 ? ""
                 : value);
+    }
+
+    /// <summary>
+    ///     内置通知浮窗的九宫格位置，取值见 <see cref="NotificationWindowPosition" />。
+    /// </summary>
+    /// <remarks>
+    ///     越界值（手改配置、旧实验值）收敛成"中心"，与旧配置缺这个键时的落位一致；
+    ///     0–4 的含义保持不变，四角是追加值。
+    /// </remarks>
+    public int WindowPosition
+    {
+        get => _windowPosition;
+        set => SetProperty(
+            ref _windowPosition,
+            NotificationWindowAnchorLayout.IsDefined(value)
+                ? value
+                : (int)NotificationWindowPosition.Center);
     }
 
     public int NotificationServiceType
@@ -305,21 +324,48 @@ public partial class NotificationChannelSettings : ObservableObject, IJsonOnDese
         set => SetProperty(ref _countdownSolidColor, NotificationCountdownPalette.ToOpaque(value));
     }
 
-    /// <summary>渐变模式的色标，顺序即「右上角 → 左下角」的颜色顺序。</summary>
-    public List<Color> CountdownGradientColors
+    /// <summary>渐变模式的起始色（窗口左端）。</summary>
+    public Color CountdownGradientStart
     {
-        get => _countdownGradientColors;
-        set => SetProperty(ref _countdownGradientColors, NotificationCountdownPalette.NormalizeColors(value));
+        get => _countdownGradientStart;
+        set => SetProperty(ref _countdownGradientStart, NotificationCountdownPalette.ToOpaque(value));
+    }
+
+    /// <summary>渐变模式的终止色（窗口右端）。</summary>
+    public Color CountdownGradientEnd
+    {
+        get => _countdownGradientEnd;
+        set => SetProperty(ref _countdownGradientEnd, NotificationCountdownPalette.ToOpaque(value));
+    }
+
+    /// <summary>
+    ///     旧版的任意色标列表（2–6 个）。倒计时现在只有起始色与终止色，这个属性只负责把旧配置的
+    ///     首尾两色迁移过来，读取恒为 <c>null</c>，所以再保存时不会写回旧键。
+    /// </summary>
+    [JsonPropertyName("countdown_gradient_colors")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<Color>? LegacyCountdownGradientColors
+    {
+        get => null;
+        set => _legacyCountdownGradientColors = value;
     }
 
     [JsonIgnore]
     public bool UsesEdgeCountdown => CountdownStyle == (int)NotificationCountdownStyle.Edge;
 
+    /// <summary>描边实际使用的起始色：纯色模式两个端点同色。</summary>
     [JsonIgnore]
-    public IReadOnlyList<Color> ResolvedCountdownColors =>
+    public Color ResolvedCountdownStart =>
         CountdownColorMode == (int)NotificationCountdownColorMode.Solid
-            ? [CountdownSolidColor]
-            : CountdownGradientColors;
+            ? CountdownSolidColor
+            : CountdownGradientStart;
+
+    /// <summary>描边实际使用的终止色：纯色模式两个端点同色。</summary>
+    [JsonIgnore]
+    public Color ResolvedCountdownEnd =>
+        CountdownColorMode == (int)NotificationCountdownColorMode.Solid
+            ? CountdownSolidColor
+            : CountdownGradientEnd;
 
     public bool Enabled
     {
@@ -366,11 +412,20 @@ public partial class NotificationChannelSettings : ObservableObject, IJsonOnDese
             is (int)NotificationCountdownColorMode.Gradient or (int)NotificationCountdownColorMode.Solid
             ? _countdownColorMode
             : (int)NotificationCountdownColorMode.Gradient;
-        _countdownGradientColors = NotificationCountdownPalette.NormalizeColors(_countdownGradientColors);
+        // 旧版把渐变存成 2–6 个色标的列表；现在只剩起止两色，取首尾两色迁移过来。
+        if (_legacyCountdownGradientColors is { Count: > 0 } legacyColors)
+        {
+            _countdownGradientStart = NotificationCountdownPalette.ToOpaque(legacyColors[0]);
+            _countdownGradientEnd = NotificationCountdownPalette.ToOpaque(legacyColors[^1]);
+        }
+
+        _countdownGradientStart = NotificationCountdownPalette.ToOpaque(_countdownGradientStart);
+        _countdownGradientEnd = NotificationCountdownPalette.ToOpaque(_countdownGradientEnd);
         _countdownSolidColor = NotificationCountdownPalette.ToOpaque(_countdownSolidColor);
 
         _legacyAutoCloseTime = null;
         _legacyUseBuiltInOnClassIslandFailure = null;
+        _legacyCountdownGradientColors = null;
     }
 
     partial void OnDisplayDurationChanging(int value) => _hasDisplayDuration = true;

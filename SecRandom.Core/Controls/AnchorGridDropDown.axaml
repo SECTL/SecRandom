@@ -1,0 +1,55 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core">
+    <Design.PreviewWith>
+        <Border Padding="24" Background="{DynamicResource SolidBackgroundFillColorBaseBrush}">
+            <sr:AnchorGridDropDown Labels="左上,上,右上,左,中,右,左下,下,右下" SelectedValue="8" />
+        </Border>
+    </Design.PreviewWith>
+
+    <!--
+        收起态的画刷、圆角、高度全部对齐 Fluent ComboBox：原来的位置下拉框换成本控件之后，
+        只有展开内容变了（九宫格代替五行文字），字段本身看起来还是一个下拉框。
+    -->
+    <Style Selector="sr|AnchorGridDropDown">
+        <Setter Property="Background" Value="{DynamicResource ComboBoxBackground}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ComboBoxBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+        <Setter Property="Foreground" Value="{DynamicResource ComboBoxForeground}" />
+        <Setter Property="MinHeight" Value="32" />
+        <Setter Property="MinWidth" Value="160" />
+        <Setter Property="Padding" Value="11,5,10,6" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border x:Name="Field"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        Padding="{TemplateBinding Padding}">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <ContentPresenter x:Name="PART_ContentPresenter"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          VerticalAlignment="Center" />
+                        <sr:FluentIcon Grid.Column="1"
+                                       Glyph="{sr:Fi ChevronDownFilled}"
+                                       FontSize="12"
+                                       Margin="8,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource ComboBoxDropDownGlyphForeground}" />
+                    </Grid>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+
+    <Style Selector="sr|AnchorGridDropDown:pointerover /template/ Border#Field">
+        <Setter Property="BorderBrush" Value="{DynamicResource ComboBoxBorderBrushPointerOver}" />
+    </Style>
+
+    <Style Selector="sr|AnchorGridDropDown:disabled /template/ Border#Field">
+        <Setter Property="BorderBrush" Value="{DynamicResource ComboBoxBorderBrushDisabled}" />
+    </Style>
+</Styles>

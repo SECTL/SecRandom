@@ -1,9 +1,12 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
@@ -35,9 +38,35 @@ public partial class NotificationFloatingWindowSettingsPage : UserControl, INoti
     {
         InitializeComponent();
         Settings = ConfigHandler.Data.NotificationSettings.Default;
+        CountdownStyleOptions =
+        [
+            new CountdownStyleOption((int)NotificationCountdownStyle.Text, Text("Text hint", "O_CountdownStyle_Text")),
+            new CountdownStyleOption((int)NotificationCountdownStyle.Edge, Text("Window outline", "O_CountdownStyle_Edge"))
+        ];
+        CountdownColorModeOptions =
+        [
+            new CountdownColorModeOption((int)NotificationCountdownColorMode.Gradient,
+                Text("Gradient", "O_CountdownColorMode_Gradient")),
+            new CountdownColorModeOption((int)NotificationCountdownColorMode.Solid,
+                Text("Single color", "O_CountdownColorMode_Solid"))
+        ];
         MonitorOptions = [new MonitorOption("", Text("Not specified", "O_Monitor_Unspecified"))];
         if (!string.IsNullOrWhiteSpace(Settings.EnabledMonitor))
             MonitorOptions.Add(new MonitorOption(Settings.EnabledMonitor, Settings.EnabledMonitor));
+
+        // 顺序必须与 NotificationWindowAnchorLayout.GridOrder 一致：左上 → 上 → 右上 → 左 → 中 → 右 → 左下 → 下 → 右下。
+        WindowPositionLabels =
+        [
+            Text("Top left", "O_WindowPosition_TopLeft"),
+            Text("Top", "O_WindowPosition_Top"),
+            Text("Top right", "O_WindowPosition_TopRight"),
+            Text("Left", "O_WindowPosition_Left"),
+            Text("Center", "O_WindowPosition_Center"),
+            Text("Right", "O_WindowPosition_Right"),
+            Text("Bottom left", "O_WindowPosition_BottomLeft"),
+            Text("Bottom", "O_WindowPosition_Bottom"),
+            Text("Bottom right", "O_WindowPosition_BottomRight")
+        ];
 
         DataContext = this;
         Loaded += OnPageLoaded;
@@ -49,6 +78,9 @@ public partial class NotificationFloatingWindowSettingsPage : UserControl, INoti
     public NotificationChannelSettings Settings { get; }
 
     public ObservableCollection<MonitorOption> MonitorOptions { get; }
+
+    /// <summary>九宫格各格的文本，顺序与 <see cref="NotificationWindowAnchorLayout.GridOrder" /> 一致。</summary>
+    public IReadOnlyList<string> WindowPositionLabels { get; }
 
     public MonitorOption? SelectedMonitor
     {
@@ -87,6 +119,77 @@ public partial class NotificationFloatingWindowSettingsPage : UserControl, INoti
         remove => NotifyPropertyChanged -= value;
     }
 
+    /// <summary>倒计时样式下拉框的候选：文字提示 / 四周描边。</summary>
+    public IReadOnlyList<CountdownStyleOption> CountdownStyleOptions { get; }
+
+    public CountdownStyleOption? SelectedCountdownStyleOption
+    {
+        get => CountdownStyleOptions.FirstOrDefault(option => option.Value == Settings.CountdownStyle);
+        set
+        {
+            if (value is null || value.Value == Settings.CountdownStyle)
+                return;
+
+            Settings.CountdownStyle = value.Value;
+        }
+    }
+
+    /// <summary>颜色模式下拉框的候选：渐变 / 统一纯色。</summary>
+    public IReadOnlyList<CountdownColorModeOption> CountdownColorModeOptions { get; }
+
+    public CountdownColorModeOption? SelectedCountdownColorModeOption
+    {
+        get => CountdownColorModeOptions.FirstOrDefault(option => option.Value == Settings.CountdownColorMode);
+        set
+        {
+            if (value is null || value.Value == Settings.CountdownColorMode)
+                return;
+
+            Settings.CountdownColorMode = value.Value;
+        }
+    }
+
+    /// <summary>颜色卡只在选中「四周描边」时出现：文字倒计时没有可设置的颜色。</summary>
+    public bool ShowCountdownColors => Settings.UsesEdgeCountdown;
+
+    public bool IsCountdownGradientMode =>
+        Settings.UsesEdgeCountdown
+        && Settings.CountdownColorMode == (int)NotificationCountdownColorMode.Gradient;
+
+    public bool IsCountdownSolidMode =>
+        Settings.UsesEdgeCountdown
+        && Settings.CountdownColorMode == (int)NotificationCountdownColorMode.Solid;
+
+    /// <summary>
+    ///     设置卡里的预览条，与浮窗四周使用同一组颜色：渐变时起始色在左、终止色在右，纯色时满条同色。
+    /// </summary>
+    public IBrush CountdownPreviewBrush
+    {
+        get
+        {
+            var start = Settings.ResolvedCountdownStart;
+            var end = Settings.ResolvedCountdownEnd;
+            if (Settings.CountdownColorMode != (int)NotificationCountdownColorMode.Gradient)
+                return new SolidColorBrush(start);
+
+            return new LinearGradientBrush
+            {
+                StartPoint = new RelativePoint(0, 0.5, RelativeUnit.Relative),
+                EndPoint = new RelativePoint(1, 0.5, RelativeUnit.Relative),
+                GradientStops =
+                {
+                    new GradientStop(start, 0),
+                    new GradientStop(end, 1)
+                }
+            };
+        }
+    }
+
+    private void Notify(string propertyName)
+    {
+        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+    }
+
     private void OnPageLoaded(object? sender, RoutedEventArgs e)
     {
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
@@ -95,8 +198,16 @@ public partial class NotificationFloatingWindowSettingsPage : UserControl, INoti
         RefreshMonitorOptions();
 
         // 低配模式可能在基本设置页刚被改过；回到本页时按当前值重算开关的可用性与显示态。
-        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsAdaptiveForegroundAvailable)));
-        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AdaptiveForegroundEnabled)));
+        Notify(nameof(IsAdaptiveForegroundAvailable));
+        Notify(nameof(AdaptiveForegroundEnabled));
+
+        // 页面可能被缓存后重新显示，倒计时相关的派生值同样按当前配置重算。
+        Notify(nameof(SelectedCountdownStyleOption));
+        Notify(nameof(SelectedCountdownColorModeOption));
+        Notify(nameof(ShowCountdownColors));
+        Notify(nameof(IsCountdownGradientMode));
+        Notify(nameof(IsCountdownSolidMode));
+        Notify(nameof(CountdownPreviewBrush));
     }
 
     private void OnPageUnloaded(object? sender, RoutedEventArgs e)
@@ -147,7 +258,28 @@ public partial class NotificationFloatingWindowSettingsPage : UserControl, INoti
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(NotificationChannelSettings.EnabledMonitor))
-            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedMonitor)));
+            Notify(nameof(SelectedMonitor));
+
+        if (e.PropertyName == nameof(NotificationChannelSettings.CountdownStyle))
+        {
+            Notify(nameof(ShowCountdownColors));
+            Notify(nameof(IsCountdownGradientMode));
+            Notify(nameof(IsCountdownSolidMode));
+            Notify(nameof(SelectedCountdownStyleOption));
+        }
+        else if (e.PropertyName == nameof(NotificationChannelSettings.CountdownColorMode))
+        {
+            Notify(nameof(IsCountdownGradientMode));
+            Notify(nameof(IsCountdownSolidMode));
+            Notify(nameof(SelectedCountdownColorModeOption));
+            Notify(nameof(CountdownPreviewBrush));
+        }
+        else if (e.PropertyName is nameof(NotificationChannelSettings.CountdownGradientStart)
+                 or nameof(NotificationChannelSettings.CountdownGradientEnd)
+                 or nameof(NotificationChannelSettings.CountdownSolidColor))
+        {
+            Notify(nameof(CountdownPreviewBrush));
+        }
 
         // 子配置（NotificationSettings.Default）不会自动落盘，页面的每次编辑都要显式保存一次。
         ScheduleSave();
@@ -186,3 +318,9 @@ public partial class NotificationFloatingWindowSettingsPage : UserControl, INoti
 
 /// <summary>显示器下拉框的一项。<see cref="Value" /> 是持久化的显示器标识，空串表示跟随主显示器。</summary>
 public sealed record MonitorOption(string Value, string Label);
+
+/// <summary>倒计时样式下拉框的一项。<see cref="Value" /> 是持久化的 <see cref="NotificationCountdownStyle" />。</summary>
+public sealed record CountdownStyleOption(int Value, string Label);
+
+/// <summary>倒计时配色模式下拉框的一项。</summary>
+public sealed record CountdownColorModeOption(int Value, string Label);

@@ -88,4 +88,18 @@
   </data>
   <data name="S_FloatingWindow_AdaptiveForeground" xml:space="preserve"><value>Adaptive Foreground Color</value></data>
   <data name="S_FloatingWindow_AdaptiveForeground_D" xml:space="preserve"><value>Picks white or black text and outlines from the desktop brightness behind the window so the result card stays readable on any wallpaper; low-spec mode turns this off</value></data>
+  <data name="S_FloatingWindow_CountdownStyle" xml:space="preserve"><value>Countdown style</value></data>
+  <data name="S_FloatingWindow_CountdownStyle_D" xml:space="preserve"><value>Choose how the built-in notification window hints the remaining time before it closes</value></data>
+  <data name="O_CountdownStyle_Text" xml:space="preserve"><value>Text hint</value></data>
+  <data name="O_CountdownStyle_Edge" xml:space="preserve"><value>Edge outline</value></data>
+  <data name="S_FloatingWindow_CountdownColorMode" xml:space="preserve"><value>Color mode</value></data>
+  <data name="S_FloatingWindow_CountdownColorMode_D" xml:space="preserve"><value>Choose whether the outline runs a gradient or a single color</value></data>
+  <data name="S_FloatingWindow_CountdownGradient" xml:space="preserve"><value>Gradient colors</value></data>
+  <data name="S_FloatingWindow_CountdownGradient_D" xml:space="preserve"><value>Only two colors are used: the outline starts at the start color and eases to the end color as time runs out</value></data>
+  <data name="S_FloatingWindow_CountdownSolidColor" xml:space="preserve"><value>Single color</value></data>
+  <data name="S_FloatingWindow_CountdownSolidColor_D" xml:space="preserve"><value>The whole outline uses this one color</value></data>
+  <data name="O_CountdownColorMode_Gradient" xml:space="preserve"><value>Gradient</value></data>
+  <data name="O_CountdownColorMode_Solid" xml:space="preserve"><value>Single color</value></data>
+  <data name="C_CountdownColors_Gradient" xml:space="preserve"><value>Start and end colors</value></data>
+  <data name="C_CountdownColors_Preview" xml:space="preserve"><value>Preview</value></data>
 </root>

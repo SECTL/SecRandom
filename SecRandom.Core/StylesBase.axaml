@@ -55,6 +55,8 @@
     </Style>
 
     <StyleInclude Source="/Controls/TouchDragThumb.axaml" />
+    <StyleInclude Source="/Controls/AnchorGridPicker.axaml" />
+        <StyleInclude Source="/Controls/AnchorGridDropDown.axaml" />
 
     <Style Selector="TextBlock :is(HyperlinkButton)">
         <Setter Property="Padding" Value="0" />
