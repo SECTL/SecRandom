@@ -279,7 +279,7 @@ public class SettingsMarkupTests
             "SecRandom/ViewModels/MainPages/QuickDrawPageViewModel.cs"));
 
         Assert.Contains("UsesBuiltInNotificationService(NotificationSettingsType.QuickDraw)", appSource, StringComparison.Ordinal);
-        Assert.Contains("StartAuthorizedTriggeredDrawAsync()", appSource, StringComparison.Ordinal);
+        Assert.Contains("StartAuthorizedTriggeredDrawAsync(count)", appSource, StringComparison.Ordinal);
         Assert.Contains("BeginBuiltInNotificationPresentationAsync(", viewModelSource, StringComparison.Ordinal);
         Assert.Contains("skipPreview = !showBuiltInNotificationAnimation;", viewModelSource, StringComparison.Ordinal);
     }
@@ -448,8 +448,9 @@ public class SettingsMarkupTests
         Assert.Contains("device.DisplayName", source, StringComparison.Ordinal);
         Assert.Contains("device.DeviceId", source, StringComparison.Ordinal);
         Assert.Contains("device.HardwareName", source, StringComparison.Ordinal);
-        Assert.Contains("!device.IsBound", source, StringComparison.Ordinal);
-        Assert.Contains("device.IsBound", source, StringComparison.Ordinal);
+        Assert.Contains("device.BindingId is null", source, StringComparison.Ordinal);
+        Assert.Contains("device.BindingId is not null", source, StringComparison.Ordinal);
+        Assert.Contains("SR.C_UsbDisconnected", source, StringComparison.Ordinal);
         Assert.Contains("new UsbBindingResult(device.DeviceId, null)", source, StringComparison.Ordinal);
         Assert.Contains("action.Text = isBinding ? SR.C_Bind : SR.C_Unbind", source, StringComparison.Ordinal);
         Assert.Contains("action.DialogResult = isBinding ? \"bind\" : \"unbind\"", source, StringComparison.Ordinal);
@@ -488,6 +489,75 @@ public class SettingsMarkupTests
             $"SecRandom/Views/SettingsPages/Notification/{pageName}.axaml.cs"));
 
         Assert.Contains("InitializeComponent();", source, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/RollCallDrawSettingsPage.axaml")]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/QuickDrawSettingsPage.axaml")]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/LotteryDrawSettingsPage.axaml")]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/DefaultDrawSettingsPage.axaml")]
+    public void DrawModeDropdownListsOnlyRepeatPolicies(string relativePath)
+    {
+        string markup = File.ReadAllText(GetRepositoryPath(relativePath));
+
+        // 「抽取模式」只回答重复记录怎么处理；编排抽取属于「抽取方式」，不能重新出现在这一行里。
+        int card = markup.IndexOf("x:Name=\"S_DrawMode\"", StringComparison.Ordinal);
+        Assert.True(card >= 0, $"{relativePath} must keep the S_DrawMode card.");
+        int end = markup.IndexOf("</fa:FASettingsExpander>", card, StringComparison.Ordinal);
+        Assert.True(end > card, $"{relativePath} must close the S_DrawMode card.");
+
+        string block = markup[card..end];
+        Assert.DoesNotContain("O_Orchestrated", block, StringComparison.Ordinal);
+        Assert.Equal(3, block.Split("<ComboBoxItem ").Length - 1);
+    }
+
+    [Theory]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/RollCallDrawSettingsPage.axaml",
+        "SecRandom/Views/SettingsPages/Picking/RollCallDrawSettingsPage.axaml.cs")]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/QuickDrawSettingsPage.axaml",
+        "SecRandom/Views/SettingsPages/Picking/QuickDrawSettingsPage.axaml.cs")]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/LotteryDrawSettingsPage.axaml",
+        "SecRandom/Views/SettingsPages/Picking/LotteryDrawSettingsPage.axaml.cs")]
+    public void DrawTypeDropdownOffersOrchestrationBehindTheRepeatPolicyMemory(string markupPath,
+        string codeBehindPath)
+    {
+        string source = File.ReadAllText(GetRepositoryPath(codeBehindPath));
+
+        Assert.Contains("DrawModeCatalog.OrchestratedOptionId", source, StringComparison.Ordinal);
+        Assert.Contains("DrawModeSelection.SelectOrchestrated", source, StringComparison.Ordinal);
+        Assert.Contains("DrawModeSelection.LeaveOrchestrated", source, StringComparison.Ordinal);
+
+        // 编排抽取期间「抽取模式」卡不隐藏，也不能把卡片交给 DrawMode 去控制可见性。
+        Assert.DoesNotContain("ApplyDrawModeVisibility", source, StringComparison.Ordinal);
+
+        // 下拉框绑的是 SampledDrawMode：它永远是 0..2 的重复策略，绑 DrawMode 会让编排（索引 3）
+        // 越界、被强制成 -1 再经 TwoWay 写回配置，既清空下拉又静默丢掉编排状态。
+        string markup = File.ReadAllText(GetRepositoryPath(markupPath));
+        int card = markup.IndexOf("x:Name=\"S_DrawMode\"", StringComparison.Ordinal);
+        Assert.True(card >= 0, $"{markupPath} must keep the S_DrawMode card.");
+        int end = markup.IndexOf("</fa:FASettingsExpander>", card, StringComparison.Ordinal);
+        Assert.True(end > card, $"{markupPath} must close the S_DrawMode card.");
+
+        string block = markup[card..end];
+        Assert.Contains("SelectedIndex=\"{Binding Settings.SampledDrawMode}\"", block, StringComparison.Ordinal);
+        Assert.DoesNotContain("IsVisible", block, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/RollCallDrawSettingsPage.axaml",
+        "SecRandom/Views/SettingsPages/Picking/RollCallDrawSettingsPage.axaml.cs")]
+    [InlineData("SecRandom/Views/SettingsPages/Picking/QuickDrawSettingsPage.axaml",
+        "SecRandom/Views/SettingsPages/Picking/QuickDrawSettingsPage.axaml.cs")]
+    public void OnlyTheFairDrawPolicyCardHidesInOrchestration(string markupPath, string codeBehindPath)
+    {
+        string source = File.ReadAllText(GetRepositoryPath(codeBehindPath));
+
+        // 公平抽取策略对编排确实没有意义，这一张卡仍按抽取方式和算法隐藏。
+        Assert.Contains("IsVisible = !DrawModeSelection.IsOrchestrated(Settings.DrawMode)", source,
+            StringComparison.Ordinal);
+
+        string markup = File.ReadAllText(GetRepositoryPath(markupPath));
+        Assert.Contains("x:Name=\"S_FairDrawMode\"", markup, StringComparison.Ordinal);
     }
 
     private static string GetDefaultNotificationMarkupPath()

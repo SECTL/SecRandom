@@ -70,19 +70,50 @@ public class FairDrawSettingsConfigTests
     }
 
     [Fact]
-    public void ShareDebtWeightsUsePersonalAndEnabledDimensionDebt()
+    public void UnifiedWeightsZeroOutAboveTheAverageTierInRandomMode()
     {
-        var first = new Student { Name = "A", Group = "G1", Gender = "男" };
-        var second = new Student { Name = "B", Group = "G2", Gender = "女" };
-        var third = new Student { Name = "C", Group = "G2", Gender = "男" };
+        var first = new Student { Name = "A" };
+        var second = new Student { Name = "B" };
+        var third = new Student { Name = "C" };
         var config = BuildConfig(new FairDrawSettingsConfig
         {
             FairDraw = true,
-            FairDrawGroup = true,
-            FairDrawGender = true,
+            FairDrawGroup = false,
+            FairDrawGender = false,
             FairDrawTime = false,
-            MinWeight = 0,
-            MaxWeight = 10
+            ColdStartEnabled = false,
+            Mode = FairDrawMode.RandomFirst
+        });
+
+        using var host = BuildHost(config, new TestProfileService());
+        var weights = CreateEngine(host).CalculateStudentWeight(
+            [first, second, third],
+            new Dictionary<Student, History>
+            {
+                [first] = new() { TotalCount = 0 },
+                [second] = new() { TotalCount = 0 },
+                [third] = new() { TotalCount = 2 }
+            });
+
+        Assert.Equal(0.5, weights[0].Weight, precision: 10);
+        Assert.Equal(0.5, weights[1].Weight, precision: 10);
+        Assert.Equal(0.0, weights[2].Weight);
+    }
+
+    [Fact]
+    public void UniformFirstKeepsEveryCandidateInThePoolDrawable()
+    {
+        var first = new Student { Name = "A" };
+        var second = new Student { Name = "B" };
+        var third = new Student { Name = "C" };
+        var config = BuildConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = true,
+            FairDrawGroup = false,
+            FairDrawGender = false,
+            FairDrawTime = false,
+            ColdStartEnabled = false,
+            Mode = FairDrawMode.UniformFirst
         });
 
         using var host = BuildHost(config, new TestProfileService());
@@ -95,37 +126,9 @@ public class FairDrawSettingsConfigTests
                 [third] = new() { TotalCount = 1 }
             });
 
-        Assert.Equal(weights[0].Weight, weights[1].Weight);
-        Assert.True(weights[0].Weight > weights[2].Weight);
+        Assert.All(weights, item => Assert.True(item.Weight > 0));
         Assert.Equal(1.0, weights.Sum(item => item.Weight), precision: 10);
-    }
-
-    [Fact]
-    public void ShareDebtDimensionHorizonScalesWithBatchSize()
-    {
-        var first = new Student { Name = "A", Group = "G1", Gender = "男" };
-        var second = new Student { Name = "B", Group = "G2", Gender = "女" };
-        var settings = FairDrawPolicySnapshot.FromConfig(new FairDrawSettingsConfig
-        {
-            FairDraw = true,
-            FairDrawGroup = true,
-            FairDrawGender = false,
-            FairDrawTime = false
-        });
-        var history = new Dictionary<Student, History>
-        {
-            [first] = new() { TotalCount = 2 },
-            [second] = new() { TotalCount = 0 }
-        };
-
-        using var host = BuildHost(BuildConfig(new FairDrawSettingsConfig()), new TestProfileService());
-        var engine = CreateEngine(host);
-        var single = engine.CalculateStudentWeight([first, second], settings with { BatchSize = 1 }, history);
-        var batch = engine.CalculateStudentWeight([first, second], settings with { BatchSize = 3 }, history);
-
-        Assert.True(batch[0].Weight > single[0].Weight);
-        Assert.True(batch[1].Weight < single[1].Weight);
-        Assert.Equal(1.0, batch.Sum(item => item.Weight), precision: 10);
+        Assert.True(weights[2].Weight < weights[0].Weight);
     }
 
     [Fact]

@@ -67,7 +67,19 @@
     <value>抽選方法</value>
   </data>
   <data name="S_DrawType_D" xml:space="preserve">
-    <value>ランダム抽選または公平な抽選を選択します</value>
+    <value>ランダム抽選、公平な抽選、編成抽選から選択します</value>
+  </data>
+  <data name="S_FairDrawMode" xml:space="preserve">
+    <value>公平抽選の方針</value>
+  </data>
+  <data name="S_FairDrawMode_D" xml:space="preserve">
+    <value>均等優先は平均回数以下のメンバーだけを抽選し、ランダム優先は最少回数のメンバーを基準に重み付けして二回を超える先行を許しません</value>
+  </data>
+  <data name="O_FairDrawModeUniform" xml:space="preserve">
+    <value>均等優先</value>
+  </data>
+  <data name="O_FairDrawModeRandom" xml:space="preserve">
+    <value>ランダム優先</value>
   </data>
   <data name="S_LotteryDrawType" xml:space="preserve">
     <value>くじ引き方法</value>
@@ -236,6 +248,9 @@
   </data>
   <data name="O_HalfRepeat" xml:space="preserve">
     <value>半重複</value>
+  </data>
+  <data name="O_Orchestrated" xml:space="preserve">
+    <value>編成抽選</value>
   </data>
   <data name="O_Restarted" xml:space="preserve">
     <value>再起動後に消去</value>
@@ -534,9 +549,7 @@
   <data name="O_HistoryGroupDefault" xml:space="preserve">
     <value>既定の記録グループ</value>
   </data>
-  <data name="S_HistoryGroup_Disabled" xml:space="preserve">
-    <value>履歴記録グループ機能が有効になっていません、「履歴記録の管理」で有効にできます</value>
-  </data>
+  
   <data name="Page_RandomNumber" xml:space="preserve">
     <value>乱数抽選</value>
   </data>
@@ -608,5 +621,425 @@
   </data>
   <data name="M_RandomNumber_NoStatistics" xml:space="preserve">
     <value>統計はまだありません</value>
+  </data>
+  <data name="Page_Orchestration" xml:space="preserve">
+    <value>編成抽選設定</value>
+  </data>
+  <data name="S_Orchestration_List_D" xml:space="preserve">
+    <value>各編成名簿は1つの抽選チャンネルと1つの参照名簿に紐づき、抽選時に自動で一致します</value>
+  </data>
+  <data name="C_Orchestration_New" xml:space="preserve">
+    <value>新規</value>
+  </data>
+  <data name="C_Orchestration_Sync" xml:space="preserve">
+    <value>名簿を同期</value>
+  </data>
+  <data name="C_Orchestration_Shuffle" xml:space="preserve">
+    <value>順序をシャッフル</value>
+  </data>
+  <data name="C_Orchestration_Delete" xml:space="preserve">
+    <value>削除</value>
+  </data>
+  <data name="S_Orchestration_Target" xml:space="preserve">
+    <value>抽選チャンネル</value>
+  </data>
+  <data name="S_Orchestration_Source" xml:space="preserve">
+    <value>参照名簿</value>
+  </data>
+  <data name="S_Orchestration_Name" xml:space="preserve">
+    <value>名簿名</value>
+  </data>
+  <data name="C_Orchestration_Create" xml:space="preserve">
+    <value>作成</value>
+  </data>
+  <data name="C_Orchestration_Cancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="S_Orchestration_Round" xml:space="preserve">
+    <value>ラウンド</value>
+  </data>
+  <data name="S_Orchestration_RoundCount" xml:space="preserve">
+    <value>ラウンド数</value>
+  </data>
+  <data name="S_Orchestration_Round_D" xml:space="preserve">
+    <value>1ラウンド=全員が1回ずつ出場、途中リセットも1ラウンドと数え、最大10ラウンド</value>
+  </data>
+  <data name="C_Orchestration_Order" xml:space="preserve">
+    <value>順序</value>
+  </data>
+  <data name="C_Orchestration_Name" xml:space="preserve">
+    <value>名前</value>
+  </data>
+  <data name="C_Orchestration_Excluded" xml:space="preserve">
+    <value>除外</value>
+  </data>
+  <data name="C_Orchestration_Skipped" xml:space="preserve">
+    <value>今回延期</value>
+  </data>
+  <data name="C_Orchestration_Position" xml:space="preserve">
+    <value>何番目</value>
+  </data>
+  <data name="C_Orchestration_Weight" xml:space="preserve">
+    <value>重み</value>
+  </data>
+  <data name="C_Orchestration_Note" xml:space="preserve">
+    <value>備考</value>
+  </data>
+  <data name="C_Orchestration_Empty" xml:space="preserve">
+    <value>編成名簿はまだありません</value>
+  </data>
+  <data name="C_Orchestration_Empty_D" xml:space="preserve">
+    <value>まず編成名簿を作成してください、抽選チャンネルと参照名簿を選ぶとメンバーは自動で取り込まれます</value>
+  </data>
+  <data name="C_Orchestration_Enable" xml:space="preserve">
+    <value>有効化</value>
+  </data>
+  <data name="C_Orchestration_Disable" xml:space="preserve">
+    <value>無効化</value>
+  </data>
+  <data name="C_Orchestration_AddMember" xml:space="preserve">
+    <value>編成メンバーを追加</value>
+  </data>
+  <data name="C_Orchestration_AddPrize" xml:space="preserve">
+    <value>編成景品を追加</value>
+  </data>
+  <data name="O_Orchestration_TargetRollCall" xml:space="preserve">
+    <value>点名</value>
+  </data>
+  <data name="O_Orchestration_TargetLottery" xml:space="preserve">
+    <value>抽選</value>
+  </data>
+  <data name="C_Orchestration_Active" xml:space="preserve">
+    <value>有効</value>
+  </data>
+  <data name="C_Orchestration_SourceMissing" xml:space="preserve">
+    <value>参照名簿に存在しません</value>
+  </data>
+  <data name="C_Orchestration_ClearOrder" xml:space="preserve">
+    <value>この回の順序を消去</value>
+  </data>
+  <data name="S_Orchestration_EditPrize" xml:space="preserve">
+    <value>編成賞品を編集</value>
+  </data>
+  <data name="S_Orchestration_EditMember" xml:space="preserve">
+    <value>編成メンバーを編集</value>
+  </data>
+  <data name="C_Orchestration_Skipped_D" xml:space="preserve">
+    <value>この回だけ後回し</value>
+  </data>
+  <data name="C_Orchestration_RandomFill" xml:space="preserve">
+    <value>ランダム補充</value>
+  </data>
+  <data name="C_Orchestration_Members" xml:space="preserve">
+    <value>メンバー表</value>
+  </data>
+  <data name="C_Orchestration_Arrange_D" xml:space="preserve">
+    <value>行を上下にドラッグするとこの回の出場順を調整できます</value>
+  </data>
+  <data name="C_Orchestration_Weight_D" xml:space="preserve">
+    <value>順位が未定のときの当たりやすさ</value>
+  </data>
+  <data name="C_Orchestration_Arrange" xml:space="preserve">
+    <value>順序配置</value>
+  </data>
+  <data name="C_Orchestration_Edit" xml:space="preserve">
+    <value>編集</value>
+  </data>
+  <data name="C_Orchestration_CopyOrder" xml:space="preserve">
+    <value>他の回へコピー</value>
+  </data>
+  <data name="C_Orchestration_Position_D" xml:space="preserve">
+    <value>例: 3 ならこの回の 3 番目</value>
+  </data>
+  <data name="C_Orchestration_Excluded_D" xml:space="preserve">
+    <value>この名簿では常に除外</value>
+  </data>
+<data name="S_Orchestration_Lists" xml:space="preserve">
+    <value>編成名簿</value>
+  </data>
+  <data name="C_Orchestration_ProfileSettings" xml:space="preserve">
+    <value>名簿設定</value>
+  </data>
+  <data name="C_Orchestration_Save" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="S_Orchestration_ProfileNew" xml:space="preserve">
+    <value>編成名簿を作成</value>
+  </data>
+  <data name="S_Orchestration_ProfileEdit" xml:space="preserve">
+    <value>編成名簿を編集</value>
+  </data>
+  <data name="S_Orchestration_Profile_D" xml:space="preserve">
+    <value>編成名簿は1つの抽選チャンネルと1つの参照名簿に紐づき、作成時に全メンバーを取り込みます</value>
+  </data>
+  <data name="S_Orchestration_Name_D" xml:space="preserve">
+    <value>空欄の場合は「参照名簿・抽選チャンネル」で自動命名</value>
+  </data>
+  <data name="S_Orchestration_Source_D" xml:space="preserve">
+    <value>参照名簿を変えてもメンバーは削除されず、新しい名簿にない人が「参照名簿に存在しません」と表示されます</value>
+  </data>
+  <data name="S_Orchestration_Sync_D" xml:space="preserve">
+    <value>参照名簿からまだ入っていないメンバーを追加し、既存の並びは変更しません</value>
+  </data>
+  <data name="S_Orchestration_Progress" xml:space="preserve">
+    <value>抽選は第 {0} ラウンドまで進んでいます</value>
+  </data>
+  <data name="M_Orchestration_NoSource" xml:space="preserve">
+    <value>この抽選チャンネルにはまだ名簿がありません。先に名簿管理で作成してください</value>
+  </data>
+  <data name="M_Orchestration_DeleteTitle" xml:space="preserve">
+    <value>編成名簿を削除</value>
+  </data>
+  <data name="M_Orchestration_DeleteContent" xml:space="preserve">
+    <value>編成名簿「{0}」とその並びをすべて削除します。元に戻せません</value>
+  </data>
+  <data name="M_Orchestration_DeletePrimary" xml:space="preserve">
+    <value>削除</value>
+  </data>
+  <data name="M_Orchestration_Created" xml:space="preserve">
+    <value>編成名簿「{0}」を作成しました</value>
+  </data>
+  <data name="M_Orchestration_Saved" xml:space="preserve">
+    <value>編成名簿「{0}」を保存しました</value>
+  </data>
+  <data name="M_Orchestration_Deleted" xml:space="preserve">
+    <value>編成名簿「{0}」を削除しました</value>
+  </data>
+  <data name="M_Orchestration_SourceRequired" xml:space="preserve">
+    <value>先に参照名簿を選択してください</value>
+  </data>
+  <data name="S_Orchestration_Position_D" xml:space="preserve">
+    <value>例：3 ならこのラウンドで3番目、入力欄から離れると反映されます</value>
+  </data>
+  <data name="S_Orchestration_Weight_D" xml:space="preserve">
+    <value>順位が未定のときの重みの倍率、入力欄から離れると反映されます</value>
+  </data>
+  <data name="S_Orchestration_ChannelRollCall" xml:space="preserve">
+    <value>点呼の抽選チャンネル</value>
+  </data>
+  <data name="S_Orchestration_ChannelLottery" xml:space="preserve">
+    <value>景品抽選のチャンネル</value>
+  </data>
+  <data name="S_Orchestration_ChannelOn" xml:space="preserve">
+    <value>すでに編成抽選です、この名簿は組み立てた順に使われます</value>
+  </data>
+  <data name="S_Orchestration_ChannelOff" xml:space="preserve">
+    <value>現在は編成抽選ではないため、この名簿は使われません</value>
+  </data>
+  <data name="S_Orchestration_ProfileInactive" xml:space="preserve">
+    <value>この名簿はまだ有効になっていないため、抽選には使われません</value>
+  </data>
+  <data name="C_Orchestration_UseOrchestrated" xml:space="preserve">
+    <value>編成抽選に切り替える</value>
+  </data>
+  <data name="M_Orchestration_ChannelSwitched" xml:space="preserve">
+    <value>抽選方式を編成抽選に切り替えました</value>
+  </data>
+  <data name="S_Orchestration_SectionLists" xml:space="preserve">
+    <value>5つのリスト</value>
+  </data>
+  <data name="S_Orchestration_SectionLists_D" xml:space="preserve">
+    <value>各リストは1つの役割だけを持ち、それぞれの設定ページで編集します</value>
+  </data>
+  <data name="S_Orchestration_Exclude" xml:space="preserve">
+    <value>除外リスト</value>
+  </data>
+  <data name="S_Orchestration_Exclude_D" xml:space="preserve">
+    <value>ここに入れた人は編成全体で参加しません</value>
+  </data>
+  <data name="S_Orchestration_Weight" xml:space="preserve">
+    <value>重みリスト</value>
+  </data>
+  <data name="S_Orchestration_Defer" xml:space="preserve">
+    <value>後回しリスト</value>
+  </data>
+  <data name="S_Orchestration_Defer_D" xml:space="preserve">
+    <value>この回だけ後回しにし、次の回で戻ります</value>
+  </data>
+  <data name="S_Orchestration_Order" xml:space="preserve">
+    <value>順番リスト</value>
+  </data>
+  <data name="S_Orchestration_Order_D" xml:space="preserve">
+    <value>この回の出場キュー、引かれた人は抜けて後ろが詰まります</value>
+  </data>
+  <data name="S_Orchestration_Guarantee" xml:space="preserve">
+    <value>必中リスト</value>
+  </data>
+  <data name="S_Orchestration_Guarantee_D" xml:space="preserve">
+    <value>この回に必ず出場し、先頭に並びます</value>
+  </data>
+  <data name="C_Orchestration_RuleOpen" xml:space="preserve">
+    <value>設定</value>
+  </data>
+  <data name="C_Orchestration_RuleOff" xml:space="preserve">
+    <value>オフ</value>
+  </data>
+  <data name="C_Orchestration_ProfileSummary" xml:space="preserve">
+    <value>{0} · {1} · {2} 人</value>
+  </data>
+  <data name="C_Orchestration_ExcludeSummary" xml:space="preserve">
+    <value>{0} 人を除外 · 残り {1} 人は通常参加</value>
+  </data>
+  <data name="C_Orchestration_WeightSummary" xml:space="preserve">
+    <value>{0} 人に手動重みあり</value>
+  </data>
+  <data name="C_Orchestration_DeferSummary" xml:space="preserve">
+    <value>この回の後回し {0} 人</value>
+  </data>
+  <data name="C_Orchestration_OrderSummary" xml:space="preserve">
+    <value>この回のキュー {0} 人</value>
+  </data>
+  <data name="C_Orchestration_OrderSummaryEmpty" xml:space="preserve">
+    <value>この回は未設定のため重みで抽選</value>
+  </data>
+  <data name="C_Orchestration_GuaranteeSummary" xml:space="preserve">
+    <value>この回の必中 {0} 人</value>
+  </data>
+  <data name="S_Orchestration_SectionEnabled" xml:space="preserve">
+    <value>リストの有効化</value>
+  </data>
+  <data name="S_Orchestration_Rules" xml:space="preserve">
+    <value>リストのスイッチ</value>
+  </data>
+  <data name="S_Orchestration_Rules_D" xml:space="preserve">
+    <value>オフにしたリストは内容を保持しますが、抽選では読まれません</value>
+  </data>
+  <data name="S_Orchestration_Rules_Exclude_D" xml:space="preserve">
+    <value>オフにすると通常どおり参加します</value>
+  </data>
+  <data name="S_Orchestration_Rules_Weight_D" xml:space="preserve">
+    <value>オフにすると公平重みのみ</value>
+  </data>
+  <data name="S_Orchestration_Rules_Defer_D" xml:space="preserve">
+    <value>オフにすると末尾に回されません</value>
+  </data>
+  <data name="S_Orchestration_Rules_Order_D" xml:space="preserve">
+    <value>オフにすると重みで抽選します</value>
+  </data>
+  <data name="S_Orchestration_Rules_Guarantee_D" xml:space="preserve">
+    <value>オフにすると先頭に置きません</value>
+  </data>
+  <data name="S_Rule_Round" xml:space="preserve">
+    <value>回</value>
+  </data>
+  <data name="S_Rule_Disabled" xml:space="preserve">
+    <value>概要ページでこのリストがオフのため、ここの内容はまだ抽選に影響しません</value>
+  </data>
+  <data name="S_Rule_Count" xml:space="preserve">
+    <value>（{0} 人、このリスト {1} 人）</value>
+  </data>
+  <data name="C_Rule_Search" xml:space="preserve">
+    <value>番号か名前で検索</value>
+  </data>
+  <data name="C_Rule_Shuffle" xml:space="preserve">
+    <value>ランダム順</value>
+  </data>
+  <data name="C_Rule_CopyOrder" xml:space="preserve">
+    <value>他の回へコピー</value>
+  </data>
+  <data name="C_Rule_ClearList" xml:space="preserve">
+    <value>このリストを空にする</value>
+  </data>
+  <data name="C_Rule_MoveUp" xml:space="preserve">
+    <value>上へ</value>
+  </data>
+  <data name="C_Rule_MoveDown" xml:space="preserve">
+    <value>下へ</value>
+  </data>
+  <data name="C_Rule_WeightWatermark" xml:space="preserve">
+    <value>既定</value>
+  </data>
+  <data name="C_Rule_NoMembers" xml:space="preserve">
+    <value>表示できるメンバーがいません</value>
+  </data>
+  <data name="C_Rule_NoProfile" xml:space="preserve">
+    <value>編成リストが未選択</value>
+  </data>
+  <data name="C_Rule_Profile" xml:space="preserve">
+    <value>編成リスト：{0}（{1} · {2}）</value>
+  </data>
+  <data name="C_Rule_NoProfile_D" xml:space="preserve">
+    <value>先に編成抽選の概要でリストを選んでください</value>
+  </data>
+  <data name="C_Rule_NoMembers_D" xml:space="preserve">
+    <value>先に概要ページで参照名簿を同期してください</value>
+  </data>
+  <data name="C_Rule_NoMatch_D" xml:space="preserve">
+    <value>一致するメンバーがいません、別のキーワードを試してください</value>
+  </data>
+  <data name="C_Rule_ExcludeHint_D" xml:space="preserve">
+    <value>チェックした人は編成全体で抽選に参加しません</value>
+  </data>
+  <data name="C_Rule_WeightHint_D" xml:space="preserve">
+    <value>この回の重みの倍率、空欄は公平重み</value>
+  </data>
+  <data name="C_Rule_DeferHint_D" xml:space="preserve">
+    <value>チェックした人はこの回だけ末尾に回り、次の回で戻ります</value>
+  </data>
+  <data name="C_Rule_OrderHint_D" xml:space="preserve">
+    <value>チェックで末尾に追加、矢印で並べ替え、引かれた人は抜けます</value>
+  </data>
+  <data name="C_Rule_GuaranteeHint_D" xml:space="preserve">
+    <value>チェックした人はこの回に先頭で出場します</value>
+  </data>
+  <data name="C_Rule_ToggleExclude" xml:space="preserve">
+    <value>不参加</value>
+  </data>
+  <data name="C_Rule_ToggleDefer" xml:space="preserve">
+    <value>この回は後回し</value>
+  </data>
+  <data name="C_Rule_ToggleOrder" xml:space="preserve">
+    <value>キューに入れる</value>
+  </data>
+  <data name="C_Rule_ToggleGuarantee" xml:space="preserve">
+    <value>この回は必中</value>
+  </data>
+  <data name="C_Rule_ExcludeNote" xml:space="preserve">
+    <value>除外リストにあり</value>
+  </data>
+  <data name="C_Rule_NotInQueue" xml:space="preserve">
+    <value>キュー未加入</value>
+  </data>
+  <data name="C_Rule_NotGuaranteed" xml:space="preserve">
+    <value>必中リスト未加入</value>
+  </data>
+  <data name="M_Rule_Shuffled" xml:space="preserve">
+    <value>この回のキューを並べ替えました</value>
+  </data>
+  <data name="M_Rule_OrderCopied" xml:space="preserve">
+    <value>このキューの内容を残り {0} 回へコピーしました</value>
+  </data>
+  <data name="M_Rule_Cleared" xml:space="preserve">
+    <value>「{0}」を空にしました</value>
+  </data>
+  <data name="M_Rule_ConflictTitle" xml:space="preserve">
+    <value>他のリストが解除されます</value>
+  </data>
+  <data name="M_Rule_ConflictContent" xml:space="preserve">
+    <value>{0}に追加すると、この人の{1}の記録が解除されます</value>
+  </data>
+  <data name="M_Rule_ConflictRound" xml:space="preserve">
+    <value>第{0}回 {1}</value>
+  </data>
+  <data name="C_Rule_Continue" xml:space="preserve">
+    <value>続行</value>
+  </data>
+  <data name="M_Rule_ConflictSwitchTitle" xml:space="preserve">
+    <value>別のリストがオフになります</value>
+  </data>
+  <data name="M_Rule_ConflictSwitchContent" xml:space="preserve">
+    <value>{0}をオンにすると{1}がオフになります</value>
+  </data>
+  <data name="C_Rule_ReplaceOrder" xml:space="preserve">
+    <value>キューを置き換える</value>
+  </data>
+  <data name="M_Rule_ShuffleConflict" xml:space="preserve">
+    <value>ランダム順はキューを組み直すため、必中リストの人はキューから外れます</value>
+  </data>
+  <data name="M_Rule_CopyConflict" xml:space="preserve">
+    <value>キューのコピーは他の回を上書きし、それらの回の必中リストの人をキューから外します</value>
+  </data>
+  <data name="C_Rule_ConflictJoin" xml:space="preserve">
+    <value>、</value>
   </data>
 </root>

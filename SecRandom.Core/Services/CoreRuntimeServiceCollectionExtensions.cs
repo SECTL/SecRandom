@@ -5,6 +5,7 @@ using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services.HistoryQuery;
+using SecRandom.Core.Services.Orchestration;
 using SecRandom.Core.Services.Profiles;
 using SecRandom.Core.Services.Stats;
 
@@ -27,6 +28,8 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         services.AddSingleton<IDrawCommitService, DrawCommitCoordinator>();
         services.AddTransient<IRollCallSession, RollCallSession>();
         services.AddTransient<ILotterySession, LotterySession>();
+        services.AddSingleton<IOrchestrationStore, OrchestrationStore>();
+        services.AddTransient<OrchestrationScheduler>();
         services.AddSingleton<IHistoryQueryService, HistoryQueryService>();
         services.AddSingleton<IHistoryExportService, HistoryExportService>();
         services.AddSingleton<IRollCallAlgorithmRegistry, RollCallAlgorithmRegistry>();

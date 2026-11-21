@@ -289,7 +289,11 @@ public partial class DrawEngine
     {
         var algorithm = _rollCallAlgorithms.Resolve(executionPolicy.AlgorithmId ??
             (executionPolicy.DrawType == DrawType.Fair ? "builtin.fair" : "builtin.random"));
-        var fairSettings = executionPolicy.FairDrawSettings with { BatchSize = Math.Max(1, batchSize) };
+        var fairSettings = executionPolicy.FairDrawSettings with
+        {
+            BatchSize = Math.Max(1, batchSize),
+            RequiredCount = Math.Max(1, batchSize)
+        };
         return algorithm.BuildCandidates(this, usable, historyCache, fairSettings, courseName)
             .ToList();
     }

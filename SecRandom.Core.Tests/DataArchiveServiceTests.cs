@@ -96,6 +96,61 @@ public sealed class DataArchiveServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ExportAllData_CarriesTheOrchestrationSection()
+    {
+        using var provider = CreateProvider();
+        provider.GetRequiredService<MainConfigHandler>().Save();
+        var profileId = Guid.NewGuid().ToString("N");
+        File.WriteAllText(Utils.GetFilePath("config", "orchestration", profileId + ".json"), "{}");
+        File.WriteAllText(Utils.GetFilePath("config", "orchestration", "runtime", profileId + ".json"), "{}");
+
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var destination = Path.Combine(_exportDirectory, "all-data-orchestration.zip");
+        await archive.ExportAllDataAsync(destination, TestContext.Current.CancellationToken);
+
+        var paths = ReadManifestPaths(destination);
+        Assert.Contains($"config/orchestration/{profileId}.json", paths);
+        Assert.Contains($"config/orchestration/runtime/{profileId}.json", paths);
+    }
+
+    [Fact]
+    public async Task ImportAllData_RestoresTheOrchestrationSection()
+    {
+        using var provider = CreateProvider();
+        provider.GetRequiredService<MainConfigHandler>().Save();
+        var profileId = Guid.NewGuid().ToString("N");
+        var profilePath = Utils.GetFilePath("config", "orchestration", profileId + ".json");
+        File.WriteAllText(profilePath, "{}");
+
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var destination = Path.Combine(_exportDirectory, "all-data-orchestration-import.zip");
+        await archive.ExportAllDataAsync(destination, TestContext.Current.CancellationToken);
+        StampProducerVersion(destination, TestV3ProducerVersion);
+
+        // 编排段在 config/ 下是唯一按目录提交的根：折叠成 settings.json 会让整段顺序名单在导入时消失。
+        Directory.Delete(Path.GetDirectoryName(profilePath)!, true);
+        await archive.ImportAllDataAsync(destination, TestContext.Current.CancellationToken);
+
+        Assert.True(File.Exists(profilePath));
+    }
+
+    [Fact]
+    public async Task ImportAllData_RejectsACorruptOrchestrationFileBeforeTouchingData()
+    {
+        using var provider = CreateProvider();
+        provider.GetRequiredService<MainConfigHandler>().Save();
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var destination = Path.Combine(_exportDirectory, "all-data-orchestration-corrupt.zip");
+        await archive.ExportAllDataAsync(destination, TestContext.Current.CancellationToken);
+        StampProducerVersion(destination, TestV3ProducerVersion);
+        AddArchiveEntry(destination, "config/orchestration/broken.json", Encoding.UTF8.GetBytes("{ broken"));
+
+        await Assert.ThrowsAnyAsync<JsonException>(() =>
+            archive.ImportAllDataAsync(destination, TestContext.Current.CancellationToken));
+        Assert.False(File.Exists(Utils.GetFilePath("config", "orchestration", "broken.json")));
+    }
+
+    [Fact]
     public async Task ImportAllData_SkipsLegacyThemeEntriesInsteadOfFailing()
     {
         using var provider = CreateProvider();

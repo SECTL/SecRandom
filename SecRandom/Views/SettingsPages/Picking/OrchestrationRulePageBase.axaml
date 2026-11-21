@@ -1,0 +1,156 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Picking"
+             xmlns:lp="clr-namespace:SecRandom.Langs.SettingsPages.Picking"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="600"
+             x:Class="SecRandom.Views.SettingsPages.Picking.OrchestrationRulePageBase"
+             x:DataType="local:OrchestrationRulePageBase"
+             x:Name="Root"
+             AttachedToVisualTree="OnAttachedToVisualTree">
+    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8" Classes="page-container animated-intro">
+        <!-- 页头：这是哪一份名单、属于哪份编排名单；轮级名单还给一个轮次切换 -->
+        <Border Grid.Row="0"
+                Padding="12,10"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4">
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                <sr:FluentIcon Grid.Column="0"
+                               Width="24" Height="24" FontSize="24"
+                               VerticalAlignment="Center"
+                               Glyph="{Binding HeaderGlyph}" />
+
+                <StackPanel Grid.Column="1" Spacing="2">
+                    <TextBlock Theme="{StaticResource SubtitleTextBlockStyle}" Text="{Binding PageTitle}" />
+                    <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Text="{Binding HeaderDetail}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <StackPanel Grid.Column="2"
+                            Orientation="Horizontal"
+                            Spacing="8"
+                            VerticalAlignment="Center"
+                            IsVisible="{Binding IsRoundScoped}">
+                    <TextBlock VerticalAlignment="Center" Text="{x:Static lp:Resources.S_Rule_Round}" />
+                    <ComboBox MinWidth="88"
+                              ItemsSource="{Binding RoundOptions}"
+                              SelectedItem="{Binding SelectedRound, Mode=TwoWay}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <StackPanel Grid.Row="1" Spacing="6">
+            <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       Text="{Binding RuleHint}"
+                       TextWrapping="Wrap" />
+
+            <TextBlock Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                       IsVisible="{Binding IsRuleDisabled}"
+                       Text="{x:Static lp:Resources.S_Rule_Disabled}"
+                       TextWrapping="Wrap" />
+
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBox Width="220"
+                         Text="{Binding SearchText, Mode=TwoWay}"
+                         PlaceholderText="{x:Static lp:Resources.C_Rule_Search}" />
+                <TextBlock VerticalAlignment="Center"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                           Text="{Binding CountText}" />
+                <Button IsVisible="{Binding IsOrderPage}"
+                        Content="{x:Static lp:Resources.C_Rule_Shuffle}"
+                        IsEnabled="{Binding CanEdit}"
+                        Click="ShuffleButton_OnClick" />
+                <Button IsVisible="{Binding IsOrderPage}"
+                        Content="{x:Static lp:Resources.C_Rule_CopyOrder}"
+                        IsEnabled="{Binding CanEdit}"
+                        Click="CopyOrderButton_OnClick" />
+                <Button Content="{x:Static lp:Resources.C_Rule_ClearList}"
+                        IsEnabled="{Binding CanEdit}"
+                        Click="ClearListButton_OnClick" />
+            </StackPanel>
+        </StackPanel>
+
+        <Border Grid.Row="2"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4"
+                ClipToBounds="True">
+            <Grid>
+                <ListBox ItemsSource="{Binding Rows}" IsVisible="{Binding HasRows}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="local:OrchestrationRuleMemberRow">
+                            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" ColumnSpacing="8" Margin="4,2">
+                                <TextBlock Grid.Column="0"
+                                           MinWidth="28"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           IsVisible="{Binding ShowPosition}"
+                                           Text="{Binding PositionText}" />
+
+                                <CheckBox Grid.Column="1"
+                                          VerticalAlignment="Center"
+                                          IsChecked="{Binding IsInList, Mode=OneWay}"
+                                          IsVisible="{Binding ShowToggle}"
+                                          ToolTip.Tip="{Binding ToggleHint}"
+                                          Click="Toggle_OnClick" />
+
+                                <StackPanel Grid.Column="2" Spacing="0" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding DisplayName}" TextWrapping="Wrap" />
+                                    <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                               IsVisible="{Binding HasNote}"
+                                               Text="{Binding Note}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <TextBox Grid.Column="3"
+                                         Width="88"
+                                         VerticalAlignment="Center"
+                                         IsVisible="{Binding ShowWeight}"
+                                         Text="{Binding WeightText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                         PlaceholderText="{x:Static lp:Resources.C_Rule_WeightWatermark}" />
+
+                                <StackPanel Grid.Column="4"
+                                            Orientation="Horizontal"
+                                            Spacing="2"
+                                            VerticalAlignment="Center"
+                                            IsVisible="{Binding ShowOrderButtons}">
+                                    <Button Theme="{StaticResource TransparentButton}"
+                                            CommandParameter="{Binding}"
+                                            IsEnabled="{Binding CanMoveUp}"
+                                            ToolTip.Tip="{x:Static lp:Resources.C_Rule_MoveUp}"
+                                            Click="MoveUpButton_OnClick">
+                                        <sr:FluentIcon Glyph="{sr:Fi ArrowUpFilled}" />
+                                    </Button>
+                                    <Button Theme="{StaticResource TransparentButton}"
+                                            CommandParameter="{Binding}"
+                                            IsEnabled="{Binding CanMoveDown}"
+                                            ToolTip.Tip="{x:Static lp:Resources.C_Rule_MoveDown}"
+                                            Click="MoveDownButton_OnClick">
+                                        <sr:FluentIcon Glyph="{sr:Fi ArrowDownFilled}" />
+                                    </Button>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <StackPanel Margin="24" Spacing="6" HorizontalAlignment="Center" IsVisible="{Binding !HasRows}">
+                    <TextBlock HorizontalAlignment="Center"
+                               Theme="{StaticResource SubtitleTextBlockStyle}"
+                               Text="{x:Static lp:Resources.C_Rule_NoMembers}" />
+                    <TextBlock HorizontalAlignment="Center"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Text="{Binding EmptyState}"
+                               TextAlignment="Center"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

@@ -4,7 +4,7 @@ using SecRandom.Core.Helpers;
 
 namespace SecRandom.Core.Models.SubConfigs.Picking;
 
-public partial class LotterySettingsConfig : OverridableDrawSettings
+public partial class LotterySettingsConfig : OverridableDrawSettings, IOrchestratedDrawSettings
 {
     [ObservableProperty] private DrawMode _drawMode = DrawMode.NoRepeat;
     [ObservableProperty] private ClearRecordMode _clearRecord = ClearRecordMode.Restarted;

@@ -3,7 +3,7 @@ using SecRandom.Core.Enums.Configs;
 
 namespace SecRandom.Core.Models.SubConfigs.Picking;
 
-public partial class QuickDrawSettingsConfig : OverridableDrawSettings
+public partial class QuickDrawSettingsConfig : OverridableDrawSettings, IOrchestratedDrawSettings
 {
     [ObservableProperty] private DrawMode _drawMode = DrawMode.NoRepeat;
     [ObservableProperty] private int _halfRepeat = 1;

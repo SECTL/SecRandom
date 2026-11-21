@@ -50,10 +50,17 @@ public sealed class DataArchiveService(
     ///     library was removed, so `theme`/`themes` are neither exported nor committed, and legacy
     ///     archives that still list them are skipped entry by entry instead of failing.
     /// </summary>
+    /// <summary>
+    ///     Arrangement lists (编排名单) live under <c>config/</c> but are the one <c>config</c> segment committed as a
+    ///     directory, so they need their own root: <see cref="GetRoots" /> otherwise folds every <c>config/</c> path
+    ///     into <c>config/settings.json</c> and the section would silently disappear on import.
+    /// </summary>
+    private const string OrchestrationRoot = "config/orchestration";
+
     private static readonly string[] AllDataRoots =
     [
-        "config/settings.json", "config/device-uuid.json", "list", "history", "TEMP", "proofs", "audio", "CSES", "images",
-        "Language", "logs", "texts"
+        "config/settings.json", "config/device-uuid.json", OrchestrationRoot, "list", "history", "TEMP", "proofs",
+        "audio", "CSES", "images", "Language", "logs", "texts"
     ];
 
     /// <summary>Device-identity path that no restore may commit even if an archive carries it.</summary>
@@ -564,6 +571,12 @@ public sealed class DataArchiveService(
                      ? Directory.EnumerateFiles(Path.Combine(staging, "history"), "*.json", SearchOption.AllDirectories)
                      : [])
             using (JsonDocument.Parse(File.ReadAllText(path))) { }
+
+        // 编排名单整段是这台机器上的数据：坏 JSON 在导入后只会静默变成"没有名单"，所以提交前先解析一次。
+        var orchestrationDirectory = Path.Combine(staging, OrchestrationRoot.Replace('/', Path.DirectorySeparatorChar));
+        if (Directory.Exists(orchestrationDirectory))
+            foreach (var path in Directory.EnumerateFiles(orchestrationDirectory, "*.json", SearchOption.AllDirectories))
+                using (JsonDocument.Parse(File.ReadAllText(path))) { }
     }
 
     /// <summary>
@@ -701,11 +714,17 @@ public sealed class DataArchiveService(
 
     private static IReadOnlyList<string> GetRoots(IEnumerable<string> paths)
     {
-        return paths.Select(NormalizePath).Select(path => path.StartsWith("config/", StringComparison.OrdinalIgnoreCase)
-                ? path.Equals("config/device-uuid.json", StringComparison.OrdinalIgnoreCase)
-                    ? "config/device-uuid.json"
-                    : "config/settings.json"
-                : path.Split('/')[0])
+        return paths.Select(NormalizePath).Select(path =>
+            {
+                if (!path.StartsWith("config/", StringComparison.OrdinalIgnoreCase))
+                    return path.Split('/')[0];
+                if (path.Equals(DeviceUuidPath, StringComparison.OrdinalIgnoreCase))
+                    return DeviceUuidPath;
+                // 编排列表是 config/ 下唯一按目录提交的段：折叠成 settings.json 会让整段顺序名单在导入时被丢掉。
+                if (path.StartsWith(OrchestrationRoot, StringComparison.OrdinalIgnoreCase))
+                    return OrchestrationRoot;
+                return "config/settings.json";
+            })
             .Where(IsManagedPath).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 

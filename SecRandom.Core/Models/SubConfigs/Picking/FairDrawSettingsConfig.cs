@@ -12,9 +12,18 @@ public partial class FairDrawSettingsConfig : ObservableObject
     [ObservableProperty] private bool _fairDrawTime = true;
     [ObservableProperty] private FrequencyFunctionMode _frequencyFunction = FrequencyFunctionMode.SquareRoot;
     [ObservableProperty] private double _frequencyWeight = 1.0;
-    // Average-gap protection is a mandatory fair-draw pipeline step. Keep these
-    // compatibility properties for source callers, but do not persist or expose
-    // them as user settings.
+
+    /// <summary>
+    ///     Selects how a fair draw treats students ahead of the class average. <see cref="FairDrawMode.UniformFirst" />
+    ///     keeps the hard average gate; <see cref="FairDrawMode.RandomFirst" /> keeps the full roster in the pool and
+    ///     gives an above-threshold student weight 0 instead. Only fair draws read this value; a random draw keeps
+    ///     its equal-probability pool.
+    /// </summary>
+    [ObservableProperty] private FairDrawMode _mode = FairDrawMode.UniformFirst;
+
+    // Average-gap protection is the mandatory gate of the UniformFirst fair mode; RandomFirst
+    // replaces it with a zero-probability weight instead. Keep these compatibility properties for
+    // source callers, but do not persist or expose them as user settings.
     [JsonIgnore]
     public bool EnableAvgGapProtection
     {

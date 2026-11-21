@@ -32,6 +32,19 @@ public sealed record FairDrawPolicySnapshot(
     /// </summary>
     public int BatchSize { get; init; } = 1;
 
+    /// <summary>
+    ///     Fair-draw strategy. Defaults to the historical hard average gate so every caller that only supplies
+    ///     the positional fields keeps yesterday's behaviour.
+    /// </summary>
+    public FairDrawMode Mode { get; init; } = FairDrawMode.UniformFirst;
+
+    /// <summary>
+    ///     How many winners the draw has to produce. Only <see cref="FairDrawMode.RandomFirst" /> reads it: the
+    ///     zero-probability threshold is relaxed just enough that this many candidates stay drawable, so a
+    ///     multi-pick draw never starves on its own average gate. Public callers keep the single-winner default.
+    /// </summary>
+    public int RequiredCount { get; init; } = 1;
+
     public static FairDrawPolicySnapshot FromConfig(FairDrawSettingsConfig settings)
     {
         return new FairDrawPolicySnapshot(
@@ -53,7 +66,10 @@ public sealed record FairDrawPolicySnapshot(
             settings.MaxWeight,
             settings.GroupWeight,
             settings.GenderWeight,
-            settings.TimeWeight);
+            settings.TimeWeight)
+        {
+            Mode = settings.Mode
+        };
     }
 
     public static FairDrawPolicySnapshot MobileDesktopDefaultsV1 { get; } = new(

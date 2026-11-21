@@ -1,0 +1,333 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Picking"
+             xmlns:lp="clr-namespace:SecRandom.Langs.SettingsPages.Picking"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="900" d:DesignHeight="620"
+             x:Class="SecRandom.Views.SettingsPages.Picking.OrchestrationSettingsPage"
+             x:DataType="local:OrchestrationSettingsPage"
+             x:Name="Root"
+             Loaded="OnLoaded"
+             AttachedToVisualTree="OnAttachedToVisualTree">
+    <UserControl.Resources>
+        <!-- 和点名/抽奖名单一样：清单在右侧抽屉里选，新建也开在同一侧 -->
+        <!-- ReSharper disable once Xaml.RedundantResource -->
+        <Grid x:Key="CurrentProfileDrawer"
+              x:DataType="local:OrchestrationSettingsPage"
+              Width="320"
+              RowDefinitions="Auto,*"
+              RowSpacing="8"
+              Margin="16">
+            <StackPanel Grid.Row="0" Spacing="4">
+                <TextBlock Theme="{StaticResource SubtitleTextBlockStyle}"
+                           Text="{x:Static lp:Resources.S_Orchestration_Lists}" />
+
+                <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                           Text="{x:Static lp:Resources.S_Orchestration_List_D}"
+                           TextWrapping="Wrap" />
+
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Button Content="{x:Static lp:Resources.C_Orchestration_New}" Click="NewButton_OnClick" />
+                    <Button Content="{x:Static lp:Resources.C_Orchestration_ProfileSettings}"
+                            IsEnabled="{Binding HasProfile}"
+                            Click="EditProfileButton_OnClick" />
+                    <Button Content="{x:Static lp:Resources.C_Orchestration_Delete}"
+                            IsEnabled="{Binding HasProfile}"
+                            Click="DeleteButton_OnClick" />
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Spacing="8">
+                <ListBox MinHeight="120"
+                         ItemsSource="{Binding Profiles}"
+                         SelectedItem="{Binding SelectedProfileItem, Mode=TwoWay}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="local:OrchestrationProfileItem">
+                            <TextBlock Text="{Binding DisplayName}" TextWrapping="Wrap" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <TextBlock IsVisible="{Binding !HasAnyProfile}"
+                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                           Text="{x:Static lp:Resources.C_Orchestration_Empty_D}"
+                           TextWrapping="Wrap" />
+            </StackPanel>
+        </Grid>
+    </UserControl.Resources>
+
+    <Grid RowDefinitions="Auto,*" RowSpacing="8" Classes="page-container animated-intro">
+        <!-- 命令栏只管名单本身：五份名单各在自己的设置页里编辑 -->
+        <Border Grid.Row="0"
+                Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                BorderThickness="1"
+                CornerRadius="4">
+            <fa:FACommandBar DefaultLabelPosition="Right">
+                <fa:FACommandBar.PrimaryCommands>
+                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi ClipboardBulletListFilled}}"
+                                           Label="{Binding CurrentLabel}"
+                                           ToolTip.Tip="{x:Static lp:Resources.S_Orchestration_List_D}"
+                                           Click="CurrentProfileButton_OnClick" />
+
+                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi AddCircleFilled}}"
+                                           Label="{x:Static lp:Resources.C_Orchestration_New}"
+                                           Click="NewButton_OnClick" />
+
+                    <fa:FACommandBarSeparator />
+
+                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}"
+                                           Label="{x:Static lp:Resources.C_Orchestration_Sync}"
+                                           ToolTip.Tip="{x:Static lp:Resources.S_Orchestration_Sync_D}"
+                                           IsEnabled="{Binding HasProfile}"
+                                           Click="SyncButton_OnClick" />
+
+                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi SettingsFilled}}"
+                                           Label="{x:Static lp:Resources.C_Orchestration_ProfileSettings}"
+                                           IsEnabled="{Binding HasProfile}"
+                                           Click="EditProfileButton_OnClick" />
+
+                    <fa:FACommandBarSeparator />
+
+                    <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi CheckmarkCircleFilled}}"
+                                           Label="{Binding ActivateLabel}"
+                                           IsEnabled="{Binding HasProfile}"
+                                           Click="ToggleActiveButton_OnClick" />
+                </fa:FACommandBar.PrimaryCommands>
+            </fa:FACommandBar>
+        </Border>
+
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel Spacing="8">
+                <!-- 一份名单都没有：页面本身先教人建一份，而不是露出一堆空卡 -->
+                <Border IsVisible="{Binding !HasAnyProfile}"
+                        Padding="24"
+                        Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4">
+                    <StackPanel Spacing="8" HorizontalAlignment="Center">
+                        <sr:FluentIcon Width="32" Height="32" HorizontalAlignment="Center"
+                                       FontSize="32"
+                                       Glyph="{sr:Fi ClipboardBulletListFilled}"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <TextBlock HorizontalAlignment="Center"
+                                   Theme="{StaticResource SubtitleTextBlockStyle}"
+                                   Text="{x:Static lp:Resources.C_Orchestration_Empty}" />
+                        <TextBlock HorizontalAlignment="Center"
+                                   Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                   Text="{x:Static lp:Resources.C_Orchestration_Empty_D}"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap" />
+                        <Button HorizontalAlignment="Center"
+                                Classes="accent"
+                                Content="{x:Static lp:Resources.C_Orchestration_New}"
+                                Click="NewButton_OnClick" />
+                    </StackPanel>
+                </Border>
+
+                <StackPanel IsVisible="{Binding HasProfile}" Spacing="8">
+                    <!-- 轮次条：决定"编辑哪一轮"，抽取进度单独显示；轮次数也在这里改 -->
+                    <Border Padding="12,10"
+                            Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4">
+                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*" ColumnSpacing="8">
+                            <TextBlock Grid.Column="0" VerticalAlignment="Center"
+                                       Text="{x:Static lp:Resources.S_Orchestration_Round}" />
+                            <ComboBox Grid.Column="1" MinWidth="88"
+                                      ItemsSource="{Binding RoundOptions}"
+                                      SelectedItem="{Binding SelectedRound, Mode=TwoWay}" />
+                            <TextBlock Grid.Column="2" VerticalAlignment="Center"
+                                       Text="{x:Static lp:Resources.S_Orchestration_RoundCount}" />
+                            <NumericUpDown Grid.Column="3" Width="140" Minimum="1" Maximum="10" Increment="1"
+                                           Value="{Binding RoundCount, Mode=TwoWay}" />
+                            <TextBlock Grid.Column="4" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       Text="{Binding ProgressText}" />
+                            <TextBlock Grid.Column="5" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                       Text="{Binding ProfileSummary}"
+                                       TextWrapping="Wrap" />
+                        </Grid>
+                    </Border>
+
+                    <!-- 通道状态：名单生效与否取决于对应抽取通道是否选了编排抽取 -->
+                    <Border Padding="10,8"
+                            Background="{DynamicResource CardBackgroundFillColorSecondaryBrush}"
+                            BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4">
+                        <StackPanel Spacing="4">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <sr:FluentIcon VerticalAlignment="Center"
+                                               Glyph="{sr:Fi InfoFilled}"
+                                               Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                                <TextBlock VerticalAlignment="Center"
+                                           Text="{Binding ChannelStatusText}"
+                                           TextWrapping="Wrap" />
+                                <Button IsVisible="{Binding CanSwitchChannel}"
+                                        Content="{x:Static lp:Resources.C_Orchestration_UseOrchestrated}"
+                                        Click="UseOrchestratedButton_OnClick" />
+                            </StackPanel>
+                            <TextBlock Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                       IsVisible="{Binding IsProfileInactive}"
+                                       Text="{x:Static lp:Resources.S_Orchestration_ProfileInactive}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 五份名单：每张卡只说这份名单管什么、现在有多少条，编辑进各自的设置页 -->
+                    <sr:IconText x:Name="S_Orchestration_SectionLists"
+                                 Margin="0 8 0 0"
+                                 Glyph="{sr:Fi AppsListDetailFilled}"
+                                 Text="{x:Static lp:Resources.S_Orchestration_SectionLists}" />
+
+                    <TextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Text="{x:Static lp:Resources.S_Orchestration_SectionLists_D}"
+                               TextWrapping="Wrap" />
+
+                    <fa:FASettingsExpander x:Name="S_Orchestration_Exclude"
+                                           Header="{x:Static lp:Resources.S_Orchestration_Exclude}"
+                                           Description="{x:Static lp:Resources.S_Orchestration_Exclude_D}"
+                                           IconSource="{sr:FluentIconSource {sr:Fi ProhibitedFilled}}">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <TextBlock VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           Text="{Binding ExcludeSummary}"
+                                           TextWrapping="Wrap" />
+                                <Button CommandParameter="Exclude"
+                                        Content="{x:Static lp:Resources.C_Orchestration_RuleOpen}"
+                                        Click="OpenRuleButton_OnClick" />
+                            </StackPanel>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+
+                    <fa:FASettingsExpander x:Name="S_Orchestration_Weight"
+                                           Header="{x:Static lp:Resources.S_Orchestration_Weight}"
+                                           Description="{x:Static lp:Resources.S_Orchestration_Weight_D}"
+                                           IconSource="{sr:FluentIconSource {sr:Fi ScalesFilled}}">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <TextBlock VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           Text="{Binding WeightSummary}"
+                                           TextWrapping="Wrap" />
+                                <Button CommandParameter="Weight"
+                                        Content="{x:Static lp:Resources.C_Orchestration_RuleOpen}"
+                                        Click="OpenRuleButton_OnClick" />
+                            </StackPanel>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+
+                    <fa:FASettingsExpander x:Name="S_Orchestration_Defer"
+                                           Header="{x:Static lp:Resources.S_Orchestration_Defer}"
+                                           Description="{x:Static lp:Resources.S_Orchestration_Defer_D}"
+                                           IconSource="{sr:FluentIconSource {sr:Fi TimerFilled}}">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <TextBlock VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           Text="{Binding DeferSummary}"
+                                           TextWrapping="Wrap" />
+                                <Button CommandParameter="Defer"
+                                        Content="{x:Static lp:Resources.C_Orchestration_RuleOpen}"
+                                        Click="OpenRuleButton_OnClick" />
+                            </StackPanel>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+
+                    <fa:FASettingsExpander x:Name="S_Orchestration_Order"
+                                           Header="{x:Static lp:Resources.S_Orchestration_Order}"
+                                           Description="{x:Static lp:Resources.S_Orchestration_Order_D}"
+                                           IconSource="{sr:FluentIconSource {sr:Fi ArrowSortFilled}}">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <TextBlock VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           Text="{Binding OrderSummary}"
+                                           TextWrapping="Wrap" />
+                                <Button CommandParameter="Order"
+                                        Content="{x:Static lp:Resources.C_Orchestration_RuleOpen}"
+                                        Click="OpenRuleButton_OnClick" />
+                            </StackPanel>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+
+                    <fa:FASettingsExpander x:Name="S_Orchestration_Guarantee"
+                                           Header="{x:Static lp:Resources.S_Orchestration_Guarantee}"
+                                           Description="{x:Static lp:Resources.S_Orchestration_Guarantee_D}"
+                                           IconSource="{sr:FluentIconSource {sr:Fi TargetFilled}}">
+                        <fa:FASettingsExpander.Footer>
+                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                                <TextBlock VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                           Text="{Binding GuaranteeSummary}"
+                                           TextWrapping="Wrap" />
+                                <Button CommandParameter="Guarantee"
+                                        Content="{x:Static lp:Resources.C_Orchestration_RuleOpen}"
+                                        Click="OpenRuleButton_OnClick" />
+                            </StackPanel>
+                        </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpander>
+
+                    <!-- 开关在名单卡下面：先看清有哪些名单，再决定这一轮用不用它 -->
+                    <sr:IconText x:Name="S_Orchestration_SectionEnabled"
+                                 Margin="0 8 0 0"
+                                 Glyph="{sr:Fi ToggleLeftFilled}"
+                                 Text="{x:Static lp:Resources.S_Orchestration_SectionEnabled}" />
+
+                    <fa:FASettingsExpander x:Name="S_Orchestration_Rules"
+                                           Header="{x:Static lp:Resources.S_Orchestration_Rules}"
+                                           Description="{x:Static lp:Resources.S_Orchestration_Rules_D}"
+                                           IconSource="{sr:FluentIconSource {sr:Fi ToggleRightFilled}}">
+                        <fa:FASettingsExpanderItem x:Name="S_Orchestration_Rules_Exclude"
+                                                   Content="{x:Static lp:Resources.S_Orchestration_Exclude}"
+                                                   Description="{x:Static lp:Resources.S_Orchestration_Rules_Exclude_D}">
+                            <fa:FASettingsExpanderItem.Footer>
+                                <ToggleSwitch IsChecked="{Binding ExcludeRuleEnabled, Mode=TwoWay}" />
+                            </fa:FASettingsExpanderItem.Footer>
+                        </fa:FASettingsExpanderItem>
+
+                        <fa:FASettingsExpanderItem x:Name="S_Orchestration_Rules_Weight"
+                                                   Content="{x:Static lp:Resources.S_Orchestration_Weight}"
+                                                   Description="{x:Static lp:Resources.S_Orchestration_Rules_Weight_D}">
+                            <fa:FASettingsExpanderItem.Footer>
+                                <ToggleSwitch IsChecked="{Binding WeightRuleEnabled, Mode=TwoWay}" />
+                            </fa:FASettingsExpanderItem.Footer>
+                        </fa:FASettingsExpanderItem>
+
+                        <fa:FASettingsExpanderItem x:Name="S_Orchestration_Rules_Defer"
+                                                   Content="{x:Static lp:Resources.S_Orchestration_Defer}"
+                                                   Description="{x:Static lp:Resources.S_Orchestration_Rules_Defer_D}">
+                            <fa:FASettingsExpanderItem.Footer>
+                                <ToggleSwitch IsChecked="{Binding DeferRuleEnabled, Mode=TwoWay}" />
+                            </fa:FASettingsExpanderItem.Footer>
+                        </fa:FASettingsExpanderItem>
+
+                        <fa:FASettingsExpanderItem x:Name="S_Orchestration_Rules_Order"
+                                                   Content="{x:Static lp:Resources.S_Orchestration_Order}"
+                                                   Description="{x:Static lp:Resources.S_Orchestration_Rules_Order_D}">
+                            <fa:FASettingsExpanderItem.Footer>
+                                <ToggleSwitch IsChecked="{Binding OrderRuleEnabled, Mode=TwoWay}" />
+                            </fa:FASettingsExpanderItem.Footer>
+                        </fa:FASettingsExpanderItem>
+
+                        <fa:FASettingsExpanderItem x:Name="S_Orchestration_Rules_Guarantee"
+                                                   Content="{x:Static lp:Resources.S_Orchestration_Guarantee}"
+                                                   Description="{x:Static lp:Resources.S_Orchestration_Rules_Guarantee_D}">
+                            <fa:FASettingsExpanderItem.Footer>
+                                <ToggleSwitch IsChecked="{Binding GuaranteeRuleEnabled, Mode=TwoWay}" />
+                            </fa:FASettingsExpanderItem.Footer>
+                        </fa:FASettingsExpanderItem>
+                    </fa:FASettingsExpander>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

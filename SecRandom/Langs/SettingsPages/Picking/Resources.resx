@@ -22,11 +22,15 @@
   <data name="S_ClearRecord" xml:space="preserve"><value>清除记录</value></data>
   <data name="S_ClearRecord_D" xml:space="preserve"><value>控制抽取记录何时清除</value></data>
   <data name="S_DrawType" xml:space="preserve"><value>抽取方式</value></data>
-  <data name="S_DrawType_D" xml:space="preserve"><value>设置使用随机抽取或公平抽取</value></data>
+  <data name="S_DrawType_D" xml:space="preserve"><value>设置使用随机抽取、公平抽取或编排抽取</value></data>
+  <data name="S_FairDrawMode" xml:space="preserve"><value>公平抽取策略</value></data>
+  <data name="S_FairDrawMode_D" xml:space="preserve"><value>均匀优先只抽平均次数及以下的成员，随机优先按最少次数加权，最多领先两次</value></data>
+  <data name="O_FairDrawModeUniform" xml:space="preserve"><value>均匀优先</value></data>
+  <data name="O_FairDrawModeRandom" xml:space="preserve"><value>随机优先</value></data>
   <data name="S_LotteryDrawType" xml:space="preserve"><value>抽奖方式</value></data>
   <data name="S_LotteryDrawType_D" xml:space="preserve"><value>设置按奖盘或按剩余数量抽奖</value></data>
   <data name="S_LotteryAlgorithm" xml:space="preserve"><value>抽奖算法</value></data>
-  <data name="S_LotteryAlgorithm_D" xml:space="preserve"><value>选择用于生成奖品候选池的算法</value></data>
+  <data name="S_LotteryAlgorithm_D" xml:space="preserve"><value>选择奖品候选池的抽取方式，也可以选编排抽取按编排名单取奖</value></data>
   <data name="S_RollCallAlgorithm" xml:space="preserve"><value>点名算法</value></data>
   <data name="S_RollCallAlgorithm_D" xml:space="preserve"><value>选择用于生成成员候选池的算法</value></data>
   <data name="S_QuickDrawAlgorithm" xml:space="preserve"><value>点名算法</value></data>
@@ -104,6 +108,7 @@
   <data name="O_Repeat" xml:space="preserve"><value>允许重复</value></data>
   <data name="O_NoRepeat" xml:space="preserve"><value>不重复</value></data>
   <data name="O_HalfRepeat" xml:space="preserve"><value>半重复</value></data>
+  <data name="O_Orchestrated" xml:space="preserve"><value>编排抽取</value></data>
   <data name="O_Restarted" xml:space="preserve"><value>重启后清除</value></data>
   <data name="O_Cleared" xml:space="preserve"><value>手动清除</value></data>
   <data name="O_Random" xml:space="preserve"><value>随机抽取</value></data>
@@ -306,9 +311,7 @@
   <data name="O_HistoryGroupDefault" xml:space="preserve">
     <value>默认记录组</value>
   </data>
-  <data name="S_HistoryGroup_Disabled" xml:space="preserve">
-    <value>历史记录组功能未启用，可在「历史记录管理」里打开</value>
-  </data>
+  
   <data name="Page_RandomNumber" xml:space="preserve">
     <value>随机数抽取</value>
   </data>
@@ -380,5 +383,425 @@
   </data>
   <data name="M_RandomNumber_NoStatistics" xml:space="preserve">
     <value>暂无统计</value>
+  </data>
+  <data name="Page_Orchestration" xml:space="preserve">
+    <value>编排抽取设置</value>
+  </data>
+  <data name="S_Orchestration_List_D" xml:space="preserve">
+    <value>每个编排名单绑定一个抽取通道和一份来源名单，抽取时自动匹配</value>
+  </data>
+  <data name="C_Orchestration_New" xml:space="preserve">
+    <value>新建</value>
+  </data>
+  <data name="C_Orchestration_Sync" xml:space="preserve">
+    <value>同步名单</value>
+  </data>
+  <data name="C_Orchestration_Shuffle" xml:space="preserve">
+    <value>随机顺序</value>
+  </data>
+  <data name="C_Orchestration_Delete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="S_Orchestration_Target" xml:space="preserve">
+    <value>抽取通道</value>
+  </data>
+  <data name="S_Orchestration_Source" xml:space="preserve">
+    <value>来源名单</value>
+  </data>
+  <data name="S_Orchestration_Name" xml:space="preserve">
+    <value>名单名称</value>
+  </data>
+  <data name="C_Orchestration_Create" xml:space="preserve">
+    <value>创建</value>
+  </data>
+  <data name="C_Orchestration_Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="S_Orchestration_Round" xml:space="preserve">
+    <value>轮次</value>
+  </data>
+  <data name="S_Orchestration_RoundCount" xml:space="preserve">
+    <value>轮次数</value>
+  </data>
+  <data name="S_Orchestration_Round_D" xml:space="preserve">
+    <value>一轮即全员各出场一次，重置也算一轮，最多 10 轮</value>
+  </data>
+  <data name="C_Orchestration_Order" xml:space="preserve">
+    <value>顺序</value>
+  </data>
+  <data name="C_Orchestration_Name" xml:space="preserve">
+    <value>姓名 / 奖品</value>
+  </data>
+  <data name="C_Orchestration_Excluded" xml:space="preserve">
+    <value>排除</value>
+  </data>
+  <data name="C_Orchestration_Skipped" xml:space="preserve">
+    <value>本轮延后</value>
+  </data>
+  <data name="C_Orchestration_Position" xml:space="preserve">
+    <value>第几个抽中</value>
+  </data>
+  <data name="C_Orchestration_Weight" xml:space="preserve">
+    <value>权重</value>
+  </data>
+  <data name="C_Orchestration_Note" xml:space="preserve">
+    <value>说明</value>
+  </data>
+  <data name="C_Orchestration_Empty" xml:space="preserve">
+    <value>还没有编排名单</value>
+  </data>
+  <data name="C_Orchestration_Empty_D" xml:space="preserve">
+    <value>先新建一个编排名单：选择抽取模式和来源名单，成员会自动带入</value>
+  </data>
+  <data name="C_Orchestration_Enable" xml:space="preserve">
+    <value>启用</value>
+  </data>
+  <data name="C_Orchestration_Disable" xml:space="preserve">
+    <value>停用</value>
+  </data>
+  <data name="C_Orchestration_AddMember" xml:space="preserve">
+    <value>添加编排成员</value>
+  </data>
+  <data name="C_Orchestration_AddPrize" xml:space="preserve">
+    <value>添加编排奖品</value>
+  </data>
+  <data name="O_Orchestration_TargetRollCall" xml:space="preserve">
+    <value>点名</value>
+  </data>
+  <data name="O_Orchestration_TargetLottery" xml:space="preserve">
+    <value>抽奖</value>
+  </data>
+  <data name="C_Orchestration_Active" xml:space="preserve">
+    <value>已启用</value>
+  </data>
+  <data name="C_Orchestration_SourceMissing" xml:space="preserve">
+    <value>已不在来源名单</value>
+  </data>
+  <data name="C_Orchestration_ClearOrder" xml:space="preserve">
+    <value>清除本轮顺序</value>
+  </data>
+  <data name="S_Orchestration_EditPrize" xml:space="preserve">
+    <value>编辑编排奖品</value>
+  </data>
+  <data name="S_Orchestration_EditMember" xml:space="preserve">
+    <value>编辑编排成员</value>
+  </data>
+  <data name="C_Orchestration_Skipped_D" xml:space="preserve">
+    <value>只跳过这一轮</value>
+  </data>
+  <data name="C_Orchestration_RandomFill" xml:space="preserve">
+    <value>随机填充</value>
+  </data>
+  <data name="C_Orchestration_Members" xml:space="preserve">
+    <value>成员表</value>
+  </data>
+  <data name="C_Orchestration_Arrange_D" xml:space="preserve">
+    <value>按住行上下拖动即可调整本轮出场顺序</value>
+  </data>
+  <data name="C_Orchestration_Weight_D" xml:space="preserve">
+    <value>定序前被抽到的相对机会</value>
+  </data>
+  <data name="C_Orchestration_Arrange" xml:space="preserve">
+    <value>顺序排布</value>
+  </data>
+  <data name="C_Orchestration_Edit" xml:space="preserve">
+    <value>编辑</value>
+  </data>
+  <data name="C_Orchestration_CopyOrder" xml:space="preserve">
+    <value>复制到其他轮</value>
+  </data>
+  <data name="C_Orchestration_Position_D" xml:space="preserve">
+    <value>如 3 表示本轮第 3 个抽中</value>
+  </data>
+  <data name="C_Orchestration_Excluded_D" xml:space="preserve">
+    <value>本名单全局不参与</value>
+  </data>
+<data name="S_Orchestration_Lists" xml:space="preserve">
+    <value>编排名单</value>
+  </data>
+  <data name="C_Orchestration_ProfileSettings" xml:space="preserve">
+    <value>名单设置</value>
+  </data>
+  <data name="C_Orchestration_Save" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="S_Orchestration_ProfileNew" xml:space="preserve">
+    <value>新建编排名单</value>
+  </data>
+  <data name="S_Orchestration_ProfileEdit" xml:space="preserve">
+    <value>编辑编排名单</value>
+  </data>
+  <data name="S_Orchestration_Profile_D" xml:space="preserve">
+    <value>编排名单绑定一个抽取通道和一份来源名单，创建时带入全部成员</value>
+  </data>
+  <data name="S_Orchestration_Name_D" xml:space="preserve">
+    <value>留空时按「来源名单 · 抽取通道」自动命名</value>
+  </data>
+  <data name="S_Orchestration_Source_D" xml:space="preserve">
+    <value>换来源名单不会删除成员，只把不在新名单里的标成已失效</value>
+  </data>
+  <data name="S_Orchestration_Sync_D" xml:space="preserve">
+    <value>从来源名单补入缺少的成员，不动已有排布</value>
+  </data>
+  <data name="S_Orchestration_Progress" xml:space="preserve">
+    <value>抽取进行到第 {0} 轮</value>
+  </data>
+  <data name="M_Orchestration_NoSource" xml:space="preserve">
+    <value>该抽取通道还没有名单，请先到名单管理里创建</value>
+  </data>
+  <data name="M_Orchestration_DeleteTitle" xml:space="preserve">
+    <value>删除编排名单</value>
+  </data>
+  <data name="M_Orchestration_DeleteContent" xml:space="preserve">
+    <value>将删除编排名单「{0}」和它的全部排布，无法撤销</value>
+  </data>
+  <data name="M_Orchestration_DeletePrimary" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="M_Orchestration_Created" xml:space="preserve">
+    <value>已创建编排名单「{0}」</value>
+  </data>
+  <data name="M_Orchestration_Saved" xml:space="preserve">
+    <value>已保存编排名单「{0}」</value>
+  </data>
+  <data name="M_Orchestration_Deleted" xml:space="preserve">
+    <value>已删除编排名单「{0}」</value>
+  </data>
+  <data name="M_Orchestration_SourceRequired" xml:space="preserve">
+    <value>请先选择来源名单</value>
+  </data>
+  <data name="S_Orchestration_Position_D" xml:space="preserve">
+    <value>如 3 表示本轮第 3 个抽中，离开输入框后生效</value>
+  </data>
+  <data name="S_Orchestration_Weight_D" xml:space="preserve">
+    <value>定序前的权重乘数，离开输入框后生效</value>
+  </data>
+  <data name="S_Orchestration_ChannelRollCall" xml:space="preserve">
+    <value>点名抽取通道</value>
+  </data>
+  <data name="S_Orchestration_ChannelLottery" xml:space="preserve">
+    <value>抽奖抽取通道</value>
+  </data>
+  <data name="S_Orchestration_ChannelOn" xml:space="preserve">
+    <value>已是编排抽取，这份名单会按排定的顺序生效</value>
+  </data>
+  <data name="S_Orchestration_ChannelOff" xml:space="preserve">
+    <value>目前不是编排抽取，这份名单不会生效</value>
+  </data>
+  <data name="S_Orchestration_ProfileInactive" xml:space="preserve">
+    <value>这份名单还没启用，抽取不会用它</value>
+  </data>
+  <data name="C_Orchestration_UseOrchestrated" xml:space="preserve">
+    <value>切换为编排抽取</value>
+  </data>
+  <data name="M_Orchestration_ChannelSwitched" xml:space="preserve">
+    <value>已把抽取方式切换为编排抽取</value>
+  </data>
+  <data name="S_Orchestration_SectionLists" xml:space="preserve">
+    <value>五份名单</value>
+  </data>
+  <data name="S_Orchestration_SectionLists_D" xml:space="preserve">
+    <value>五份名单各管一件事，点开各自的设置页单独编</value>
+  </data>
+  <data name="S_Orchestration_Exclude" xml:space="preserve">
+    <value>排斥名单</value>
+  </data>
+  <data name="S_Orchestration_Exclude_D" xml:space="preserve">
+    <value>名单里的人整份编排名单都不参加</value>
+  </data>
+  <data name="S_Orchestration_Weight" xml:space="preserve">
+    <value>权重名单</value>
+  </data>
+  <data name="S_Orchestration_Defer" xml:space="preserve">
+    <value>延后名单</value>
+  </data>
+  <data name="S_Orchestration_Defer_D" xml:space="preserve">
+    <value>这一轮先不抽，下一轮自动恢复</value>
+  </data>
+  <data name="S_Orchestration_Order" xml:space="preserve">
+    <value>顺序名单</value>
+  </data>
+  <data name="S_Orchestration_Order_D" xml:space="preserve">
+    <value>本轮的出场队列，抽到谁谁离队</value>
+  </data>
+  <data name="S_Orchestration_Guarantee" xml:space="preserve">
+    <value>必中名单</value>
+  </data>
+  <data name="S_Orchestration_Guarantee_D" xml:space="preserve">
+    <value>本轮必定出场，排在最前面</value>
+  </data>
+  <data name="C_Orchestration_RuleOpen" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="C_Orchestration_RuleOff" xml:space="preserve">
+    <value>已关闭</value>
+  </data>
+  <data name="C_Orchestration_ProfileSummary" xml:space="preserve">
+    <value>{0} · {1} · {2} 人</value>
+  </data>
+  <data name="C_Orchestration_ExcludeSummary" xml:space="preserve">
+    <value>已排斥 {0} 人 · 其余 {1} 人照常参与</value>
+  </data>
+  <data name="C_Orchestration_WeightSummary" xml:space="preserve">
+    <value>{0} 人设了手动权重</value>
+  </data>
+  <data name="C_Orchestration_DeferSummary" xml:space="preserve">
+    <value>本轮延后 {0} 人</value>
+  </data>
+  <data name="C_Orchestration_OrderSummary" xml:space="preserve">
+    <value>本轮队列 {0} 人</value>
+  </data>
+  <data name="C_Orchestration_OrderSummaryEmpty" xml:space="preserve">
+    <value>本轮还没排顺序，按权重随机</value>
+  </data>
+  <data name="C_Orchestration_GuaranteeSummary" xml:space="preserve">
+    <value>本轮必中 {0} 人</value>
+  </data>
+  <data name="S_Orchestration_SectionEnabled" xml:space="preserve">
+    <value>启用名单</value>
+  </data>
+  <data name="S_Orchestration_Rules" xml:space="preserve">
+    <value>名单开关</value>
+  </data>
+  <data name="S_Orchestration_Rules_D" xml:space="preserve">
+    <value>关掉的名单保留内容，但抽取时不读它</value>
+  </data>
+  <data name="S_Orchestration_Rules_Exclude_D" xml:space="preserve">
+    <value>关掉后照常参加</value>
+  </data>
+  <data name="S_Orchestration_Rules_Weight_D" xml:space="preserve">
+    <value>关掉后只按公平权重</value>
+  </data>
+  <data name="S_Orchestration_Rules_Defer_D" xml:space="preserve">
+    <value>关掉后不再排到队尾</value>
+  </data>
+  <data name="S_Orchestration_Rules_Order_D" xml:space="preserve">
+    <value>关掉后按权重随机</value>
+  </data>
+  <data name="S_Orchestration_Rules_Guarantee_D" xml:space="preserve">
+    <value>关掉后不参与排序</value>
+  </data>
+  <data name="S_Rule_Round" xml:space="preserve">
+    <value>轮次</value>
+  </data>
+  <data name="S_Rule_Disabled" xml:space="preserve">
+    <value>总览页把这份名单的开关关了，这里的内容暂时不影响抽取</value>
+  </data>
+  <data name="S_Rule_Count" xml:space="preserve">
+    <value>（{0} 人，本名单 {1} 人）</value>
+  </data>
+  <data name="C_Rule_Search" xml:space="preserve">
+    <value>搜索学号或姓名</value>
+  </data>
+  <data name="C_Rule_Shuffle" xml:space="preserve">
+    <value>随机顺序</value>
+  </data>
+  <data name="C_Rule_CopyOrder" xml:space="preserve">
+    <value>复制到其他轮</value>
+  </data>
+  <data name="C_Rule_ClearList" xml:space="preserve">
+    <value>清空本名单</value>
+  </data>
+  <data name="C_Rule_MoveUp" xml:space="preserve">
+    <value>上移</value>
+  </data>
+  <data name="C_Rule_MoveDown" xml:space="preserve">
+    <value>下移</value>
+  </data>
+  <data name="C_Rule_WeightWatermark" xml:space="preserve">
+    <value>默认</value>
+  </data>
+  <data name="C_Rule_NoMembers" xml:space="preserve">
+    <value>没有可显示的成员</value>
+  </data>
+  <data name="C_Rule_NoProfile" xml:space="preserve">
+    <value>还没有选中编排名单</value>
+  </data>
+  <data name="C_Rule_Profile" xml:space="preserve">
+    <value>编排名单：{0}（{1} · {2}）</value>
+  </data>
+  <data name="C_Rule_NoProfile_D" xml:space="preserve">
+    <value>先在编排抽取总览里选一份名单</value>
+  </data>
+  <data name="C_Rule_NoMembers_D" xml:space="preserve">
+    <value>先在总览页同步来源名单，把成员导进来</value>
+  </data>
+  <data name="C_Rule_NoMatch_D" xml:space="preserve">
+    <value>没有匹配的成员，换个关键词试试</value>
+  </data>
+  <data name="C_Rule_ExcludeHint_D" xml:space="preserve">
+    <value>勾上的人整份名单都不参加抽取</value>
+  </data>
+  <data name="C_Rule_WeightHint_D" xml:space="preserve">
+    <value>这一轮的权重乘数，留空即公平权重</value>
+  </data>
+  <data name="C_Rule_DeferHint_D" xml:space="preserve">
+    <value>勾上的人这一轮排到最后，下一轮自动恢复</value>
+  </data>
+  <data name="C_Rule_OrderHint_D" xml:space="preserve">
+    <value>勾选加入队尾，用箭头调整先后，抽到谁谁离队</value>
+  </data>
+  <data name="C_Rule_GuaranteeHint_D" xml:space="preserve">
+    <value>勾上的人这一轮排在最前面</value>
+  </data>
+  <data name="C_Rule_ToggleExclude" xml:space="preserve">
+    <value>不参加</value>
+  </data>
+  <data name="C_Rule_ToggleDefer" xml:space="preserve">
+    <value>本轮延后</value>
+  </data>
+  <data name="C_Rule_ToggleOrder" xml:space="preserve">
+    <value>加入队列</value>
+  </data>
+  <data name="C_Rule_ToggleGuarantee" xml:space="preserve">
+    <value>本轮必中</value>
+  </data>
+  <data name="C_Rule_ExcludeNote" xml:space="preserve">
+    <value>已在排斥名单</value>
+  </data>
+  <data name="C_Rule_NotInQueue" xml:space="preserve">
+    <value>未加入队列</value>
+  </data>
+  <data name="C_Rule_NotGuaranteed" xml:space="preserve">
+    <value>未加入必中名单</value>
+  </data>
+  <data name="M_Rule_Shuffled" xml:space="preserve">
+    <value>已随机重排本轮队列</value>
+  </data>
+  <data name="M_Rule_OrderCopied" xml:space="preserve">
+    <value>已把本轮队列复制到其余 {0} 轮</value>
+  </data>
+  <data name="M_Rule_Cleared" xml:space="preserve">
+    <value>已清空「{0}」</value>
+  </data>
+  <data name="M_Rule_ConflictTitle" xml:space="preserve">
+    <value>会取消其他名单</value>
+  </data>
+  <data name="M_Rule_ConflictContent" xml:space="preserve">
+    <value>加入{0}会取消这个成员在{1}里的记录</value>
+  </data>
+  <data name="M_Rule_ConflictRound" xml:space="preserve">
+    <value>第 {0} 轮 {1}</value>
+  </data>
+  <data name="C_Rule_Continue" xml:space="preserve">
+    <value>继续</value>
+  </data>
+  <data name="M_Rule_ConflictSwitchTitle" xml:space="preserve">
+    <value>会关闭另一份名单</value>
+  </data>
+  <data name="M_Rule_ConflictSwitchContent" xml:space="preserve">
+    <value>开启{0}会关闭{1}</value>
+  </data>
+  <data name="C_Rule_ReplaceOrder" xml:space="preserve">
+    <value>替换队列</value>
+  </data>
+  <data name="M_Rule_ShuffleConflict" xml:space="preserve">
+    <value>随机顺序会重排队列，必中名单里的人会被移出</value>
+  </data>
+  <data name="M_Rule_CopyConflict" xml:space="preserve">
+    <value>复制队列会覆盖其他轮，并把这些轮必中名单里的人移出</value>
+  </data>
+  <data name="C_Rule_ConflictJoin" xml:space="preserve">
+    <value>、</value>
   </data>
 </root>

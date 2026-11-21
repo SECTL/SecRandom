@@ -61,7 +61,13 @@ public partial class LotteryDrawSettingsPage : UserControl
     public ObservableCollection<string> DefaultPoolOptions => DefaultPoolSource.Options;
     public IReadOnlyList<LotteryAlgorithmOption> Algorithms { get; } =
         LotteryAlgorithmRegistryService.RegisteredAlgorithms
-            .Select(x => new LotteryAlgorithmOption(x.Id, x.Name)).ToArray();
+            .Select(x => new LotteryAlgorithmOption(x.Id, x.Name))
+            .Append(OrchestratedOption)
+            .ToArray();
+
+    /// <summary>「编排抽取」不是注册的抽样算法，只是「抽取方式」里的第三个选项。</summary>
+    private static readonly LotteryAlgorithmOption OrchestratedOption =
+        new(DrawModeCatalog.OrchestratedOptionId, PickingResources.O_Orchestrated);
 
     /// <summary>
     ///     抽奖页的默认记录组：页面打开时选择器先落到这里，用户当场换组仍然只改界面状态、不写配置。
@@ -71,12 +77,27 @@ public partial class LotteryDrawSettingsPage : UserControl
 
     public LotteryAlgorithmOption? SelectedAlgorithm
     {
-        get => Algorithms.FirstOrDefault(x => string.Equals(x.Id, Settings.AlgorithmId, StringComparison.OrdinalIgnoreCase))
-               ?? Algorithms.FirstOrDefault();
+        get => DrawModeSelection.IsOrchestrated(Settings.DrawMode)
+            ? OrchestratedOption
+            : Algorithms.FirstOrDefault(x => string.Equals(x.Id, Settings.AlgorithmId, StringComparison.OrdinalIgnoreCase))
+              ?? Algorithms.FirstOrDefault();
         set
         {
-            if (value is null || string.Equals(Settings.AlgorithmId, value.Id, StringComparison.OrdinalIgnoreCase))
+            if (value is null)
                 return;
+
+            if (string.Equals(value.Id, DrawModeCatalog.OrchestratedOptionId, StringComparison.OrdinalIgnoreCase))
+            {
+                DrawModeSelection.SelectOrchestrated(Settings);
+                return;
+            }
+
+            if (string.Equals(Settings.AlgorithmId, value.Id, StringComparison.OrdinalIgnoreCase)
+                && !DrawModeSelection.IsOrchestrated(Settings.DrawMode))
+                return;
+
+            // 改回抽样算法：先把进入编排前的重复策略还回去，否则抽取端还以为这个通道在编排。
+            DrawModeSelection.LeaveOrchestrated(Settings);
             Settings.AlgorithmId = value.Id;
             if (string.Equals(value.Id, "builtin.inventory", StringComparison.OrdinalIgnoreCase))
                 Settings.DrawType = LotteryDrawType.Count;
@@ -145,6 +166,8 @@ public partial class LotteryDrawSettingsPage : UserControl
     {
         MusicLibrary.Refresh();
         RefreshHistoryGroupSelection();
+        ApplyDefaultPoolCardVisibility();
+        ApplyHistoryGroupCardVisibility();
         SubscribeSettings();
     }
 
@@ -165,6 +188,7 @@ public partial class LotteryDrawSettingsPage : UserControl
 
         HistoryGroup.Refresh();
         ApplyHistoryGroupSelection();
+        ApplyHistoryGroupCardVisibility();
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -177,6 +201,14 @@ public partial class LotteryDrawSettingsPage : UserControl
 
         if (e.PropertyName == nameof(LotterySettingsConfig.DefaultPool))
             DefaultPoolSource.Sync(DefaultPoolSelector);
+
+        // 抽取方式换了（含进出编排）：只有非编排时，记住的重复策略才跟着 DrawMode 走。
+        if (e.PropertyName == nameof(LotterySettingsConfig.DrawMode))
+            DrawModeSelection.SynchronizeRepeatPolicy(Settings);
+
+        // 「抽取模式」下拉框绑的是 SampledDrawMode：非编排时它才是真正生效的重复策略。
+        if (e.PropertyName == nameof(LotterySettingsConfig.SampledDrawMode))
+            DrawModeSelection.SetRepeatPolicy(Settings, Settings.SampledDrawMode);
 
         NormalizeDrawSettings();
         ConfigHandler.Save();
@@ -193,7 +225,12 @@ public partial class LotteryDrawSettingsPage : UserControl
     }
 
     /// <summary>重建默认奖池候选值，并把选中项落回配置（未配置过时落到第一份并写回）。</summary>
-    private void RefreshPrizeLists() => DefaultPoolSource.Refresh(DefaultPoolSelector);
+    private void RefreshPrizeLists()
+    {
+        DefaultPoolSource.Refresh(DefaultPoolSelector);
+        ApplyDefaultPoolCardVisibility();
+        ApplyHistoryGroupCardVisibility();
+    }
 
     private void DefaultPoolSelectorOnSelectionChanged(object? sender, SelectionChangedEventArgs e)
         => DefaultPoolSource.OnSelectionChanged(sender, e);
@@ -206,7 +243,14 @@ public partial class LotteryDrawSettingsPage : UserControl
         _normalizingSettings = true;
         try
         {
-            Settings.HalfRepeat = Settings.DrawMode switch
+            // 「抽取模式」下拉框绑的是 SampledDrawMode，每一项都必须是 0..2 的重复策略：
+            // 手改的配置、旧存档或控制面下发可能写成编排，三个选项的下拉框还会先把越界索引
+            // 压成 -1 再经 TwoWay 写回，所以任何非重复策略都要修回当前应显示的那一档。
+            var repeatPolicy = DrawModeSelection.ResolveRepeatPolicy(Settings);
+            Settings.SampledDrawMode = repeatPolicy;
+
+            // 半重复档位按「抽取模式」下拉框显示的那一档来夹：编排期间显示的是记住的重复策略。
+            Settings.HalfRepeat = repeatPolicy switch
             {
                 DrawMode.Repeat => 0,
                 DrawMode.NoRepeat => 1,
@@ -238,6 +282,20 @@ public partial class LotteryDrawSettingsPage : UserControl
         textBox.SelectionStart = caret;
         textBox.SelectionEnd = caret;
         textBox.Focus();
+    }
+
+    /// <summary>奖池可以全部删除：没有奖池时这张默认奖池卡没有可选项，整卡隐藏。</summary>
+    private void ApplyDefaultPoolCardVisibility()
+    {
+        if (this.FindControl<FluentAvalonia.UI.Controls.FASettingsExpander>("S_DefaultPool") is { } card)
+            card.IsVisible = DefaultPoolSource.HasRosters;
+    }
+
+    /// <summary>历史记录组总开关关闭时整卡隐藏：没有地方能解释一个不存在功能的选择器。</summary>
+    private void ApplyHistoryGroupCardVisibility()
+    {
+        if (this.FindControl<FluentAvalonia.UI.Controls.FASettingsExpander>("S_LotteryHistoryGroup") is { } card)
+            card.IsVisible = HistoryGroups.Enabled;
     }
 }
 

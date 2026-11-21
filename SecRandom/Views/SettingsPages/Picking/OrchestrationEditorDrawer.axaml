@@ -1,0 +1,76 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Picking"
+             xmlns:lp="clr-namespace:SecRandom.Langs.SettingsPages.Picking"
+             mc:Ignorable="d" d:DesignWidth="380" d:DesignHeight="600"
+             x:Class="SecRandom.Views.SettingsPages.Picking.OrchestrationEditorDrawer"
+             x:DataType="local:OrchestrationEditorDrawer"
+             Width="380">
+    <Grid RowDefinitions="Auto,*,Auto" Margin="16" RowSpacing="12">
+        <StackPanel Grid.Row="0" Spacing="4">
+            <TextBlock Theme="{StaticResource SubtitleTextBlockStyle}"
+                       Text="{Binding Title}"
+                       TextWrapping="Wrap" />
+
+            <TextBlock Classes="caption"
+                       Text="{x:Static lp:Resources.S_Orchestration_Profile_D}"
+                       TextWrapping="Wrap" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1">
+            <StackPanel Spacing="14">
+                <StackPanel Spacing="4">
+                    <TextBlock Classes="caption" Text="{x:Static lp:Resources.S_Orchestration_Name}" />
+                    <TextBox Text="{Binding ProfileName, Mode=TwoWay}" />
+                    <TextBlock Classes="caption"
+                               Text="{x:Static lp:Resources.S_Orchestration_Name_D}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Classes="caption" Text="{x:Static lp:Resources.S_Orchestration_Target}" />
+                    <ComboBox HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding TargetModes}"
+                              SelectedIndex="{Binding SelectedTargetIndex, Mode=TwoWay}" />
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Classes="caption" Text="{x:Static lp:Resources.S_Orchestration_Source}" />
+                    <ComboBox HorizontalAlignment="Stretch"
+                              ItemsSource="{Binding SourceLists}"
+                              SelectedItem="{Binding SelectedSourceList, Mode=TwoWay}" />
+                    <TextBlock Classes="caption"
+                               IsVisible="{Binding !HasAnySourceList}"
+                               Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                               Text="{x:Static lp:Resources.M_Orchestration_NoSource}"
+                               TextWrapping="Wrap" />
+                    <TextBlock Classes="caption"
+                               IsVisible="{Binding HasAnySourceList}"
+                               Text="{x:Static lp:Resources.S_Orchestration_Source_D}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+
+                <StackPanel Spacing="4">
+                    <TextBlock Classes="caption" Text="{x:Static lp:Resources.S_Orchestration_RoundCount}" />
+                    <NumericUpDown HorizontalAlignment="Stretch"
+                                   Minimum="1"
+                                   Maximum="10"
+                                   Increment="1"
+                                   Value="{Binding RoundCount, Mode=TwoWay}" />
+                    <TextBlock Classes="caption"
+                               Text="{x:Static lp:Resources.S_Orchestration_Round_D}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="{x:Static lp:Resources.C_Cancel}" Click="CancelButton_OnClick" />
+            <Button Classes="accent"
+                    Content="{Binding PrimaryButtonText}"
+                    Click="ConfirmButton_OnClick" />
+        </StackPanel>
+    </Grid>
+</UserControl>

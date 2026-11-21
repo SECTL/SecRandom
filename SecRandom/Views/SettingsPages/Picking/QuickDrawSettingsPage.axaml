@@ -22,7 +22,7 @@
                                    Description="{x:Static lp:Resources.S_DrawMode_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <ComboBox SelectedIndex="{Binding Settings.DrawMode}">
+                    <ComboBox SelectedIndex="{Binding Settings.SampledDrawMode}">
                         <ComboBoxItem Content="{x:Static lp:Resources.O_Repeat}" />
                         <ComboBoxItem Content="{x:Static lp:Resources.O_NoRepeat}" />
                         <ComboBoxItem Content="{x:Static lp:Resources.O_HalfRepeat}" />
@@ -33,14 +33,15 @@
             <fa:FASettingsExpander x:Name="S_HalfRepeat" Header="{x:Static lp:Resources.S_HalfRepeat}"
                                    Description="{x:Static lp:Resources.S_HalfRepeat_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi ClipboardBulletListFilled}}"
-                                   IsVisible="{Binding Settings.DrawMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:DrawMode.HalfRepeat}}">
+                                   IsVisible="{Binding Settings.SampledDrawMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:DrawMode.HalfRepeat}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.HalfRepeat}" Minimum="0" Maximum="100" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander x:Name="S_Algorithm" Header="{x:Static lp:Resources.S_QuickDrawAlgorithm}"
-                                   Description="{x:Static lp:Resources.S_QuickDrawAlgorithm_D}"
+            <!-- 抽取方式：随机抽取 / 公平抽取 / 编排抽取。编排不是重复策略，所以它在抽取方式里而不是抽取模式里 -->
+            <fa:FASettingsExpander x:Name="S_DrawType" Header="{x:Static lp:Resources.S_DrawType}"
+                                   Description="{x:Static lp:Resources.S_DrawType_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox ItemsSource="{Binding Algorithms}" SelectedItem="{Binding SelectedAlgorithm, Mode=TwoWay}"
@@ -50,6 +51,17 @@
                                 <TextBlock Text="{Binding Name}" />
                             </DataTemplate>
                         </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_FairDrawMode" Header="{x:Static lp:Resources.S_FairDrawMode}"
+                                   Description="{x:Static lp:Resources.S_FairDrawMode_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ClipboardBulletListFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding FairDrawModeIndex, Mode=TwoWay}" MinWidth="220">
+                        <ComboBoxItem Content="{x:Static lp:Resources.O_FairDrawModeUniform}" />
+                        <ComboBoxItem Content="{x:Static lp:Resources.O_FairDrawModeRandom}" />
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
@@ -83,24 +95,16 @@
             </fa:FASettingsExpander>
 
             <!-- 闪抽没有自己的记录组选择器，所以这里选定的组就是它的默认值：锁定后权重只读该组历史，
-                 写出的记录也只进该组。选「默认记录组」表示只算未分组的记录；总开关关闭时不显示选择器，
-                 改为说明为什么不可用。 -->
+                 写出的记录也只进该组。选「默认记录组」表示只算未分组的记录；总开关关闭时整张卡隐藏。 -->
             <fa:FASettingsExpander x:Name="S_QuickDrawHistoryGroup"
                                    Header="{x:Static lp:Resources.S_QuickDrawHistoryGroup}"
                                    Description="{x:Static lp:Resources.S_QuickDrawHistoryGroup_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <StackPanel Spacing="4" HorizontalAlignment="Right">
-                        <ComboBox x:Name="HistoryGroupSelector"
-                                  MinWidth="220"
-                                  IsVisible="{Binding HistoryGroup.IsSelectorVisible}"
-                                  ItemsSource="{Binding HistoryGroup.Options}"
-                                  SelectionChanged="HistoryGroupSelectorOnSelectionChanged" />
-                        <TextBlock Text="{x:Static lp:Resources.S_HistoryGroup_Disabled}"
-                                   IsVisible="{Binding !HistoryGroup.IsSelectorVisible}"
-                                   Opacity="0.72" FontSize="12" TextWrapping="Wrap"
-                                   HorizontalAlignment="Right" TextAlignment="Right" MaxWidth="320" />
-                    </StackPanel>
+                    <ComboBox x:Name="HistoryGroupSelector"
+                              MinWidth="220"
+                              ItemsSource="{Binding HistoryGroup.Options}"
+                              SelectionChanged="HistoryGroupSelectorOnSelectionChanged" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

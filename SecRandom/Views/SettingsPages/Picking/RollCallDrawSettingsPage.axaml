@@ -22,7 +22,7 @@
                                    Description="{x:Static lp:Resources.S_DrawMode_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <ComboBox SelectedIndex="{Binding Settings.DrawMode}">
+                    <ComboBox SelectedIndex="{Binding Settings.SampledDrawMode}">
                         <ComboBoxItem Content="{x:Static lp:Resources.O_Repeat}" />
                         <ComboBoxItem Content="{x:Static lp:Resources.O_NoRepeat}" />
                         <ComboBoxItem Content="{x:Static lp:Resources.O_HalfRepeat}" />
@@ -33,7 +33,7 @@
             <fa:FASettingsExpander x:Name="S_HalfRepeat" Header="{x:Static lp:Resources.S_HalfRepeat}"
                                    Description="{x:Static lp:Resources.S_HalfRepeat_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi ClipboardBulletListFilled}}"
-                                   IsVisible="{Binding Settings.DrawMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:DrawMode.HalfRepeat}}">
+                                   IsVisible="{Binding Settings.SampledDrawMode, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static enums:DrawMode.HalfRepeat}}">
                 <fa:FASettingsExpander.Footer>
                     <NumericUpDown Value="{Binding Settings.HalfRepeat}" Minimum="0" Maximum="100" />
                 </fa:FASettingsExpander.Footer>
@@ -54,6 +54,17 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_FairDrawMode" Header="{x:Static lp:Resources.S_FairDrawMode}"
+                                   Description="{x:Static lp:Resources.S_FairDrawMode_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ClipboardBulletListFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding FairDrawModeIndex, Mode=TwoWay}" MinWidth="220">
+                        <ComboBoxItem Content="{x:Static lp:Resources.O_FairDrawModeUniform}" />
+                        <ComboBoxItem Content="{x:Static lp:Resources.O_FairDrawModeRandom}" />
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_DefaultClass" Header="{x:Static lp:Resources.S_DefaultClass}"
                                    Description="{x:Static lp:Resources.S_DefaultClass_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PeopleListFilled}}">
@@ -65,23 +76,16 @@
             </fa:FASettingsExpander>
 
             <!-- 默认记录组：点名页打开时选择器先落到这里，用户当场换组仍然是纯界面状态、不写配置。
-                 选「默认记录组」表示只算未分组的记录；总开关关闭时不显示选择器，改为说明为什么不可用。 -->
+                 选「默认记录组」表示只算未分组的记录；总开关关闭时整张卡隐藏。 -->
             <fa:FASettingsExpander x:Name="S_RollCallHistoryGroup"
                                    Header="{x:Static lp:Resources.S_RollCallHistoryGroup}"
                                    Description="{x:Static lp:Resources.S_RollCallHistoryGroup_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <StackPanel Spacing="4" HorizontalAlignment="Right">
-                        <ComboBox x:Name="HistoryGroupSelector"
-                                  MinWidth="220"
-                                  IsVisible="{Binding HistoryGroup.IsSelectorVisible}"
-                                  ItemsSource="{Binding HistoryGroup.Options}"
-                                  SelectionChanged="HistoryGroupSelectorOnSelectionChanged" />
-                        <TextBlock Text="{x:Static lp:Resources.S_HistoryGroup_Disabled}"
-                                   IsVisible="{Binding !HistoryGroup.IsSelectorVisible}"
-                                   Opacity="0.72" FontSize="12" TextWrapping="Wrap"
-                                   HorizontalAlignment="Right" TextAlignment="Right" MaxWidth="320" />
-                    </StackPanel>
+                    <ComboBox x:Name="HistoryGroupSelector"
+                              MinWidth="220"
+                              ItemsSource="{Binding HistoryGroup.Options}"
+                              SelectionChanged="HistoryGroupSelectorOnSelectionChanged" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

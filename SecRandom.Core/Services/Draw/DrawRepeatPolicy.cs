@@ -9,6 +9,9 @@ public static class DrawRepeatPolicy
         DrawMode.Repeat => 0,
         DrawMode.NoRepeat => 1,
         DrawMode.HalfRepeat => Math.Max(1, halfRepeat),
+        // Orchestration replaces the repeat limit: who participates, and how often, is already decided by the
+        // schedule, so no history-driven limit may silently drop a participant the teacher arranged.
+        DrawMode.Orchestrated => 0,
         _ => 1
     };
 

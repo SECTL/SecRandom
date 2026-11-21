@@ -4,6 +4,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Profiles;
 using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Shared.Models.Profile;
 
@@ -14,7 +15,8 @@ internal sealed class RollCallSession(
     IProfileService profileService,
     IDrawTemporaryRecordService temporaryRecordService,
     IDrawCommitService drawCommitService,
-    DrawEngine drawEngine) : IRollCallSession
+    DrawEngine drawEngine,
+    IHistoryGroupCatalog historyGroupCatalog) : IRollCallSession
 {
     /// <summary>简洁模式下隐藏的点名抽取设置按默认值读取。</summary>
     private RollCallSettingsConfig Settings => configHandler.Data.SimpleModeEnabled
@@ -55,8 +57,29 @@ internal sealed class RollCallSession(
             1,
             GetListName(),
             DrawMethod: (int)drawType,
-            Weights: weights));
+            Weights: weights,
+            RecordGroup: ResolveRecordGroup()));
         return output;
+    }
+
+    /// <summary>
+    ///     这条历史记录该盖的组标记。移动端点名没有组选择器，读取范围永远是「全部历史」，但写入必须落在
+    ///     本通道自己配置的默认记录组上——否则点名、闪抽、抽奖的记录会一起挤进默认组（见
+    ///     <see cref="HistoryGroupScope.ResolveRecordGroup" />）。
+    /// </summary>
+    private string ResolveRecordGroup()
+    {
+        IReadOnlyList<string>? names = null;
+        try
+        {
+            names = historyGroupCatalog.GetGroupNames(HistoryGroupKind.RollCall);
+        }
+        catch (Exception)
+        {
+            // 组目录只是书签：读不到就只影响「组名是否还存在」的判断，不能让一次抽取因此失败。
+        }
+
+        return HistoryGroupScope.ResolveRecordGroup(Settings.HistoryGroup, names);
     }
 
     private string GetListName() => profileService.StudentListConfig?.Name ?? "default";

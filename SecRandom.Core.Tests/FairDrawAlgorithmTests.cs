@@ -366,6 +366,165 @@ public sealed class FairDrawAlgorithmTests
         Assert.Equal(0, audit.RootElement.GetProperty("internalExcludedCandidateCount").GetInt32());
     }
 
+    [Fact]
+    public void RandomFirst_ZeroesAboveThresholdWeightsWithoutHardGate()
+    {
+        var low = new Student { Name = "Low", RecordId = Guid.NewGuid() };
+        var average = new Student { Name = "Average", RecordId = Guid.NewGuid() };
+        var high = new Student { Name = "High", RecordId = Guid.NewGuid() };
+        var history = new StudentHistory
+        {
+            Students =
+            {
+                [low.RecordId.ToString("D")] = new History { TotalCount = 0 },
+                [average.RecordId.ToString("D")] = new History { TotalCount = 2 },
+                [high.RecordId.ToString("D")] = new History { TotalCount = 4 }
+            }
+        };
+        var config = CreateConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = true,
+            FairDrawGroup = false,
+            FairDrawGender = false,
+            FairDrawTime = false,
+            ColdStartEnabled = false,
+            Mode = FairDrawMode.RandomFirst
+        });
+        var students = new List<Student> { low, average, high };
+
+        using var host = CreateHost(config, new TestProfileService(history, new StudentList { Students = new ObservableCollection<Student>(students) }));
+        var engine = CreateEngine(host);
+
+        var weights = engine.CalculateStudentWeight(students);
+        Assert.Equal(1.0, weights.Single(candidate => candidate.Candidate == low).Weight, 6);
+        Assert.Equal(0.0, weights.Single(candidate => candidate.Candidate == average).Weight);
+        Assert.Equal(0.0, weights.Single(candidate => candidate.Candidate == high).Weight);
+
+        var input = engine.CreateStudentVerificationInput(1, students, DrawSettingsType.RollCall);
+        using var audit = JsonDocument.Parse(input.AuditPayload);
+        var fairness = audit.RootElement.GetProperty("fairness");
+
+        Assert.False(fairness.GetProperty("averageGapProtectionApplied").GetBoolean());
+        Assert.Equal(3, fairness.GetProperty("candidateCountAfterAverageGapProtection").GetInt32());
+
+        // Random-first keeps the whole roster in the verification payload; the ceiling shows up as exact
+        // zero weights instead of a shorter candidate list, which is what "no hard average gate" means.
+        Assert.Equal(3, input.Candidates.Count);
+        Assert.Single(input.Candidates.Where(candidate => candidate.WeightMicros > 0));
+        Assert.Equal(0, input.Candidates.Single(candidate => candidate.RecordId == high.RecordId).WeightMicros);
+        Assert.Equal(0, input.Candidates.Single(candidate => candidate.RecordId == average.RecordId).WeightMicros);
+    }
+
+    [Fact]
+    public void RandomFirst_RelaxesThresholdToKeepRequiredCountDrawable()
+    {
+        var zero = new Student { Name = "Zero", RecordId = Guid.NewGuid() };
+        var first = new Student { Name = "First", RecordId = Guid.NewGuid() };
+        var second = new Student { Name = "Second", RecordId = Guid.NewGuid() };
+        var third = new Student { Name = "Third", RecordId = Guid.NewGuid() };
+        var history = new StudentHistory
+        {
+            Students =
+            {
+                [zero.RecordId.ToString("D")] = new History { TotalCount = 0 },
+                [first.RecordId.ToString("D")] = new History { TotalCount = 10 },
+                [second.RecordId.ToString("D")] = new History { TotalCount = 10 },
+                [third.RecordId.ToString("D")] = new History { TotalCount = 10 }
+            }
+        };
+        var config = CreateConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = true,
+            FairDrawGroup = false,
+            FairDrawGender = false,
+            FairDrawTime = false,
+            ColdStartEnabled = false,
+            Mode = FairDrawMode.RandomFirst
+        });
+        var students = new List<Student> { zero, first, second, third };
+
+        using var host = CreateHost(config, new TestProfileService(history, new StudentList { Students = new ObservableCollection<Student>(students) }));
+        var engine = CreateEngine(host);
+
+        var input = engine.CreateStudentVerificationInput(2, students, DrawSettingsType.RollCall);
+        var local = engine.DrawPreparedStudents(2, students, DrawSettingsType.RollCall);
+
+        // The minimum is 0, so the ceiling is 2: only the zero-count member is drawable at first. Asking
+        // for two members relaxes the ceiling to 11, which pulls every tied 10-count member back in.
+        Assert.Equal(4, input.Candidates.Count);
+        Assert.True(local.IsSuccess);
+        Assert.Equal(2, local.Result.Count);
+    }
+
+    /// <summary>
+    ///     Both modes run the same tiering formula; the mode only decides which pool it measures and how many
+    ///     candidates must stay drawable. Uniform-first measures the gated pool, random-first measures the whole
+    ///     roster and lets the above-average members fall to exactly zero.
+    /// </summary>
+    [Fact]
+    public void UnifiedWeights_ShareTheSameTierFormulaAcrossModes()
+    {
+        var zero = new Student { Name = "Zero", RecordId = Guid.NewGuid() };
+        var first = new Student { Name = "First", RecordId = Guid.NewGuid() };
+        var second = new Student { Name = "Second", RecordId = Guid.NewGuid() };
+        var third = new Student { Name = "Third", RecordId = Guid.NewGuid() };
+        var history = new StudentHistory
+        {
+            Students =
+            {
+                [zero.RecordId.ToString("D")] = new History { TotalCount = 0 },
+                [first.RecordId.ToString("D")] = new History { TotalCount = 1 },
+                [second.RecordId.ToString("D")] = new History { TotalCount = 2 },
+                [third.RecordId.ToString("D")] = new History { TotalCount = 3 }
+            }
+        };
+        var students = new List<Student> { zero, first, second, third };
+
+        var randomConfig = CreateConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = true,
+            FairDrawGroup = false,
+            FairDrawGender = false,
+            FairDrawTime = false,
+            ColdStartEnabled = false,
+            Mode = FairDrawMode.RandomFirst
+        });
+        using (var randomHost = CreateHost(randomConfig, new TestProfileService(history, new StudentList { Students = new ObservableCollection<Student>(students) })))
+        {
+            var randomEngine = CreateEngine(randomHost);
+            var randomWeights = randomEngine.CalculateStudentWeight(students);
+
+            // While somebody is still at zero the lead cap is one, so only the never-drawn member is drawable.
+            Assert.Equal(1.0, randomWeights.Single(candidate => candidate.Candidate == zero).Weight, 6);
+            Assert.Equal(0.0, randomWeights.Single(candidate => candidate.Candidate == first).Weight);
+            Assert.Equal(0.0, randomWeights.Single(candidate => candidate.Candidate == second).Weight);
+            Assert.Equal(0.0, randomWeights.Single(candidate => candidate.Candidate == third).Weight);
+        }
+
+        var uniformConfig = CreateConfig(new FairDrawSettingsConfig
+        {
+            FairDraw = true,
+            FairDrawGroup = false,
+            FairDrawGender = false,
+            FairDrawTime = false,
+            ColdStartEnabled = false,
+            Mode = FairDrawMode.UniformFirst
+        });
+        using (var uniformHost = CreateHost(uniformConfig, new TestProfileService(history, new StudentList { Students = new ObservableCollection<Student>(students) })))
+        {
+            var uniformEngine = CreateEngine(uniformHost);
+
+            var gated = uniformEngine.CreateStudentVerificationInput(1, students, DrawSettingsType.RollCall);
+            Assert.Equal(2, gated.Candidates.Count);
+            Assert.DoesNotContain(gated.Candidates, candidate => candidate.RecordId == second.RecordId);
+
+            var pool = new List<Student> { zero, first };
+            var uniformWeights = uniformEngine.CalculateStudentWeight(pool);
+            Assert.Equal(0.666667, uniformWeights.Single(candidate => candidate.Candidate == zero).Weight, 6);
+            Assert.Equal(0.333333, uniformWeights.Single(candidate => candidate.Candidate == first).Weight, 6);
+        }
+    }
+
     private static MainConfigModel CreateConfig(FairDrawSettingsConfig fairSettings)
     {
         return new MainConfigModel

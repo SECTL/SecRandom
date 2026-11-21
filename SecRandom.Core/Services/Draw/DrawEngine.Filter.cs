@@ -85,9 +85,13 @@ public partial class DrawEngine
         if (drawCount > filteredList.Count)
             throw new RepeatLimitExhaustedException();
 
-        // Average-gap protection is intentionally mandatory for fair draws. It is
-        // the hard candidate gate; the fair algorithm only ranks this pool later.
+        // Average-gap protection is the hard candidate gate of the UniformFirst fair mode; the fair algorithm
+        // only ranks that pool later. RandomFirst keeps the whole roster and moves the exclusion into the
+        // weight layer as an exact zero, so its pool must not be narrowed here.
         if (executionPolicy.DrawType != DrawType.Fair)
+            return filteredList;
+
+        if (executionPolicy.FairDrawSettings.Mode == FairDrawMode.RandomFirst)
             return filteredList;
 
         var countByStudent = filteredList.ToDictionary(
