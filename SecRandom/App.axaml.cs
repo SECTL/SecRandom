@@ -86,6 +86,7 @@ using SecRandom.Services.Profiles;
 using SecRandom.Services.RosterTransfer;
 using SecRandom.Services.Ipc;
 using SecRandom.Services.ImportExport;
+using SecRandom.Services.Integration;
 using SecRandom.Services.FirstRun;
 using SecRandom.Services.Feedback;
 using SecRandom.Services.Linkage;
@@ -145,6 +146,14 @@ public partial class App : Application
 {
     private static FloatingWindow? _floatingWindow;
     private static FloatingWindow? _secondaryFloatingWindow;
+    /// <summary>一扇窗藏起来去同步另一扇时的重入闸，避免两窗互相触发。</summary>
+    private static bool _syncingFloatingWindowVisibility;
+
+    /// <summary>快选（长按闪抽）进行时被临时让位的另一侧悬浮窗，结束后按原意还原。</summary>
+    private static readonly List<FloatingWindow> _quickPickSuppressedWindows = [];
+    private static readonly HashSet<string> _integrationLinkageLeases = new(StringComparer.Ordinal);
+    private static readonly List<FloatingWindow> _integrationSuppressedWindows = [];
+    private static bool _floatingWindowsSuppressedForQuickPick;
     private static Window? _quickDrawWindow;
     private static NotificationChannelSettings? _quickDrawNotificationSettings;
     private static bool _positioningQuickDrawWindow;
@@ -193,6 +202,31 @@ public partial class App : Application
         }
 
         throw new InvalidOperationException("No active application TopLevel is available.");
+    }
+
+    internal async Task<bool?> ConfirmIntegrationChannelAsync(IntegrationChannel channel)
+    {
+        var root = _settingsWindow as TopLevel ?? _mainWindow as TopLevel ?? _floatingWindow as TopLevel;
+        if (root is null)
+            return null;
+
+        var resources = Langs.SettingsPages.Linkage.Resources.ResourceManager;
+        var culture = Langs.SettingsPages.Linkage.Resources.Culture;
+        var content = string.Format(
+            System.Globalization.CultureInfo.CurrentCulture,
+            resources.GetString("M_IntegrationApprovalContent", culture)
+                ?? "Allow {0} ({1}) to receive draw results?",
+            channel.DisplayName,
+            channel.AppId);
+        var result = await new FAContentDialog
+        {
+            Title = resources.GetString("M_IntegrationApprovalTitle", culture) ?? "Save integration channel",
+            Content = content,
+            PrimaryButtonText = resources.GetString("C_Confirm", culture) ?? "Confirm",
+            CloseButtonText = resources.GetString("C_Cancel", culture) ?? "Cancel",
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(root);
+        return result == FAContentDialogResult.Primary;
     }
 
     public event EventHandler? AppStarted;
@@ -774,6 +808,59 @@ public partial class App : Application
     {
         foreach (var window in FloatingWindows())
             window.Hide();
+    }
+
+    /// <summary>由已验证的 SDK 联动租约调用：暂时隐藏当前可见的悬浮窗。</summary>
+    public static void AcquireIntegrationLinkage(string leaseId)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!_integrationLinkageLeases.Add(leaseId) || _integrationLinkageLeases.Count != 1)
+                return;
+
+            _integrationSuppressedWindows.Clear();
+            _syncingFloatingWindowVisibility = true;
+            try
+            {
+                foreach (var window in FloatingWindows())
+                {
+                    if (!window.IsVisible)
+                        continue;
+                    _integrationSuppressedWindows.Add(window);
+                    window.Hide();
+                }
+            }
+            finally
+            {
+                _syncingFloatingWindowVisibility = false;
+            }
+        });
+    }
+
+    /// <summary>释放联动租约；所有租约结束后按联动开始前的状态恢复悬浮窗。</summary>
+    public static void ReleaseIntegrationLinkage(string leaseId)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!_integrationLinkageLeases.Remove(leaseId) || _integrationLinkageLeases.Count != 0)
+                return;
+
+            var restore = _integrationSuppressedWindows.ToArray();
+            _integrationSuppressedWindows.Clear();
+            _syncingFloatingWindowVisibility = true;
+            try
+            {
+                foreach (var window in restore)
+                {
+                    if (!window.IsVisible && window.UserWantsVisible && !window.IsHiddenByCourseLinkage)
+                        RestoreWithoutActivating(window);
+                }
+            }
+            finally
+            {
+                _syncingFloatingWindowVisibility = false;
+            }
+        });
     }
 
     /// <summary>
@@ -1812,6 +1899,11 @@ public partial class App : Application
                     // 插件扩展点（第二批）：事件总线 / UI 线程 / 私有存储 / 名单查询 / 忙碌指示 /
                     // 抽签流水线 / 主题色板 / 通知与对话框 / 窗口 / 弹层 / 本地化 / 能力与权限 / 诊断
                     services.AddSingleton<IPluginEventBus, PluginEventBus>();
+                    if (!isMobile)
+                    {
+                        services.AddSingleton<IntegrationChannelService>();
+                        services.AddHostedService(provider => provider.GetRequiredService<IntegrationChannelService>());
+                    }
                     services.AddSingleton<IUiScheduler, UiScheduler>();
                     services.AddSingleton<IPluginStorageFactory>(_ =>
                         new PluginStorageFactory(PluginManager.PluginConfigsDirectory));
