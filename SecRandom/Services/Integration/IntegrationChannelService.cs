@@ -13,6 +13,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Shared.Models.Profile;
 using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Shared;
+using SecRandom.Services.Draw;
 
 namespace SecRandom.Services.Integration;
 
@@ -24,7 +25,7 @@ public sealed class IntegrationChannelService(
     IPluginEventBus eventBus,
     ILogger<IntegrationChannelService> logger) : IHostedService, IDisposable
 {
-    private const string OfficialPackageId = "SecRandom.Integration.Client";
+    internal const string OfficialPackageId = "SecRandom.Integration.Client";
     private const string AppId = "secrandom.app";
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private readonly object _gate = new();
@@ -255,6 +256,10 @@ public sealed class IntegrationChannelService(
 
     private async Task ForwardDrawCompletedAsync(HostEvents.DrawCompleted completed)
     {
+        if (string.Equals(completed.ListName, RollCallDrawService.NumberListName, StringComparison.Ordinal)
+            || string.Equals(completed.PrizeListName, LotteryDrawService.NumberPrizePoolName, StringComparison.Ordinal))
+            return;
+
         IntegrationChannel[] channels;
         lock (_gate) channels = _channels.Values.ToArray();
         var members = completed.Channel == DrawPresentationChannel.Lottery
@@ -383,9 +388,11 @@ public sealed class IntegrationChannelService(
         return false;
     }
 
-    private static bool VerifyProof(OfficialSdkProof proof, string? publicKey)
+    internal static bool VerifyProof(OfficialSdkProof proof, string? publicKey)
     {
-        if (string.IsNullOrWhiteSpace(publicKey) || proof.AssemblySha256.Length != 64 ||
+        if (proof.PackageId != OfficialPackageId || string.IsNullOrWhiteSpace(proof.SdkVersion)
+            || string.IsNullOrWhiteSpace(proof.AssemblySha256) || string.IsNullOrWhiteSpace(proof.Signature)
+            || string.IsNullOrWhiteSpace(publicKey) || proof.AssemblySha256.Length != 64 ||
             proof.AssemblySha256.Any(x => !Uri.IsHexDigit(x))) return false;
         var canonical = $"secrandom.integration-sdk/v1\n{proof.PackageId}\n{proof.SdkVersion}\n{proof.AssemblySha256.ToLowerInvariant()}";
         try
