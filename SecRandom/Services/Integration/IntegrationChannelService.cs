@@ -9,6 +9,7 @@ using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction.Services.Messaging;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Shared.Models.Profile;
 using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Shared;
@@ -265,7 +266,12 @@ public sealed class IntegrationChannelService(
         {
             round_id = completed.RoundId,
             roster_id = completed.Channel == DrawPresentationChannel.Lottery ? completed.PrizeListName : completed.ListName,
-            mode = (int?)null,
+            mode = completed.DrawType switch
+            {
+                DrawType.Random => 0,
+                DrawType.Fair => 1,
+                _ => (int?)null
+            },
             members,
             at = new DateTimeOffset(completed.DrawTime).ToUniversalTime(),
             idempotency_key = completed.RoundId,

@@ -146,14 +146,8 @@ public partial class App : Application
 {
     private static FloatingWindow? _floatingWindow;
     private static FloatingWindow? _secondaryFloatingWindow;
-    /// <summary>一扇窗藏起来去同步另一扇时的重入闸，避免两窗互相触发。</summary>
-    private static bool _syncingFloatingWindowVisibility;
-
-    /// <summary>快选（长按闪抽）进行时被临时让位的另一侧悬浮窗，结束后按原意还原。</summary>
-    private static readonly List<FloatingWindow> _quickPickSuppressedWindows = [];
     private static readonly HashSet<string> _integrationLinkageLeases = new(StringComparer.Ordinal);
     private static readonly List<FloatingWindow> _integrationSuppressedWindows = [];
-    private static bool _floatingWindowsSuppressedForQuickPick;
     private static Window? _quickDrawWindow;
     private static NotificationChannelSettings? _quickDrawNotificationSettings;
     private static bool _positioningQuickDrawWindow;
@@ -819,20 +813,12 @@ public partial class App : Application
                 return;
 
             _integrationSuppressedWindows.Clear();
-            _syncingFloatingWindowVisibility = true;
-            try
+            foreach (var window in FloatingWindows())
             {
-                foreach (var window in FloatingWindows())
-                {
-                    if (!window.IsVisible)
-                        continue;
-                    _integrationSuppressedWindows.Add(window);
-                    window.Hide();
-                }
-            }
-            finally
-            {
-                _syncingFloatingWindowVisibility = false;
+                if (!window.IsVisible)
+                    continue;
+                _integrationSuppressedWindows.Add(window);
+                window.Hide();
             }
         });
     }
@@ -847,18 +833,10 @@ public partial class App : Application
 
             var restore = _integrationSuppressedWindows.ToArray();
             _integrationSuppressedWindows.Clear();
-            _syncingFloatingWindowVisibility = true;
-            try
+            foreach (var window in restore)
             {
-                foreach (var window in restore)
-                {
-                    if (!window.IsVisible && window.UserWantsVisible && !window.IsHiddenByCourseLinkage)
-                        RestoreWithoutActivating(window);
-                }
-            }
-            finally
-            {
-                _syncingFloatingWindowVisibility = false;
+                if (!window.IsVisible && window.UserWantsVisible && !window.IsHiddenByCourseLinkage)
+                    RestoreWithoutActivating(window);
             }
         });
     }

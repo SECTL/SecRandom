@@ -1,5 +1,6 @@
 using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Core.Abstraction.Services.Theming;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Abstraction.Services.Messaging;
@@ -39,7 +40,10 @@ public static class HostEvents
         string PrizeListName,
         string RoundId,
         DateTime DrawTime,
-        int RequestedCount);
+        int RequestedCount)
+    {
+        public DrawType? DrawType { get; init; }
+    }
 
     /// <summary>插件加载完成。</summary>
     public sealed record PluginLoaded(string PluginId, string Name, string Version);
