@@ -262,7 +262,7 @@ static class AuditRunner
     }
 
     /// <summary>
-    ///     Replays the production prize path over a frozen <see cref="DrawEngine.CreatePrizeVerificationInput(int, IReadOnlyDictionary{string, int}, bool, string)"/>
+    ///     Replays the production prize path over a frozen <see cref="DrawEngine.CreatePrizeVerificationInput(int, IReadOnlyDictionary{string, int}, string?, string)"/>
     ///     request with an empty temporary-record set (no per-round inventory carried over).
     /// </summary>
     private static AuditSummary SimulatePrizes(
@@ -335,7 +335,7 @@ static class AuditRunner
     {
         try
         {
-            return engine.CreatePrizeVerificationInput(1, temporaryCounts, includeInternalRules: true);
+            return engine.CreatePrizeVerificationInput(1, temporaryCounts);
         }
         catch (NoEligibleCandidatesException exception)
         {
