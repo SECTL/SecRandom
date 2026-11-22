@@ -14,5 +14,11 @@ public enum VerificationSamplingMode : byte
     ///     in the round's arranged order in the weight slot (<c>1..count</c>, dense and unique), the replay
     ///     returns exactly those candidates in exactly that order and consumes no random material.
     /// </summary>
-    SequentialOrder = 4
+    SequentialOrder = 4,
+
+    /// <summary>
+    ///     Samples groups uniformly without replacement, then samples one member uniformly from each selected group.
+    ///     For this mode <see cref="VerificationCandidate.OccurrenceIndex"/> is a per-proof anonymous group bucket.
+    /// </summary>
+    GroupUniform = 5
 }

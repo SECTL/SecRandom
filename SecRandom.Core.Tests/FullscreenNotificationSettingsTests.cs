@@ -11,8 +11,7 @@ namespace SecRandom.Core.Tests;
 ///     全屏通知渠道设置的默认值与夹取规则。
 /// </summary>
 /// <remarks>
-///     这些默认值直接决定教师第一次打开渠道时看到的画面：文案只服务打字机、背景跟随主题、
-///     不透明度 100%。默认值被改掉不会报错，只会在真实课堂上"看起来不对"，所以钉在这里。
+///     这些默认值直接决定教师第一次打开渠道时看到的画面：文案只服务打字机，背景默认跟随主题。
 /// </remarks>
 public class FullscreenNotificationSettingsTests
 {
@@ -72,17 +71,6 @@ public class FullscreenNotificationSettingsTests
     }
 
     [Theory]
-    [InlineData(-4, FullscreenNotificationSettings.MinBackgroundBlurRadius)]
-    [InlineData(24, 24)]
-    [InlineData(400, FullscreenNotificationSettings.MaxBackgroundBlurRadius)]
-    public void EffectiveBackgroundBlurRadius_ClampsToRange(int configured, int expected)
-    {
-        var settings = new FullscreenNotificationSettings { BackgroundBlurRadius = configured };
-
-        Assert.Equal(expected, settings.EffectiveBackgroundBlurRadius);
-    }
-
-    [Theory]
     [InlineData(-90, FullscreenNotificationSettings.MinBackgroundGradientAngle)]
     [InlineData(135, FullscreenNotificationSettings.DefaultBackgroundGradientAngle)]
     [InlineData(720, FullscreenNotificationSettings.MaxBackgroundGradientAngle)]
@@ -94,7 +82,7 @@ public class FullscreenNotificationSettingsTests
     }
 
     /// <summary>
-    ///     默认必须落到"跟随主题"：这是唯一不依赖用户文件、也不会把窗口画成透明的模式。
+    ///     默认跟随应用主题，不依赖用户图片文件。
     /// </summary>
     [Fact]
     public void ResolveBackgroundAppearance_DefaultsToTheme()
@@ -170,15 +158,18 @@ public class FullscreenNotificationSettingsTests
     /// <summary>
     ///     从 settings.json 手工改出来的越界值不能把整屏画歪：一次 Normalize 全部夹回去。
     /// </summary>
-    [Fact]
-    public void NormalizeBackground_ClampsOutOfRangeValues()
+    [Theory]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(42)]
+    public void NormalizeBackground_ClampsOutOfRangeValues(int stored)
     {
         var settings = new FullscreenNotificationSettings
         {
-            BackgroundMode = (FullscreenBackgroundMode)42,
+            BackgroundMode = (FullscreenBackgroundMode)stored,
             BackgroundGradientAngle = -30,
-            BackgroundBlurRadius = 999,
             BackgroundOpacity = -5,
+            ThemeBackgroundOpacity = 105,
             BackgroundImage = "  classroom.png  "
         };
 
@@ -186,9 +177,21 @@ public class FullscreenNotificationSettingsTests
 
         Assert.Equal(FullscreenBackgroundMode.Theme, settings.BackgroundMode);
         Assert.Equal(FullscreenNotificationSettings.MinBackgroundGradientAngle, settings.BackgroundGradientAngle);
-        Assert.Equal(FullscreenNotificationSettings.MaxBackgroundBlurRadius, settings.BackgroundBlurRadius);
         Assert.Equal(0, settings.BackgroundOpacity);
+        Assert.Equal(100, settings.ThemeBackgroundOpacity);
         Assert.Equal("classroom.png", settings.BackgroundImage);
+    }
+
+    [Fact]
+    public void LegacyImageOpacityDoesNotChangeOtherModes()
+    {
+        const string json = """{"background_mode":3,"background_opacity":40}""";
+        var settings = JsonSerializer.Deserialize<FullscreenNotificationSettings>(json, ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(settings);
+        Assert.Equal(FullscreenBackgroundMode.Image, settings.BackgroundMode);
+        Assert.Equal(40, settings.BackgroundOpacity);
+        Assert.Equal(100, settings.ThemeBackgroundOpacity);
     }
 
     /// <summary>

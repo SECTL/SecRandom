@@ -65,9 +65,9 @@ public sealed class ProfileCatalogManagerTests : IDisposable
     [InlineData("COM10")]
     public void ProfilePaths_PreserveNormalNames(string name)
     {
-        Assert.Equal(Utils.GetFilePath("list", "roll_call_list", $"{name}.json"), new StudentList(name).ConfigFilePath);
+        Assert.Equal(Utils.GetFilePath("list", "roll_call.srl"), new StudentList(name).ConfigFilePath);
         Assert.Equal(Utils.GetFilePath("history", "roll_call_history", $"{name}.json"), new StudentHistory(name).ConfigFilePath);
-        Assert.Equal(Utils.GetFilePath("list", "lottery_list", $"{name}.json"), new PrizeList(name).ConfigFilePath);
+        Assert.Equal(Utils.GetFilePath("list", "lottery.srl"), new PrizeList(name).ConfigFilePath);
         Assert.Equal(Utils.GetFilePath("history", "lottery_history", $"{name}.json"), new PrizeHistory(name).ConfigFilePath);
         Assert.Equal(string.Empty, new StudentList().Name);
         Assert.Equal(string.Empty, new PrizeList().Name);
@@ -83,16 +83,16 @@ public sealed class ProfileCatalogManagerTests : IDisposable
         var profile = provider.GetRequiredService<IProfileService>();
         var studentPath = profile.CurrentStudentList!.ConfigFilePath;
         var prizePath = profile.CurrentPrizeList!.ConfigFilePath;
-        var studentBefore = File.ReadAllText(studentPath);
-        var prizeBefore = File.ReadAllText(prizePath);
+        var studentBefore = File.ReadAllBytes(studentPath);
+        var prizeBefore = File.ReadAllBytes(prizePath);
         profile.CurrentStudentList.Students.Add(new Student { Name = "unsaved" });
         profile.CurrentPrizeList.Prizes.Add(new Prize { Name = "unsaved" });
 
         Assert.Throws<ArgumentException>(() => profile.LoadStudentProfile(name));
         Assert.Throws<ArgumentException>(() => profile.LoadPrizeProfile(name));
 
-        Assert.Equal(studentBefore, File.ReadAllText(studentPath));
-        Assert.Equal(prizeBefore, File.ReadAllText(prizePath));
+        Assert.Equal(studentBefore, File.ReadAllBytes(studentPath));
+        Assert.Equal(prizeBefore, File.ReadAllBytes(prizePath));
     }
 
     [Theory]
@@ -100,7 +100,7 @@ public sealed class ProfileCatalogManagerTests : IDisposable
     [InlineData(true)]
     public void ProfileStartup_RejectsUnsafeConfiguredDefault(bool prize)
     {
-        using var provider = CreateProvider();
+        using var provider = CreateProvider(seedDefaultLists: false);
         var config = provider.GetRequiredService<MainConfigHandler>();
         if (prize)
             config.Data.LotterySettings.DefaultPool = "../outside";
@@ -131,13 +131,13 @@ public sealed class ProfileCatalogManagerTests : IDisposable
     [Fact]
     public void LoadStudentList_ReturnsNullForMissingWithoutCreatingFiles()
     {
-        using var provider = CreateProvider();
+        using var provider = CreateProvider(seedDefaultLists: false);
         var manager = provider.GetRequiredService<IProfileCatalogManager>();
 
         Assert.Null(manager.LoadStudentList("missing-class"));
         Assert.Null(manager.LoadPrizeList("missing-pool"));
-        Assert.False(File.Exists(Utils.GetFilePath("list", "roll_call_list", "missing-class.json")));
-        Assert.False(File.Exists(Utils.GetFilePath("list", "lottery_list", "missing-pool.json")));
+        Assert.False(File.Exists(Utils.GetFilePath("list", "roll_call.srl")));
+        Assert.False(File.Exists(Utils.GetFilePath("list", "lottery.srl")));
     }
 
     [Fact]
@@ -318,7 +318,7 @@ public sealed class ProfileCatalogManagerTests : IDisposable
 
         Assert.True(manager.DeleteStudentList("class-c", deleteHistory: true));
         Assert.False(manager.StudentListExists("class-c"));
-        Assert.False(File.Exists(Utils.GetFilePath("list", "roll_call_list", "class-c.json")));
+        Assert.True(File.Exists(Utils.GetFilePath("list", "roll_call.srl")));
         Assert.False(File.Exists(Utils.GetFilePath("history", "roll_call_history", "class-c.json")));
         // 活跃档案切换到剩余名单，而不是停留在被删名单
         Assert.Equal(fallbackName, profile.StudentListConfig!.Name);
@@ -360,7 +360,7 @@ public sealed class ProfileCatalogManagerTests : IDisposable
         Assert.Null(profile.StudentHistoryConfig);
         Assert.Null(profile.CurrentStudentHistory);
         Assert.Empty(profile.StudentHistoryConfig?.Data.HistoryGroups ?? []);
-        Assert.False(File.Exists(Utils.GetFilePath("list", "roll_call_list", $"{onlyName}.json")));
+        Assert.True(File.Exists(Utils.GetFilePath("list", "roll_call.srl")));
     }
 
     [Fact]
@@ -378,7 +378,7 @@ public sealed class ProfileCatalogManagerTests : IDisposable
         Assert.Null(profile.CurrentPrizeList);
         Assert.Null(profile.PrizeHistoryConfig);
         Assert.Null(profile.CurrentPrizeHistory);
-        Assert.False(File.Exists(Utils.GetFilePath("list", "lottery_list", $"{onlyName}.json")));
+        Assert.True(File.Exists(Utils.GetFilePath("list", "lottery.srl")));
     }
 
     [Fact]
@@ -390,7 +390,7 @@ public sealed class ProfileCatalogManagerTests : IDisposable
             var manager = provider.GetRequiredService<IProfileCatalogManager>();
             var profile = provider.GetRequiredService<IProfileService>();
 
-            // 引导完成后空目录就是「没有名单」；只有首次运行才会补一份 default。
+            // 引导完成后空目录就是「没有名单」。
             config.Data.General.Basic.GuideCompleted = true;
             config.Save();
 
@@ -398,7 +398,7 @@ public sealed class ProfileCatalogManagerTests : IDisposable
             Assert.True(manager.DeletePrizeList(profile.PrizeListConfig!.Name, deleteHistory: true));
         }
 
-        using (var restarted = CreateProvider())
+        using (var restarted = CreateProvider(seedDefaultLists: false))
         {
             var config = restarted.GetRequiredService<MainConfigHandler>();
             var profile = restarted.GetRequiredService<IProfileService>();
@@ -406,21 +406,26 @@ public sealed class ProfileCatalogManagerTests : IDisposable
             // 重启不补建：删掉最后一份名单之后，零名单状态必须是真的零名单。
             Assert.Null(profile.StudentListConfig);
             Assert.Null(profile.PrizeListConfig);
-            Assert.False(File.Exists(Utils.GetFilePath("list", "roll_call_list", "default.json")));
-            Assert.False(File.Exists(Utils.GetFilePath("list", "lottery_list", "default.json")));
+            Assert.Empty(restarted.GetRequiredService<IProfileCatalogManager>().GetStudentListNames());
+            Assert.Empty(restarted.GetRequiredService<IProfileCatalogManager>().GetPrizeListNames());
         }
     }
 
     [Fact]
-    public void FirstRun_StillSeedsOneDefaultListPerChannel()
+    public void FirstRun_DoesNotCreateDefaultLists()
     {
-        using var provider = CreateProvider();
+        using var provider = CreateProvider(seedDefaultLists: false);
         var config = provider.GetRequiredService<MainConfigHandler>();
         var profile = provider.GetRequiredService<IProfileService>();
+        var manager = provider.GetRequiredService<IProfileCatalogManager>();
 
         Assert.False(config.Data.General.Basic.GuideCompleted);
-        Assert.Equal("default", profile.StudentListConfig!.Name);
-        Assert.Equal("default", profile.PrizeListConfig!.Name);
+        Assert.Null(profile.StudentListConfig);
+        Assert.Null(profile.PrizeListConfig);
+        Assert.Empty(manager.GetStudentListNames());
+        Assert.Empty(manager.GetPrizeListNames());
+        Assert.False(File.Exists(Utils.GetFilePath("list", "roll_call.srl")));
+        Assert.False(File.Exists(Utils.GetFilePath("list", "lottery.srl")));
     }
 
     [Fact]
@@ -459,6 +464,7 @@ public sealed class ProfileCatalogManagerTests : IDisposable
         Assert.Equal(newName, profile.StudentListConfig!.Name);
         Assert.True(manager.StudentListExists(newName));
         Assert.False(manager.StudentListExists(oldName));
+        Assert.Equal("Alice", Assert.Single(manager.LoadStudentList(newName)!.Students).Name);
         Assert.True(File.Exists(Utils.GetFilePath("history", "roll_call_history", $"{newName}{Utils.HistoryDatabaseExtension}")));
         Assert.False(File.Exists(Utils.GetFilePath("TEMP", $"roll_call_record_{oldName}.json")));
         Assert.NotEmpty(temporary.GetStudentCounts(newName, null, null));
@@ -488,12 +494,24 @@ public sealed class ProfileCatalogManagerTests : IDisposable
             Directory.Delete(_dataRoot, recursive: true);
     }
 
-    private static ServiceProvider CreateProvider()
+    private static ServiceProvider CreateProvider(bool seedDefaultLists = true)
     {
         var services = new ServiceCollection();
         services.AddLogging(builder => builder.SetMinimumLevel(LogLevel.None));
         services.AddCoreRuntimeServices();
-        return services.BuildServiceProvider();
+        var provider = services.BuildServiceProvider();
+        if (!seedDefaultLists)
+            return provider;
+
+        var catalog = provider.GetRequiredService<IProfileCatalogManager>();
+        catalog.CreateStudentList("default");
+        catalog.CreatePrizeList("default");
+        catalog.SetDefaultStudentList("default");
+        catalog.SetDefaultPrizePool("default");
+        var profile = provider.GetRequiredService<IProfileService>();
+        profile.LoadStudentProfile("default", saveCurrent: false);
+        profile.LoadPrizeProfile("default", saveCurrent: false);
+        return provider;
     }
 
     private static void ConfigureDataRootForTests(string dataRoot)

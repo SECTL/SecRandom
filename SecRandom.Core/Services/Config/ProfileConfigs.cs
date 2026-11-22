@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Services.HistoryStore;
+using SecRandom.Core.Services.Profiles;
 using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.Models.Profile;
 
@@ -60,6 +61,12 @@ public class StudentListConfig : ProfileConfigHandlerBase<StudentList>
     public StudentListConfig(string name, ILogger logger, ConfigServiceBase configService) : base(name, logger, configService)
     {
     }
+
+    protected override StudentList LoadData() => ProfileRosterDatabase.LoadStudentList(FallbackFactory().Name, Logger);
+
+    protected override void SaveData() => ProfileRosterDatabase.SaveStudentList(Data, Logger);
+
+    protected override void DeleteData() => ProfileRosterDatabase.Delete(Data.Name, ProfileRosterKind.RollCall, Logger);
 }
 
 /// <summary>
@@ -93,6 +100,12 @@ public class PrizeListConfig : ProfileConfigHandlerBase<PrizeList>
     public PrizeListConfig(string name, ILogger logger, ConfigServiceBase configService) : base(name, logger, configService)
     {
     }
+
+    protected override PrizeList LoadData() => ProfileRosterDatabase.LoadPrizeList(FallbackFactory().Name, Logger);
+
+    protected override void SaveData() => ProfileRosterDatabase.SavePrizeList(Data, Logger);
+
+    protected override void DeleteData() => ProfileRosterDatabase.Delete(Data.Name, ProfileRosterKind.Lottery, Logger);
 }
 
 /// <summary>抽奖历史的处理器；存储方式与 <see cref="StudentHistoryConfig" /> 相同。</summary>

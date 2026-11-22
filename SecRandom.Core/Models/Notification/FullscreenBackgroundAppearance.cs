@@ -29,7 +29,7 @@ public sealed record FullscreenBackgroundAppearance(
     Color? GradientEnd,
     int GradientAngle)
 {
-    /// <summary>跟随主题——渲染层不铺任何颜色层，让窗口自己的主题底色透上来。</summary>
+    /// <summary>渲染层使用应用主题的底色。</summary>
     public static FullscreenBackgroundAppearance Theme { get; } =
         new(FullscreenBackgroundMode.Theme, null, null, null, 135);
 

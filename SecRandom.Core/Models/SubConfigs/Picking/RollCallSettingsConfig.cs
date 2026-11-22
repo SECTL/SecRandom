@@ -11,6 +11,7 @@ public partial class RollCallSettingsConfig : OverridableDrawSettings, IOrchestr
     [ObservableProperty] private DrawType _drawType = DrawType.Fair;
     [ObservableProperty] private string _algorithmId = "builtin.fair";
     [ObservableProperty] private string _defaultClass = string.Empty;
+    [ObservableProperty] private GroupMemberDisplayMode _groupMemberDisplay = GroupMemberDisplayMode.GroupOnly;
 
     /// <summary>
     ///     点名页选择器的初始记录组（空串 = 默认记录组，即只算未分组的记录）。

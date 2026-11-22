@@ -20,9 +20,15 @@ public class StudentList : ProfileConfigBase, IAttachableSettingsObject
 
     [JsonIgnore]
     public override string ConfigFilePath =>
-        GetProfileFilePath("list", "roll_call_list");
+        GetCentralRosterFilePath("roll_call");
 
     public ObservableCollection<Student> Students { get; set; } = [];
 
     public Dictionary<Guid, object?> AttachedObjects { get; set; } = [];
+
+    private string GetCentralRosterFilePath(string kind)
+    {
+        ValidateProfileName(Name);
+        return Utils.GetFilePath("list", $"{kind}{Utils.RosterDatabaseExtension}");
+    }
 }

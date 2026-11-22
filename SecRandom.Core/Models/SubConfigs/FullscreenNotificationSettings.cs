@@ -11,7 +11,7 @@ namespace SecRandom.Core.Models.SubConfigs;
 /// <remarks>
 ///     <para>
 ///         这是**渠道自己的**窗口外观，刻意不复用 <see cref="NotificationChannelSettings.Transparency" />
-///         或浮窗的位置/透明度字段：内置通知渠道是 QuickDraw 窗口，而全屏渠道是另一扇独立窗口，
+///         或浮窗的位置/不透明度字段：内置通知渠道是 QuickDraw 窗口，而全屏渠道是另一扇独立窗口，
 ///         两者的外观语义不同。根 <c>AGENTS.md</c> 禁止"通知设置复制 QuickDraw 窗口外观控件"，
 ///         全屏渠道不复制浮窗外观，但确实拥有自己的外观字段。
 ///     </para>
@@ -23,12 +23,6 @@ namespace SecRandom.Core.Models.SubConfigs;
 /// </remarks>
 public partial class FullscreenNotificationSettings : ObservableObject
 {
-    /// <summary>背景模糊半径的下限。</summary>
-    public const int MinBackgroundBlurRadius = 0;
-
-    /// <summary>背景模糊半径的上限。</summary>
-    public const int MaxBackgroundBlurRadius = 64;
-
     /// <summary>结果字体大小的下限（像素）。</summary>
     public const int MinResultFontSize = 32;
 
@@ -99,7 +93,7 @@ public partial class FullscreenNotificationSettings : ObservableObject
     /// </summary>
     [ObservableProperty] private int _typewriterCharactersPerSecond = DefaultTypewriterCharactersPerSecond;
 
-    /// <summary>背景来源，默认跟随主题。</summary>
+    /// <summary>背景来源，默认跟随应用主题。</summary>
     [ObservableProperty] private FullscreenBackgroundMode _backgroundMode = FullscreenBackgroundMode.Theme;
 
     /// <summary>纯色模式的底色（只在 <see cref="FullscreenBackgroundMode.Solid" /> 下生效）。</summary>
@@ -119,11 +113,11 @@ public partial class FullscreenNotificationSettings : ObservableObject
     /// </summary>
     [ObservableProperty] private string _backgroundImage = "";
 
-    /// <summary>背景图模糊半径（像素）。</summary>
-    [ObservableProperty] private int _backgroundBlurRadius = 12;
-
-    /// <summary>背景层不透明度（百分比）。</summary>
+    /// <summary>自定义背景图的不透明度（百分比）。</summary>
     [ObservableProperty] private int _backgroundOpacity = 100;
+
+    /// <summary>跟随主题时的底色不透明度（百分比）。</summary>
+    [ObservableProperty] private int _themeBackgroundOpacity = 100;
 
     /// <summary>结果里是否包含序号。默认只要名称（用户 m03502）。</summary>
     [ObservableProperty] private bool _showResultNumber;
@@ -145,10 +139,6 @@ public partial class FullscreenNotificationSettings : ObservableObject
 
     /// <summary>自定义强调色（<c>#RRGGBB</c>），仅在 <see cref="UseThemeAccentColor" /> 关闭时生效。</summary>
     [ObservableProperty] private string _accentColor = "";
-
-    /// <summary>实际生效的模糊半径（夹回合法区间）。</summary>
-    public int EffectiveBackgroundBlurRadius =>
-        Math.Clamp(BackgroundBlurRadius, MinBackgroundBlurRadius, MaxBackgroundBlurRadius);
 
     /// <summary>实际生效的结果字体大小（夹回合法区间）。</summary>
     public int EffectiveResultFontSize =>
@@ -184,12 +174,8 @@ public partial class FullscreenNotificationSettings : ObservableObject
             MinBackgroundGradientAngle,
             MaxBackgroundGradientAngle);
 
-        BackgroundBlurRadius = Math.Clamp(
-            BackgroundBlurRadius,
-            MinBackgroundBlurRadius,
-            MaxBackgroundBlurRadius);
-
         BackgroundOpacity = Math.Clamp(BackgroundOpacity, 0, 100);
+        ThemeBackgroundOpacity = Math.Clamp(ThemeBackgroundOpacity, 0, 100);
         BackgroundImage = BackgroundImage?.Trim() ?? string.Empty;
 
         // 字号也在这里夹回区间：settings.json 被手改过时，页面和窗口都不该拿到越界值。
@@ -199,8 +185,7 @@ public partial class FullscreenNotificationSettings : ObservableObject
     /// <summary>
     ///     把当前配置算成渲染层能直接用的样子（模式归一化、角度夹取、按模式挑出该用的颜色）。
     ///     <para>
-    ///         解析失败或未选图一律退回 <see cref="FullscreenBackgroundAppearance.Theme" />：
-    ///         一块坏配置不该把整屏画成透明的。
+    ///         未定义的旧模式退回跟随主题，图片缺失时由渲染层用主题底色兜底。
     ///     </para>
     /// </summary>
     public FullscreenBackgroundAppearance ResolveBackgroundAppearance()
@@ -223,6 +208,7 @@ public partial class FullscreenNotificationSettings : ObservableObject
             {
                 Mode = FullscreenBackgroundMode.Image
             },
+            FullscreenBackgroundMode.Theme => FullscreenBackgroundAppearance.Theme,
             _ => FullscreenBackgroundAppearance.Theme
         };
     }

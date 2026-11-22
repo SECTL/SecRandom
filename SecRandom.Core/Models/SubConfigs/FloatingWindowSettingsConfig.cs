@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Services.FloatingWindow;
 
 namespace SecRandom.Core.Models.SubConfigs;
 
@@ -56,7 +57,7 @@ public partial class FloatingWindowSettingsConfig : ObservableObject
     [ObservableProperty] private int _stickToEdgeDisplayStyle = 1;
     [ObservableProperty] private int _dockedWindowSize = 32;
 
-    // 收纳手柄的“文字”样式：空字符串等于沿用本地化默认文字（中文“抽”、英文“Go”）。
+    // 收纳手柄的“文字”样式：设置页会把本地化默认文字写入这里；空字符串仅兼容旧配置，渲染时仍回退。
     // 允许的语言与长度由 FloatingWindowDockHandle 决定，非中文语言不限“一个字”。
     [ObservableProperty] private string _stickToEdgeDisplayText = string.Empty;
 
@@ -67,7 +68,8 @@ public partial class FloatingWindowSettingsConfig : ObservableObject
     [ObservableProperty] private string _stickToEdgeDisplayIconImage = string.Empty;
     [ObservableProperty] private bool _draggable = true;
     [ObservableProperty] private int _floatingWindowSize = 56;
-    [ObservableProperty] private int _longPressDuration = 500;
+    [ObservableProperty]
+    private int _longPressDuration = QuickDrawLongPressGesture.DefaultHoldDurationMilliseconds;
 
     /// <summary>
     ///     闪抽按钮支持长按快选：按住时按钮四周走一圈蓝→绿进度环，按住满

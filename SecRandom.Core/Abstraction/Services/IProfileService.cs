@@ -39,6 +39,12 @@ public interface IProfileService
         string? drawRoundId = null,
         string? historyGroup = null);
 
+    /// <summary>Records group winners separately from individual student histories.</summary>
+    public void RecordGroupHistory(IReadOnlyList<Student> representatives, DateTime now, int requestedCount,
+        string drawGender = "", string courseName = "", string? drawRoundId = null, string? historyGroup = null,
+        bool includeMember = false)
+        => throw new NotSupportedException();
+
     /// <param name="courseName">
     ///     Linkage course the prize records belong to; empty keeps global prize history. Prize history had no
     ///     course dimension before history groups, so this parameter is additive for the same reason.

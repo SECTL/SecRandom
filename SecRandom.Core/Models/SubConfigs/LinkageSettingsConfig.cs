@@ -1,5 +1,6 @@
 using SecRandom.Core.Enums.Configs;
 using CommunityToolkit.Mvvm.ComponentModel;
+using SecRandom.Core.Models.Linkage;
 
 namespace SecRandom.Core.Models.SubConfigs;
 
@@ -18,4 +19,7 @@ public partial class LinkageSettingsConfig : ObservableObject
     [ObservableProperty] private int _postClassDisableDelay = 0;
     [ObservableProperty] private bool _subjectHistoryFilterEnabled = false;
     [ObservableProperty] private LinkageBreakAssignment _subjectHistoryBreakAssignment = LinkageBreakAssignment.PreviousClass;
+
+    /// <summary>课程联动时按科目选择的点名/闪抽名单和抽奖奖品池。</summary>
+    [ObservableProperty] private List<CourseRosterBinding> _courseRosterBindings = [];
 }

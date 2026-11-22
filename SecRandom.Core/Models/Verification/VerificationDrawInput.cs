@@ -29,8 +29,8 @@ public sealed class VerificationDrawInput
     public int? OrchestrationRoundCount { get; init; }
 
     /// <summary>
-    ///     Candidates the internal rule removed outright. The audit payload already declares it; the proof context
-    ///     repeats it in readable form so the pool arithmetic adds up without decoding Base64.
+    ///     Legacy proof-context slot retained so older v2 context hashes remain readable. New draws never apply
+    ///     hidden candidate rules and therefore leave this value at zero.
     /// </summary>
     public int ExcludedCandidateCount { get; init; }
 }

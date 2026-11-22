@@ -2,9 +2,12 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services.Profiles;
+using SecRandom.Core.Services.Stats;
 using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.Models.Profile;
@@ -18,20 +21,26 @@ public static partial class CoreRuntimeServiceCollectionExtensions
     private readonly ILogger<ProfileService> _logger;
     private readonly MainConfigHandler _configHandler;
     private readonly ConfigServiceBase _configService;
+    private readonly IOverviewStatisticsService _overviewStatistics;
 
     public ProfileService(
         ILogger<ProfileService> logger,
         MainConfigHandler configHandler,
-        ConfigServiceBase configService)
+        ConfigServiceBase configService,
+        IOverviewStatisticsService overviewStatistics)
     {
         _logger = logger;
         _configHandler = configHandler;
         _configService = configService;
+        _overviewStatistics = overviewStatistics;
 
-        SeedDefaultListsOnFirstRun();
+        // Consolidate legacy per-profile roster files before resolving the active names. A
+        // first run with no data remains empty; OOBE creates a list explicitly.
+        ProfileRosterDatabase.MigrateLegacyProfiles(ProfileRosterKind.RollCall, _logger);
+        ProfileRosterDatabase.MigrateLegacyProfiles(ProfileRosterKind.Lottery, _logger);
 
-        var studentListName = ResolveProfileName("list", "roll_call_list", _configHandler.Data.RollCallSettings.DefaultClass);
-        var prizeListName = ResolveProfileName("list", "lottery_list", _configHandler.Data.LotterySettings.DefaultPool);
+        var studentListName = ResolveProfileName("roll_call_list", _configHandler.Data.RollCallSettings.DefaultClass);
+        var prizeListName = ResolveProfileName("lottery_list", _configHandler.Data.LotterySettings.DefaultPool);
 
         StudentListConfig = CreateStudentListConfig(studentListName);
         StudentHistoryConfig = CreateStudentHistoryConfig(studentListName);
@@ -218,11 +227,48 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         }
 
         StudentHistoryConfig?.Save();
+        _overviewStatistics.RecordStudentDraw(history.Name, students.Count, now);
 
         _logger.LogInformation(
             "已记录点名历史：学生名单={StudentListName}，抽取数量={StudentCount}。",
             StudentListConfig?.Name,
             students.Count);
+    }
+
+    public void RecordGroupHistory(IReadOnlyList<Student> representatives, DateTime now, int requestedCount,
+        string drawGender = "", string courseName = "", string? drawRoundId = null, string? historyGroup = null,
+        bool includeMember = false)
+    {
+        var history = CurrentStudentHistory;
+        if (history is null || representatives.Count == 0)
+            return;
+        history.TotalRounds++;
+        history.TotalStats += representatives.Count;
+        var roundId = string.IsNullOrWhiteSpace(drawRoundId) ? Guid.NewGuid().ToString("N") : drawRoundId;
+        foreach (var student in representatives)
+        {
+            var key = GroupDrawCandidates.HistoryKey(student.Group);
+            if (!history.Students.TryGetValue(key, out var entry))
+                history.Students[key] = entry = new History();
+            entry.TotalCount++;
+            entry.LastDrawnTime = now;
+            entry.Histories.Add(new HistoryItem
+            {
+                RecordId = key,
+                RecordName = !includeMember || string.IsNullOrWhiteSpace(student.Name) ? student.Group : $"{student.Group} - {student.Name}",
+                RecordGroup = student.Group,
+                DrawGroup = student.Group,
+                DrawGender = drawGender,
+                DrawTime = now,
+                DrawRoundId = roundId,
+                DrawNumbers = requestedCount,
+                DrawMethod = (int)DrawType.Random,
+                CourseName = courseName,
+                HistoryGroup = historyGroup ?? string.Empty
+            });
+        }
+        StudentHistoryConfig?.Save();
+        _overviewStatistics.RecordStudentDraw(history.Name, representatives.Count, now);
     }
 
     public void RecordPrizeHistory(IReadOnlyList<Prize> prizes, DateTime now, int requestedCount, int drawMethod = 0, string? drawRoundId = null, string courseName = "", string? historyGroup = null)
@@ -282,6 +328,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         }
 
         PrizeHistoryConfig?.Save();
+        _overviewStatistics.RecordPrizeDraw(history.Name, prizes.Count, now);
 
         _logger.LogInformation(
             "已记录抽奖历史：奖品池={PrizeListName}，抽取数量={PrizeCount}。",
@@ -424,33 +471,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         _logger.LogInformation("已清空当前奖品池档案：现在没有奖品池。");
     }
 
-    /// <summary>
-    ///     A first run (guide not completed yet) gets one blank <c>default</c> list per channel, which is what every
-    ///     build up to now produced implicitly at startup.
-    /// </summary>
-    /// <remarks>
-    ///     It only ever happens before the guide completes, because after that deleting the last list has to mean
-    ///     "there are no lists": recreating <c>default</c> on every restart would make the empty state impossible.
-    /// </remarks>
-    private void SeedDefaultListsOnFirstRun()
-    {
-        if (_configHandler.Data.General.Basic.GuideCompleted)
-            return;
-
-        if (!HasListFiles("roll_call_list"))
-            new StudentListConfig("default", _logger, _configService).Save();
-
-        if (!HasListFiles("lottery_list"))
-            new PrizeListConfig("default", _logger, _configService).Save();
-    }
-
-    private static bool HasListFiles(string directory)
-    {
-        var path = Utils.GetDirectoryPath("list", directory);
-        return Directory.Exists(path) && Directory.GetFiles(path, "*.json").Length > 0;
-    }
-
-    private static string? ResolveProfileName(string rootA, string rootB, string preferredName)
+    private string? ResolveProfileName(string rootName, string preferredName)
     {
         // 「不使用名单」不是真实档案名：回落到磁盘上已有的名单，绝不为哨兵创建/读取档案文件。
         if (RosterSelection.IsNone(preferredName))
@@ -459,19 +480,17 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         if (preferredName != string.Empty)
             ProfileConfigBase.ValidateProfileName(preferredName);
 
-        var directory = Utils.GetDirectoryPath(rootA, rootB);
         if (preferredName != string.Empty)
         {
-            var preferredPath = Path.Combine(directory, $"{preferredName}.json");
-            if (File.Exists(preferredPath))
+            var kind = rootName == "roll_call_list" ? ProfileRosterKind.RollCall : ProfileRosterKind.Lottery;
+            if (ProfileRosterDatabase.Exists(preferredName, kind, _logger))
                 return preferredName;
         }
 
         // 目录里没有任何名单文件就是"没有名单"：不再回落到 default，否则删掉最后一份名单后重启会被凭空重建，
         // 而"至少保留一份名单"的限制正是靠这条回落才显得存在。
-        return Directory.GetFiles(directory, "*.json")
-            .Select(Path.GetFileNameWithoutExtension)
-            .FirstOrDefault(ProfileConfigBase.IsValidProfileName);
+        var profileKind = rootName == "roll_call_list" ? ProfileRosterKind.RollCall : ProfileRosterKind.Lottery;
+        return ProfileRosterDatabase.GetProfileNames(profileKind, _logger).FirstOrDefault();
     }
     }
 }

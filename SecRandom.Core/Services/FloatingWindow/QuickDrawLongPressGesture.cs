@@ -49,13 +49,13 @@ public static class QuickDrawLongPressGesture
     public const int MaxHoldDurationMilliseconds = 3000;
 
     /// <summary>配置缺字段或非法时的长按时长回退值。</summary>
-    public const int DefaultHoldDurationMilliseconds = 500;
+    public const int DefaultHoldDurationMilliseconds = 800;
 
     /// <summary>鼠标右键按下时用的长按时长（只做一次确认，不再等满整个配置时长）。</summary>
     /// <remarks>
     ///     Windows 会把触控"长按"先攒在自己的按住时间里，攒够之后才以一次<em>鼠标右键按下</em>的形式
     ///     重新投递（松手时补一次右键抬起）。也就是说用户真正的按住时长已经用掉了，这里再等一整个
-    ///     <see cref="DefaultHoldDurationMilliseconds" /> 等于让人多按半秒；但也不能一按下就弹面板，
+    ///     <see cref="DefaultHoldDurationMilliseconds" /> 等于让人再等完整的配置时长；但也不能一按下就弹面板，
     ///     否则一次快速的右键点击也会把人送进快选。取一个只够区分"按下即松"和"继续按住"的时长。
     /// </remarks>
     public const int SecondaryButtonHoldDurationMilliseconds = 160;

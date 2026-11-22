@@ -11,7 +11,6 @@ using AppearanceSettingsConfig = SecRandom.Core.Models.SubConfigs.Personalized.A
 using BackupConfig = SecRandom.Core.Models.SubConfigs.General.BackupConfig;
 using BasicSettingsConfig = SecRandom.Core.Models.SubConfigs.General.BasicSettingsConfig;
 using GeneralSettingsConfig = SecRandom.Core.Models.SubConfigs.General.GeneralSettingsConfig;
-using HistoryGroupSettingsConfig = SecRandom.Core.Models.SubConfigs.General.HistoryGroupSettingsConfig;
 using DefaultDrawSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.DefaultDrawSettingsConfig;
 using DrawSettingsConfigBase = SecRandom.Core.Models.SubConfigs.Picking.DrawSettingsConfigBase;
 using FairDrawSettingsConfig = SecRandom.Core.Models.SubConfigs.Picking.FairDrawSettingsConfig;
@@ -126,10 +125,6 @@ public partial class MainConfigModel : ConfigBase, IJsonOnDeserialized
     [JsonIgnore]
     public TimerSettingsConfig EffectiveTimerSettings =>
         SimpleModeEnabled ? SimpleModeDefaults.TimerSettings : TimerSettings;
-
-    [JsonIgnore]
-    public HistoryGroupSettingsConfig EffectiveHistoryGroups =>
-        SimpleModeEnabled ? SimpleModeDefaults.HistoryGroups : General.HistoryGroups;
 
     [JsonIgnore]
     public BasicSettingsConfig Basic

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Microsoft.Data.Sqlite;
 using SecRandom.Shared.DataRoot;
 
 namespace SecRandom.Core.Services.DataRoot;
@@ -43,6 +44,166 @@ public static class DataRootPathRewriter
         if (File.Exists(attestationQueue))
             changed += RewriteFile(attestationQueue, oldRoot, newRoot, imageOnly: false);
 
+        changed += RewriteRosterDatabases(stagingRoot, oldRoot, newRoot);
+        return changed;
+    }
+
+    /// <summary>
+    /// Rewrites image paths in roster SQLite databases copied into a migration staging tree.
+    /// Unknown, malformed, and non-roster databases are ignored without opening them for writes.
+    /// </summary>
+    public static int RewriteRosterDatabases(string stagingRoot, string oldRoot, string newRoot)
+    {
+        var changed = 0;
+        var directory = Path.Combine(stagingRoot, "list");
+        if (!Directory.Exists(directory))
+            return changed;
+
+        IEnumerable<string> files;
+        try
+        {
+            files = Directory.EnumerateFiles(directory, "*.srl", SearchOption.AllDirectories).ToArray();
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return changed;
+        }
+
+        foreach (var file in files)
+            changed += RewriteRosterDatabase(file, oldRoot, newRoot);
+
+        return changed;
+    }
+
+    /// <summary>Rewrites a recognized roster database transactionally.</summary>
+    public static int RewriteRosterDatabase(string databasePath, string oldRoot, string newRoot)
+    {
+        try
+        {
+            using var connection = new SqliteConnection(new SqliteConnectionStringBuilder
+            {
+                DataSource = databasePath,
+                Mode = SqliteOpenMode.ReadWrite,
+                Pooling = false
+            }.ConnectionString);
+            connection.Open();
+
+            if (!IsRosterDatabase(connection))
+                return 0;
+
+            using var transaction = connection.BeginTransaction();
+            var updates = new List<(string Table, string Payload, long RowId)>();
+            var changed = 0;
+            changed += ReadPayloads(connection, transaction, "members", oldRoot, newRoot, updates);
+            changed += ReadPayloads(connection, transaction, "attached_objects", oldRoot, newRoot, updates);
+            if (changed == 0)
+            {
+                transaction.Rollback();
+                return 0;
+            }
+
+            foreach (var update in updates)
+            {
+                using var command = connection.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText = $"UPDATE {update.Table} SET payload = $payload WHERE rowid = $rowid";
+                command.Parameters.AddWithValue("$payload", update.Payload);
+                command.Parameters.AddWithValue("$rowid", update.RowId);
+                if (command.ExecuteNonQuery() != 1)
+                    throw new InvalidDataException("Roster database payload row disappeared during rewrite.");
+            }
+
+            transaction.Commit();
+            return changed;
+        }
+        catch (Exception exception) when (exception is SqliteException or IOException or UnauthorizedAccessException or
+                                           InvalidDataException or NotSupportedException)
+        {
+            return 0;
+        }
+    }
+
+    private static bool IsRosterDatabase(SqliteConnection connection)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT value FROM meta WHERE key = 'format'";
+        var format = command.ExecuteScalar() as string;
+        var version = format switch
+        {
+            "SecRandomRosterDatabase/v1" => "1",
+            "SecRandomRosterDatabase/v2" => "2",
+            _ => null
+        };
+        if (version is null)
+            return false;
+
+        command.CommandText = "SELECT value FROM meta WHERE key = 'schema_version'";
+        if (!string.Equals(command.ExecuteScalar() as string, version, StringComparison.Ordinal))
+            return false;
+
+        command.CommandText = "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('members', 'attached_objects')";
+        using var reader = command.ExecuteReader();
+        var tables = 0;
+        while (reader.Read())
+            tables++;
+        if (tables != 2)
+            return false;
+
+        return HasColumn(connection, "members", "payload") &&
+               HasColumn(connection, "attached_objects", "payload");
+    }
+
+    private static bool HasColumn(SqliteConnection connection, string table, string column)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = $"PRAGMA table_info([{table}])";
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            if (string.Equals(reader.GetString(1), column, StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static int ReadPayloads(SqliteConnection connection, SqliteTransaction transaction, string table,
+        string oldRoot, string newRoot, List<(string Table, string Payload, long RowId)> updates)
+    {
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = $"SELECT rowid, payload FROM {table}";
+        using var reader = command.ExecuteReader();
+        var changed = 0;
+        while (reader.Read())
+        {
+            var rowId = reader.GetInt64(0);
+            var original = reader.IsDBNull(1) ? null : reader.GetString(1);
+            if (string.IsNullOrWhiteSpace(original))
+                continue;
+
+            JsonNode? root;
+            try
+            {
+                root = JsonNode.Parse(original, NodeOptions);
+            }
+            catch (JsonException)
+            {
+                continue;
+            }
+
+            if (root is null)
+                continue;
+            var valueChanges = RewriteNode(root, oldRoot, newRoot, imageOnly: true);
+            if (valueChanges == 0)
+                continue;
+
+            var options = original.Contains('\n') ? IndentedWriteOptions : CompactWriteOptions;
+            updates.Add((table, root.ToJsonString(options), rowId));
+            changed += valueChanges;
+        }
+
+        reader.Close();
         return changed;
     }
 

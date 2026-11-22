@@ -44,6 +44,20 @@ public sealed class ClassIslandScheduleSourceTests
     }
 
     [Fact]
+    public void GetSubjectNames_UsesProfileCatalogWithoutRequiringCurrentClassPlan()
+    {
+        var profile = new Profile();
+        profile.Subjects.Add(Guid.NewGuid(), new Subject { Name = "语文" });
+        profile.Subjects.Add(Guid.NewGuid(), new Subject { Name = "数学" });
+        profile.Subjects.Add(Guid.NewGuid(), new Subject { Name = " 语文 " });
+        profile.Subjects.Add(Guid.NewGuid(), new Subject { Name = "???" });
+        profile.Subjects.Add(Guid.NewGuid(), new Subject { Name = " " });
+
+        Assert.Equal(["数学", "语文"], ClassIslandScheduleSource.GetSubjectNames(profile));
+        Assert.Empty(ClassIslandScheduleSource.GetSubjectNames(null));
+    }
+
+    [Fact]
     public async Task AfterSchool_IsConfirmedNonClassTime()
     {
         var harness = new LinkageHarness();
@@ -237,6 +251,21 @@ public sealed class ClassIslandScheduleSourceTests
     }
 
     [Fact]
+    public async Task OutdoorSetting_IsIgnoredWhenDataSourceIsNotClassIsland()
+    {
+        var harness = new LinkageHarness(
+            instantDrawDisable: false,
+            disableOnOutdoorCourse: true,
+            dataSource: LinkageDataSource.Cses);
+        harness.Lessons.CurrentState = TimeState.OnClass;
+        harness.Lessons.CurrentSubject = new Subject { Name = "体育", IsOutDoor = true };
+        await harness.RefreshAsync();
+
+        Assert.False(harness.Snapshot.IsOutdoorCourse);
+        Assert.False(harness.OutdoorRestricted);
+    }
+
+    [Fact]
     public async Task OnClass_IndoorSubject_NotRestricted()
     {
         var harness = new LinkageHarness(instantDrawDisable: false, disableOnOutdoorCourse: true);
@@ -274,7 +303,7 @@ public sealed class ClassIslandScheduleSourceTests
     }
 
     [Fact]
-    public async Task Refresh_WhenPreClassEnableWindowOpens_UnrestrictsWithoutNotifying()
+    public async Task Refresh_WhenPreClassEnableWindowOpens_NotifiesVisibilitySubscribers()
     {
         var harness = new LinkageHarness(preClassEnableSeconds: 300);
         harness.Lessons.CurrentState = TimeState.Breaking;
@@ -287,7 +316,41 @@ public sealed class ClassIslandScheduleSourceTests
         await harness.RefreshAsync();
 
         Assert.False(harness.Restricted);
-        Assert.Equal(notifications, harness.StateChangedCount);
+        Assert.Equal(notifications + 1, harness.StateChangedCount);
+    }
+
+    [Fact]
+    public async Task Refresh_WhenPostClassDelayExpires_NotifiesVisibilitySubscribers()
+    {
+        var now = DateTime.Now;
+        var harness = new LinkageHarness(postClassDelaySeconds: 600);
+        harness.Lessons.CurrentState = TimeState.OnClass;
+        harness.Lessons.CurrentTimeLayoutItem = ClassTime(now, TimeSpan.FromMinutes(50), TimeSpan.FromMinutes(5));
+        await harness.RefreshAsync();
+        harness.Lessons.CurrentState = TimeState.Breaking;
+        await harness.RefreshAsync();
+        Assert.False(harness.Restricted);
+        var notifications = harness.StateChangedCount;
+
+        harness.SetLastCourseEnd(now - TimeSpan.FromMinutes(15));
+        await harness.RefreshAsync();
+
+        Assert.True(harness.Restricted);
+        Assert.Equal(notifications + 1, harness.StateChangedCount);
+    }
+
+    [Fact]
+    public async Task ZeroPostClassDelay_DoesNotGrantAnExemptionAtTheBoundary()
+    {
+        var now = DateTime.Now;
+        var harness = new LinkageHarness();
+        harness.Lessons.CurrentState = TimeState.OnClass;
+        harness.Lessons.CurrentTimeLayoutItem = ClassTime(now, TimeSpan.FromMinutes(40), TimeSpan.Zero);
+        await harness.RefreshAsync();
+        harness.Lessons.CurrentState = TimeState.Breaking;
+        await harness.RefreshAsync();
+
+        Assert.True(harness.Restricted);
     }
 
     private static TimeLayoutItem ClassTime(DateTime now, TimeSpan startedAgo, TimeSpan endedAgo) => new()
@@ -299,6 +362,8 @@ public sealed class ClassIslandScheduleSourceTests
 
     private sealed class LinkageHarness
     {
+        private readonly ClassIslandScheduleSource _source;
+
         public LinkageHarness(
             int preClassEnableSeconds = 0,
             int postClassDelaySeconds = 0,
@@ -327,12 +392,12 @@ public sealed class ClassIslandScheduleSourceTests
                         ?? throw new InvalidOperationException("ClassIslandIpcConnection._lessonsService 字段已改名。");
             field.SetValue(connection, Lessons);
 
-            var source = new ClassIslandScheduleSource(connection, NullLogger<ClassIslandScheduleSource>.Instance);
+            _source = new ClassIslandScheduleSource(connection, NullLogger<ClassIslandScheduleSource>.Instance);
             Service = new CourseLinkageService(
                 handler,
                 store,
                 new CsesScheduleSource(store),
-                source,
+                _source,
                 NullLogger<CourseLinkageService>.Instance);
             Service.StateChanged += (_, _) => StateChangedCount++;
         }
@@ -346,6 +411,10 @@ public sealed class ClassIslandScheduleSourceTests
         public bool OutdoorRestricted => Service.IsConfirmedOutdoorCourse;
 
         public Task RefreshAsync() => Service.RefreshAsync();
+
+        public void SetLastCourseEnd(DateTime end) => typeof(ClassIslandScheduleSource)
+            .GetField("_lastKnownCourseEnd", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(_source, end);
     }
 
     /// <summary>

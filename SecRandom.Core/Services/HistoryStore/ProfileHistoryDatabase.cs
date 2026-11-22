@@ -4,6 +4,7 @@ using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Enums;
+using SecRandom.Core.Helpers;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.HistoryStore;
@@ -93,6 +94,20 @@ internal static class ProfileHistoryDatabase
         ProfileHistoryPaths.Delete(profileName, kind);
     }
 
+    /// <summary>
+    /// Imports an unmigrated legacy history without activating the profile. Archive restore uses this
+    /// to upgrade every legacy history file before the import operation returns.
+    /// </summary>
+    internal static void MigrateLegacyJsonIfPresent(string profileName, HistoryGroupKind kind, ILogger logger)
+    {
+        var databasePath = ProfileHistoryPaths.DatabasePath(profileName, kind);
+        var legacyPath = ProfileHistoryPaths.LegacyJsonPath(profileName, kind);
+        if (File.Exists(databasePath) || !File.Exists(legacyPath))
+            return;
+
+        _ = ImportLegacyJson(profileName, kind, legacyPath, databasePath, logger);
+    }
+
     private static HistorySnapshot? LoadSnapshot(string profileName, HistoryGroupKind kind, ILogger logger)
     {
         var databasePath = ProfileHistoryPaths.DatabasePath(profileName, kind);
@@ -125,7 +140,7 @@ internal static class ProfileHistoryDatabase
     {
         try
         {
-            var json = File.ReadAllText(legacyPath);
+            var json = SharedFileReader.ReadAllText(legacyPath);
             HistorySnapshot snapshot;
             if (kind == HistoryGroupKind.RollCall)
             {
@@ -147,7 +162,7 @@ internal static class ProfileHistoryDatabase
             WriteSnapshot(profileName, kind, snapshot, logger);
 
             // 迁移成功才改名：否则宁可保留 JSON 让下次启动再试，也不要把唯一一份历史弄丢。
-            File.Move(legacyPath, ProfileHistoryPaths.LegacyBackupPath(profileName, kind), overwrite: true);
+            CompleteLegacyMigration(legacyPath, ProfileHistoryPaths.LegacyBackupPath(profileName, kind));
             logger.LogInformation("已把历史记录 JSON 迁移到数据库：档案={ProfileName}，类型={Kind}。", profileName, kind);
             return snapshot;
         }
@@ -156,6 +171,18 @@ internal static class ProfileHistoryDatabase
             logger.LogWarning(exception, "历史记录 JSON 迁移失败，保留原文件：{Path}", legacyPath);
             return null;
         }
+    }
+
+    private static void CompleteLegacyMigration(string legacyPath, string backupPath)
+    {
+        // Preserve an existing rollback copy from an archive or an earlier migration.
+        if (File.Exists(backupPath))
+        {
+            File.Delete(legacyPath);
+            return;
+        }
+
+        File.Move(legacyPath, backupPath);
     }
 
     private static void WriteSnapshot(
@@ -177,6 +204,7 @@ internal static class ProfileHistoryDatabase
         WriteCounters(connection, transaction, snapshot);
 
         var stored = ReadStoredRows(connection, transaction);
+        var storedMembers = ReadStoredMemberKeys(connection, transaction);
         var currentKeys = new HashSet<string>(StringComparer.Ordinal);
         using var memberCommand = CreateMemberUpsertCommand(connection, transaction);
         using var insertCommand = CreateRecordInsertCommand(connection, transaction);
@@ -216,10 +244,19 @@ internal static class ProfileHistoryDatabase
             }
         }
 
-        foreach (var key in stored.Keys)
+        // Members without record rows still carry counters and must also be removed.
+        storedMembers.UnionWith(stored.Keys);
+        foreach (var key in storedMembers)
         {
             if (!currentKeys.Contains(key))
+            {
                 DeleteMemberRecords(connection, transaction, key);
+                using var deleteMember = connection.CreateCommand();
+                deleteMember.Transaction = transaction;
+                deleteMember.CommandText = "DELETE FROM members WHERE member_key = $key";
+                deleteMember.Parameters.AddWithValue("$key", key);
+                deleteMember.ExecuteNonQuery();
+            }
         }
 
         transaction.Commit();
@@ -302,6 +339,18 @@ internal static class ProfileHistoryDatabase
                 command.ExecuteNonQuery();
             }
         }
+    }
+
+    private static HashSet<string> ReadStoredMemberKeys(SqliteConnection connection, SqliteTransaction transaction)
+    {
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = "SELECT member_key FROM members";
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+            keys.Add(reader.GetString(0));
+        return keys;
     }
 
     /// <summary>读出磁盘上每个成员已有的记录指纹，用来判断哪些行需要写。</summary>

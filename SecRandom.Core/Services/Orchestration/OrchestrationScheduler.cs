@@ -87,7 +87,8 @@ public sealed class OrchestrationScheduler(DrawEngine drawEngine)
         OrchestrationRound round,
         IReadOnlyList<Prize> participants,
         IReadOnlyDictionary<Guid, int> drawnCounts,
-        IRandomSource random)
+        IRandomSource random,
+        bool expandInventory = false)
     {
         ArgumentNullException.ThrowIfNull(profile);
         ArgumentNullException.ThrowIfNull(round);
@@ -112,13 +113,34 @@ public sealed class OrchestrationScheduler(DrawEngine drawEngine)
                 member?.IsExcluded == true));
         }
 
-        var ordered = OrchestrationOrdering.Resolve(candidates, round, new HashSet<Guid>(), random, profile.Rules);
+        // The snapshot has already applied the channel's repeat policy. Count mode keeps a prize entry
+        // while it still has physical units, so its remaining count is expanded below.
+        // Pan mode must remove entries already drawn in this round. Count mode keeps the entry
+        // because its remaining physical units are expanded below.
+        var alreadyDrawn = expandInventory
+            ? new HashSet<Guid>()
+            : drawnCounts.Where(entry => entry.Value > 0).Select(entry => entry.Key).ToHashSet();
+        var ordered = OrchestrationOrdering.Resolve(candidates, round, alreadyDrawn, random, profile.Rules);
         var byRecordId = pool
             .GroupBy(RecordIdOf)
             .ToDictionary(group => group.Key, group => group.First());
+
+        // Count-mode orchestration still resolves rules once per prize entry. The draw plan then
+        // expands that order into the remaining physical inventory units; occurrence identity is
+        // assigned by the verification input, so the persisted profile remains keyed by RecordId.
+        if (!expandInventory)
+        {
+            return ordered
+                .Where(byRecordId.ContainsKey)
+                .Select(recordId => byRecordId[recordId])
+                .ToList();
+        }
+
         return ordered
             .Where(byRecordId.ContainsKey)
-            .Select(recordId => byRecordId[recordId])
+            .SelectMany(recordId => Enumerable.Repeat(
+                byRecordId[recordId],
+                Math.Max(0, byRecordId[recordId].Count - drawnCounts.GetValueOrDefault(recordId))))
             .ToList();
     }
 

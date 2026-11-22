@@ -67,8 +67,11 @@ public sealed class LinkageDrawCoordinatorTests
         Assert.Equal(LinkageDrawGate.Allowed, harness.Coordinator.EvaluateGate(SecurityOperation.RollCallStart));
     }
 
-    [Fact]
-    public async Task VerificationDisabled_BlocksEvenWhenVerificationIsConfigured()
+    [Theory]
+    [InlineData(SecurityOperation.RollCallStart)]
+    [InlineData(SecurityOperation.QuickDrawStart)]
+    [InlineData(SecurityOperation.LotteryStart)]
+    public async Task VerificationDisabled_BlocksDrawBeforeItsAction(SecurityOperation operation)
     {
         var harness = new Harness(
             restrictWhenUnavailable: true,
@@ -77,11 +80,11 @@ public sealed class LinkageDrawCoordinatorTests
 
         var executed = false;
         var authorized = await harness.Coordinator.AuthorizeAsync(
-            SecurityOperation.RollCallStart, () => { executed = true; return Task.CompletedTask; });
+            operation, () => { executed = true; return Task.CompletedTask; });
 
         Assert.False(authorized);
         Assert.False(executed);
-        Assert.Equal(LinkageDrawGate.BlockedByClassTime, harness.Coordinator.EvaluateGate(SecurityOperation.RollCallStart));
+        Assert.Equal(LinkageDrawGate.BlockedByClassTime, harness.Coordinator.EvaluateGate(operation));
     }
 
     private sealed class Harness

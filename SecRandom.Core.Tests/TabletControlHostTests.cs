@@ -494,39 +494,35 @@ public sealed class TabletControlHostTests
     }
 
     [Fact]
-    public void 接线_接入卡不做展开器且双因子各自带上限()
+    public void 接线_接入卡按方式切换且双因子各自带上限()
     {
         var xaml = File.ReadAllText(GetRepositoryPath(@"SecRandom/Views/SettingsPages/General/ControlSettingsPage.axaml"));
-        var card = SectionOf(xaml, "x:Name=\"S_NodeEnrollment\"", "</fa:FASettingsExpander>", includeStart: true);
+        var card = SectionOf(xaml, "x:Name=\"S_Enrollment\"", "</fa:FASettingsExpander>", includeStart: true);
+        var viewModelSource = File.ReadAllText(GetRepositoryPath(@"SecRandom/ViewModels/SettingsPages/ControlSettingsPageViewModel.cs"));
 
-        // 接入卡是普通设置卡，不是"展开式下拉框"：整张卡一个 item 都没有，所以 FluentAvalonia 连展开箭头都不渲染
-        // （FASettingsExpander 只要有一个 item 就会画出 展开/收起 箭头并把正文区留出来）。
-        Assert.DoesNotContain("IsExpanded", card, StringComparison.Ordinal);
+        Assert.Contains("Description=\"{Binding EnrollmentModeDescription}\"", card, StringComparison.Ordinal);
+        Assert.Contains("Command=\"{Binding SwitchEnrollmentModeCommand}\"", card, StringComparison.Ordinal);
+        Assert.Contains("IsVisible=\"{Binding !IsAccountEnrollmentMode}\"", card, StringComparison.Ordinal);
+        Assert.Contains("IsVisible=\"{Binding IsAccountEnrollmentMode}\"", card, StringComparison.Ordinal);
 
-        // 内容全在 Footer 里：Footer 之后到卡片结尾不允许再有任何元素——那正是"item"（= 展开箭头）的来源。
-        const string footerOpen = "<fa:FASettingsExpander.Footer>";
-        const string footerClose = "</fa:FASettingsExpander.Footer>";
-        var footerStart = card.IndexOf(footerOpen, StringComparison.Ordinal);
-        var footerEnd = card.IndexOf(footerClose, StringComparison.Ordinal);
-        Assert.True(footerStart >= 0 && footerEnd > footerStart, "接入卡必须把内容写在 FASettingsExpander.Footer 里");
-        var footer = card[footerStart..(footerEnd + footerClose.Length)];
-        Assert.DoesNotContain("<", card[(footerEnd + footerClose.Length)..], StringComparison.Ordinal);
-
-        // 结果提示走 Toast（设置页是长列表，内联那行字用户很容易漏看）：接入卡里不再有内联提示。
-        Assert.DoesNotContain("Binding EnrollmentMessage", footer, StringComparison.Ordinal);
+        // 结果提示走 Toast（设置页是长列表，内联那行字用户很容易漏看）。
+        Assert.DoesNotContain("Binding EnrollmentMessage", card, StringComparison.Ordinal);
 
         // v4 接入是双因子：地点 ID 与配对码是两个输入框，缺一不可。
         // 上限由 VM 提供、协议长度由 NodeEnrollmentClient 的常量兜底，界面不写死业务数字。
-        Assert.Contains("Text=\"{Binding SiteIdInput}\"", footer, StringComparison.Ordinal);
-        Assert.Contains("Text=\"{Binding PairingCodeInput}\"", footer, StringComparison.Ordinal);
-        Assert.Contains("MaxLength=\"{Binding SiteIdMaxLength}\"", footer, StringComparison.Ordinal);
-        Assert.Contains("MaxLength=\"{Binding PairingCodeMaxLength}\"", footer, StringComparison.Ordinal);
+        Assert.Contains("Text=\"{Binding SiteIdInput}\"", card, StringComparison.Ordinal);
+        Assert.Contains("Text=\"{Binding PairingCodeInput}\"", card, StringComparison.Ordinal);
+        Assert.Contains("MaxLength=\"{Binding SiteIdMaxLength}\"", card, StringComparison.Ordinal);
+        Assert.Contains("MaxLength=\"{Binding PairingCodeMaxLength}\"", card, StringComparison.Ordinal);
 
-        // 两个动作各自只在自己的 Can* 下可点："清除接入"在未接入但记录损坏时也要能点，所以不再互斥显隐。
         Assert.Contains("IsEnabled=\"{Binding CanEnroll}\"", card, StringComparison.Ordinal);
-        Assert.Contains("IsEnabled=\"{Binding CanClearEnrollment}\"", card, StringComparison.Ordinal);
+        Assert.DoesNotContain("S_Enrollment_Overview", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("EnrollmentOverviewText", viewModelSource, StringComparison.Ordinal);
 
-        var viewModelSource = File.ReadAllText(GetRepositoryPath(@"SecRandom/ViewModels/SettingsPages/ControlSettingsPageViewModel.cs"));
+        var enrolled = SectionOf(xaml, "x:Name=\"S_Enrolled\"", "</fa:FASettingsExpander>", includeStart: true);
+        Assert.Contains("Command=\"{Binding ClearEnrollmentCommand}\"", enrolled, StringComparison.Ordinal);
+        Assert.Contains("IsVisible=\"{Binding ShowEnrollmentStatus}\"", enrolled, StringComparison.Ordinal);
+        Assert.DoesNotContain("ClearEnrollmentCommand", card, StringComparison.Ordinal);
 
         // 双因子缺一不可：只有两个输入都能归一化时才允许接入。
         Assert.Contains(
@@ -559,11 +555,17 @@ public sealed class TabletControlHostTests
         Assert.Contains("FAInfoBarSeverity.Error", pageSource, StringComparison.Ordinal);
         Assert.Contains("string.IsNullOrEmpty(message)", pageSource, StringComparison.Ordinal);
 
-        // 接入之后的状态行在"已接入"卡里右对齐；未接入卡只留双因子输入与失败提示。
-        var enrolled = SectionOf(xaml, "x:Name=\"S_Enrolled\"", "</fa:FASettingsExpander>", includeStart: true);
-        Assert.Contains("Binding EnrollmentStatusText", enrolled, StringComparison.Ordinal);
-        Assert.Contains("TextAlignment=\"Right\"", enrolled, StringComparison.Ordinal);
-        Assert.DoesNotContain("TextAlignment=\"Right\"", card, StringComparison.Ordinal);
+        // 接入表单只在未接入时显示，已有凭据必须先清除。
+        Assert.Contains("IsVisible=\"{Binding !IsEnrolled}\"", card, StringComparison.Ordinal);
+        Assert.Contains("IsAccountEnrollmentMode", viewModelSource, StringComparison.Ordinal);
+        Assert.Contains("IsEnrolled || IsEnrollmentUnreadable", viewModelSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("IsAccountEnrollmentMode = false", viewModelSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("IsAccountEnrollmentMode = false", pageSource, StringComparison.Ordinal);
+        Assert.Contains("status.EnrollmentMethod, NodeEnrollmentMethods.Account", viewModelSource, StringComparison.Ordinal);
+        Assert.Contains("var enrolledClassId = enrollment is { HasCredential: true }", viewModelSource,
+            StringComparison.Ordinal);
+        Assert.Contains("classes.Any(item => string.Equals(item.Id, enrolledClassId", viewModelSource,
+            StringComparison.Ordinal);
     }
 
     [Fact]

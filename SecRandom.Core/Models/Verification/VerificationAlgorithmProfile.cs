@@ -12,6 +12,7 @@ public enum VerificationAlgorithmProfile : byte
     StudentRandomNoRepeat = 5,
     StudentRandomHalfRepeat = 6,
     LotteryInventoryCount = 7,
+    // Values 8 and 12-17 are retained only so proofs created by older builds can still be decoded.
     LotteryCountInternalRule = 8,
     LotteryPanRepeat = 9,
     LotteryPanNoRepeat = 10,
@@ -32,5 +33,8 @@ public enum VerificationAlgorithmProfile : byte
     StudentOrchestrated = 19,
 
     /// <summary>Prize equivalent of <see cref="StudentOrchestrated" />.</summary>
-    LotteryOrchestrated = 20
+    LotteryOrchestrated = 20,
+
+    /// <summary>Samples each group with equal probability, then samples a member within each selected group.</summary>
+    StudentGroupUniform = 21
 }

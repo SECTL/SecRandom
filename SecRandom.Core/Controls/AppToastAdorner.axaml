@@ -7,18 +7,15 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Core.Controls.AppToastAdorner"
              HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-    <Grid RowDefinitions="Auto, *"
+    <Grid
           DataContext="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType=sr:AppToastAdorner}}">
-        <!-- Gap for Windows title bar -->
-        <Border Height="48" Grid.Row="0" />
-
-        <ItemsControl Grid.Row="1"
-                      ItemsSource="{Binding Messages}"
+        <ItemsControl ItemsSource="{Binding Messages}"
                       HorizontalAlignment="Right"
-                      VerticalAlignment="Stretch"
+                      VerticalAlignment="Bottom"
                       MaxWidth="400"
+                      MaxHeight="700"
                       ClipToBounds="True"
-                      Margin="4">
+                      Margin="12">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <StackPanel />

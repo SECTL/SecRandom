@@ -1,7 +1,8 @@
-﻿using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Interfaces;
 using SecRandom.Core.Models.Orchestration;
 using SecRandom.Core.Services.Orchestration;
+using SecRandom.Shared.Models.Profile;
 using Xunit;
 
 namespace SecRandom.Core.Tests;
@@ -36,6 +37,53 @@ public class OrchestrationOrderingTests
         IReadOnlySet<Guid>? drawn = null) =>
         OrchestrationOrdering.Resolve(
             candidates, round, drawn ?? new HashSet<Guid>(), new FixedRandomSource(0.5), rules ?? Rules());
+
+    [Fact]
+    public void CountModeExpandsOnlyRemainingInventoryUnits()
+    {
+        var prize = new Prize { RecordId = Id(1), Name = "Ticket", Count = 3 };
+        var profile = new OrchestrationProfile
+        {
+            Target = OrchestrationTarget.Lottery,
+            Members = [new OrchestrationMember { RecordId = prize.RecordId, Name = prize.Name }]
+        };
+        var round = Round();
+        round.Order = [prize.RecordId];
+
+        var scheduler = new OrchestrationScheduler(null!);
+        var remaining = scheduler.OrderRound(
+            profile,
+            round,
+            [prize],
+            new Dictionary<Guid, int> { [prize.RecordId] = 1 },
+            new FixedRandomSource(0.5),
+            expandInventory: true);
+
+        Assert.Equal(2, remaining.Count);
+        Assert.All(remaining, item => Assert.Same(prize, item));
+    }
+
+    [Fact]
+    public void CountModeDoesNotExpandWhenInventoryIsExhausted()
+    {
+        var prize = new Prize { RecordId = Id(1), Name = "Ticket", Count = 2 };
+        var profile = new OrchestrationProfile
+        {
+            Target = OrchestrationTarget.Lottery,
+            Members = [new OrchestrationMember { RecordId = prize.RecordId, Name = prize.Name }]
+        };
+
+        var scheduler = new OrchestrationScheduler(null!);
+        var remaining = scheduler.OrderRound(
+            profile,
+            Round(),
+            [prize],
+            new Dictionary<Guid, int> { [prize.RecordId] = 2 },
+            new FixedRandomSource(0.5),
+            expandInventory: true);
+
+        Assert.Empty(remaining);
+    }
 
     [Fact]
     public void QueueIsFollowedAndTheDrawnMemberLeavesSoTheNextOneMovesUp()

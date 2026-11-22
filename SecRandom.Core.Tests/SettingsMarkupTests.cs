@@ -560,6 +560,23 @@ public class SettingsMarkupTests
         Assert.Contains("x:Name=\"S_FairDrawMode\"", markup, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void QuickDrawDisplayStyleOffersDefaultAndUsesTheMatchingResultLayout()
+    {
+        string settingsMarkup = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Views/SettingsPages/Picking/QuickDrawSettingsPage.axaml"));
+        string resultMarkup = File.ReadAllText(GetRepositoryPath(
+            "SecRandom/Views/MainPages/QuickDrawPage.axaml"));
+
+        Assert.Contains("x:Name=\"S_DisplayStyle\"", settingsMarkup, StringComparison.Ordinal);
+        Assert.Contains("SelectedIndex=\"{Binding Settings.DisplayStyle}\"", settingsMarkup,
+            StringComparison.Ordinal);
+        Assert.Contains("<Border IsVisible=\"{Binding IsCardStyle}\"", resultMarkup,
+            StringComparison.Ordinal);
+        Assert.Contains("<StackPanel IsVisible=\"{Binding !IsCardStyle}\"", resultMarkup,
+            StringComparison.Ordinal);
+    }
+
     private static string GetDefaultNotificationMarkupPath()
     {
         return GetRepositoryPath(

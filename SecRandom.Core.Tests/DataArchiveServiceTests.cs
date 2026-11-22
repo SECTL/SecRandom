@@ -11,7 +11,12 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.HistoryStore;
+using SecRandom.Core.Services.Orchestration;
+using SecRandom.Core.Services.Profiles;
+using SecRandom.Core.Models.Orchestration;
 using SecRandom.Shared;
+using SecRandom.Core.Enums;
 
 namespace SecRandom.Core.Tests;
 
@@ -45,7 +50,8 @@ public sealed class DataArchiveServiceTests : IDisposable
         await archive.ExportAllDataAsync(destination, TestContext.Current.CancellationToken);
 
         var paths = ReadManifestPaths(destination);
-        Assert.Contains("list/roll_call_list/class.json", paths);
+        Assert.Contains("list/roll_call.srl", paths);
+        Assert.Contains("list/roll_call_list/class.json.migrated", paths);
         Assert.DoesNotContain(paths, path => path.StartsWith("theme", StringComparison.OrdinalIgnoreCase));
     }
 
@@ -101,16 +107,17 @@ public sealed class DataArchiveServiceTests : IDisposable
         using var provider = CreateProvider();
         provider.GetRequiredService<MainConfigHandler>().Save();
         var profileId = Guid.NewGuid().ToString("N");
-        File.WriteAllText(Utils.GetFilePath("config", "orchestration", profileId + ".json"), "{}");
-        File.WriteAllText(Utils.GetFilePath("config", "orchestration", "runtime", profileId + ".json"), "{}");
+        var store = new OrchestrationStore();
+        store.Save(new OrchestrationProfile { Id = profileId, Name = "测试编排", SourceListName = "class-a", IsActive = true });
+        store.SaveRuntime(new OrchestrationRuntime { ProfileId = profileId, Round = 2 });
 
         var archive = provider.GetRequiredService<DataArchiveService>();
         var destination = Path.Combine(_exportDirectory, "all-data-orchestration.zip");
         await archive.ExportAllDataAsync(destination, TestContext.Current.CancellationToken);
 
         var paths = ReadManifestPaths(destination);
-        Assert.Contains($"config/orchestration/{profileId}.json", paths);
-        Assert.Contains($"config/orchestration/runtime/{profileId}.json", paths);
+        Assert.Contains("config/orchestration.sro", paths);
+        Assert.DoesNotContain(paths, path => path.StartsWith("config/orchestration/", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -119,8 +126,9 @@ public sealed class DataArchiveServiceTests : IDisposable
         using var provider = CreateProvider();
         provider.GetRequiredService<MainConfigHandler>().Save();
         var profileId = Guid.NewGuid().ToString("N");
-        var profilePath = Utils.GetFilePath("config", "orchestration", profileId + ".json");
-        File.WriteAllText(profilePath, "{}");
+        var databasePath = OrchestrationStore.DatabasePath();
+        var store = new OrchestrationStore();
+        store.Save(new OrchestrationProfile { Id = profileId, Name = "导入测试", SourceListName = "class-a" });
 
         var archive = provider.GetRequiredService<DataArchiveService>();
         var destination = Path.Combine(_exportDirectory, "all-data-orchestration-import.zip");
@@ -128,10 +136,11 @@ public sealed class DataArchiveServiceTests : IDisposable
         StampProducerVersion(destination, TestV3ProducerVersion);
 
         // 编排段在 config/ 下是唯一按目录提交的根：折叠成 settings.json 会让整段顺序名单在导入时消失。
-        Directory.Delete(Path.GetDirectoryName(profilePath)!, true);
+        File.Delete(databasePath);
         await archive.ImportAllDataAsync(destination, TestContext.Current.CancellationToken);
 
-        Assert.True(File.Exists(profilePath));
+        Assert.True(File.Exists(databasePath));
+        Assert.Equal("导入测试", new OrchestrationStore().Load(profileId)?.Name);
     }
 
     [Fact]
@@ -151,6 +160,36 @@ public sealed class DataArchiveServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task ExportAndImportAllData_CarriesCentralRosterDatabases()
+    {
+        using var provider = CreateProvider();
+        provider.GetRequiredService<MainConfigHandler>().Save();
+        var manager = provider.GetRequiredService<SecRandom.Core.Abstraction.Services.IProfileCatalogManager>();
+        Assert.True(manager.CreateStudentList("class-a"));
+        Assert.True(manager.ReplaceStudents("class-a", [new SecRandom.Shared.Models.Profile.Student { Name = "甲" }]));
+        Assert.True(manager.CreatePrizeList("pool-a"));
+        Assert.True(manager.ReplacePrizes("pool-a", [new SecRandom.Shared.Models.Profile.Prize { Name = "书" }]));
+
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var destination = Path.Combine(_exportDirectory, "central-rosters.zip");
+        await archive.ExportAllDataAsync(destination, TestContext.Current.CancellationToken);
+        StampProducerVersion(destination, TestV3ProducerVersion);
+
+        var paths = ReadManifestPaths(destination);
+        Assert.Contains("list/roll_call.srl", paths);
+        Assert.Contains("list/lottery.srl", paths);
+        File.Delete(ProfileRosterPaths.DatabasePath(ProfileRosterKind.RollCall));
+        File.Delete(ProfileRosterPaths.DatabasePath(ProfileRosterKind.Lottery));
+
+        await archive.ImportAllDataAsync(destination, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["class-a"], manager.GetStudentListNames());
+        Assert.Equal(["pool-a"], manager.GetPrizeListNames());
+        Assert.Equal("甲", Assert.Single(manager.LoadStudentList("class-a")!.Students).Name);
+        Assert.Equal("书", Assert.Single(manager.LoadPrizeList("pool-a")!.Prizes).Name);
+    }
+
+    [Fact]
     public async Task ImportAllData_SkipsLegacyThemeEntriesInsteadOfFailing()
     {
         using var provider = CreateProvider();
@@ -165,6 +204,110 @@ public sealed class DataArchiveServiceTests : IDisposable
 
         Assert.True(result.ImportedFiles > 0);
         Assert.False(File.Exists(Utils.GetFilePath("themes", "theme.json")));
+    }
+
+    [Fact]
+    public async Task ExportAndImportAllData_CarriesOpaqueRosterSqliteFilesAndLegacyJsonBackups()
+    {
+        using var provider = CreateProvider();
+        provider.GetRequiredService<MainConfigHandler>().Save();
+        var archive = provider.GetRequiredService<DataArchiveService>();
+
+        var listDirectory = Utils.GetDirectoryPath("list", "roll_call_list");
+        var historyDirectory = Utils.GetDirectoryPath("history", "roll_call_history");
+        Directory.CreateDirectory(listDirectory);
+        Directory.CreateDirectory(historyDirectory);
+
+        var rosterDatabase = Path.Combine(listDirectory, "class.srl");
+        var rosterWal = rosterDatabase + "-wal";
+        var rosterShm = rosterDatabase + "-shm";
+        var legacyRoster = Path.Combine(listDirectory, "legacy.json");
+        var legacyRosterBackup = legacyRoster + ".migrated";
+        var legacyHistory = Path.Combine(historyDirectory, "legacy.json");
+        var legacyHistoryBackup = legacyHistory + ".migrated";
+        var databaseBytes = new byte[] { 0x53, 0x51, 0x4C, 0x69, 0x74, 0x65, 0x00, 0x01 };
+        File.WriteAllBytes(rosterDatabase, databaseBytes);
+        File.WriteAllBytes(rosterWal, [0x01, 0x02, 0x03]);
+        File.WriteAllBytes(rosterShm, [0x04, 0x05]);
+        File.WriteAllText(legacyRoster, "{}");
+        File.WriteAllBytes(legacyRosterBackup, [0xFF, 0x00, 0xFF]);
+        File.WriteAllText(legacyHistory, "{}");
+        File.WriteAllBytes(legacyHistoryBackup, [0xFF, 0x00, 0xFF]);
+
+        var destination = Path.Combine(_exportDirectory, "roster-sqlite-roundtrip.zip");
+        await archive.ExportAllDataAsync(destination, TestContext.Current.CancellationToken);
+        StampProducerVersion(destination, TestV3ProducerVersion);
+
+        var paths = ReadManifestPaths(destination);
+        Assert.Contains("list/roll_call_list/class.srl", paths);
+        Assert.Contains("list/roll_call_list/class.srl-wal", paths);
+        Assert.Contains("list/roll_call_list/class.srl-shm", paths);
+        Assert.Contains("list/roll_call_list/legacy.json", paths);
+        Assert.Contains("list/roll_call_list/legacy.json.migrated", paths);
+        Assert.Contains("history/roll_call_history/legacy.json", paths);
+        Assert.Contains("history/roll_call_history/legacy.json.migrated", paths);
+
+        Directory.Delete(listDirectory, recursive: true);
+        Directory.Delete(historyDirectory, recursive: true);
+        await archive.ImportAllDataAsync(destination, TestContext.Current.CancellationToken);
+
+        Assert.Equal(databaseBytes, File.ReadAllBytes(rosterDatabase));
+        Assert.Equal(new byte[] { 0x01, 0x02, 0x03 }, File.ReadAllBytes(rosterWal));
+        Assert.Equal(new byte[] { 0x04, 0x05 }, File.ReadAllBytes(rosterShm));
+        Assert.False(File.Exists(legacyRoster));
+        Assert.True(File.Exists(ProfileRosterPaths.DatabasePath("legacy", ProfileRosterKind.RollCall)));
+        Assert.Equal(new byte[] { 0xFF, 0x00, 0xFF }, File.ReadAllBytes(legacyRosterBackup));
+        Assert.False(File.Exists(legacyHistory));
+        Assert.True(File.Exists(ProfileHistoryPaths.DatabasePath("legacy", HistoryGroupKind.RollCall)));
+        Assert.Equal(new byte[] { 0xFF, 0x00, 0xFF }, File.ReadAllBytes(legacyHistoryBackup));
+    }
+
+    [Fact]
+    public async Task ImportAllData_ValidatesLegacyJsonButTreatsSqliteAndMigratedBackupsAsOpaque()
+    {
+        using var provider = CreateProvider();
+        provider.GetRequiredService<MainConfigHandler>().Save();
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var destination = Path.Combine(_exportDirectory, "opaque-roster-files.zip");
+        await archive.ExportAllDataAsync(destination, TestContext.Current.CancellationToken);
+        StampProducerVersion(destination, TestV3ProducerVersion);
+        AddArchiveEntry(destination, "list/roll_call_list/opaque.srl", [0x00, 0xFF, 0x01]);
+        AddArchiveEntry(destination, "list/roll_call_list/opaque.srl-wal", [0x02, 0x03]);
+        AddArchiveEntry(destination, "list/roll_call_list/opaque.srl-shm", [0x04, 0x05]);
+        AddArchiveEntry(destination, "list/roll_call_list/opaque.json.migrated", [0xFF, 0x00, 0xFF]);
+
+        var result = await archive.ImportAllDataAsync(destination, TestContext.Current.CancellationToken);
+
+        Assert.True(result.ImportedFiles > 0);
+        Assert.Equal(new byte[] { 0x00, 0xFF, 0x01 },
+            File.ReadAllBytes(Utils.GetFilePath("list", "roll_call_list", "opaque.srl")));
+        Assert.Equal(new byte[] { 0xFF, 0x00, 0xFF },
+            File.ReadAllBytes(Utils.GetFilePath("list", "roll_call_list", "opaque.json.migrated")));
+    }
+
+    [Fact]
+    public async Task ImportAllData_RejectsMalformedLegacyJsonBeforeReplacingRosterData()
+    {
+        using var provider = CreateProvider();
+        provider.GetRequiredService<MainConfigHandler>().Save();
+        var existing = Utils.GetFilePath("list", "roll_call_list", "keep.json");
+        File.WriteAllText(existing, "{}");
+
+        var archive = provider.GetRequiredService<DataArchiveService>();
+        var destination = Path.Combine(_exportDirectory, "malformed-legacy-roster.zip");
+        await archive.ExportAllDataAsync(destination, TestContext.Current.CancellationToken);
+        StampProducerVersion(destination, TestV3ProducerVersion);
+        var migratedBackup = existing + ".migrated";
+        var databasePath = ProfileRosterPaths.DatabasePath(ProfileRosterKind.RollCall);
+        var databaseBefore = File.ReadAllBytes(databasePath);
+        AddArchiveEntry(destination, "list/roll_call_list/broken.json", Encoding.UTF8.GetBytes("{ broken"));
+
+        await Assert.ThrowsAnyAsync<JsonException>(
+            () => archive.ImportAllDataAsync(destination, TestContext.Current.CancellationToken));
+
+        Assert.Equal("{}", File.ReadAllText(migratedBackup));
+        Assert.Equal(databaseBefore, File.ReadAllBytes(databasePath));
+        Assert.False(File.Exists(Utils.GetFilePath("list", "roll_call_list", "broken.json")));
     }
 
     [Fact]
@@ -192,7 +335,8 @@ public sealed class DataArchiveServiceTests : IDisposable
             Assert.Equal(ArchiveKind.AllData.ToString(), manifest.Kind);
             Assert.Equal(GlobalConstants.Version, manifest.ProducerVersion);
             Assert.Contains(manifest.Files, file => file.Path == "config/settings.json");
-            Assert.Contains(manifest.Files, file => file.Path == "list/roll_call_list/class.json");
+            Assert.Contains(manifest.Files, file => file.Path == "list/roll_call.srl");
+            Assert.Contains(manifest.Files, file => file.Path == "list/roll_call_list/class.json.migrated");
             Assert.Contains(manifest.Files, file => file.Path.StartsWith("history/roll_call_history/", StringComparison.Ordinal));
 
             var dataEntries = zip.Entries.Where(entry => !string.IsNullOrEmpty(entry.Name) && entry.FullName != "manifest.json").ToList();
@@ -228,7 +372,7 @@ public sealed class DataArchiveServiceTests : IDisposable
 
         RewriteArchive(destination, (name, bytes) =>
         {
-            if (name != "list/roll_call_list/class.json")
+            if (name != "list/roll_call.srl")
                 return bytes;
             var tampered = (byte[])bytes.Clone();
             tampered[0] ^= 0xFF;
@@ -328,23 +472,29 @@ public sealed class DataArchiveServiceTests : IDisposable
         var config = provider.GetRequiredService<MainConfigHandler>();
         var exportedInterval = config.Data.General.Backup.AutoBackupIntervalDays;
         config.Save();
-        var listPath = Utils.GetFilePath("list", "roll_call_list", "class.json");
-        File.WriteAllText(listPath, "{}");
+        var catalog = provider.GetRequiredService<SecRandom.Core.Abstraction.Services.IProfileCatalogManager>();
+        Assert.True(catalog.CreateStudentList("class"));
+        catalog.SetDefaultStudentList("class");
+        var profile = provider.GetRequiredService<SecRandom.Core.Abstraction.Services.IProfileService>();
+        profile.LoadStudentProfile("class", saveCurrent: false);
+        Assert.True(catalog.ReplaceStudents("class", [new SecRandom.Shared.Models.Profile.Student { Name = "原名单" }]));
 
         var archive = provider.GetRequiredService<DataArchiveService>();
         var destination = Path.Combine(_exportDirectory, "restore.zip");
         await archive.ExportAllDataAsync(destination, TestContext.Current.CancellationToken);
         StampProducerVersion(destination, TestV3ProducerVersion);
+        var listPath = ProfileRosterPaths.DatabasePath(ProfileRosterKind.RollCall);
         // 导出即归档内容的真实来源（导出前服务会先落盘当前状态），以其为恢复基准。
-        var exportedListContent = File.ReadAllText(listPath);
+        var exportedListContent = File.ReadAllBytes(listPath);
 
-        File.WriteAllText(listPath, "{\"changed\":true}");
+        Assert.True(catalog.ReplaceStudents("class", [new SecRandom.Shared.Models.Profile.Student { Name = "改动后" }]));
         config.Data.General.Backup.AutoBackupIntervalDays = exportedInterval + 3;
         config.Save();
 
         var result = await archive.ImportAllDataAsync(destination, TestContext.Current.CancellationToken);
 
-        Assert.Equal(exportedListContent, File.ReadAllText(listPath));
+        Assert.Equal(exportedListContent, File.ReadAllBytes(listPath));
+        Assert.Equal("原名单", Assert.Single(catalog.LoadStudentList("class")!.Students).Name);
         Assert.Equal(exportedInterval, config.Data.General.Backup.AutoBackupIntervalDays);
         Assert.True(result.ImportedFiles > 0);
         Assert.False(string.IsNullOrEmpty(result.SnapshotPath));
@@ -436,16 +586,16 @@ public sealed class DataArchiveServiceTests : IDisposable
         var settingsPath = config.Data.ConfigFilePath;
         var settingsBefore = File.ReadAllText(settingsPath);
         var profile = provider.GetRequiredService<SecRandom.Core.Abstraction.Services.IProfileService>();
-        var studentName = profile.StudentListConfig!.Name;
-        var prizeName = profile.PrizeListConfig!.Name;
+        var studentName = profile.StudentListConfig?.Name;
+        var prizeName = profile.PrizeListConfig?.Name;
 
         await Assert.ThrowsAsync<InvalidDataException>(() => zip
             ? archive.ImportAllDataAsync(source, TestContext.Current.CancellationToken)
             : archive.ImportSettingsAsync(source, TestContext.Current.CancellationToken));
 
         Assert.Equal(settingsBefore, File.ReadAllText(settingsPath));
-        Assert.Equal(studentName, profile.StudentListConfig.Name);
-        Assert.Equal(prizeName, profile.PrizeListConfig.Name);
+        Assert.Equal(studentName, profile.StudentListConfig?.Name);
+        Assert.Equal(prizeName, profile.PrizeListConfig?.Name);
         Assert.Equal(0, hooks.SettingsCalls);
         Assert.Equal(0, hooks.AllDataCalls);
         var backup = Path.Combine(_dataRoot, "backup");

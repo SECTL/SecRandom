@@ -20,9 +20,15 @@ public class PrizeList : ProfileConfigBase, IAttachableSettingsObject
 
     [JsonIgnore]
     public override string ConfigFilePath =>
-        GetProfileFilePath("list", "lottery_list");
+        GetCentralRosterFilePath("lottery");
 
     public ObservableCollection<Prize> Prizes { get; set; } = [];
 
     public Dictionary<Guid, object?> AttachedObjects { get; set; } = [];
+
+    private string GetCentralRosterFilePath(string kind)
+    {
+        ValidateProfileName(Name);
+        return Utils.GetFilePath("list", $"{kind}{Utils.RosterDatabaseExtension}");
+    }
 }

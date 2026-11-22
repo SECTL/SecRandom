@@ -26,7 +26,9 @@ public sealed record StudentDrawCommit(
     string CourseName = "",
     string? DrawRoundId = null,
     string? HistoryGroup = null,
-    string? RecordGroup = null);
+    string? RecordGroup = null,
+    IReadOnlyList<string>? GroupWinners = null,
+    bool IncludeGroupMember = false);
 
 /// <summary>
 ///     One logical lottery draw. Prizes and their assigned students share a single DrawRoundId so history
@@ -48,7 +50,9 @@ public sealed record LotteryDrawCommit(
     string? DrawRoundId = null,
     string? HistoryGroup = null,
     string? RecordGroup = null,
-    string? StudentRecordGroup = null);
+    string? StudentRecordGroup = null,
+    IReadOnlyList<string>? GroupWinners = null,
+    bool IncludeGroupMember = false);
 
 /// <summary>
 ///     One logical "no roster" number-range draw. Number tickets are synthetic, so the commit writes temporary

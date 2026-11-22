@@ -60,7 +60,11 @@ internal static class ProfileHistoryPaths
     /// <summary>改名档案：数据库、未迁移的 JSON 与迁移备份都要跟着换名，避免同名档案被下一次加载迁移覆盖。</summary>
     internal static void Rename(string oldName, string newName, HistoryGroupKind kind)
     {
-        MoveIfExists(DatabasePath(oldName, kind), DatabasePath(newName, kind));
+        var oldDatabase = DatabasePath(oldName, kind);
+        var newDatabase = DatabasePath(newName, kind);
+        MoveIfExists(oldDatabase, newDatabase);
+        MoveIfExists(oldDatabase + "-wal", newDatabase + "-wal");
+        MoveIfExists(oldDatabase + "-shm", newDatabase + "-shm");
         MoveIfExists(LegacyJsonPath(oldName, kind), LegacyJsonPath(newName, kind));
         MoveIfExists(LegacyBackupPath(oldName, kind), LegacyBackupPath(newName, kind));
     }

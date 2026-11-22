@@ -92,7 +92,7 @@ public class FloatingWindowSettingsConfigTests
     {
         MainConfigModel config = new();
         Assert.True(config.FloatingWindowSettings.EnableQuickDrawLongPress);
-        Assert.Equal(500, config.FloatingWindowSettings.LongPressDuration);
+        Assert.Equal(800, config.FloatingWindowSettings.LongPressDuration);
 
         config.FloatingWindowSettings.EnableQuickDrawLongPress = false;
         config.FloatingWindowSettings.LongPressDuration = 800;

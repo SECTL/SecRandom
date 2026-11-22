@@ -4,22 +4,17 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Interfaces;
 using SecRandom.Core.Models;
-using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Core.Services.Draw.Exceptions;
 using SecRandom.Shared.Extensions;
-using SecRandom.Shared.Interfaces;
 using SecRandom.Shared.Models.Profile;
 
 namespace SecRandom.Core.Services.Draw;
 
 public partial class DrawEngine
 {
-    private static readonly Guid BehindSceneAttachedSettingsId =
-        Guid.Parse(GlobalConstants.BehindSceneAttachedSettings);
-
     private readonly MainConfigHandler _configHandler;
     private readonly IProfileService _profileService;
     private readonly ILogger<DrawEngine> _logger;
@@ -109,7 +104,7 @@ public partial class DrawEngine
             var usable = FilterStudents(Filter1, count, historyCache, executionPolicy);
             var weightedCandidates = BuildStudentWeightedCandidates(usable, historyCache, executionPolicy, courseName, count);
 
-            var result = DrawWithBehindSceneWeights(weightedCandidates, count);
+            var result = DrawWeightedCandidates(weightedCandidates, count);
             LogDrawResult("学生抽取", result.Status, count, usable.Count, result.Result.Count);
             return result;
         }
@@ -239,7 +234,7 @@ public partial class DrawEngine
 
     internal DrawResult<Student> DrawPreparedStudents(DrawPreparedStudentsSnapshot prepared, int count)
     {
-        return DrawWithBehindSceneWeights(prepared.WeightedCandidates, count);
+        return DrawWeightedCandidates(prepared.WeightedCandidates, count);
     }
 
     private int GetStudentRepeatThreshold(DrawSettingsType drawSettingsType)
@@ -400,9 +395,8 @@ public partial class DrawEngine
 
     private DrawResult<Prize> DrawPrizeCandidates(IReadOnlyList<WeightedCandidate<Prize>> candidates, int count)
     {
-        if (ConfigData.LotterySettings.DrawType != LotteryDrawType.Count
-            || candidates.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true }))
-            return DrawWithBehindSceneWeights(candidates, count);
+        if (ConfigData.LotterySettings.DrawType != LotteryDrawType.Count)
+            return DrawWeightedCandidates(candidates, count);
 
         if (count > candidates.Count)
             return new DrawResult<Prize> { Status = DrawStatus.NoEligibleCandidates };
@@ -421,76 +415,15 @@ public partial class DrawEngine
         };
     }
 
-    private DrawResult<TCandidate> DrawWithBehindSceneWeights<TCandidate>(
+    private DrawResult<TCandidate> DrawWeightedCandidates<TCandidate>(
         IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates,
         int count)
-        where TCandidate : IAttachableSettingsObject
     {
-        var drawEngine = new WeightedDrawEngine<TCandidate>(_randomSource);
-        List<WeightedCandidate<TCandidate>> guaranteedCandidates = [];
-        List<WeightedCandidate<TCandidate>> effectiveCandidates = [];
-        HashSet<TCandidate> guaranteedCandidateSet = [];
-
-        foreach (var candidate in weightedCandidates)
+        return new WeightedDrawEngine<TCandidate>(_randomSource).Draw(new DrawRequest<TCandidate>
         {
-            var settings = GetBehindSceneSettings(candidate.Candidate);
-            if (guaranteedCandidateSet.Contains(candidate.Candidate))
-                continue;
-
-            if (settings is not { IsAttachSettingsEnabled: true })
-            {
-                effectiveCandidates.Add(new WeightedCandidate<TCandidate>
-                {
-                    Candidate = candidate.Candidate,
-                    Weight = candidate.Weight
-                });
-                continue;
-            }
-
-            var probability = Math.Clamp(settings.Probability, 0, 100);
-            if (probability >= 100)
-            {
-                guaranteedCandidateSet.Add(candidate.Candidate);
-                guaranteedCandidates.Add(new WeightedCandidate<TCandidate>
-                {
-                    Candidate = candidate.Candidate,
-                    Weight = 1.0
-                });
-                continue;
-            }
-
-            if (probability <= 0)
-                continue;
-
-            effectiveCandidates.Add(new WeightedCandidate<TCandidate>
-            {
-                Candidate = candidate.Candidate,
-                Weight = candidate.Weight * (probability / 100.0)
-            });
-        }
-
-        if (guaranteedCandidates.Count >= count)
-            return drawEngine.Draw(new DrawRequest<TCandidate> { Candidates = guaranteedCandidates, Count = count });
-
-        var result = guaranteedCandidates.Select(c => c.Candidate).ToList();
-        var remainingCount = count - result.Count;
-        if (remainingCount <= 0)
-            return new DrawResult<TCandidate> { Result = result, Status = DrawStatus.Success };
-
-        if (effectiveCandidates.Count < remainingCount)
-            return new DrawResult<TCandidate> { Status = DrawStatus.NoEligibleCandidates };
-
-        var restResult = drawEngine.Draw(new DrawRequest<TCandidate>
-        {
-            Candidates = effectiveCandidates,
-            Count = remainingCount
+            Candidates = weightedCandidates,
+            Count = count
         });
-
-        if (!restResult.IsSuccess)
-            return new DrawResult<TCandidate> { Status = restResult.Status };
-
-        result.AddRange(restResult.Result);
-        return new DrawResult<TCandidate> { Result = result, Status = DrawStatus.Success };
     }
 
     private void LogDrawResult(
@@ -509,11 +442,6 @@ public partial class DrawEngine
 
         _logger.LogWarning("{Operation}未成功：状态={Status}，请求数量={RequestedCount}，候选数量={CandidateCount}.",
             operation, status, requestedCount, candidateCount);
-    }
-
-    private static BehindSceneAttachedSettings? GetBehindSceneSettings(IAttachableSettingsObject candidate)
-    {
-        return candidate.GetAttachedObject<BehindSceneAttachedSettings>(BehindSceneAttachedSettingsId);
     }
 
 }

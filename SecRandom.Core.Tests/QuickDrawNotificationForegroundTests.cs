@@ -95,6 +95,30 @@ public sealed class QuickDrawNotificationForegroundTests : IDisposable
         AssertInk(viewModel, Colors.Yellow);
     }
 
+    [Fact]
+    public void QuickDrawResultsFollowTheDefaultStyleAndRefreshWhenItChanges()
+    {
+        using var viewModel = CreateViewModel(darkAppTheme: true);
+        var config = viewModel.Config;
+        ReplaceStudentResults(viewModel, "学生");
+
+        Assert.False(Assert.Single(viewModel.ResultItems).IsCardStyle);
+
+        config.DefaultDrawSettings.DisplayStyle = DisplayStyleMode.Card;
+        Assert.True(Assert.Single(viewModel.ResultItems).IsCardStyle);
+
+        config.QuickDrawSettings.OverrideDisplaySettings = true;
+        Assert.False(Assert.Single(viewModel.ResultItems).IsCardStyle);
+        config.QuickDrawSettings.DisplayStyle = DisplayStyleMode.Card;
+        Assert.True(Assert.Single(viewModel.ResultItems).IsCardStyle);
+
+        config.QuickDrawSettings.OverrideDisplaySettings = false;
+        Assert.True(Assert.Single(viewModel.ResultItems).IsCardStyle);
+
+        config.DefaultDrawSettings.DisplayStyle = DisplayStyleMode.Default;
+        Assert.False(Assert.Single(viewModel.ResultItems).IsCardStyle);
+    }
+
     private QuickDrawPageViewModel CreateViewModel(bool darkAppTheme, bool useAccent = true)
     {
         var config = new MainConfigModel();
@@ -106,7 +130,7 @@ public sealed class QuickDrawNotificationForegroundTests : IDisposable
         var handler = new MainConfigHandler(NullLogger<MainConfigHandler>.Instance, new TestConfigService(config));
         // Sampling/commit services are unused by presentation; disposal only stops the idle audio service.
         return new QuickDrawPageViewModel(handler, null!, null!, null!, null!, _audio,
-            NullLogger<QuickDrawPageViewModel>.Instance, null!, null!, null!, null!);
+            NullLogger<QuickDrawPageViewModel>.Instance, null!, null!, null!, null!, null!);
     }
 
     private static void ReplaceStudentResults(QuickDrawPageViewModel viewModel, string name)

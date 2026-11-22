@@ -9,7 +9,6 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Interfaces;
 using SecRandom.Core.Models;
-using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Verification;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
@@ -236,57 +235,6 @@ public sealed class FairDrawAlgorithmTests
     }
 
     [Fact]
-    public void RandomStudentVerification_UsesInternalRuleProfileWhenCandidateWeightsAreOverridden()
-    {
-        var student = new Student { Name = "First", RecordId = Guid.NewGuid() };
-        student.AttachedObjects[Guid.Parse(GlobalConstants.BehindSceneAttachedSettings)] = new BehindSceneAttachedSettings
-        {
-            IsAttachSettingsEnabled = true,
-            Probability = 50
-        };
-        var config = CreateConfig(new FairDrawSettingsConfig());
-        config.RollCallSettings.DrawType = DrawType.Random;
-        config.RollCallSettings.AlgorithmId = "builtin.random";
-        config.RollCallSettings.DrawMode = DrawMode.NoRepeat;
-
-        using var host = CreateHost(config, new TestProfileService(new StudentHistory(), new StudentList { Students = [student] }));
-
-        var input = CreateEngine(host).CreateStudentVerificationInput(1, [student], DrawSettingsType.RollCall);
-
-        Assert.Equal(VerificationAlgorithmProfile.StudentRandomInternalRuleNoRepeat, input.AlgorithmProfile);
-        Assert.Equal(500_000, input.Candidates.Single().WeightMicros);
-    }
-
-    [Fact]
-    public void StudentVerification_CanIgnoreInternalRules()
-    {
-        var student = new Student { Name = "First", RecordId = Guid.NewGuid() };
-        student.AttachedObjects[Guid.Parse(GlobalConstants.BehindSceneAttachedSettings)] = new BehindSceneAttachedSettings
-        {
-            IsAttachSettingsEnabled = true,
-            Probability = 50
-        };
-        var config = CreateConfig(new FairDrawSettingsConfig());
-        config.RollCallSettings.DrawType = DrawType.Random;
-        config.RollCallSettings.AlgorithmId = "builtin.random";
-        config.RollCallSettings.DrawMode = DrawMode.NoRepeat;
-
-        using var host = CreateHost(config, new TestProfileService(new StudentHistory(), new StudentList { Students = [student] }));
-
-        var input = CreateEngine(host).CreateStudentVerificationInput(
-            1,
-            [student],
-            DrawSettingsType.RollCall,
-            courseName: "",
-            includeInternalRules: false);
-
-        Assert.Equal(VerificationAlgorithmProfile.StudentRandomNoRepeat, input.AlgorithmProfile);
-        Assert.Equal(1_000_000, input.Candidates.Single().WeightMicros);
-        using var audit = JsonDocument.Parse(input.AuditPayload);
-        Assert.False(audit.RootElement.GetProperty("internalSettingsApplied").GetBoolean());
-    }
-
-    [Fact]
     public void CountLottery_UsesInventoryPermutationRatherThanPrizeWeights()
     {
         var first = new Prize { Name = "First", RecordId = Guid.NewGuid(), Count = 2, Weight = 100 };
@@ -310,60 +258,6 @@ public sealed class FairDrawAlgorithmTests
         Assert.Equal(VerificationSamplingMode.InventoryPermutation, input.SamplingMode);
         Assert.Equal(VerificationAlgorithmProfile.LotteryInventoryCount, input.AlgorithmProfile);
         Assert.All(input.Candidates, candidate => Assert.Equal(1_000_000, candidate.WeightMicros));
-    }
-
-    [Fact]
-    public void CountLotteryVerification_AuditsZeroProbabilityInternalRules()
-    {
-        var blocked = new Prize { Name = "Blocked", RecordId = Guid.NewGuid(), Count = 1 };
-        blocked.AttachedObjects[Guid.Parse(GlobalConstants.BehindSceneAttachedSettings)] = new BehindSceneAttachedSettings
-        {
-            IsAttachSettingsEnabled = true,
-            Probability = 0
-        };
-        var available = new Prize { Name = "Available", RecordId = Guid.NewGuid(), Count = 1 };
-        var config = CreateConfig(new FairDrawSettingsConfig());
-        config.LotterySettings = new LotterySettingsConfig { DrawType = LotteryDrawType.Count };
-
-        using var host = CreateHost(config, new TestProfileService(
-            new StudentHistory(), new StudentList(), new PrizeList { Prizes = [blocked, available] }));
-
-        var input = CreateEngine(host).CreatePrizeVerificationInput(1, new Dictionary<string, int>());
-        using var audit = JsonDocument.Parse(input.AuditPayload);
-
-        Assert.Equal(VerificationAlgorithmProfile.LotteryCountInternalRule, input.AlgorithmProfile);
-        Assert.True(audit.RootElement.GetProperty("internalSettingsApplied").GetBoolean());
-        Assert.Equal(0, audit.RootElement.GetProperty("internalCandidateCount").GetInt32());
-        Assert.Equal(1, audit.RootElement.GetProperty("internalExcludedCandidateCount").GetInt32());
-    }
-
-    [Fact]
-    public void CountLotteryVerification_CanIgnoreInternalRules()
-    {
-        var blocked = new Prize { Name = "Blocked", RecordId = Guid.NewGuid(), Count = 1 };
-        blocked.AttachedObjects[Guid.Parse(GlobalConstants.BehindSceneAttachedSettings)] = new BehindSceneAttachedSettings
-        {
-            IsAttachSettingsEnabled = true,
-            Probability = 0
-        };
-        var available = new Prize { Name = "Available", RecordId = Guid.NewGuid(), Count = 1 };
-        var config = CreateConfig(new FairDrawSettingsConfig());
-        config.LotterySettings = new LotterySettingsConfig { DrawType = LotteryDrawType.Count };
-
-        using var host = CreateHost(config, new TestProfileService(
-            new StudentHistory(), new StudentList(), new PrizeList { Prizes = [blocked, available] }));
-
-        var input = CreateEngine(host).CreatePrizeVerificationInput(
-            1,
-            new Dictionary<string, int>(),
-            includeInternalRules: false);
-
-        Assert.Equal(VerificationAlgorithmProfile.LotteryInventoryCount, input.AlgorithmProfile);
-        Assert.Equal(2, input.Candidates.Count);
-        Assert.All(input.Candidates, candidate => Assert.Equal(1_000_000, candidate.WeightMicros));
-        using var audit = JsonDocument.Parse(input.AuditPayload);
-        Assert.False(audit.RootElement.GetProperty("internalSettingsApplied").GetBoolean());
-        Assert.Equal(0, audit.RootElement.GetProperty("internalExcludedCandidateCount").GetInt32());
     }
 
     [Fact]
@@ -584,27 +478,26 @@ public sealed class FairDrawAlgorithmTests
                 1,
                 students.Students,
                 DrawSettingsType.RollCall,
-                courseName,
-                includeInternalRules: true,
+            courseName,
                 rosterDigest: string.Empty,
                 historyGroup: historyGroup);
             using var audit = JsonDocument.Parse(input.AuditPayload);
             return audit.RootElement.GetProperty("fairness").GetProperty("historyScope").GetString()!;
         }
 
-        // null = 组轴不参与过滤（global/course）；"" 是默认记录组，仍然是一个组范围，因此归入 history-group。
+        // 科目只作为记录元数据；只有记录组会改变权重历史范围。
         Assert.Equal("global", ReadScope(engine, students, string.Empty, null));
-        Assert.Equal("course", ReadScope(engine, students, "数学", null));
+        Assert.Equal("global", ReadScope(engine, students, "数学", null));
         Assert.Equal("history-group", ReadScope(engine, students, string.Empty, "期末抽奖"));
         Assert.Equal("history-group", ReadScope(engine, students, string.Empty, string.Empty));
-        Assert.Equal("course-and-history-group", ReadScope(engine, students, "数学", "期末抽奖"));
+        Assert.Equal("history-group", ReadScope(engine, students, "数学", "期末抽奖"));
 
         // Only the scope name is uploaded: the audit payload must not carry the course or the group the user typed.
         // The check parses the document instead of scanning the raw bytes, because the serializer escapes non-ASCII
         // text and a substring test on the bytes would pass even while the name was uploaded.
         var scoped = engine.CreateStudentVerificationInput(
             1, students.Students, DrawSettingsType.RollCall, "数学",
-            includeInternalRules: true, rosterDigest: string.Empty, historyGroup: "期末抽奖");
+            rosterDigest: string.Empty, historyGroup: "期末抽奖");
         using var scopedAudit = JsonDocument.Parse(scoped.AuditPayload);
         var uploadedText = CollectStrings(scopedAudit.RootElement).ToArray();
         Assert.DoesNotContain(uploadedText, text => text.Contains("期末抽奖", StringComparison.Ordinal));

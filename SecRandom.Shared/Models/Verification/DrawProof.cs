@@ -18,6 +18,9 @@ public sealed record class DrawProof
     /// </summary>
     public const string FormatV2 = "secrandom-draw-proof/v2";
 
+    /// <summary>Formal notarization extension with algorithm publication and lock commitments.</summary>
+    public const string FormatV3 = "secrandom-draw-proof/v3";
+
     [JsonPropertyName("format")]
     public string Format { get; init; } = FormatV2;
 
@@ -38,6 +41,20 @@ public sealed record class DrawProof
 
     [JsonPropertyName("algorithmEngineVersion")]
     public string AlgorithmEngineVersion { get; init; } = string.Empty;
+
+    /// <summary>Stable allow-listed algorithm publication identifier.</summary>
+    [JsonPropertyName("algorithmSpecId")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AlgorithmSpecId { get; init; }
+
+    /// <summary>SHA-256 commitment to the published algorithm specification.</summary>
+    [JsonPropertyName("algorithmSpecHash")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? AlgorithmSpecHash { get; init; }
+
+    [JsonPropertyName("candidatePoolCommitment")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? CandidatePoolCommitment { get; init; }
 
     // Keeps deserializing v1 proof files while new exports use algorithmEngineVersion.
     [JsonPropertyName("kernelVersion")]

@@ -3,6 +3,8 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Services;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.HistoryStore;
@@ -132,6 +134,125 @@ public sealed class HistoryDatabaseTests : IDisposable
 
         Assert.Empty(history.Students);
         Assert.False(File.Exists(ProfileHistoryPaths.DatabasePath("不存在的班", SecRandom.Core.Enums.HistoryGroupKind.RollCall)));
+    }
+
+    [Fact]
+    public void Save_RemovesOnlyMissingMembersIncludingThoseWithoutRecords()
+    {
+        using var provider = CreateProvider();
+        var handler = CreateHandler(provider);
+        handler.Data.Students["keep"] = new History { TotalCount = 1, Histories = [new HistoryItem { RecordId = "keep" }] };
+        handler.Data.Students["remove"] = new History { TotalCount = 2, Histories = [new HistoryItem { RecordId = "remove" }] };
+        handler.Data.Students["counter-only"] = new History { TotalCount = 3 };
+        handler.Save();
+
+        handler.Data.Students.Remove("remove");
+        handler.Data.Students.Remove("counter-only");
+        handler.Save();
+
+        var remaining = Assert.Single(Load(provider).Students);
+        Assert.Equal("keep", remaining.Key);
+        Assert.Equal(1, remaining.Value.TotalCount);
+        Assert.Single(remaining.Value.Histories);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void ClearHistory_RemovesRecordsAndMemberCountersAfterReload(bool prize, bool active)
+    {
+        using var provider = CreateProvider();
+        var manager = provider.GetRequiredService<IProfileCatalogManager>();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var logger = provider.GetRequiredService<ILogger<StudentHistoryConfig>>();
+        var config = provider.GetRequiredService<ConfigServiceBase>();
+        var name = active ? "active" : "inactive";
+
+        if (prize)
+        {
+            manager.CreatePrizeList("active");
+            manager.CreatePrizeList("inactive");
+            profile.LoadPrizeProfile("active");
+            var handler = active ? profile.PrizeHistoryConfig! : new PrizeHistoryConfig(name, logger, config);
+            handler.Data.TotalRounds = 3;
+            handler.Data.TotalStats = 3;
+            handler.Data.Prizes["drawn"] = new History { TotalCount = 3, Histories = [new HistoryItem { RecordId = "drawn" }] };
+            handler.Data.Prizes["counter-only"] = new History { TotalCount = 2 };
+            handler.Data.HistoryGroups["group"] = new HistoryGroupInfo();
+            handler.Save();
+
+            Assert.True(manager.ClearPrizeHistory(name));
+            var result = new PrizeHistoryConfig(name, logger, config).Data;
+            Assert.Empty(result.Prizes);
+            Assert.Equal(0, result.TotalRounds);
+            Assert.Equal(0, result.TotalStats);
+            Assert.Contains("group", result.HistoryGroups.Keys);
+        }
+        else
+        {
+            manager.CreateStudentList("active");
+            manager.CreateStudentList("inactive");
+            profile.LoadStudentProfile("active");
+            var handler = active ? profile.StudentHistoryConfig! : new StudentHistoryConfig(name, logger, config);
+            handler.Data.TotalRounds = 3;
+            handler.Data.TotalStats = 3;
+            handler.Data.Students["drawn"] = new History { TotalCount = 3, Histories = [new HistoryItem { RecordId = "drawn" }] };
+            handler.Data.Students["counter-only"] = new History { TotalCount = 2 };
+            handler.Data.HistoryGroups["group"] = new HistoryGroupInfo();
+            handler.Save();
+
+            Assert.True(manager.ClearStudentHistory(name));
+            var result = new StudentHistoryConfig(name, logger, config).Data;
+            Assert.Empty(result.Students);
+            Assert.Equal(0, result.TotalRounds);
+            Assert.Equal(0, result.TotalStats);
+            Assert.Contains("group", result.HistoryGroups.Keys);
+        }
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public void DeleteRoster_RemovesOnlySelectedRosterAndItsDatabaseHistory(bool prize, bool active)
+    {
+        using var provider = CreateProvider();
+        var manager = provider.GetRequiredService<IProfileCatalogManager>();
+        var profile = provider.GetRequiredService<IProfileService>();
+        var name = active ? "active" : "other";
+        var survivor = active ? "other" : "active";
+
+        if (prize)
+        {
+            manager.CreatePrizeList("active");
+            manager.CreatePrizeList("other");
+            profile.LoadPrizeProfile(name);
+            profile.RecordPrizeHistory([new Prize { Name = "奖品" }], DateTime.Now, 1);
+            if (!active) profile.LoadPrizeProfile("active");
+            Assert.True(ProfileHistoryPaths.Exists(name, HistoryGroupKind.Lottery));
+            Assert.True(manager.DeletePrizeList(name, deleteHistory: true));
+            profile.SaveProfile();
+            Assert.Equal([survivor], manager.GetPrizeListNames());
+            Assert.False(ProfileHistoryPaths.Exists(name, HistoryGroupKind.Lottery));
+            Assert.Equal(survivor, profile.PrizeListConfig!.Name);
+        }
+        else
+        {
+            manager.CreateStudentList("active");
+            manager.CreateStudentList("other");
+            profile.LoadStudentProfile(name);
+            profile.RecordStudentHistory([new Student { Name = "学生" }], DateTime.Now, 1);
+            if (!active) profile.LoadStudentProfile("active");
+            Assert.True(ProfileHistoryPaths.Exists(name, HistoryGroupKind.RollCall));
+            Assert.True(manager.DeleteStudentList(name, deleteHistory: true));
+            profile.SaveProfile();
+            Assert.Equal([survivor], manager.GetStudentListNames());
+            Assert.False(ProfileHistoryPaths.Exists(name, HistoryGroupKind.RollCall));
+            Assert.Equal(survivor, profile.StudentListConfig!.Name);
+        }
     }
 
     private static StudentHistory Load(ServiceProvider provider) => CreateHandler(provider).Data;

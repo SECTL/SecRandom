@@ -18,7 +18,15 @@ public static class VerificationWireCodec
     public const string WeightedLotteryAlgorithmId = "secrandom-lottery-weighted-without-replacement-chacha20/v3";
     public const string NumberAlgorithmId = "secrandom-number-permutation-chacha20/v3";
     public const string OrchestratedSequenceAlgorithmId = "secrandom-orchestrated-sequential-order/v3";
+    public const string GroupUniformAlgorithmId = "secrandom-group-uniform-then-member-uniform-chacha20/v1";
     public const string AlgorithmId = StudentAlgorithmId;
+
+    /// <summary>
+    ///     Engine version committed by the published algorithm specifications used for formal notarization.
+    ///     Ordinary offline proofs keep <see cref="AlgorithmEngineVersion"/> for compatibility with deployed
+    ///     verifiers; formal v3 requests use this newer publication generation.
+    /// </summary>
+    public const string FormalAlgorithmEngineVersion = "3.6.0";
 
     /// <summary>
     ///     Engine version stamped into every new proof.
@@ -54,11 +62,25 @@ public static class VerificationWireCodec
     /// </remarks>
     public const string OrchestratedAlgorithmEngineVersion = "3.6.0";
 
+    /// <summary>Engine generation that first replays two-stage group/member draws.</summary>
+    public const string GroupUniformAlgorithmEngineVersion = "3.7.0";
+
     /// <summary>Engine version a proof of this sampling mode is stamped with.</summary>
     public static string GetEngineVersion(VerificationSamplingMode samplingMode) =>
-        samplingMode == VerificationSamplingMode.SequentialOrder
-            ? OrchestratedAlgorithmEngineVersion
-            : AlgorithmEngineVersion;
+        samplingMode switch
+        {
+            VerificationSamplingMode.SequentialOrder => OrchestratedAlgorithmEngineVersion,
+            VerificationSamplingMode.GroupUniform => GroupUniformAlgorithmEngineVersion,
+            _ => AlgorithmEngineVersion
+        };
+
+    /// <summary>Returns the published engine generation for a formal v3 request.</summary>
+    public static string GetFormalEngineVersion() => FormalAlgorithmEngineVersion;
+
+    public static string GetFormalEngineVersion(VerificationSamplingMode samplingMode) =>
+        samplingMode == VerificationSamplingMode.GroupUniform
+            ? GroupUniformAlgorithmEngineVersion
+            : FormalAlgorithmEngineVersion;
 
     private static readonly byte[] InputMagic = "SRDI"u8.ToArray();
     private static readonly byte[] RequestMagic = "SRDQ"u8.ToArray();
@@ -83,6 +105,7 @@ public static class VerificationWireCodec
         VerificationSamplingMode.InventoryPermutation => InventoryLotteryAlgorithmId,
         VerificationSamplingMode.WeightedWithoutReplacement => WeightedLotteryAlgorithmId,
         VerificationSamplingMode.SequentialOrder => OrchestratedSequenceAlgorithmId,
+        VerificationSamplingMode.GroupUniform => GroupUniformAlgorithmId,
         _ => throw new ArgumentOutOfRangeException(nameof(samplingMode), samplingMode, "Verification sampling mode is unsupported.")
     };
 
@@ -108,6 +131,7 @@ public static class VerificationWireCodec
         VerificationAlgorithmProfile.NumberUniformPermutation => NumberAlgorithmId,
         VerificationAlgorithmProfile.StudentOrchestrated => "secrandom-student-orchestrated/v3",
         VerificationAlgorithmProfile.LotteryOrchestrated => "secrandom-lottery-orchestrated/v3",
+        VerificationAlgorithmProfile.StudentGroupUniform => "secrandom-student-group-uniform/v1",
         _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, "Verification algorithm profile is unsupported.")
     };
 
@@ -133,6 +157,7 @@ public static class VerificationWireCodec
         VerificationAlgorithmProfile.NumberUniformPermutation => "数字：范围内等概率不放回",
         VerificationAlgorithmProfile.StudentOrchestrated => "点名：编排抽取（顺序已事先排定）",
         VerificationAlgorithmProfile.LotteryOrchestrated => "抽奖：编排抽取（顺序已事先排定）",
+        VerificationAlgorithmProfile.StudentGroupUniform => "点名：小组等概率，组内成员等概率",
         _ => throw new ArgumentOutOfRangeException(nameof(profile), profile, "Verification algorithm profile is unsupported.")
     };
 
@@ -160,6 +185,7 @@ public static class VerificationWireCodec
             NumberAlgorithmId => GetAlgorithmLabel(VerificationAlgorithmProfile.NumberUniformPermutation),
             "secrandom-student-orchestrated/v3" => GetAlgorithmLabel(VerificationAlgorithmProfile.StudentOrchestrated),
             "secrandom-lottery-orchestrated/v3" => GetAlgorithmLabel(VerificationAlgorithmProfile.LotteryOrchestrated),
+            "secrandom-student-group-uniform/v1" => GetAlgorithmLabel(VerificationAlgorithmProfile.StudentGroupUniform),
             InventoryLotteryAlgorithmId => "按剩余数量",
             WeightedLotteryAlgorithmId => "加权无放回",
             OrchestratedSequenceAlgorithmId => "按预定顺序取出（不消耗随机数）",
@@ -201,6 +227,8 @@ public static class VerificationWireCodec
             VerificationAlgorithmProfile.StudentOrchestrated
                 or VerificationAlgorithmProfile.LotteryOrchestrated
                 => samplingMode == VerificationSamplingMode.SequentialOrder,
+            VerificationAlgorithmProfile.StudentGroupUniform
+                => samplingMode == VerificationSamplingMode.GroupUniform,
             _ => false
         };
     }
@@ -234,6 +262,8 @@ public static class VerificationWireCodec
                 => kind == VerificationDrawKind.Student,
             VerificationAlgorithmProfile.LotteryOrchestrated
                 => kind == VerificationDrawKind.Prize,
+            VerificationAlgorithmProfile.StudentGroupUniform
+                => kind == VerificationDrawKind.Student,
             _ => false
         };
     }
@@ -244,6 +274,46 @@ public static class VerificationWireCodec
             throw new ArgumentException("Verification seeds must contain exactly 32 bytes.", nameof(seed));
 
         return EncodeInput(input, RequestMagic, seed);
+    }
+
+    public static string ComputeCandidatePoolCommitment(VerificationDrawInput input)
+    {
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        hash.AppendData("SecRandomCandidatePool/v1\0"u8);
+        AppendInt32(hash, CanonicalizeCandidates(input).Count);
+        foreach (var candidate in CanonicalizeCandidates(input))
+        {
+            hash.AppendData(Encoding.ASCII.GetBytes(candidate.RecordId.ToString("N")));
+            AppendUInt32(hash, candidate.OccurrenceIndex);
+            hash.AppendData([candidate.IsGuaranteed ? (byte)1 : (byte)0]);
+            AppendInt64(hash, candidate.WeightMicros);
+        }
+
+        return Convert.ToBase64String(hash.GetHashAndReset()).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+    }
+
+    public static string ComputeCandidatePoolCommitmentFromRequest(ReadOnlySpan<byte> request)
+    {
+        if (request.Length < 49 || !request[..4].SequenceEqual(RequestMagic)
+            || BinaryPrimitives.ReadUInt16LittleEndian(request[4..]) != RequestFormatVersion)
+            throw new InvalidDataException("Verification request frame is invalid.");
+        var candidateCount = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(request[13..]));
+        if (request.Length != checked(49 + candidateCount * 45))
+            throw new InvalidDataException("Verification candidate pool frame length is invalid.");
+
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        hash.AppendData("SecRandomCandidatePool/v1\0"u8);
+        AppendInt32(hash, candidateCount);
+        for (var index = 0; index < candidateCount; index++)
+        {
+            var offset = 49 + index * 45;
+            hash.AppendData(request.Slice(offset, 32));
+            hash.AppendData(request.Slice(offset + 32, 4));
+            hash.AppendData(request.Slice(offset + 36, 1));
+            hash.AppendData(request.Slice(offset + 37, 8));
+        }
+
+        return Convert.ToBase64String(hash.GetHashAndReset()).TrimEnd('=').Replace('+', '-').Replace('/', '_');
     }
 
     public static byte[] EncodeProofPayload(
@@ -282,6 +352,62 @@ public static class VerificationWireCodec
         }
 
         return new VerificationKernelResult { Winners = winners };
+    }
+
+    /// <summary>
+    /// Decodes the request and response frames stored in a proof payload for offline replay.
+    /// </summary>
+    public static VerificationProofPayload DecodeProofPayload(ReadOnlySpan<byte> payload, byte[] auditPayload)
+    {
+        if (payload.Length < 49 + 10 || !payload[..4].SequenceEqual(RequestMagic))
+            throw new InvalidDataException("Verification proof payload has an invalid request frame.");
+
+        var version = BinaryPrimitives.ReadUInt16LittleEndian(payload[4..]);
+        if (version != RequestFormatVersion)
+            throw new InvalidDataException($"Unsupported verification request version {version}.");
+
+        var kind = (VerificationDrawKind)payload[6];
+        var samplingMode = (VerificationSamplingMode)payload[7];
+        var profile = (VerificationAlgorithmProfile)payload[8];
+        var count = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(payload[9..]));
+        var candidateCount = checked((int)BinaryPrimitives.ReadUInt32LittleEndian(payload[13..]));
+        var requestLength = checked(49 + candidateCount * 45);
+        if (count <= 0 || candidateCount <= 0 || count > candidateCount || payload.Length <= requestLength)
+            throw new InvalidDataException("Verification proof payload has invalid request counts.");
+
+        if (!Enum.IsDefined(kind) || !Enum.IsDefined(samplingMode) || !Enum.IsDefined(profile)
+            || !IsKindCompatible(profile, kind) || !IsSamplingModeCompatible(profile, samplingMode))
+            throw new InvalidDataException("Verification proof payload declares an incompatible algorithm.");
+
+        var candidates = new VerificationCandidate[candidateCount];
+        for (var index = 0; index < candidateCount; index++)
+        {
+            var offset = 49 + index * 45;
+            var recordIdText = Encoding.ASCII.GetString(payload.Slice(offset, 32));
+            if (!Guid.TryParseExact(recordIdText, "N", out var recordId))
+                throw new InvalidDataException("Verification proof payload contains an invalid record ID.");
+
+            var occurrence = BinaryPrimitives.ReadUInt32LittleEndian(payload[(offset + 32)..]);
+            var guaranteed = payload[offset + 36];
+            var weight = BinaryPrimitives.ReadInt64LittleEndian(payload[(offset + 37)..]);
+            if (guaranteed > 1 || weight < 0)
+                throw new InvalidDataException("Verification proof payload contains an invalid candidate.");
+
+            candidates[index] = new VerificationCandidate(recordId, occurrence, weight, guaranteed == 1);
+        }
+
+        var seed = payload.Slice(17, 32).ToArray();
+        var response = DecodeDrawResponse(payload[requestLength..]);
+        var input = new VerificationDrawInput
+        {
+            Kind = kind,
+            SamplingMode = samplingMode,
+            AlgorithmProfile = profile,
+            Count = count,
+            Candidates = candidates,
+            AuditPayload = auditPayload ?? []
+        };
+        return new VerificationProofPayload(input, seed, response);
     }
 
     public static byte[] EncodeDrawResponse(IReadOnlyList<VerificationWinner> winners)
@@ -392,6 +518,27 @@ public static class VerificationWireCodec
         Span<byte> buffer = stackalloc byte[8];
         BinaryPrimitives.WriteInt64LittleEndian(buffer, value);
         bytes.AddRange(buffer.ToArray());
+    }
+
+    private static void AppendInt32(IncrementalHash hash, int value)
+    {
+        Span<byte> buffer = stackalloc byte[sizeof(int)];
+        BinaryPrimitives.WriteInt32LittleEndian(buffer, value);
+        hash.AppendData(buffer);
+    }
+
+    private static void AppendUInt32(IncrementalHash hash, uint value)
+    {
+        Span<byte> buffer = stackalloc byte[sizeof(uint)];
+        BinaryPrimitives.WriteUInt32LittleEndian(buffer, value);
+        hash.AppendData(buffer);
+    }
+
+    private static void AppendInt64(IncrementalHash hash, long value)
+    {
+        Span<byte> buffer = stackalloc byte[sizeof(long)];
+        BinaryPrimitives.WriteInt64LittleEndian(buffer, value);
+        hash.AppendData(buffer);
     }
 
     private static ushort ReadUInt16(ReadOnlySpan<byte> source, ref int offset)

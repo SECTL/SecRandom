@@ -439,4 +439,16 @@ public static class Utils
     ///     extension no longer matches a <c>*.json</c> enumeration.
     /// </summary>
     public const string HistoryLegacyBackupExtension = ".json.migrated";
+
+    /// <summary>Suffix of a student-list or prize-pool SQLite database.</summary>
+    public const string RosterDatabaseExtension = ".srl";
+
+    /// <summary>Suffix of the single SQLite store containing all orchestration profiles and cursors.</summary>
+    public const string OrchestrationDatabaseExtension = ".sro";
+
+    /// <summary>Suffix of an intermediate per-profile roster database after consolidation.</summary>
+    public const string RosterDatabaseMigratedExtension = ".srl.migrated";
+
+    /// <summary>Suffix of a legacy roster JSON retained after successful migration.</summary>
+    public const string RosterLegacyBackupExtension = ".json.migrated";
 }

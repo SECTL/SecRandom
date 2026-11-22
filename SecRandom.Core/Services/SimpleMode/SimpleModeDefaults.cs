@@ -31,7 +31,7 @@ public static class SimpleModeDefaults
     /// <summary>默认配置模型。所有读取都只读，调用方不得写入。</summary>
     public static MainConfigModel Model => LazyModel.Value;
 
-    /// <summary>简洁模式下点名控件显隐使用的默认「更多设置」（全部控件默认可见）。</summary>
+    /// <summary>简洁模式下点名控件显隐使用的默认「更多设置」。</summary>
     public static MoreSettingsConfig MoreSettings => Model.MoreSettings;
 
     /// <summary>简洁模式下浮窗外观使用的默认浮窗设置。</summary>
@@ -54,9 +54,6 @@ public static class SimpleModeDefaults
 
     /// <summary>简洁模式下抽取设置使用的默认「默认抽取设置」。</summary>
     public static DefaultDrawSettingsConfig DefaultDrawSettings => Model.DefaultDrawSettings;
-
-    /// <summary>简洁模式下历史记录组使用的默认设置（总开关关闭）。</summary>
-    public static HistoryGroupSettingsConfig HistoryGroups => Model.General.HistoryGroups;
 
     /// <summary>简洁模式下历史管理使用的默认设置。</summary>
     public static HistoryManagementSettingsConfig HistoryManagementSettings => Model.HistoryManagementSettings;

@@ -134,7 +134,9 @@ public sealed class DrawCommitCoordinatorTests : IDisposable
             null!,
             null!,
             null!,
-            new ProfileQueryService(provider.GetRequiredService<IHistoryQueryService>()),
+            new ProfileQueryService(
+                provider.GetRequiredService<IProfileCatalogManager>(),
+                provider.GetRequiredService<IHistoryQueryService>()),
             null!,
             provider.GetRequiredService<IFeatureAvailabilityService>(),
             new PageRouteResolver(provider.GetRequiredService<IFeatureAvailabilityService>()));

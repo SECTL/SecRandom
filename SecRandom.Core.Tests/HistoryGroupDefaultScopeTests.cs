@@ -6,17 +6,17 @@ namespace SecRandom.Core.Tests;
 ///     Resolution of the persisted "default record group" that the roll-call, lottery and Quick Draw surfaces
 ///     start from. The configuration value is deliberately tri-state-free: only the empty string is stored, and
 ///     it means the default group (ungrouped records) rather than "no group scope". The helper is the single
-///     place that decides when a scope becomes <see langword="null" /> (feature off, group catalogue unreadable)
-///     versus the default group, because collapsing those two is exactly the unfairness the group axis avoids.
+///     place that decides when a scope becomes <see langword="null" /> (group catalogue unreadable) versus the
+///     default group, because collapsing those two is exactly the unfairness the group axis avoids.
 /// </summary>
 public sealed class HistoryGroupDefaultScopeTests
 {
     [Fact]
-    public void FeatureOff_MeansNoGroupScopeAtAll()
+    public void HistoryGroupsAlwaysUseTheConfiguredScope()
     {
-        var scope = HistoryGroupScope.Resolve(false, "Class A", ["Class A"]);
+        var scope = HistoryGroupScope.Resolve("Class A", ["Class A"]);
 
-        Assert.Null(scope.Group);
+        Assert.Equal("Class A", scope.Group);
         Assert.False(scope.ConfiguredGroupMissing);
     }
 
@@ -26,7 +26,7 @@ public sealed class HistoryGroupDefaultScopeTests
     [InlineData("   ")]
     public void BlankConfiguration_MeansTheDefaultGroup(string? configured)
     {
-        var scope = HistoryGroupScope.Resolve(true, configured, ["Class A"]);
+        var scope = HistoryGroupScope.Resolve(configured, ["Class A"]);
 
         Assert.Equal(string.Empty, scope.Group);
         Assert.False(scope.ConfiguredGroupMissing);
@@ -35,7 +35,7 @@ public sealed class HistoryGroupDefaultScopeTests
     [Fact]
     public void ConfiguredGroupThatStillExists_IsUsed()
     {
-        var scope = HistoryGroupScope.Resolve(true, "Class A", ["Class A", "Class B"]);
+        var scope = HistoryGroupScope.Resolve("Class A", ["Class A", "Class B"]);
 
         Assert.Equal("Class A", scope.Group);
         Assert.False(scope.ConfiguredGroupMissing);
@@ -44,7 +44,7 @@ public sealed class HistoryGroupDefaultScopeTests
     [Fact]
     public void ConfiguredGroupIsTrimmedBeforeMatching()
     {
-        var scope = HistoryGroupScope.Resolve(true, "  Class A  ", ["Class A"]);
+        var scope = HistoryGroupScope.Resolve("  Class A  ", ["Class A"]);
 
         Assert.Equal("Class A", scope.Group);
         Assert.False(scope.ConfiguredGroupMissing);
@@ -55,7 +55,7 @@ public sealed class HistoryGroupDefaultScopeTests
     {
         // Deleting a group moves its records back into the default group, so the fallback keeps the
         // history the user was actually using instead of silently widening to every group.
-        var scope = HistoryGroupScope.Resolve(true, "Deleted", ["Class A"]);
+        var scope = HistoryGroupScope.Resolve("Deleted", ["Class A"]);
 
         Assert.Equal(string.Empty, scope.Group);
         Assert.True(scope.ConfiguredGroupMissing);
@@ -64,7 +64,7 @@ public sealed class HistoryGroupDefaultScopeTests
     [Fact]
     public void GroupMatchingIsOrdinal_SoCaseOnlyDifferencesAreNotSilentlyAccepted()
     {
-        var scope = HistoryGroupScope.Resolve(true, "class a", ["Class A"]);
+        var scope = HistoryGroupScope.Resolve("class a", ["Class A"]);
 
         Assert.Equal(string.Empty, scope.Group);
         Assert.True(scope.ConfiguredGroupMissing);
@@ -75,7 +75,7 @@ public sealed class HistoryGroupDefaultScopeTests
     {
         // A failed catalogue read must not be treated as "the group was deleted": narrowing weights to a
         // group we could not verify would be worse than this draw counting every record.
-        var scope = HistoryGroupScope.Resolve(true, "Class A", null);
+        var scope = HistoryGroupScope.Resolve("Class A", null);
 
         Assert.Null(scope.Group);
         Assert.False(scope.ConfiguredGroupMissing);
@@ -84,7 +84,7 @@ public sealed class HistoryGroupDefaultScopeTests
 
 /// <summary>
 ///     Write-side counterpart of the same decision: which group marker a new record carries. It is deliberately a
-///     separate entry point, because the feature master switch only governs whether the selector may be shown — a
+///     separate entry point, because selector visibility only governs whether the selector may be shown — a
 ///     channel whose history is not group-scoped still writes its own configured default group. Collapsing the two
 ///     would let every mode pile into the default group as soon as the feature is turned off, which cannot be undone
 ///     by turning it back on.
@@ -127,10 +127,10 @@ public sealed class HistoryRecordGroupWriteScopeTests
     }
 
     [Fact]
-    public void TheFeatureSwitch_IsNotPartOfTheWriteDecision()
+    public void SelectorVisibility_IsNotPartOfTheWriteDecision()
     {
         // Pinned by signature: adding an `enabled` parameter here would re-introduce exactly the collapse this type
-        // exists to prevent (feature off ⇒ every mode writes the default group).
+        // exists to prevent hidden selectors from making every mode write the default group.
         var method = typeof(HistoryGroupScope).GetMethod(nameof(HistoryGroupScope.ResolveRecordGroup));
 
         Assert.NotNull(method);

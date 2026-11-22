@@ -59,6 +59,11 @@ public sealed record class DrawProofContext
     [JsonPropertyName("environment")]
     public DrawProofEnvironment Environment { get; init; } = new();
 
+    /// <summary>SHA-256 commitment to the candidate pool used for this draw.</summary>
+    [JsonPropertyName("candidatePoolCommitment")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? CandidatePoolCommitment { get; init; }
+
     /// <summary>
     ///     One random identifier per draw, so several proofs saved in one lesson can be recognised as the same
     ///     session locally. It is deliberately not derived from the device, the profile, or the clock, and it is

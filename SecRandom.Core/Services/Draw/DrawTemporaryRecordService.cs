@@ -25,6 +25,35 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         WriteIndented = true
     };
 
+    public IReadOnlyDictionary<string, int> GetGroupCounts(string listName)
+    {
+        lock (_gate)
+            return new Dictionary<string, int>(LoadStudentState(listName).GroupCounts, StringComparer.Ordinal);
+    }
+
+    public void RecordGroups(string listName, IEnumerable<string> groups)
+    {
+        lock (_gate)
+        {
+            var state = LoadStudentState(listName);
+            foreach (var group in groups)
+                state.GroupCounts[group] = checked(state.GroupCounts.GetValueOrDefault(group) + 1);
+            state.UpdatedAt = DateTimeOffset.Now;
+            SaveStudentState(listName, state);
+        }
+    }
+
+    public void ClearGroups(string listName)
+    {
+        lock (_gate)
+        {
+            var state = LoadStudentState(listName);
+            state.GroupCounts.Clear();
+            state.UpdatedAt = DateTimeOffset.Now;
+            SaveStudentState(listName, state);
+        }
+    }
+
     public IReadOnlyDictionary<string, int> GetStudentCounts(string listName, string gender, string group)
     {
         lock (_gate)
@@ -242,10 +271,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
     {
         lock (_gate)
         {
-            var state = LoadStudentState(listName);
-            return state.Scopes.TryGetValue(ListScopeKey, out var scope)
-                ? JsonSerializer.Serialize(scope, JsonOptions)
-                : null;
+            return JsonSerializer.Serialize(LoadStudentState(listName), JsonOptions);
         }
     }
 
@@ -253,13 +279,9 @@ public static partial class CoreRuntimeServiceCollectionExtensions
     {
         lock (_gate)
         {
-            var state = LoadStudentState(listName);
-            var scopeKey = ListScopeKey;
-            if (snapshotJson is null)
-                state.Scopes.Remove(scopeKey);
-            else
-                state.Scopes[scopeKey] = JsonSerializer.Deserialize<TemporaryRecordScope>(snapshotJson, JsonOptions)
-                                         ?? new TemporaryRecordScope();
+            var state = snapshotJson is null ? new TemporaryRecordState { ListName = listName }
+                : JsonSerializer.Deserialize<TemporaryRecordState>(snapshotJson, JsonOptions)
+                  ?? new TemporaryRecordState { ListName = listName };
             state.UpdatedAt = DateTimeOffset.Now;
             SaveStudentState(listName, state);
         }
@@ -352,6 +374,7 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         public string ListName { get; set; } = string.Empty;
         public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.Now;
         public Dictionary<string, TemporaryRecordScope> Scopes { get; set; } = [];
+        public Dictionary<string, int> GroupCounts { get; set; } = new(StringComparer.Ordinal);
     }
 
     private sealed class TemporaryRecordScope

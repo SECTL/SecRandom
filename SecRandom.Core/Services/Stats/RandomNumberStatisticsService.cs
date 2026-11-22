@@ -52,9 +52,9 @@ public sealed record RandomNumberStatisticsSnapshot(
     IReadOnlyList<RandomNumberDrawRecord> Recent);
 
 /// <summary>
-///     Owns the random-number statistics file. Number draws deliberately never write roster history, so this
-///     small document is the only durable record of them; it is also the overview page's only data source for
-///     that mode.
+///     Legacy standalone random-number statistics store kept for file-format compatibility and isolated tests.
+///     Production registration uses <see cref="OverviewStatisticsService"/>, which stores this section in
+///     <c>data/config/overview.json</c> alongside roll-call and lottery aggregates.
 /// </summary>
 public interface IRandomNumberStatisticsService
 {
@@ -75,18 +75,30 @@ public sealed class RandomNumberStatisticsService : IRandomNumberStatisticsServi
     private readonly object _gate = new();
 
     public RandomNumberStatisticsService(ILogger<RandomNumberStatisticsService> logger)
-        : this(logger, Utils.GetFilePath("history", "random-number", "stats.json"))
+        // This constructor is retained for callers that still explicitly create the legacy store. The host does
+        // not register this type; its shared overview service is the only production persistence boundary.
+        : this(logger, Utils.GetFilePath("config", "random-number-stats.json"),
+            Utils.GetFilePath("history", "random-number", "stats.json"))
     {
     }
 
     /// <summary>Test seam: lets a test point at a temporary file instead of the data root.</summary>
     public RandomNumberStatisticsService(ILogger<RandomNumberStatisticsService> logger, string filePath)
+        : this(logger, filePath, legacyFilePath: null)
+    {
+    }
+
+    private RandomNumberStatisticsService(ILogger<RandomNumberStatisticsService> logger, string filePath,
+        string? legacyFilePath)
     {
         _logger = logger;
         _filePath = filePath;
+        _legacyFilePath = legacyFilePath;
     }
 
     public event EventHandler? Changed;
+
+    private readonly string? _legacyFilePath;
 
     public RandomNumberStatisticsSnapshot Load()
     {
@@ -157,6 +169,8 @@ public sealed class RandomNumberStatisticsService : IRandomNumberStatisticsServi
             try
             {
                 Save(new RandomNumberStatistics());
+                if (!string.IsNullOrWhiteSpace(_legacyFilePath) && File.Exists(_legacyFilePath))
+                    File.Move(_legacyFilePath, _legacyFilePath + ".migrated", overwrite: true);
                 Changed?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception exception)
@@ -169,25 +183,34 @@ public sealed class RandomNumberStatisticsService : IRandomNumberStatisticsServi
     private RandomNumberStatistics LoadDocument()
     {
         if (!File.Exists(_filePath))
-            return new RandomNumberStatistics();
+        {
+            if (string.IsNullOrWhiteSpace(_legacyFilePath) || !File.Exists(_legacyFilePath))
+                return new RandomNumberStatistics();
+
+            try
+            {
+                var legacy = LoadFromPath(_legacyFilePath);
+                Save(legacy);
+                try
+                {
+                    File.Move(_legacyFilePath, _legacyFilePath + ".migrated", overwrite: true);
+                }
+                catch (Exception exception)
+                {
+                    _logger.LogWarning(exception, "随机数统计已迁移，但无法改名旧文件：{Path}", _legacyFilePath);
+                }
+                return legacy;
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                _logger.LogWarning(exception, "迁移旧版随机数统计失败：{Path}", _legacyFilePath);
+                return new RandomNumberStatistics();
+            }
+        }
 
         try
         {
-            var document = JsonSerializer.Deserialize<RandomNumberStatistics>(
-                File.ReadAllText(_filePath), ConfigServiceBase.JsonOptions);
-            if (document is null
-                || !string.Equals(document.Format, RandomNumberStatistics.CurrentFormat, StringComparison.Ordinal))
-                throw new InvalidDataException("Unsupported random-number statistics format.");
-
-            document.TotalRounds = Math.Max(0, document.TotalRounds);
-            document.TotalDrawnCount = Math.Max(0, document.TotalDrawnCount);
-            document.Recent ??= [];
-            document.Recent = document.Recent
-                .Where(record => record is not null)
-                .Take(RandomNumberStatistics.MaxRecentRecords)
-                .ToList();
-            document.Ranges = NormalizeRanges(document.Ranges, document.Recent);
-            return document;
+            return LoadFromPath(_filePath);
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
@@ -195,6 +218,25 @@ public sealed class RandomNumberStatisticsService : IRandomNumberStatisticsServi
             TryQuarantine();
             return new RandomNumberStatistics();
         }
+    }
+
+    private RandomNumberStatistics LoadFromPath(string path)
+    {
+        var document = JsonSerializer.Deserialize<RandomNumberStatistics>(
+            File.ReadAllText(path), ConfigServiceBase.JsonOptions);
+        if (document is null
+            || !string.Equals(document.Format, RandomNumberStatistics.CurrentFormat, StringComparison.Ordinal))
+            throw new InvalidDataException("Unsupported random-number statistics format.");
+
+        document.TotalRounds = Math.Max(0, document.TotalRounds);
+        document.TotalDrawnCount = Math.Max(0, document.TotalDrawnCount);
+        document.Recent ??= [];
+        document.Recent = document.Recent
+            .Where(record => record is not null)
+            .Take(RandomNumberStatistics.MaxRecentRecords)
+            .ToList();
+        document.Ranges = NormalizeRanges(document.Ranges, document.Recent);
+        return document;
     }
 
     private static List<RandomNumberRangeStatistics> NormalizeRanges(

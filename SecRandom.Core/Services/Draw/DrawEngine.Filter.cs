@@ -181,7 +181,7 @@ public partial class DrawEngine
         string courseName = "",
         string? historyGroup = null)
     {
-        var unfiltered = string.IsNullOrWhiteSpace(courseName) && historyGroup is null;
+        var unfiltered = historyGroup is null;
         var legacyKeySet = BuildUniqueStudentLegacyKeySet();
         Dictionary<Student, History> cache = new();
         foreach (var candidate in candidates)
@@ -193,17 +193,16 @@ public partial class DrawEngine
             if (history is not null)
                 cache[candidate] = unfiltered
                     ? history
-                    : FilterHistoryForScope(history, courseName, historyGroup);
+                    : FilterHistoryForScope(history, historyGroup);
         }
 
         return cache;
     }
 
     /// <summary>
-    ///     Narrows one candidate's history to the records that belong to the requested scope. Both axes are
-    ///     optional and combine by intersection: an empty course leaves the course axis unfiltered, and a
-    ///     <see langword="null" /> group leaves the group axis unfiltered, so a caller that passes neither gets the
-    ///     untouched history back.
+    ///     Narrows one candidate's history to the requested record-group scope. The course name is recording
+    ///     metadata only and never narrows the history used for weights; a <see langword="null" /> group leaves the
+    ///     group axis unfiltered, so a caller that passes neither gets the untouched history back.
     /// </summary>
     /// <param name="historyGroup">
     ///     The record group to read. <see langword="null" /> means the group axis is off (the feature is disabled or
@@ -211,11 +210,9 @@ public partial class DrawEngine
     ///     therefore matches only the records that carry no group marker. Those two must stay distinct: an empty
     ///     value must never fall back to the unfiltered history.
     /// </param>
-    private static History FilterHistoryForScope(History history, string courseName, string? historyGroup)
+    private static History FilterHistoryForScope(History history, string? historyGroup)
     {
         var matches = history.Histories
-            .Where(item => string.IsNullOrWhiteSpace(courseName)
-                           || string.Equals(item.CourseName, courseName, StringComparison.Ordinal))
             .Where(item => historyGroup is null
                            || string.Equals(item.HistoryGroup, historyGroup, StringComparison.Ordinal))
             .OrderBy(item => item.DrawTime)
@@ -235,7 +232,7 @@ public partial class DrawEngine
         string courseName = "",
         string? historyGroup = null)
     {
-        var unfiltered = string.IsNullOrWhiteSpace(courseName) && historyGroup is null;
+        var unfiltered = historyGroup is null;
         var legacyKeySet = BuildUniquePrizeLegacyKeySet();
         Dictionary<Prize, History> cache = new();
         foreach (var candidate in candidates)
@@ -247,7 +244,7 @@ public partial class DrawEngine
             if (history is not null)
                 cache[candidate] = unfiltered
                     ? history
-                    : FilterHistoryForScope(history, courseName, historyGroup);
+                    : FilterHistoryForScope(history, historyGroup);
         }
 
         return cache;

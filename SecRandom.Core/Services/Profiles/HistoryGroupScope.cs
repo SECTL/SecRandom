@@ -15,8 +15,7 @@ namespace SecRandom.Core.Services.Profiles;
 /// <remarks>
 ///     <para>
 ///         三态在这里收口，因为点名、抽奖、闪抽三个界面读的是同一套含义：配置里的空串就是
-///         「默认记录组」，不是「不分组」。功能关闭时才会退化成真正的「不分组」——那时选择器
-///         根本不显示，没人能看出当前按哪个范围算权重，所以只能按全部历史。
+///         「默认记录组」，不是「不分组」。历史记录组现在始终可用；选择器是否显示只由页面布局设置决定。
 ///     </para>
 ///     <para>
 ///         <paramref name="availableGroupNames" /> 传 <see langword="null" /> 表示目录这次读不到：
@@ -30,18 +29,13 @@ namespace SecRandom.Core.Services.Profiles;
 /// </remarks>
 public readonly record struct HistoryGroupScope(string? Group, bool ConfiguredGroupMissing)
 {
-    /// <summary>解析默认记录组配置。</summary>
-    /// <param name="enabled">历史记录组总开关。</param>
+    /// <summary>解析默认记录组配置。历史记录组始终参与解析。</summary>
     /// <param name="configuredGroup">配置里保存的组名（空串 = 默认记录组）。</param>
     /// <param name="availableGroupNames">当前档案里可用的组名；<see langword="null" /> = 这次读不到。</param>
     public static HistoryGroupScope Resolve(
-        bool enabled,
         string? configuredGroup,
         IReadOnlyList<string>? availableGroupNames)
     {
-        if (!enabled)
-            return new HistoryGroupScope(null, false);
-
         if (string.IsNullOrWhiteSpace(configuredGroup))
             return new HistoryGroupScope(string.Empty, false);
 
@@ -64,14 +58,13 @@ public readonly record struct HistoryGroupScope(string? Group, bool ConfiguredGr
     /// </returns>
     /// <remarks>
     ///     <para>
-    ///         与 <see cref="Resolve" /> 的区别只有一条，但它是本质的：<b>历史记录组总开关不参与</b>。
-    ///         开关管的是「界面上能不能临时切组」，不是「记录落在哪个组」。关掉开关只是不许临时切换，
+    ///         与 <see cref="Resolve" /> 的区别只有一条，但它是本质的：<b>读取开关不参与写入归属</b>。
+    ///         页面显隐管的是「界面上能不能临时切组」，不是「记录落在哪个组」。
     ///         每个抽取模式仍然按**自己**保存的默认记录组落标记——否则点名、闪抽、抽奖、编排的记录会
-    ///         一起挤进默认记录组，重新打开功能时就再也拆不回各自的组了。
+    ///         一起挤进默认记录组，再次显示选择器时就再也拆不回各自的组了。
     ///     </para>
     ///     <para>
-    ///         读取范围仍然走 <see cref="Resolve" /> 的三态：开关关掉时选择器不可见，用户看不到当前按哪批
-    ///         历史算权重，所以读取退回「全部历史」；写入却必须保留归属，两者刻意不同。
+    ///         读取范围仍然走 <see cref="Resolve" /> 的三态；写入却必须保留归属，两者刻意不同。
     ///     </para>
     ///     <para>
     ///         目录这次读不到时返回配置里的名字而不是空串：把记录静默移进默认组是不可逆的信息丢失，

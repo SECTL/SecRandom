@@ -4,6 +4,12 @@ namespace SecRandom.Core.Tests;
 
 public class QuickDrawHoldDurationTests
 {
+    [Fact]
+    public void DefaultHoldDuration_IsEightHundredMilliseconds()
+    {
+        Assert.Equal(800, QuickDrawLongPressGesture.DefaultHoldDurationMilliseconds);
+    }
+
     [Theory]
     [InlineData(500, 500)]
     [InlineData(40, 40)]

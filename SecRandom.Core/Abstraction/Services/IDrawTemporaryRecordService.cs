@@ -6,6 +6,9 @@ public interface IDrawTemporaryRecordService
 {
     IReadOnlyDictionary<string, int> GetStudentCounts(string listName, string gender, string group);
     void RecordStudents(string listName, string gender, string group, IEnumerable<Student> students);
+    IReadOnlyDictionary<string, int> GetGroupCounts(string listName) => new Dictionary<string, int>();
+    void RecordGroups(string listName, IEnumerable<string> groups) => throw new NotSupportedException();
+    void ClearGroups(string listName) => throw new NotSupportedException();
     void ClearStudentScope(string listName, string gender, string group);
     /// <summary>
     /// Replaces the complete student temporary-record file with an empty state

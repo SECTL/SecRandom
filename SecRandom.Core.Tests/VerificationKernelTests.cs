@@ -53,7 +53,60 @@ public sealed class VerificationKernelTests
         Assert.Equal("3.5.0", VerificationWireCodec.GetEngineVersion(VerificationSamplingMode.InventoryPermutation));
         Assert.Equal("3.5.0", VerificationWireCodec.GetEngineVersion(VerificationSamplingMode.WeightedWithoutReplacement));
         Assert.Equal("3.6.0", VerificationWireCodec.GetEngineVersion(VerificationSamplingMode.SequentialOrder));
+        Assert.Equal("3.7.0", VerificationWireCodec.GetEngineVersion(VerificationSamplingMode.GroupUniform));
         Assert.Equal("3.6.0", VerificationWireCodec.OrchestratedAlgorithmEngineVersion);
+        Assert.Equal("3.7.0", VerificationWireCodec.GroupUniformAlgorithmEngineVersion);
+    }
+
+    [Fact]
+    public void FormalProofsUseThePublishedAlgorithmGeneration()
+    {
+        Assert.Equal("3.6.0", VerificationWireCodec.GetFormalEngineVersion());
+        Assert.Equal("3.7.0", VerificationWireCodec.GetFormalEngineVersion(VerificationSamplingMode.GroupUniform));
+        Assert.Equal("3.5.0", VerificationWireCodec.GetEngineVersion(VerificationSamplingMode.HistoryBalancedWeighted));
+    }
+
+    [Fact]
+    public void FormalAlgorithmRegistryRejectsOrchestrationAndMismatchedKinds()
+    {
+        Assert.True(VerificationAlgorithmSpecificationRegistry.TryResolve(
+            VerificationDrawKind.Student,
+            VerificationSamplingMode.HistoryBalancedWeighted,
+            VerificationAlgorithmProfile.StudentFairNoRepeat,
+            out var fair));
+        Assert.NotEmpty(fair.Id);
+        Assert.False(VerificationAlgorithmSpecificationRegistry.TryResolve(
+            VerificationDrawKind.Student,
+            VerificationSamplingMode.SequentialOrder,
+            VerificationAlgorithmProfile.StudentOrchestrated,
+            out _));
+        Assert.False(VerificationAlgorithmSpecificationRegistry.TryResolve(
+            VerificationDrawKind.Number,
+            VerificationSamplingMode.WeightedWithoutReplacement,
+            VerificationAlgorithmProfile.LotteryPanNoRepeat,
+            out _));
+        Assert.True(VerificationAlgorithmSpecificationRegistry.TryResolve(
+            VerificationDrawKind.Student,
+            VerificationSamplingMode.GroupUniform,
+            VerificationAlgorithmProfile.StudentGroupUniform,
+            out var groups));
+        Assert.Equal("secrandom-spec/group-uniform-then-member-uniform/chacha20/v1", groups.Id);
+        Assert.Equal("065beadd3daa6a72d5c186fdc3250b5d6e9f56ded15677540e7bb632d47c312c", groups.Hash);
+    }
+
+    [Fact]
+    public void CandidatePoolCommitmentBindsOccurrenceWeightAndGuarantee()
+    {
+        var recordId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+        var baseInput = CreateInput(new VerificationCandidate(recordId, 0, 1_000_000, false));
+        var changedWeight = CreateInput(new VerificationCandidate(recordId, 0, 2_000_000, false));
+        var changedGuarantee = CreateInput(new VerificationCandidate(recordId, 0, 1_000_000, true));
+        var changedOccurrence = CreateInput(new VerificationCandidate(recordId, 1, 1_000_000, false));
+
+        var commitment = VerificationWireCodec.ComputeCandidatePoolCommitment(baseInput);
+        Assert.NotEqual(commitment, VerificationWireCodec.ComputeCandidatePoolCommitment(changedWeight));
+        Assert.NotEqual(commitment, VerificationWireCodec.ComputeCandidatePoolCommitment(changedGuarantee));
+        Assert.NotEqual(commitment, VerificationWireCodec.ComputeCandidatePoolCommitment(changedOccurrence));
     }
 
     [Fact]
@@ -138,7 +191,53 @@ public sealed class VerificationKernelTests
     }
 
     [Fact]
-    public void InventoryPermutation_RejectsWeightsChangedByInternalRules()
+    public void GroupUniform_SelectsGroupsEquallyBeforeSelectingMembers()
+    {
+        var input = new VerificationDrawInput
+        {
+            Kind = VerificationDrawKind.Student,
+            SamplingMode = VerificationSamplingMode.GroupUniform,
+            AlgorithmProfile = VerificationAlgorithmProfile.StudentGroupUniform,
+            Count = 1,
+            Candidates =
+            [
+                new VerificationCandidate(Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"), 0, 1_000_000, false),
+                new VerificationCandidate(Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"), 1, 1_000_000, false),
+                new VerificationCandidate(Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc"), 1, 1_000_000, false),
+                new VerificationCandidate(Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd"), 2, 1_000_000, false),
+                new VerificationCandidate(Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee"), 2, 1_000_000, false),
+                new VerificationCandidate(Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff"), 2, 1_000_000, false)
+            ]
+        };
+        var seed = Enumerable.Range(0, 32).Select(value => (byte)value).ToArray();
+        var kernel = new ManagedVerificationKernel();
+
+        var first = kernel.Draw(input, seed);
+        var repeated = kernel.Draw(input, seed);
+        Assert.Equal(first.Winners, repeated.Winners);
+
+        var groupCounts = new int[3];
+        var memberCounts = new Dictionary<Guid, int>();
+        for (var seedIndex = 0; seedIndex < 6000; seedIndex++)
+        {
+            byte[] drawSeed = new byte[32];
+            BitConverter.GetBytes(seedIndex).CopyTo(drawSeed, 0);
+            var winner = kernel.Draw(input, drawSeed).Winners.Single();
+            var candidate = input.Candidates.Single(item => item.RecordId == winner.RecordId
+                && item.OccurrenceIndex == winner.OccurrenceIndex);
+            groupCounts[candidate.OccurrenceIndex]++;
+            memberCounts[winner.RecordId] = memberCounts.GetValueOrDefault(winner.RecordId) + 1;
+        }
+
+        Assert.All(groupCounts, count => Assert.InRange(count, 1800, 2200));
+        Assert.Equal(6000, memberCounts.Values.Sum());
+        var largestGroupMemberCounts = input.Candidates.Where(candidate => candidate.OccurrenceIndex == 2)
+            .Select(candidate => memberCounts.GetValueOrDefault(candidate.RecordId)).ToArray();
+        Assert.All(largestGroupMemberCounts, count => Assert.InRange(count, 500, 850));
+    }
+
+    [Fact]
+    public void InventoryPermutation_RejectsNonUnitWeights()
     {
         var input = new VerificationDrawInput
         {
@@ -209,42 +308,6 @@ public sealed class VerificationKernelTests
         Assert.Equal(VerificationWireCodec.RequestFormatVersion, BitConverter.ToUInt16(request, 4));
         Assert.Equal((byte)VerificationAlgorithmProfile.StudentFairHalfRepeat, request[8]);
         Assert.NotEqual(VerificationWireCodec.ComputeInputHash(noRepeat), VerificationWireCodec.ComputeInputHash(halfRepeat));
-    }
-
-    [Fact]
-    public void AttachedSettings_RestoresEnabledHundredPercentRuleFromPersistedJson()
-    {
-        var settingsId = Guid.Parse(GlobalConstants.BehindSceneAttachedSettings);
-        var student = new Student();
-        student.AttachedObjects[settingsId] = JsonSerializer.SerializeToElement(new
-        {
-            is_attach_settings_enabled = true,
-            probability = 100d
-        });
-
-        var settings = student.GetAttachedObject<BehindSceneAttachedSettings>(settingsId);
-
-        Assert.NotNull(settings);
-        Assert.True(settings.IsAttachSettingsEnabled);
-        Assert.Equal(100d, settings.Probability);
-    }
-
-    [Fact]
-    public void AttachedSettings_PersistedJsonUsesSnakeCaseFieldNames()
-    {
-        var settings = new BehindSceneAttachedSettings
-        {
-            IsAttachSettingsEnabled = true,
-            Probability = 100d
-        };
-
-        var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions
-        {
-            PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
-        });
-
-        Assert.Contains("\"is_attach_settings_enabled\"", json);
-        Assert.Contains("\"probability\":100", json);
     }
 
     [Fact]

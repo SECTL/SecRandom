@@ -35,8 +35,6 @@ public sealed class HistoryGroupLocalizationTests
         (["SettingsPages", "HistoryManagement"],
         [
             "S_HistoryGroups",
-            "S_HistoryGroups_Enabled",
-            "S_HistoryGroups_Enabled_D",
             "S_HistoryGroups_Manage",
             "S_HistoryGroups_Manage_D",
             "S_HistoryGroups_Existing",

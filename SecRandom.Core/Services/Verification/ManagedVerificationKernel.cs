@@ -45,6 +45,35 @@ public sealed class ManagedVerificationKernel : IVerificationKernel
             };
         }
 
+        if (input.SamplingMode == VerificationSamplingMode.GroupUniform)
+        {
+            if (candidates.Any(candidate => candidate.IsGuaranteed || candidate.WeightMicros != 1_000_000))
+                throw new InvalidOperationException("Group-uniform sampling requires equally weighted, unrestricted members.");
+
+            var groups = candidates
+                .GroupBy(candidate => candidate.OccurrenceIndex)
+                .OrderBy(group => group.Key)
+                .Select(group => group.ToList())
+                .ToList();
+            if (groups.Count == 0 || input.Count > groups.Count
+                || groups.Select((_, index) => index).Any(index => groups[index].Any(candidate =>
+                    candidate.OccurrenceIndex != (uint)index)))
+                throw new InvalidOperationException("Group-uniform sampling requires dense group buckets and a drawable group count.");
+
+            var groupWinners = new List<VerificationWinner>(input.Count);
+            var groupRandom = new VerificationChaCha20Random(seed);
+            for (var index = 0; index < input.Count; index++)
+            {
+                var selectedGroupIndex = checked(index + (int)groupRandom.NextBelow((ulong)(groups.Count - index)));
+                (groups[index], groups[selectedGroupIndex]) = (groups[selectedGroupIndex], groups[index]);
+                var members = groups[index];
+                var selectedMember = members[checked((int)groupRandom.NextBelow((ulong)members.Count))];
+                groupWinners.Add(new VerificationWinner(selectedMember.RecordId, selectedMember.OccurrenceIndex));
+            }
+
+            return new VerificationKernelResult { Winners = groupWinners };
+        }
+
         var guaranteed = candidates.Where(candidate => candidate.IsGuaranteed).ToList();
         var winners = new List<VerificationWinner>(input.Count);
         var random = new VerificationChaCha20Random(seed);

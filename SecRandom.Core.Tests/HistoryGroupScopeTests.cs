@@ -80,7 +80,7 @@ public sealed class HistoryGroupScopeTests
     }
 
     [Fact]
-    public void CourseAndGroup_CombineByIntersection()
+    public void CourseNameDoesNotNarrowWeights_ButGroupStillDoes()
     {
         var student = new Student { Name = "Lin", RecordId = Guid.NewGuid() };
         var config = CreateConfig();
@@ -95,14 +95,12 @@ public sealed class HistoryGroupScopeTests
         var engine = CreateEngine(host);
         var policy = CreatePolicy(config);
 
-        // 课程轴用「只选课程」：组轴传 null（不参与过滤），不是 ""（那只算默认组，见下一个断言）。
-        Assert.Equal(1, engine.PrepareStudentsForDraw(1, [student], policy, "数学", "A").HistoryCache[student].TotalCount);
-        Assert.Equal(2, engine.PrepareStudentsForDraw(1, [student], policy, "数学", null).HistoryCache[student].TotalCount);
-        Assert.Equal(2, engine.PrepareStudentsForDraw(1, [student], policy, string.Empty, "A").HistoryCache[student].TotalCount);
+        // 科目只记录，不缩小权重历史；记录组仍保持 null/空串的三态语义。
+        Assert.Equal(4, engine.PrepareStudentsForDraw(1, [student], policy, "数学", null).HistoryCache[student].TotalCount);
+        Assert.Equal(4, engine.PrepareStudentsForDraw(1, [student], policy, "语文", null).HistoryCache[student].TotalCount);
         Assert.Equal(4, engine.PrepareStudentsForDraw(1, [student], policy, string.Empty, null).HistoryCache[student].TotalCount);
-        // 组轴传 "" 是「只算默认组」，即只匹配未分组记录：唯一那条未分组记录属于语文，所以「数学 + 默认组」为 0。
-        Assert.Equal(0, engine.PrepareStudentsForDraw(1, [student], policy, "数学", string.Empty).HistoryCache[student].TotalCount);
-        Assert.Equal(1, engine.PrepareStudentsForDraw(1, [student], policy, string.Empty, string.Empty).HistoryCache[student].TotalCount);
+        Assert.Equal(2, engine.PrepareStudentsForDraw(1, [student], policy, "数学", "A").HistoryCache[student].TotalCount);
+        Assert.Equal(1, engine.PrepareStudentsForDraw(1, [student], policy, "数学", string.Empty).HistoryCache[student].TotalCount);
     }
 
     [Fact]

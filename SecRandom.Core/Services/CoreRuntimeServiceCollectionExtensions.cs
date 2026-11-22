@@ -21,7 +21,11 @@ public static partial class CoreRuntimeServiceCollectionExtensions
         services.AddSingleton<MainConfigHandler>();
         services.AddSingleton<IProfileService, ProfileService>();
         services.AddSingleton<IHistoryGroupCatalog, HistoryGroupCatalog>();
-        services.AddSingleton<IRandomNumberStatisticsService, RandomNumberStatisticsService>();
+        services.AddSingleton<OverviewStatisticsService>();
+        services.AddSingleton<IOverviewStatisticsService>(services =>
+            services.GetRequiredService<OverviewStatisticsService>());
+        services.AddSingleton<IRandomNumberStatisticsService>(services =>
+            services.GetRequiredService<OverviewStatisticsService>());
         services.AddSingleton<IProfileCatalogEditor, ProfileCatalogEditor>();
         services.AddSingleton<IProfileCatalogManager, ProfileCatalogManager>();
         services.AddSingleton<IDrawTemporaryRecordService, DrawTemporaryRecordService>();

@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 using Avalonia.Media;
 using CommunityToolkit.Mvvm.ComponentModel;
+using SecRandom.Core.Enums.Configs;
 
 namespace SecRandom.Core.Models.SubConfigs;
 
@@ -168,7 +169,7 @@ public partial class NotificationSettingsConfig : ObservableObject, IJsonOnDeser
     }
 }
 
-public partial class NotificationChannelSettings : ObservableObject, IJsonOnDeserialized
+public partial class NotificationChannelSettings : ObservableObject, IJsonOnDeserialized, IJsonOnDeserializing
 {
     private bool _enabled;
     private bool _hasExplicitEnabled;
@@ -177,7 +178,34 @@ public partial class NotificationChannelSettings : ObservableObject, IJsonOnDese
     private int _windowPosition = (int)NotificationWindowPosition.Center;
     [ObservableProperty] private int _horizontalOffset = 0;
     [ObservableProperty] private int _verticalOffset = 0;
+    /// <summary>浮窗整体不透明度（百分比）；沿用旧配置字段名。</summary>
     [ObservableProperty] private int _transparency = 80;
+
+    /// <summary>背景来源与全屏通知一致，默认跟随主题。</summary>
+    [ObservableProperty] private WindowBackgroundStyle _backgroundStyle = WindowBackgroundStyle.Theme;
+    [ObservableProperty] private Color _backgroundColor = FullscreenNotificationSettings.DefaultBackgroundColor;
+    [ObservableProperty] private Color _backgroundGradientStart = FullscreenNotificationSettings.DefaultBackgroundGradientStart;
+    [ObservableProperty] private Color _backgroundGradientEnd = FullscreenNotificationSettings.DefaultBackgroundGradientEnd;
+    [ObservableProperty] private int _backgroundGradientAngle = FullscreenNotificationSettings.DefaultBackgroundGradientAngle;
+    [ObservableProperty] private int _backgroundOpacity = 100;
+    [ObservableProperty] private int _themeBackgroundOpacity = 100;
+
+    /// <summary>
+    ///     内置通知浮窗的背景图文件名（相对 <c>data/images/notification/</c>）。空字符串表示不使用图片。
+    /// </summary>
+    private string _backgroundImage = "";
+
+    // Version 1 marks explicit image mode; the old value 1 plus an image is a legacy image configuration.
+    [JsonInclude]
+    public int BackgroundStyleVersion { get; private set; } = 1;
+
+    void IJsonOnDeserializing.OnDeserializing() => BackgroundStyleVersion = 0;
+
+    public string BackgroundImage
+    {
+        get => _backgroundImage;
+        set => SetProperty(ref _backgroundImage, value?.Trim() ?? "");
+    }
 
     /// <summary>
     ///     内置通知浮窗是否按窗口背后的桌面亮度自适应前景色（默认开启）。
@@ -412,6 +440,15 @@ public partial class NotificationChannelSettings : ObservableObject, IJsonOnDese
             is (int)NotificationCountdownColorMode.Gradient or (int)NotificationCountdownColorMode.Solid
             ? _countdownColorMode
             : (int)NotificationCountdownColorMode.Gradient;
+        if (BackgroundStyleVersion == 0 && (int)BackgroundStyle == 1
+            && !string.IsNullOrWhiteSpace(BackgroundImage))
+            BackgroundStyle = WindowBackgroundStyle.Image;
+        BackgroundStyleVersion = 1;
+        if (!Enum.IsDefined(BackgroundStyle))
+            BackgroundStyle = WindowBackgroundStyle.Theme;
+        BackgroundGradientAngle = Math.Clamp(BackgroundGradientAngle, 0, 360);
+        BackgroundOpacity = Math.Clamp(BackgroundOpacity, 0, 100);
+        ThemeBackgroundOpacity = Math.Clamp(ThemeBackgroundOpacity, 0, 100);
         // 旧版把渐变存成 2–6 个色标的列表；现在只剩起止两色，取首尾两色迁移过来。
         if (_legacyCountdownGradientColors is { Count: > 0 } legacyColors)
         {
@@ -429,6 +466,7 @@ public partial class NotificationChannelSettings : ObservableObject, IJsonOnDese
     }
 
     partial void OnDisplayDurationChanging(int value) => _hasDisplayDuration = true;
+
 }
 
 public partial class OverridableNotificationChannelSettings : NotificationChannelSettings

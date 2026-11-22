@@ -84,20 +84,24 @@ public static class OrchestrationVerification
         int round,
         int roundCount,
         IReadOnlyDictionary<Guid, (int Count, DateTime? LastDrawn)>? history = null,
-        string rosterDigest = "")
+        string rosterDigest = "",
+        bool countMode = false)
     {
         ArgumentNullException.ThrowIfNull(ordered);
         EnsureOrder(ordered);
         var (safeRound, safeRoundCount) = NormalizeRound(round, roundCount);
 
         var candidates = new List<VerificationCandidate>(ordered.Count);
+        var occurrences = new Dictionary<Guid, uint>();
         for (var index = 0; index < ordered.Count; index++)
         {
             var prize = ordered[index];
             var recordId = prize.RecordId != Guid.Empty
                 ? prize.RecordId
                 : throw new ArgumentException("Every scheduled prize needs a stable RecordId.", nameof(ordered));
-            candidates.Add(new VerificationCandidate(recordId, 0, index + 1, false));
+            var occurrence = occurrences.GetValueOrDefault(recordId);
+            occurrences[recordId] = checked(occurrence + 1);
+            candidates.Add(new VerificationCandidate(recordId, occurrence, index + 1, false));
         }
 
         var audit = CreateAuditPayload(
@@ -110,7 +114,7 @@ public static class OrchestrationVerification
                 inventoryEntriesEqualWeight = false,
                 internalRulesRequireWeightedFallback = false,
                 algorithmProfile = VerificationAlgorithmProfile.LotteryOrchestrated.ToString(),
-                lotteryMode = "pan",
+                lotteryMode = countMode ? "count" : "pan",
                 repeatMode = "orchestrated",
                 orchestration = new { round = safeRound, roundCount = safeRoundCount }
             },

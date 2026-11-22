@@ -11,10 +11,13 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Enums;
 using SecRandom.Core.Helpers;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.HistoryStore;
+using SecRandom.Core.Services.Orchestration;
 using SecRandom.Core.Services.Profiles;
 using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
@@ -56,10 +59,12 @@ public sealed class DataArchiveService(
     ///     into <c>config/settings.json</c> and the section would silently disappear on import.
     /// </summary>
     private const string OrchestrationRoot = "config/orchestration";
+    private const string OrchestrationDatabasePath = "config/orchestration.sro";
+    private const string OverviewPath = "config/overview.json";
 
     private static readonly string[] AllDataRoots =
     [
-        "config/settings.json", "config/device-uuid.json", OrchestrationRoot, "list", "history", "TEMP", "proofs",
+        "config/settings.json", "config/device-uuid.json", OverviewPath, OrchestrationDatabasePath, OrchestrationRoot, "list", "history", "TEMP", "proofs",
         "audio", "CSES", "images", "Language", "logs", "texts"
     ];
 
@@ -160,6 +165,7 @@ public sealed class DataArchiveService(
         {
             roots.Add("config/settings.json");
             roots.Add("config/device-uuid.json");
+            roots.Add(OverviewPath);
             // 全屏渠道的文案库跟「配置」一起备份：数据量很小，且用户把它当成通知配置的一部分。
             roots.Add("texts");
         }
@@ -216,6 +222,7 @@ public sealed class DataArchiveService(
                         ? AllDataRoots
                         : inspection.Roots;
                     CommitCandidate(staging, rootsToCommit, inspection.Kind == ArchiveKind.AllData, warnings);
+                    MigrateLegacyProfiles();
                     ReloadCoreRuntimeState();
                     warnings.AddRange(postImportHooks.OnAllDataImported());
                     return new ImportResult(snapshot, importedFiles, warnings, []);
@@ -375,13 +382,21 @@ public sealed class DataArchiveService(
         var fileLength = new FileInfo(source).Length;
         sourceBytes = checked(sourceBytes + fileLength);
         EnsureTransferSize(sourceBytes, "archive export");
-        var entry = archive.CreateEntry(entryPath, CompressionLevel.SmallestSize);
+        var compression = IsSqlitePayload(entryPath) ? CompressionLevel.NoCompression : CompressionLevel.SmallestSize;
+        var entry = archive.CreateEntry(entryPath, compression);
         // 日志等应用自己仍在写入的文件必须用宽松共享读取，否则导出的整个归档会因共享冲突失败
         using var input = SharedFileReader.OpenRead(source);
         using var output = entry.Open();
         var hash = CopyAndHash(input, output, cancellationToken, out var length, MaxTransferBytes);
         files.Add(new ArchiveFileEntry { Path = entryPath, Length = length, Sha256 = hash });
     }
+
+    private static bool IsSqlitePayload(string path) =>
+        path.EndsWith(".srl", StringComparison.OrdinalIgnoreCase) ||
+        path.EndsWith(".srhdb", StringComparison.OrdinalIgnoreCase) ||
+        path.EndsWith(".sro", StringComparison.OrdinalIgnoreCase) ||
+        path.EndsWith("-wal", StringComparison.OrdinalIgnoreCase) ||
+        path.EndsWith("-shm", StringComparison.OrdinalIgnoreCase);
 
     private int ExtractCurrentArchive(string sourcePath, string staging, CancellationToken cancellationToken)
     {
@@ -494,6 +509,55 @@ public sealed class DataArchiveService(
         }
     }
 
+    private void MigrateLegacyProfiles()
+    {
+        MigrateLegacyProfiles(ProfileRosterKind.RollCall,
+            ProfileRosterDatabase.GetProfileNames(ProfileRosterKind.RollCall, logger),
+            (name, logger) => ProfileRosterDatabase.MigrateLegacyJsonIfPresent(name, ProfileRosterKind.RollCall, logger));
+        MigrateLegacyProfiles(ProfileRosterKind.Lottery,
+            ProfileRosterDatabase.GetProfileNames(ProfileRosterKind.Lottery, logger),
+            (name, logger) => ProfileRosterDatabase.MigrateLegacyJsonIfPresent(name, ProfileRosterKind.Lottery, logger));
+        MigrateLegacyHistories(HistoryGroupKind.RollCall,
+            ProfileHistoryPaths.EnumerateProfileNames(HistoryGroupKind.RollCall),
+            (name, logger) => ProfileHistoryDatabase.MigrateLegacyJsonIfPresent(name, HistoryGroupKind.RollCall, logger));
+        MigrateLegacyHistories(HistoryGroupKind.Lottery,
+            ProfileHistoryPaths.EnumerateProfileNames(HistoryGroupKind.Lottery),
+            (name, logger) => ProfileHistoryDatabase.MigrateLegacyJsonIfPresent(name, HistoryGroupKind.Lottery, logger));
+        try
+        {
+            OrchestrationStore.MigrateLegacyProfiles();
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "导入后迁移编排名单失败。");
+        }
+    }
+
+    private void MigrateLegacyProfiles<TKind>(
+        TKind kind,
+        IReadOnlyList<string> names,
+        Action<string, ILogger> migrate)
+        where TKind : struct, Enum
+    {
+        foreach (var name in names)
+        {
+            try
+            {
+                migrate(name, logger);
+            }
+            catch (Exception exception)
+            {
+                logger.LogWarning(exception, "导入后迁移名单失败：{ProfileName} ({Kind})", name, kind);
+            }
+        }
+    }
+
+    private void MigrateLegacyHistories(
+        HistoryGroupKind kind,
+        IReadOnlyList<string> names,
+        Action<string, ILogger> migrate) =>
+        MigrateLegacyProfiles(kind, names, migrate);
+
     private void ReloadConfiguredProfiles()
     {
         var defaultClass = configHandler.Data.RollCallSettings.DefaultClass;
@@ -563,13 +627,12 @@ public sealed class DataArchiveService(
         // 所以保护开着时一律先过一次新鲜验证，而不是只在那份归档里恰好有 settings.json 时才问。
         AuthorizeImport();
 
-        foreach (var path in Directory.Exists(Path.Combine(staging, "list"))
-                     ? Directory.EnumerateFiles(Path.Combine(staging, "list"), "*.json", SearchOption.AllDirectories)
-                     : [])
+        // Legacy roster/history JSON remains importable, but SQLite databases and their sidecars are
+        // opaque archive payloads. In particular, *.json.migrated is a rollback copy, not a JSON
+        // profile, so do not parse it during staging validation.
+        foreach (var path in EnumerateJsonFiles(Path.Combine(staging, "list")))
             using (JsonDocument.Parse(File.ReadAllText(path))) { }
-        foreach (var path in Directory.Exists(Path.Combine(staging, "history"))
-                     ? Directory.EnumerateFiles(Path.Combine(staging, "history"), "*.json", SearchOption.AllDirectories)
-                     : [])
+        foreach (var path in EnumerateJsonFiles(Path.Combine(staging, "history")))
             using (JsonDocument.Parse(File.ReadAllText(path))) { }
 
         // 编排名单整段是这台机器上的数据：坏 JSON 在导入后只会静默变成"没有名单"，所以提交前先解析一次。
@@ -582,6 +645,15 @@ public sealed class DataArchiveService(
     /// <summary>
     ///     归档里可能没有 settings.json（例如只带名单的归档），此时没有可比较的安全设置。
     /// </summary>
+    private static IEnumerable<string> EnumerateJsonFiles(string directory)
+    {
+        if (!Directory.Exists(directory))
+            return [];
+
+        return Directory.EnumerateFiles(directory, "*.json", SearchOption.AllDirectories)
+            .Where(path => !path.EndsWith(".json.migrated", StringComparison.OrdinalIgnoreCase));
+    }
+
     private static MainConfigModel? ReadCandidateSettings(string staging)
     {
         var settings = Path.Combine(staging, "config", "settings.json");
@@ -693,13 +765,17 @@ public sealed class DataArchiveService(
     private static bool IsFixedFileRoot(string path)
     {
         return path.Equals("config/settings.json", StringComparison.OrdinalIgnoreCase)
-               || path.Equals(DeviceUuidPath, StringComparison.OrdinalIgnoreCase);
+               || path.Equals(DeviceUuidPath, StringComparison.OrdinalIgnoreCase)
+               || path.Equals(OverviewPath, StringComparison.OrdinalIgnoreCase)
+               || path.Equals(OrchestrationDatabasePath, StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsDescendantOfFixedFileRoot(string path)
     {
         return path.StartsWith("config/settings.json/", StringComparison.OrdinalIgnoreCase)
-               || path.StartsWith(DeviceUuidPath + "/", StringComparison.OrdinalIgnoreCase);
+               || path.StartsWith(DeviceUuidPath + "/", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith(OverviewPath + "/", StringComparison.OrdinalIgnoreCase)
+               || path.StartsWith(OrchestrationDatabasePath + "/", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsManagedPath(string path)
@@ -720,6 +796,10 @@ public sealed class DataArchiveService(
                     return path.Split('/')[0];
                 if (path.Equals(DeviceUuidPath, StringComparison.OrdinalIgnoreCase))
                     return DeviceUuidPath;
+                if (path.Equals(OverviewPath, StringComparison.OrdinalIgnoreCase))
+                    return OverviewPath;
+                if (path.Equals(OrchestrationDatabasePath, StringComparison.OrdinalIgnoreCase))
+                    return OrchestrationDatabasePath;
                 // 编排列表是 config/ 下唯一按目录提交的段：折叠成 settings.json 会让整段顺序名单在导入时被丢掉。
                 if (path.StartsWith(OrchestrationRoot, StringComparison.OrdinalIgnoreCase))
                     return OrchestrationRoot;

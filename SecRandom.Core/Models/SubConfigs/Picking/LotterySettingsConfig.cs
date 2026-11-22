@@ -14,6 +14,7 @@ public partial class LotterySettingsConfig : OverridableDrawSettings, IOrchestra
     [ObservableProperty] private string _algorithmId = "builtin.inventory";
     [ObservableProperty] private string _defaultPool = string.Empty;
     [ObservableProperty] private LotteryShowRandomMode _lotteryShowRandom = LotteryShowRandomMode.PrizeIdPrizeBreakGroupHyphenMember;
+    [ObservableProperty] private bool _showGroupMember;
     [ObservableProperty] private string _customLotteryShowRandomFormat = LotteryProcessDisplayFormatter.DefaultTemplate;
     [ObservableProperty] private bool _lotteryImage = false;
     [ObservableProperty] private StudentImagePositionMode _lotteryImagePosition = StudentImagePositionMode.Left;

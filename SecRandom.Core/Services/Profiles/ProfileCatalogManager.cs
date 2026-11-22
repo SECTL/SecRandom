@@ -5,6 +5,7 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.HistoryStore;
+using SecRandom.Core.Services.Stats;
 using SecRandom.Shared;
 using SecRandom.Shared.Abstraction;
 using SecRandom.Shared.ComponentModels;
@@ -18,6 +19,7 @@ internal sealed class ProfileCatalogManager(
     IProfileService profileService,
     IHistoryGroupCatalog historyGroupCatalog,
     MainConfigHandler configHandler,
+    IOverviewStatisticsService overviewStatistics,
     ILogger<ProfileCatalogManager> logger) : IProfileCatalogManager
 {
     public IReadOnlyList<string> GetStudentListNames() => GetListNames("roll_call_list");
@@ -30,10 +32,12 @@ internal sealed class ProfileCatalogManager(
 
     public bool CreateStudentList(string name)
     {
-        if (string.IsNullOrWhiteSpace(name) || StudentListExists(name))
+        if (string.IsNullOrWhiteSpace(name))
+            return false;
+        name = name.Trim();
+        if (!ProfileConfigBase.IsValidProfileName(name) || StudentListExists(name))
             return false;
 
-        // FileConfigService 在缺失时先写入 fallback，这里再显式保存一次与桌面既有行为一致。
         new StudentListConfig(name, logger, configService).Save();
         logger.LogInformation("已创建点名名单：名单={ListName}。", name);
         return true;
@@ -41,7 +45,10 @@ internal sealed class ProfileCatalogManager(
 
     public bool CreatePrizeList(string name)
     {
-        if (string.IsNullOrWhiteSpace(name) || PrizeListExists(name))
+        if (string.IsNullOrWhiteSpace(name))
+            return false;
+        name = name.Trim();
+        if (!ProfileConfigBase.IsValidProfileName(name) || PrizeListExists(name))
             return false;
 
         new PrizeListConfig(name, logger, configService).Save();
@@ -50,19 +57,22 @@ internal sealed class ProfileCatalogManager(
     }
 
     public bool RenameStudentList(string oldName, string newName) =>
-        RenameList(oldName, newName, "roll_call_list", "roll_call_record_", isStudent: true);
+        RenameList(oldName, newName, "roll_call_record_", isStudent: true);
 
     public bool RenamePrizeList(string oldName, string newName) =>
-        RenameList(oldName, newName, "lottery_list", "lottery_record_", isStudent: false);
+        RenameList(oldName, newName, "lottery_record_", isStudent: false);
 
     public bool DeleteStudentList(string name, bool deleteHistory)
     {
-        if (string.IsNullOrWhiteSpace(name) || !StudentListExists(name))
+        var resolvedName = ResolveExistingName(GetStudentListNames(), name);
+        if (resolvedName is null)
             return false;
 
-        DeleteFile(Utils.GetFilePath("list", "roll_call_list", $"{name}.json"));
+        name = resolvedName;
+        ProfileRosterDatabase.Delete(name, ProfileRosterKind.RollCall, logger);
         if (deleteHistory)
             ProfileHistoryPaths.Delete(name, HistoryGroupKind.RollCall);
+        overviewStatistics.RemoveStudent(name);
 
         if (string.Equals(profileService.StudentListConfig?.Name, name, StringComparison.Ordinal))
         {
@@ -76,12 +86,15 @@ internal sealed class ProfileCatalogManager(
 
     public bool DeletePrizeList(string name, bool deleteHistory)
     {
-        if (string.IsNullOrWhiteSpace(name) || !PrizeListExists(name))
+        var resolvedName = ResolveExistingName(GetPrizeListNames(), name);
+        if (resolvedName is null)
             return false;
 
-        DeleteFile(Utils.GetFilePath("list", "lottery_list", $"{name}.json"));
+        name = resolvedName;
+        ProfileRosterDatabase.Delete(name, ProfileRosterKind.Lottery, logger);
         if (deleteHistory)
             ProfileHistoryPaths.Delete(name, HistoryGroupKind.Lottery);
+        overviewStatistics.RemovePrize(name);
 
         if (string.Equals(profileService.PrizeListConfig?.Name, name, StringComparison.Ordinal))
         {
@@ -95,14 +108,15 @@ internal sealed class ProfileCatalogManager(
 
     public StudentList? LoadStudentList(string name)
     {
-        if (string.IsNullOrWhiteSpace(name) || !StudentListExists(name))
+        name = ResolveExistingName(GetStudentListNames(), name) ?? string.Empty;
+        if (name.Length == 0)
             return null;
 
         try
         {
             var data = new StudentListConfig(name, logger, configService).Data;
             if (SortInPlace(data.Students))
-                configService.SaveConfig(data);
+                ProfileRosterDatabase.SaveStudentList(data, logger);
             return data;
         }
         catch (Exception exception)
@@ -114,14 +128,15 @@ internal sealed class ProfileCatalogManager(
 
     public PrizeList? LoadPrizeList(string name)
     {
-        if (string.IsNullOrWhiteSpace(name) || !PrizeListExists(name))
+        name = ResolveExistingName(GetPrizeListNames(), name) ?? string.Empty;
+        if (name.Length == 0)
             return null;
 
         try
         {
             var data = new PrizeListConfig(name, logger, configService).Data;
             if (SortInPlace(data.Prizes))
-                configService.SaveConfig(data);
+                ProfileRosterDatabase.SavePrizeList(data, logger);
             return data;
         }
         catch (Exception exception)
@@ -139,7 +154,7 @@ internal sealed class ProfileCatalogManager(
 
         ProfileRecordIdentity.Normalize(list);
         SortInPlace(list.Students);
-        configService.SaveConfig(list);
+        ProfileRosterDatabase.SaveStudentList(list, logger);
         SyncActiveStudentProfile(list.Name);
         return true;
     }
@@ -152,7 +167,7 @@ internal sealed class ProfileCatalogManager(
 
         ProfileRecordIdentity.Normalize(list);
         SortInPlace(list.Prizes);
-        configService.SaveConfig(list);
+        ProfileRosterDatabase.SavePrizeList(list, logger);
         SyncActivePrizeProfile(list.Name);
         return true;
     }
@@ -513,21 +528,25 @@ internal sealed class ProfileCatalogManager(
             profileService.LoadPrizeProfile(name, saveCurrent: false);
     }
 
-    private static IReadOnlyList<string> GetListNames(string directory)
+    private IReadOnlyList<string> GetListNames(string directory)
     {
-        var path = Utils.GetDirectoryPath("list", directory);
-        return Directory.Exists(path)
-            ? Directory.GetFiles(path, "*.json")
-                .Select(Path.GetFileNameWithoutExtension)
-                .OfType<string>()
-                .Where(name => !string.IsNullOrWhiteSpace(name))
-                .OrderBy(name => name)
-                .ToArray()
-            : [];
+        var kind = directory.Equals("roll_call_list", StringComparison.Ordinal)
+            ? ProfileRosterKind.RollCall
+            : ProfileRosterKind.Lottery;
+        return ProfileRosterDatabase.GetProfileNames(kind, logger);
     }
 
     private static bool ContainsName(IReadOnlyList<string> names, string name) =>
         !string.IsNullOrWhiteSpace(name) && names.Contains(name, StringComparer.OrdinalIgnoreCase);
+
+    private static string? ResolveExistingName(IReadOnlyList<string> names, string? requestedName)
+    {
+        if (string.IsNullOrWhiteSpace(requestedName))
+            return null;
+
+        var trimmed = requestedName.Trim();
+        return names.FirstOrDefault(name => string.Equals(name, trimmed, StringComparison.OrdinalIgnoreCase));
+    }
 
     private static bool SortInPlace(ObservableCollection<Student> students)
     {
@@ -559,14 +578,11 @@ internal sealed class ProfileCatalogManager(
             File.Delete(path);
     }
 
-    private bool RenameList(string oldName, string newName, string listDirectory,
-        string temporaryPrefix, bool isStudent)
+    private bool RenameList(string oldName, string newName, string temporaryPrefix, bool isStudent)
     {
-        oldName = oldName.Trim();
+        oldName = ResolveExistingName(isStudent ? GetStudentListNames() : GetPrizeListNames(), oldName) ?? string.Empty;
         newName = newName.Trim();
-        if (string.IsNullOrWhiteSpace(oldName) || string.IsNullOrWhiteSpace(newName) ||
-            oldName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
-            newName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+        if (string.IsNullOrWhiteSpace(oldName) || !ProfileConfigBase.IsValidProfileName(newName) ||
             string.Equals(oldName, newName, StringComparison.OrdinalIgnoreCase))
             return false;
 
@@ -581,15 +597,15 @@ internal sealed class ProfileCatalogManager(
         profileService.SaveProfile();
 
         var historyKind = isStudent ? HistoryGroupKind.RollCall : HistoryGroupKind.Lottery;
+        var rosterKind = isStudent ? ProfileRosterKind.RollCall : ProfileRosterKind.Lottery;
         var moves = new[]
         {
-            (Source: Utils.GetFilePath("list", listDirectory, $"{oldName}.json"),
-             Target: Utils.GetFilePath("list", listDirectory, $"{newName}.json")),
             (Source: Utils.GetFilePath("TEMP", $"{temporaryPrefix}{NormalizeFileComponent(oldName)}.json"),
              Target: Utils.GetFilePath("TEMP", $"{temporaryPrefix}{NormalizeFileComponent(newName)}.json"))
         };
 
         var moved = new List<(string Source, string Target)>();
+        var rosterRenamed = false;
         var historyRenamed = false;
         try
         {
@@ -602,7 +618,8 @@ internal sealed class ProfileCatalogManager(
                 moved.Add(move);
             }
 
-            // 历史档案的实际数据在数据库里（旧 JSON 只可能还没迁移），数据库、未迁移的 JSON 与迁移备份一起换名。
+            ProfileRosterDatabase.Rename(oldName, newName, rosterKind, logger);
+            rosterRenamed = true;
             ProfileHistoryPaths.Rename(oldName, newName, historyKind);
             historyRenamed = true;
 
@@ -622,6 +639,10 @@ internal sealed class ProfileCatalogManager(
             }
 
             configHandler.Save();
+            if (isStudent)
+                overviewStatistics.RenameStudent(oldName, newName);
+            else
+                overviewStatistics.RenamePrize(oldName, newName);
             logger.LogInformation("已重命名{ListType}：旧名称={OldName}，新名称={NewName}。",
                 isStudent ? "点名名单" : "奖品池", oldName, newName);
             return true;
@@ -637,6 +658,17 @@ internal sealed class ProfileCatalogManager(
                 catch (Exception rollbackException)
                 {
                     logger.LogWarning(rollbackException, "回滚历史档案名称失败：{OldName} -> {NewName}", newName, oldName);
+                }
+            }
+            if (rosterRenamed)
+            {
+                try
+                {
+                    ProfileRosterDatabase.Rename(newName, oldName, rosterKind, logger);
+                }
+                catch (Exception rollbackException)
+                {
+                    logger.LogWarning(rollbackException, "回滚名单档案名称失败：{OldName} -> {NewName}", newName, oldName);
                 }
             }
 

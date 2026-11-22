@@ -5,8 +5,8 @@ using SecRandom.Core.Models.Verification;
 using SecRandom.Core.Services.Draw.Exceptions;
 using SecRandom.Core.Services.Profiles;
 using SecRandom.Shared.Extensions;
-using SecRandom.Shared.Interfaces;
 using SecRandom.Shared.Models.Profile;
+using System.Security.Cryptography;
 using System.Text.Json;
 using VerificationDrawKind = SecRandom.Shared.Models.Verification.VerificationDrawKind;
 
@@ -14,22 +14,7 @@ namespace SecRandom.Core.Services.Draw;
 
 public partial class DrawEngine
 {
-    /// <summary>
-    ///     Freezes the same prepared student pool used by the draw page into a deterministic verification request.
-    /// </summary>
-    public VerificationDrawInput CreateStudentVerificationInput(
-        int count,
-        IReadOnlyCollection<Student> candidates,
-        DrawSettingsType drawSettingsType,
-        string courseName = "",
-        string? historyGroup = null) => CreateStudentVerificationInput(
-        count,
-        candidates,
-        drawSettingsType,
-        courseName,
-        includeInternalRules: true,
-        historyGroup: historyGroup);
-
+    // Compatibility overload retained for plugins compiled against the pre-V3 verification entry point.
     public VerificationDrawInput CreateStudentVerificationInput(
         int count,
         IReadOnlyCollection<Student> candidates,
@@ -38,13 +23,41 @@ public partial class DrawEngine
         bool includeInternalRules,
         string rosterDigest = "",
         string? historyGroup = null,
-        DrawMode? drawModeOverride = null)
+        DrawMode? drawModeOverride = null) => CreateStudentVerificationInput(
+            count, candidates, drawSettingsType, courseName, historyGroup, rosterDigest, drawModeOverride);
+
+    // Compatibility overload retained for plugins compiled against the pre-V3 verification entry point.
+    public VerificationDrawInput CreatePrizeVerificationInput(
+        int count,
+        IReadOnlyDictionary<string, int> temporaryCounts,
+        bool includeInternalRules,
+        string rosterDigest = "",
+        string? historyGroup = null) => CreatePrizeVerificationInput(
+            count, temporaryCounts, historyGroup, rosterDigest);
+
+    public bool IsStudentOrchestratedMode(DrawSettingsType drawSettingsType, DrawMode? drawModeOverride = null) =>
+        (drawModeOverride ?? GetStudentDrawMode(drawSettingsType)) == DrawMode.Orchestrated;
+
+    public bool IsLotteryOrchestratedMode() => ConfigData.LotterySettings.DrawMode == DrawMode.Orchestrated;
+
+    /// <summary>
+    ///     Freezes the same prepared student pool used by the draw page into a deterministic verification request.
+    /// </summary>
+    public VerificationDrawInput CreateStudentVerificationInput(
+        int count,
+        IReadOnlyCollection<Student> candidates,
+        DrawSettingsType drawSettingsType,
+        string courseName = "",
+        string? historyGroup = null,
+        string rosterDigest = "",
+        DrawMode? drawModeOverride = null,
+        DrawType? drawTypeOverride = null)
     {
         var preparedCandidates = candidates.Where(student => student.IsCandidate).ToList();
         if (preparedCandidates.Count == 0 || count <= 0 || count > preparedCandidates.Count)
             throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.");
 
-        var drawType = GetStudentDrawType(drawSettingsType);
+        var drawType = drawTypeOverride ?? GetStudentDrawType(drawSettingsType);
         // 覆盖只为一个场景存在：抽奖轮里附带的「分配学生」是这一轮自己的随机分配，点名通道即便配了编排，
         // 也不该把那轮的点名排布塞进抽奖证明里。其它调用方一律沿用配置里的模式。
         var drawMode = drawModeOverride ?? GetStudentDrawMode(drawSettingsType);
@@ -56,7 +69,7 @@ public partial class DrawEngine
             throw new InvalidOperationException(
                 "Orchestrated draws must build their verification input from the arranged schedule.");
         var executionPolicy = StudentDrawExecutionPolicy.DesktopConfigured(drawType, ConfigData.FairDrawSettings,
-            drawSettingsType switch
+            drawTypeOverride == DrawType.Random ? "builtin.random" : drawSettingsType switch
             {
                 DrawSettingsType.RollCall => ConfigData.RollCallSettings.AlgorithmId,
                 DrawSettingsType.QuickDraw => ConfigData.QuickDrawSettings.AlgorithmId,
@@ -75,15 +88,12 @@ public partial class DrawEngine
             throw new NoEligibleCandidatesException("The prepared student pool has no drawable candidate.", exception);
         }
 
-        var frozen = FreezeCandidates(prepared.WeightedCandidates, includeInternalRules);
+        var frozen = FreezeCandidates(prepared.WeightedCandidates);
         if (count > frozen.Count)
             throw new InvalidOperationException("The prepared student pool cannot satisfy this draw.");
         EnsureDrawableWeight(frozen, count);
-        var hasInternalRules = includeInternalRules
-                               && prepared.WeightedCandidates.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
-        var algorithmProfile = GetStudentAlgorithmProfile(drawType, drawMode, hasInternalRules);
-        var auditPayload = CreateAuditPayload("student", count, frozen, prepared.WeightedCandidates, prepared.HistoryCache,
-            includeInternalRules, new
+        var algorithmProfile = GetStudentAlgorithmProfile(drawType, drawMode);
+        var auditPayload = CreateAuditPayload("student", count, frozen, prepared.HistoryCache, new
             {
                 fairDraw = drawType == DrawType.Fair,
                 algorithmProfile = algorithmProfile.ToString(),
@@ -108,7 +118,7 @@ public partial class DrawEngine
                 shareDebtPersonalHorizonRounds = ShareDebtPersonalHorizonRounds,
                 shareDebtDimensionHorizonPerPick = ShareDebtDimensionHorizonPerPick,
                 shareDebtRandomFloor = ShareDebtRandomFloor
-            }, rosterDigest, out var excludedCandidateCount);
+            }, rosterDigest);
         return new VerificationDrawInput
         {
             Kind = VerificationDrawKind.Student,
@@ -120,8 +130,75 @@ public partial class DrawEngine
             Candidates = frozen,
             AuditPayload = auditPayload,
             DrawModeToken = ToAuditName(drawMode),
-            HistoryScope = ToHistoryScopeName(courseName, historyGroup),
-            ExcludedCandidateCount = excludedCandidateCount
+            HistoryScope = ToHistoryScopeName(courseName, historyGroup)
+        };
+    }
+
+    /// <summary>
+    ///     Freezes a group draw as anonymous member candidates. The occurrence slot carries a per-proof, randomly
+    ///     assigned group bucket, allowing replay to sample groups uniformly and then members uniformly without
+    ///     transmitting group names or a reusable group identifier.
+    /// </summary>
+    public VerificationDrawInput CreateGroupVerificationInput(
+        int count,
+        IReadOnlyList<GroupDrawCandidates.Group> groups,
+        DrawMode drawMode,
+        int halfRepeat,
+        string courseName = "",
+        string? historyGroup = null,
+        string rosterDigest = "")
+    {
+        ArgumentNullException.ThrowIfNull(groups);
+        if (groups.Count == 0 || count <= 0 || count > groups.Count)
+            throw new InvalidOperationException("The prepared group pool cannot satisfy this draw.");
+
+        var groupOrdinals = Enumerable.Range(0, groups.Count).Select(index => (uint)index).ToArray();
+        for (var index = groupOrdinals.Length - 1; index > 0; index--)
+        {
+            var selected = RandomNumberGenerator.GetInt32(index + 1);
+            (groupOrdinals[index], groupOrdinals[selected]) = (groupOrdinals[selected], groupOrdinals[index]);
+        }
+
+        HashSet<Guid> seenRecordIds = [];
+        List<VerificationCandidate> frozen = [];
+        for (var groupIndex = 0; groupIndex < groups.Count; groupIndex++)
+        {
+            var group = groups[groupIndex];
+            if (string.IsNullOrWhiteSpace(group.Name) || group.Members.Count == 0)
+                throw new InvalidOperationException("Every drawable group must contain a member.");
+
+            foreach (var student in group.Members)
+            {
+                var recordId = EnsureRecordId(student);
+                if (!seenRecordIds.Add(recordId))
+                    throw new InvalidOperationException("A student may belong to only one group in a proof pool.");
+                frozen.Add(new VerificationCandidate(recordId, groupOrdinals[groupIndex], 1_000_000, false));
+            }
+        }
+
+        frozen = frozen.OrderBy(candidate => candidate.RecordId.ToString("N"), StringComparer.Ordinal)
+            .ThenBy(candidate => candidate.OccurrenceIndex).ToList();
+        var profile = VerificationAlgorithmProfile.StudentGroupUniform;
+        var auditPayload = CreateAuditPayload("group", count, frozen, new Dictionary<Student, History>(), new
+        {
+            fairDraw = false,
+            algorithmProfile = profile.ToString(),
+            repeatMode = ToAuditName(drawMode),
+            halfRepeatLimit = drawMode == DrawMode.HalfRepeat ? halfRepeat : (int?)null,
+            historyScope = ToHistoryScopeName(courseName, historyGroup),
+            groupCount = groups.Count
+        }, rosterDigest);
+
+        return new VerificationDrawInput
+        {
+            Kind = VerificationDrawKind.Student,
+            SamplingMode = VerificationSamplingMode.GroupUniform,
+            AlgorithmProfile = profile,
+            Count = count,
+            Candidates = frozen,
+            AuditPayload = auditPayload,
+            DrawModeToken = ToAuditName(drawMode),
+            HistoryScope = ToHistoryScopeName(courseName, historyGroup)
         };
     }
 
@@ -131,23 +208,8 @@ public partial class DrawEngine
     public VerificationDrawInput CreatePrizeVerificationInput(
         int count,
         IReadOnlyDictionary<string, int> temporaryCounts,
-        string? historyGroup = null) => CreatePrizeVerificationInput(
-        count,
-        temporaryCounts,
-        includeInternalRules: true,
-        historyGroup: historyGroup);
-
-    /// <param name="historyGroup">
-    ///     Accepted for signature symmetry with the student entry points and reserved for the persistent
-    ///     prize-history scope. The verified prize pool is built from temporary counts only, so it does not
-    ///     narrow this request; the anonymous audit payload therefore stays unchanged.
-    /// </param>
-    public VerificationDrawInput CreatePrizeVerificationInput(
-        int count,
-        IReadOnlyDictionary<string, int> temporaryCounts,
-        bool includeInternalRules,
-        string rosterDigest = "",
-        string? historyGroup = null)
+        string? historyGroup = null,
+        string rosterDigest = "")
     {
         var historyCache = BuildPrizeTemporaryHistoryCache(PrizeList.Prizes, temporaryCounts);
         List<Prize> usable;
@@ -164,49 +226,45 @@ public partial class DrawEngine
         if (count <= 0 || count > weighted.Count)
             throw new InvalidOperationException("The prepared prize pool cannot satisfy this draw.");
 
-        var frozen = FreezeCandidates(weighted, includeInternalRules);
+        var frozen = FreezeCandidates(weighted);
         if (count > frozen.Count)
             throw new InvalidOperationException("The prepared prize pool cannot satisfy this draw.");
         EnsureDrawableWeight(frozen, count);
-        var hasInternalRules = includeInternalRules
-                               && weighted.Any(candidate => GetBehindSceneSettings(candidate.Candidate) is { IsAttachSettingsEnabled: true });
         var lotteryDrawType = ConfigData.LotterySettings.DrawType;
         var lotteryDrawMode = ConfigData.LotterySettings.DrawMode;
         if (lotteryDrawMode == DrawMode.Orchestrated)
             throw new InvalidOperationException(
                 "Orchestrated draws must build their verification input from the arranged schedule.");
-        var samplingMode = lotteryDrawType == LotteryDrawType.Count && !hasInternalRules
+        var samplingMode = lotteryDrawType == LotteryDrawType.Count
             ? VerificationSamplingMode.InventoryPermutation
             : VerificationSamplingMode.WeightedWithoutReplacement;
-        var auditPayload = CreateAuditPayload("prize", count, frozen, weighted, historyCache, includeInternalRules, new
+        var auditPayload = CreateAuditPayload("prize", count, frozen, historyCache, new
         {
             samplingAlgorithm = samplingMode == VerificationSamplingMode.InventoryPermutation
                 ? "inventory-partial-permutation"
                 : "weighted-without-replacement",
             inventoryEntriesEqualWeight = samplingMode == VerificationSamplingMode.InventoryPermutation,
-            internalRulesRequireWeightedFallback = samplingMode == VerificationSamplingMode.WeightedWithoutReplacement
-                && lotteryDrawType == LotteryDrawType.Count
-                && hasInternalRules,
-            algorithmProfile = GetLotteryAlgorithmProfile(lotteryDrawType, lotteryDrawMode, hasInternalRules).ToString(),
+            // Reserved compatibility marker; count-mode draws no longer have an insider fallback.
+            internalRulesRequireWeightedFallback = false,
+            algorithmProfile = GetLotteryAlgorithmProfile(lotteryDrawType, lotteryDrawMode).ToString(),
             lotteryMode = lotteryDrawType == LotteryDrawType.Count ? "count" : "pan",
             repeatMode = lotteryDrawType == LotteryDrawType.Pan ? ToAuditName(lotteryDrawMode) : null,
             halfRepeatLimit = lotteryDrawType == LotteryDrawType.Pan && lotteryDrawMode == DrawMode.HalfRepeat
                 ? GetLotteryRepeatThreshold()
                 : (int?)null
-        }, rosterDigest, out var excludedCandidateCount);
+        }, rosterDigest);
         return new VerificationDrawInput
         {
             Kind = VerificationDrawKind.Prize,
             SamplingMode = samplingMode,
-            AlgorithmProfile = GetLotteryAlgorithmProfile(lotteryDrawType, lotteryDrawMode, hasInternalRules),
+            AlgorithmProfile = GetLotteryAlgorithmProfile(lotteryDrawType, lotteryDrawMode),
             Count = count,
             Candidates = frozen,
             AuditPayload = auditPayload,
             // Count-mode inventory has no repeat semantics of its own, so it declares the sampling shape instead of
             // borrowing the configured (and unused) repeat mode.
             DrawModeToken = lotteryDrawType == LotteryDrawType.Count ? "inventory" : ToAuditName(lotteryDrawMode),
-            HistoryScope = "global",
-            ExcludedCandidateCount = excludedCandidateCount
+            HistoryScope = "global"
         };
     }
 
@@ -253,6 +311,7 @@ public partial class DrawEngine
             operation = "number",
             requestedCount = count,
             candidateCount = ordered.Length,
+            // Reserved compatibility markers; insider settings are no longer generated or applied.
             internalSettingsApplied = false,
             internalCandidateCount = 0,
             internalExcludedCandidateCount = 0,
@@ -287,22 +346,8 @@ public partial class DrawEngine
 
     private static VerificationAlgorithmProfile GetStudentAlgorithmProfile(
         DrawType drawType,
-        DrawMode drawMode,
-        bool hasInternalRules)
+        DrawMode drawMode)
     {
-        if (hasInternalRules)
-        {
-            return (drawType, drawMode) switch
-            {
-                (DrawType.Fair, DrawMode.Repeat) => VerificationAlgorithmProfile.StudentFairInternalRuleRepeat,
-                (DrawType.Fair, DrawMode.NoRepeat) => VerificationAlgorithmProfile.StudentFairInternalRuleNoRepeat,
-                (DrawType.Fair, _) => VerificationAlgorithmProfile.StudentFairInternalRuleHalfRepeat,
-                (_, DrawMode.Repeat) => VerificationAlgorithmProfile.StudentRandomInternalRuleRepeat,
-                (_, DrawMode.NoRepeat) => VerificationAlgorithmProfile.StudentRandomInternalRuleNoRepeat,
-                _ => VerificationAlgorithmProfile.StudentRandomInternalRuleHalfRepeat
-            };
-        }
-
         return (drawType, drawMode) switch
         {
             (DrawType.Fair, DrawMode.Repeat) => VerificationAlgorithmProfile.StudentFairRepeat,
@@ -316,13 +361,10 @@ public partial class DrawEngine
 
     private static VerificationAlgorithmProfile GetLotteryAlgorithmProfile(
         LotteryDrawType drawType,
-        DrawMode drawMode,
-        bool hasInternalRules)
+        DrawMode drawMode)
     {
         if (drawType == LotteryDrawType.Count)
-            return hasInternalRules
-                ? VerificationAlgorithmProfile.LotteryCountInternalRule
-                : VerificationAlgorithmProfile.LotteryInventoryCount;
+            return VerificationAlgorithmProfile.LotteryInventoryCount;
 
         return drawMode switch
         {
@@ -345,21 +387,13 @@ public partial class DrawEngine
     ///     Names the history scope a draw's per-candidate history counts came from, for the anonymous audit payload.
     /// </summary>
     /// <remarks>
-    ///     The two narrowing axes are independent and intersecting: an empty course means the whole profile history
-    ///     was read, a <see langword="null" /> group means no record-group filter was applied, and both together mean
-    ///     the counts are the intersection. The empty group string is <i>not</i> "no filter" — it is the default
-    ///     record group, so it narrows the history like any other group and must report a group scope. Only the scope
-    ///     name leaves the device — never the course or group name — because both are user-typed text that can carry
-    ///     a class or a person's name.
+    ///     Course names are recording metadata and never narrow the history counts. A <see langword="null" /> group
+    ///     means no record-group filter was applied; the empty group string is the default record group and therefore
+    ///     still narrows the history. Only the scope name leaves the device — never the group name — because it is
+    ///     user-typed text that can carry a class or a person's name.
     /// </remarks>
-    private static string ToHistoryScopeName(string courseName, string? historyGroup) =>
-        (string.IsNullOrWhiteSpace(courseName), historyGroup is null) switch
-        {
-            (true, true) => "global",
-            (false, true) => "course",
-            (true, false) => "history-group",
-            _ => "course-and-history-group"
-        };
+    private static string ToHistoryScopeName(string _, string? historyGroup) =>
+        historyGroup is null ? "global" : "history-group";
 
     /// <summary>
     ///     Rejects a frozen pool that cannot actually produce <paramref name="count"/> winners. Shielded
@@ -375,12 +409,9 @@ public partial class DrawEngine
     }
 
     private static IReadOnlyList<VerificationCandidate> FreezeCandidates<TCandidate>(
-        IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates,
-        bool includeInternalRules)
-        where TCandidate : IAttachableSettingsObject
+        IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates)
     {
         Dictionary<Guid, uint> occurrences = [];
-        HashSet<Guid> guaranteedRecordIds = [];
         List<VerificationCandidate> result = [];
         foreach (var weighted in weightedCandidates)
         {
@@ -388,29 +419,17 @@ public partial class DrawEngine
             var occurrence = occurrences.GetValueOrDefault(recordId);
             occurrences[recordId] = checked(occurrence + 1);
 
-            var settings = includeInternalRules ? GetBehindSceneSettings(weighted.Candidate) : null;
-            var probability = settings is { IsAttachSettingsEnabled: true }
-                ? Math.Clamp(settings.Probability, 0d, 100d)
-                : 100d;
-            if (probability <= 0)
-                continue;
-
-            var guaranteed = settings is { IsAttachSettingsEnabled: true } && probability >= 100d;
-            if (guaranteed && !guaranteedRecordIds.Add(recordId))
-                continue;
-
-            var effectiveWeight = guaranteed ? 1.0 : weighted.Weight * (probability / 100.0);
             result.Add(new VerificationCandidate(
                 recordId,
                 occurrence,
-                ToWeightMicros(effectiveWeight),
-                guaranteed));
+                ToWeightMicros(weighted.Weight),
+                false));
         }
 
         return result;
     }
 
-    private static Guid GetRecordId(IAttachableSettingsObject candidate)
+    private static Guid GetRecordId<TCandidate>(TCandidate candidate)
     {
         return candidate switch
         {
@@ -453,32 +472,11 @@ public partial class DrawEngine
         string operation,
         int count,
         IReadOnlyList<VerificationCandidate> candidates,
-        IReadOnlyList<WeightedCandidate<TCandidate>> weightedCandidates,
         IReadOnlyDictionary<TCandidate, History> historyCache,
-        bool includeInternalRules,
         object? fairness,
-        string rosterDigest,
-        out int internalExcludedCandidateCount)
-        where TCandidate : IAttachableSettingsObject
+        string rosterDigest)
     {
-        internalExcludedCandidateCount = 0;
         var historyByRecordId = historyCache.ToDictionary(pair => GetRecordId(pair.Key), pair => pair.Value);
-        Dictionary<Guid, double?> internalSettingsByRecordId = [];
-        foreach (var weighted in weightedCandidates)
-        {
-            var recordId = GetRecordId(weighted.Candidate);
-            var settings = includeInternalRules ? GetBehindSceneSettings(weighted.Candidate) : null;
-            if (settings is not { IsAttachSettingsEnabled: true })
-            {
-                internalSettingsByRecordId[recordId] = null;
-                continue;
-            }
-
-            var probability = Math.Clamp(settings.Probability, 0d, 100d);
-            internalSettingsByRecordId[recordId] = probability;
-            if (probability <= 0)
-                internalExcludedCandidateCount++;
-        }
         var ordered = candidates
             .OrderBy(candidate => candidate.RecordId.ToString("N"), StringComparer.Ordinal)
             .ThenBy(candidate => candidate.OccurrenceIndex)
@@ -492,8 +490,10 @@ public partial class DrawEngine
                     candidate.OccurrenceIndex,
                     candidate.WeightMicros,
                     candidate.IsGuaranteed,
-                    internalSettingApplied = internalSettingsByRecordId.GetValueOrDefault(candidate.RecordId) is not null,
-                    internalProbability = internalSettingsByRecordId.GetValueOrDefault(candidate.RecordId),
+                    // Keep these nullable fields in the v2 audit shape for verifier compatibility. The insider
+                    // feature is removed, so every new proof writes them as disabled/null.
+                    internalSettingApplied = false,
+                    internalProbability = (double?)null,
                     historyCount = history?.TotalCount ?? 0,
                     // Day precision only: a candidate's exact last-drawn instant is a behavioural fingerprint that
                     // links this record to unrelated proofs (and, with the timestamp field, to a real lesson time).
@@ -512,10 +512,9 @@ public partial class DrawEngine
             operation,
             requestedCount = count,
             candidateCount = ordered.Length,
-            internalSettingsApplied = ordered.Any(candidate => candidate.internalSettingApplied)
-                                      || internalExcludedCandidateCount > 0,
-            internalCandidateCount = ordered.Count(candidate => candidate.internalSettingApplied),
-            internalExcludedCandidateCount,
+            internalSettingsApplied = false,
+            internalCandidateCount = 0,
+            internalExcludedCandidateCount = 0,
             fairness,
             // The roster's RecordId-to-display mapping. Anonymous: a digest only, never names or numbers.
             rosterDigest = string.IsNullOrWhiteSpace(rosterDigest) ? null : rosterDigest,

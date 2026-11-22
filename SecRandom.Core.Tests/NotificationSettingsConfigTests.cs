@@ -4,6 +4,7 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Enums;
+using SecRandom.Core.Enums.Configs;
 
 namespace SecRandom.Core.Tests;
 
@@ -60,6 +61,7 @@ public class NotificationSettingsConfigTests
         Assert.False(settings.Lottery.OverrideBasicSettings);
         Assert.False(settings.Lottery.OverrideNotificationWindowSettings);
         Assert.False(settings.Lottery.OverrideServiceSettings);
+        Assert.Equal(WindowBackgroundStyle.Theme, settings.Default.BackgroundStyle);
     }
 
     [Fact]
@@ -84,6 +86,34 @@ public class NotificationSettingsConfigTests
         Assert.Empty(settings.RollCall.EnabledMonitor);
         Assert.Empty(settings.QuickDraw.EnabledMonitor);
         Assert.Empty(settings.Lottery.EnabledMonitor);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(99)]
+    public void NotificationChannelSettings_RemovedAndInvalidStylesFallBackToTheme(int stored)
+    {
+        NotificationChannelSettings? settings = JsonSerializer.Deserialize<NotificationChannelSettings>(
+            $$"""{"background_style":{{stored}},"background_blur_radius":150}""",
+            ConfigServiceBase.JsonOptions);
+
+        Assert.NotNull(settings);
+        Assert.Equal(WindowBackgroundStyle.Theme, settings.BackgroundStyle);
+    }
+
+    [Fact]
+    public void LegacyImageBackgroundMigratesAndPreservesThemeSelection()
+    {
+        var settings = JsonSerializer.Deserialize<NotificationChannelSettings>(
+            """{"background_style":1,"background_image":"classroom.png"}""", ConfigServiceBase.JsonOptions)!;
+        Assert.Equal(WindowBackgroundStyle.Image, settings.BackgroundStyle);
+
+        settings.BackgroundStyle = WindowBackgroundStyle.Theme;
+        var restored = JsonSerializer.Deserialize<NotificationChannelSettings>(
+            JsonSerializer.Serialize(settings, ConfigServiceBase.JsonOptions), ConfigServiceBase.JsonOptions)!;
+        Assert.Equal(WindowBackgroundStyle.Theme, restored.BackgroundStyle);
+        Assert.Equal("classroom.png", restored.BackgroundImage);
     }
 
     [Theory]
@@ -244,13 +274,13 @@ public class NotificationSettingsConfigTests
 
         Assert.NotNull(settings);
         Assert.True(settings.NotificationSettings.RollCall.OverrideBasicSettings);
-        Assert.True(settings.NotificationSettings.RollCall.OverrideNotificationWindowSettings);
+        Assert.False(settings.NotificationSettings.RollCall.OverrideNotificationWindowSettings);
         Assert.True(settings.NotificationSettings.RollCall.OverrideServiceSettings);
         Assert.True(settings.NotificationSettings.QuickDraw.OverrideBasicSettings);
-        Assert.True(settings.NotificationSettings.QuickDraw.OverrideNotificationWindowSettings);
+        Assert.False(settings.NotificationSettings.QuickDraw.OverrideNotificationWindowSettings);
         Assert.True(settings.NotificationSettings.QuickDraw.OverrideServiceSettings);
         Assert.True(settings.NotificationSettings.Lottery.OverrideBasicSettings);
-        Assert.True(settings.NotificationSettings.Lottery.OverrideNotificationWindowSettings);
+        Assert.False(settings.NotificationSettings.Lottery.OverrideNotificationWindowSettings);
         Assert.True(settings.NotificationSettings.Lottery.OverrideServiceSettings);
         Assert.Same(
             settings.NotificationSettings.RollCall,
