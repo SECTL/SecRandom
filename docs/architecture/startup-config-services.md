@@ -26,8 +26,8 @@
 
 ### 配置文件路径
 - 主配置: data/config/settings.json
-- 学生名单: data/list/roll_call_list/{name}.json
-- 奖品池: data/list/lottery_list/{name}.json
+- 学生名单: data/list/roll_call.srl（一个点名模式数据库，名称是 profiles 表中的行）
+- 奖品池: data/list/lottery.srl（一个抽奖模式数据库，名称是 profiles 表中的行）
 - 历史记录: data/history/{profile_name}_history.json
 
 ### 配置层次
@@ -37,7 +37,7 @@ MainConfigModel (根配置对象)
 ├─ General.PrivacySettings - 遥测和在线状态
 ├─ Appearance - 主题、字体、颜色
 ├─ RollCallSettings - 点名设置
-├─ QuickDrawSettings - 快速抽取
+├─ QuickDrawSettings - 闪抽
 ├─ LotterySettings - 抽奖设置
 └─ ... (其他功能设置)
 
