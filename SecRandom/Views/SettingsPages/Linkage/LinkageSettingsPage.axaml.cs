@@ -3,7 +3,6 @@ using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
@@ -17,6 +16,7 @@ using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.Linkage;
+using SecRandom.Services.Integration;
 using SecRandom.ViewModels;
 using SecRandom.Views;
 using LR = SecRandom.Langs.SettingsPages.Linkage.Resources;
@@ -66,6 +66,10 @@ public partial class LinkageSettingsPage : UserControl
     }
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private ICsesScheduleStore CsesStore { get; } = IAppHost.GetService<ICsesScheduleStore>();
+    public bool CanOpenIntegrationChannels => IAppHost.TryGetService<IntegrationChannelService>() is not null;
+    public string IntegrationChannelsTitle => GetLinkageText("S_IntegrationChannels", "SDK notification channels");
+    public string IntegrationChannelsDescription => GetLinkageText("S_IntegrationChannels_D", "Manage approved SDK channels");
+    public string IntegrationChannelsOpenLabel => GetLinkageText("C_IntegrationOpen", "Manage");
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
@@ -99,10 +103,16 @@ public partial class LinkageSettingsPage : UserControl
     private void OpenCourseRoster_OnClick(object? sender, RoutedEventArgs e) =>
         SettingsView.Current?.NavigateToPage("settings.linkage.courseRoster");
 
+    private void OpenIntegrationChannels_OnClick(object? sender, RoutedEventArgs e) =>
+        SettingsView.Current?.NavigateToPage("settings.linkage.integrationChannels");
+
     private void CsesStoreOnScheduleChanged(object? sender, EventArgs e)
     {
         RefreshCsesSummary();
     }
+
+    private static string GetLinkageText(string key, string fallback) =>
+        LR.ResourceManager.GetString(key, LR.Culture) ?? fallback;
 
     private async void ImportCses_OnClick(object? sender, RoutedEventArgs e)
     {

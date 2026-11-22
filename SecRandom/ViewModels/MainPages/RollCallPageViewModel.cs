@@ -85,6 +85,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private bool _isDrawCommandRunning;
     private bool _historyGroupDefaultApplied;
     private bool _isApplyingCourseBinding;
+    private bool _isApplyingProofPlaybackState;
     private CancellationTokenSource? _previewCts;
 
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
@@ -310,6 +311,9 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     partial void OnSelectedStudentListNameChanged(string value)
     {
+        if (_isApplyingProofPlaybackState)
+            return;
+
         if (!string.IsNullOrWhiteSpace(value) && !_isApplyingSelectionRefresh)
         {
             // 自动刷新解析出的选择（名单被删、学生暂时全被禁用等）不算用户决策：
@@ -408,6 +412,9 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     partial void OnDrawCountChanged(int value)
     {
+        if (_isApplyingProofPlaybackState)
+            return;
+
         var normalized = Math.Clamp(value, 1, MaximumDrawCount);
         if (normalized != value)
         {
@@ -1318,15 +1325,24 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         var displayTotalCount = rosterEntryCount > 0 ? rosterEntryCount : candidateCount;
         var state = new ProofPlaybackDisplayState(
             this,
-            _selectedStudentListName,
-            _drawCount,
+            SelectedStudentListName,
+            DrawCount,
             TotalCount,
             RemainingCount);
 
-        if (!string.IsNullOrWhiteSpace(rosterName) && StudentListNames.Contains(rosterName))
-            _selectedStudentListName = rosterName;
+        _isApplyingProofPlaybackState = true;
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(rosterName) && StudentListNames.Contains(rosterName))
+                SelectedStudentListName = rosterName;
 
-        _drawCount = Math.Clamp(resultCount, 1, Math.Max(1, candidateCount));
+            DrawCount = Math.Clamp(resultCount, 1, Math.Max(1, candidateCount));
+        }
+        finally
+        {
+            _isApplyingProofPlaybackState = false;
+        }
+
         TotalCount = Math.Max(0, displayTotalCount);
         // The proof may have filtered the roster; keep the remaining count tied to the frozen candidate pool.
         RemainingCount = Math.Max(0, candidateCount);
@@ -1364,8 +1380,17 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 return;
 
             _disposed = true;
-            owner._selectedStudentListName = selectedStudentListName;
-            owner._drawCount = drawCount;
+            owner._isApplyingProofPlaybackState = true;
+            try
+            {
+                owner.SelectedStudentListName = selectedStudentListName;
+                owner.DrawCount = drawCount;
+            }
+            finally
+            {
+                owner._isApplyingProofPlaybackState = false;
+            }
+
             owner.TotalCount = totalCount;
             owner.RemainingCount = remainingCount;
             owner.NotifyProofPlaybackDisplayState();

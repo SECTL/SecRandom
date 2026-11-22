@@ -618,6 +618,7 @@ public partial class FloatingWindow : Window
 
     public void SetUserVisibilityIntent(bool visible)
     {
+        App.NotifyQuickPickVisibilityIntentChanged(this, visible);
         _userWantsVisible = visible;
         if (visible && _hiddenByCourseLinkage)
             _wasVisibleBeforeCourseLinkage = true;

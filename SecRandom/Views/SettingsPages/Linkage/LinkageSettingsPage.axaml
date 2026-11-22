@@ -182,6 +182,22 @@
                     </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
+
+            <Separator Margin="0 12 0 4" IsVisible="{Binding CanOpenIntegrationChannels}" />
+            <sr:IconText x:Name="S_IntegrationChannels"
+                         Text="{Binding IntegrationChannelsTitle}"
+                         Glyph="{sr:Fi PlugConnectedFilled}"
+                         IsVisible="{Binding CanOpenIntegrationChannels}"
+                         Margin="0 0 0 4" />
+            <fa:FASettingsExpander Header="{Binding IntegrationChannelsTitle}"
+                                   Description="{Binding IntegrationChannelsDescription}"
+                                   IsVisible="{Binding CanOpenIntegrationChannels}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ShieldCheckmarkFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <Button Content="{Binding IntegrationChannelsOpenLabel}"
+                            Click="OpenIntegrationChannels_OnClick" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

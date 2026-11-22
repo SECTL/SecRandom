@@ -90,6 +90,7 @@ using SecRandom.Services.Profiles;
 using SecRandom.Services.RosterTransfer;
 using SecRandom.Services.Ipc;
 using SecRandom.Services.ImportExport;
+using SecRandom.Services.Integration;
 using SecRandom.Services.FirstRun;
 using SecRandom.Services.Feedback;
 using SecRandom.Services.Linkage;
@@ -160,12 +161,16 @@ public partial class App : Application
 
     /// <summary>快选（长按闪抽）期间的浮窗可见性快照，结束后按原意还原。</summary>
     private static readonly List<QuickPickWindowSnapshot> _quickPickSuppressedWindows = [];
+    private static readonly HashSet<FloatingWindow> _quickPickVisibilityIntentChanges = [];
     private static bool _floatingWindowsSuppressedForQuickPick;
+    private static int _quickPickSuppressionRevision;
 
     private sealed record QuickPickWindowSnapshot(
         FloatingWindow Window,
         bool WasVisible,
         bool WantedVisible);
+    private static readonly HashSet<string> _integrationLinkageLeases = new(StringComparer.Ordinal);
+    private static readonly List<FloatingWindow> _integrationSuppressedWindows = [];
     private static Window? _quickDrawWindow;
     private static NotificationChannelSettings? _quickDrawNotificationSettings;
     private static bool _positioningQuickDrawWindow;
@@ -232,6 +237,31 @@ public partial class App : Application
         }
 
         throw new InvalidOperationException("No active application TopLevel is available.");
+    }
+
+    internal async Task<bool?> ConfirmIntegrationChannelAsync(IntegrationChannel channel)
+    {
+        var root = _settingsWindow as TopLevel ?? _mainWindow as TopLevel ?? _floatingWindow as TopLevel;
+        if (root is null)
+            return null;
+
+        var resources = Langs.SettingsPages.Linkage.Resources.ResourceManager;
+        var culture = Langs.SettingsPages.Linkage.Resources.Culture;
+        var content = string.Format(
+            System.Globalization.CultureInfo.CurrentCulture,
+            resources.GetString("M_IntegrationApprovalContent", culture)
+                ?? "Allow {0} ({1}) to receive draw results?",
+            channel.DisplayName,
+            channel.AppId);
+        var result = await new FAContentDialog
+        {
+            Title = resources.GetString("M_IntegrationApprovalTitle", culture) ?? "Save integration channel",
+            Content = content,
+            PrimaryButtonText = resources.GetString("C_Confirm", culture) ?? "Confirm",
+            CloseButtonText = resources.GetString("C_Cancel", culture) ?? "Cancel",
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(root);
+        return result == FAContentDialogResult.Primary;
     }
 
     public event EventHandler? AppStarted;
@@ -699,7 +729,10 @@ public partial class App : Application
     /// </remarks>
     internal static void NotifyFloatingWindowHidden(FloatingWindow source)
     {
-        if (_syncingFloatingWindowVisibility)
+        // Quick-pick hides the sibling deliberately.  The visibility notification can be
+        // delivered after the Hide call returns, so the re-entrancy guard alone is not
+        // enough: a late notification would hide the window that is hosting the picker too.
+        if (_syncingFloatingWindowVisibility || _floatingWindowsSuppressedForQuickPick)
             return;
 
         _syncingFloatingWindowVisibility = true;
@@ -744,7 +777,9 @@ public partial class App : Application
             return;
 
         _floatingWindowsSuppressedForQuickPick = true;
+        ++_quickPickSuppressionRevision;
         _quickPickSuppressedWindows.Clear();
+        _quickPickVisibilityIntentChanges.Clear();
         _syncingFloatingWindowVisibility = true;
         try
         {
@@ -774,9 +809,9 @@ public partial class App : Application
         if (!_floatingWindowsSuppressedForQuickPick)
             return;
 
-        _floatingWindowsSuppressedForQuickPick = false;
         var restore = _quickPickSuppressedWindows.ToArray();
         _quickPickSuppressedWindows.Clear();
+        var suppressionRevision = _quickPickSuppressionRevision;
 
         _syncingFloatingWindowVisibility = true;
         try
@@ -785,11 +820,10 @@ public partial class App : Application
             {
                 var window = snapshot.Window;
                 // 期间用户自己把它藏了、或课程联动接管了可见性，就让那条路径说了算。
-                // A window whose intent was still "visible" is restored even if a layout race
-                // made it invisible just before the snapshot was taken.
+                // 启动/布局代码可能在快选期间改写当前意图，因此单独记录用户的显式改动。
                 if (window.IsVisible
                     || !snapshot.WantedVisible
-                    || !window.UserWantsVisible
+                    || _quickPickVisibilityIntentChanges.Contains(window)
                     || window.IsHiddenByCourseLinkage)
                     continue;
 
@@ -799,7 +833,35 @@ public partial class App : Application
         finally
         {
             _syncingFloatingWindowVisibility = false;
+            // Keep the quick-pick suppression active until every restored window has been
+            // shown.  This also covers a backend that raises IsVisible asynchronously.
+            Dispatcher.UIThread.Post(
+                () =>
+                {
+                    if (suppressionRevision != _quickPickSuppressionRevision)
+                        return;
+
+                    _quickPickVisibilityIntentChanges.Clear();
+                    _floatingWindowsSuppressedForQuickPick = false;
+                },
+                DispatcherPriority.Render);
         }
+    }
+
+    internal static void NotifyQuickPickVisibilityIntentChanged(FloatingWindow window, bool visible)
+    {
+        if (!_floatingWindowsSuppressedForQuickPick)
+            return;
+
+        var snapshot = _quickPickSuppressedWindows.FirstOrDefault(
+            item => ReferenceEquals(item.Window, window));
+        if (snapshot is null)
+            return;
+
+        if (snapshot.WantedVisible == visible)
+            _quickPickVisibilityIntentChanges.Remove(window);
+        else
+            _quickPickVisibilityIntentChanges.Add(window);
     }
 
     /// <summary>当前存在的悬浮窗（主窗在前，副窗在后）。</summary>
@@ -855,9 +917,10 @@ public partial class App : Application
             }
 
             // 副窗是"跟随主窗"的可见性：主窗此刻藏着的（托盘/启动设置/课程联动）就不该单独露面。
-            var visible = primary is { IsVisible: true } && primary.UserWantsVisible;
-            secondary.SetUserVisibilityIntent(visible);
-            if (visible && !primary.IsHiddenByCourseLinkage)
+            // Layout also runs before the lifetime first shows the primary window. Its
+            // current visibility is temporary; the secondary must inherit the user's intent.
+            secondary.SetUserVisibilityIntent(primary.UserWantsVisible);
+            if (primary.IsVisible && primary.UserWantsVisible && !primary.IsHiddenByCourseLinkage)
                 RestoreWithoutActivating(secondary);
 
             Dispatcher.UIThread.Post(AlignFloatingWindowAnchors, DispatcherPriority.Loaded);
@@ -933,6 +996,43 @@ public partial class App : Application
     {
         foreach (var window in FloatingWindows())
             window.Hide();
+    }
+
+    /// <summary>由已验证的 SDK 联动租约调用：暂时隐藏当前可见的悬浮窗。</summary>
+    public static void AcquireIntegrationLinkage(string leaseId)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!_integrationLinkageLeases.Add(leaseId) || _integrationLinkageLeases.Count != 1)
+                return;
+
+            _integrationSuppressedWindows.Clear();
+            foreach (var window in FloatingWindows())
+            {
+                if (!window.IsVisible)
+                    continue;
+                _integrationSuppressedWindows.Add(window);
+                window.Hide();
+            }
+        });
+    }
+
+    /// <summary>释放联动租约；所有租约结束后按联动开始前的状态恢复悬浮窗。</summary>
+    public static void ReleaseIntegrationLinkage(string leaseId)
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            if (!_integrationLinkageLeases.Remove(leaseId) || _integrationLinkageLeases.Count != 0)
+                return;
+
+            var restore = _integrationSuppressedWindows.ToArray();
+            _integrationSuppressedWindows.Clear();
+            foreach (var window in restore)
+            {
+                if (!window.IsVisible && window.UserWantsVisible && !window.IsHiddenByCourseLinkage)
+                    RestoreWithoutActivating(window);
+            }
+        });
     }
 
     /// <summary>
@@ -1699,6 +1799,10 @@ public partial class App : Application
                     .Page_Title);
                 services.AddSettingsPage<LinkageSettingsPage>(Langs.Common.Resources.Settings_Linkage);
                 services.AddSettingsPage<CourseRosterSettingsPage>(Langs.SettingsPages.Linkage.Resources.S_External_CourseRoster);
+                if (!isMobile)
+                    services.AddSettingsPage<IntegrationChannelsSettingsPage>(
+                        Langs.SettingsPages.Linkage.Resources.ResourceManager.GetString("S_IntegrationChannels", Langs.SettingsPages.Linkage.Resources.Culture)
+                        ?? "SDK notification channels");
                 services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
 
                 services.AddSettingsPageSeparator();
@@ -1810,6 +1914,11 @@ public partial class App : Application
                     // 插件扩展点（第二批）：事件总线 / UI 线程 / 私有存储 / 名单查询 / 忙碌指示 /
                     // 抽签流水线 / 主题色板 / 通知与对话框 / 窗口 / 弹层 / 本地化 / 能力与权限 / 诊断
                     services.AddSingleton<IPluginEventBus, PluginEventBus>();
+                    if (!isMobile)
+                    {
+                        services.AddSingleton<IntegrationChannelService>();
+                        services.AddHostedService(provider => provider.GetRequiredService<IntegrationChannelService>());
+                    }
                     services.AddSingleton<IUiScheduler, UiScheduler>();
                     services.AddSingleton<IPluginStorageFactory>(_ =>
                         new PluginStorageFactory(PluginManager.PluginConfigsDirectory));

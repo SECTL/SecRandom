@@ -1,0 +1,61 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.Linkage"
+             xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="SecRandom.Views.SettingsPages.Linkage.IntegrationChannelsSettingsPage"
+             x:DataType="local:IntegrationChannelsSettingsPage"
+             Loaded="OnLoaded" Unloaded="OnUnloaded">
+    <ScrollViewer>
+        <StackPanel Classes="page-container animated-intro settings" Spacing="12">
+            <sr:IconText Text="{Binding IntegrationChannelsTitle}"
+                         Glyph="{sr:Fi PlugConnectedFilled}" />
+            <TextBlock Text="{Binding IntegrationChannelsDescription}"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       TextWrapping="Wrap" />
+            <Button HorizontalAlignment="Left"
+                    Content="{Binding IntegrationChannelsScanLabel}"
+                    Click="DiscoverIntegrationChannels_OnClick" />
+            <TextBlock Text="{Binding IntegrationChannelsEmptyText}"
+                       IsVisible="{Binding NoIntegrationChannels}"
+                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                       TextWrapping="Wrap" />
+            <ItemsControl ItemsSource="{Binding IntegrationChannels}"
+                          IsVisible="{Binding HasIntegrationChannels}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="local:IntegrationChannelRow">
+                        <Border Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{DynamicResource ControlElevationBorderBrush}"
+                                BorderThickness="1" CornerRadius="4" Padding="16" Margin="0 0 0 8">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <StackPanel Spacing="4" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Details}" Opacity="0.72" />
+                                    <TextBlock Text="{Binding Channel.AppId}" Opacity="0.58" FontSize="11" TextWrapping="Wrap" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Spacing="4" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding DeliveryLabel}" VerticalAlignment="Center" />
+                                        <ToggleSwitch IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                                      ToolTip.Tip="{Binding EnabledTooltip}" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="8" HorizontalAlignment="Right">
+                                        <TextBlock Text="{Binding LinkageLabel}" VerticalAlignment="Center" />
+                                        <ToggleSwitch IsChecked="{Binding IsLinkageEnabled, Mode=TwoWay}"
+                                                      ToolTip.Tip="{Binding LinkageTooltip}" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal" Spacing="6" HorizontalAlignment="Right">
+                                        <Button Content="{Binding RenameLabel}" Click="RenameIntegrationChannel_OnClick" />
+                                        <Button Content="{Binding RemoveLabel}" Click="RemoveIntegrationChannel_OnClick" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

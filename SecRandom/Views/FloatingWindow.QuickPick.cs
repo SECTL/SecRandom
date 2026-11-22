@@ -6,12 +6,15 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using SecRandom.Core.Abstraction;
 using SecRandom.Core.Behaviors;
 using Avalonia.Media;
 using Avalonia.Threading;
 using SecRandom.Core.Controls;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
+using SecRandom.Core.Models.SubConfigs;
+using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.FloatingWindow;
 using SecRandom.Helpers;
 
@@ -110,6 +113,15 @@ public partial class FloatingWindow
     private Point _quickPickPressPoint;
     private PixelPoint _quickPickPressScreenPoint;
     private PixelPoint _quickPickOriginPosition;
+    private int _quickPickOriginAnchorCenterY;
+    private PixelRect? _quickPickOriginDockWorkingArea;
+    private bool _quickPickOriginWasDocked;
+    private bool _quickPickOriginWasDockedOnLeft;
+    private int _quickPickOriginExpandedWindowWidth;
+    private int _quickPickOriginExpandedWindowHeight;
+    private int _quickPickOriginFloatPositionX;
+    private int _quickPickOriginFloatPositionY;
+    private int? _quickPickOriginSecondaryAnchorCenterY;
     private long _quickPickPressTimestamp;
     private int _quickPickRevision;
     private DispatcherTimer? _quickPickTimer;
@@ -186,6 +198,15 @@ public partial class FloatingWindow
         // 展开态的原位就在按下的这一刻定下来。收起展开态、改窗口尺寸都可能挪动窗口，
         // 等那时再读 Position 记原位，结束快选时窗口会被放回一个已经偏掉的位置。
         _quickPickOriginPosition = Position;
+        _quickPickOriginAnchorCenterY = AnchorCenterY;
+        _quickPickOriginDockWorkingArea = _dockWorkingArea;
+        _quickPickOriginWasDocked = _isDocked;
+        _quickPickOriginWasDockedOnLeft = _isDockedOnLeft;
+        _quickPickOriginExpandedWindowWidth = _expandedWindowWidth;
+        _quickPickOriginExpandedWindowHeight = _expandedWindowHeight;
+        _quickPickOriginFloatPositionX = ViewModel.Config.FloatPosition.X;
+        _quickPickOriginFloatPositionY = ViewModel.Config.FloatPosition.Y;
+        _quickPickOriginSecondaryAnchorCenterY = EffectiveFloatingWindowSettings.SecondaryAnchorCenterY;
         _quickPickPressTimestamp = Environment.TickCount64;
         _quickPickTapSuppressed = false;
         ++_quickPickRevision;
@@ -483,6 +504,12 @@ public partial class FloatingWindow
             return;
 
         _quickPickState = QuickPickState.Picking;
+        // A previous interrupted gesture must not turn the next quick-pick release into a
+        // drag completion. The panel owns the pointer for its entire lifetime.
+        _isPendingWindowDrag = false;
+        _isMovingWindow = false;
+        _isNativeWindowDrag = false;
+        _isMovingDockHandle = false;
         StopQuickPickTimer();
         _quickDrawRing.Progress = 1;
         var revision = ++_quickPickRevision;
@@ -492,6 +519,7 @@ public partial class FloatingWindow
         // 让已经排上的自动收纳失效：否则按住不放的这几秒里窗口可能自己收纳，松手后就变成
         // "展开态和收纳球同时在屏上"的怪样子。
         ++_dockRevision;
+        ++_dockTransitionRevision;
         // A pending edge-snap from the previous interaction must not write the temporary
         // quick-pick position while this gesture is active.
         ++_snapAnimationRevision;
@@ -735,63 +763,94 @@ public partial class FloatingWindow
 
         // 窗口级材质从头到尾都不动，保持用户设置的样子。
 
-        // 万一收纳在按住这几秒里已经开始（在途的收纳动画），别再强行摊开展开态：
-        // 交给 RestoreFromDock 走它自己的展开与定位，否则展开按钮和"抽"球会一起挂在屏上。
-        if (_isDocked)
-        {
-            RestoreFromDock();
-        }
-        else
-        {
-            WindowBorder.IsVisible = true;
-            ExpandedContent.IsVisible = true;
-            // 收起那一下留的缩放/透明度缓动先清掉，再由动画从 0.96 淡入到 1；
-            // 低配模式里 AnimateControlAsync 会直接落终值，不播动画。
-            ExpandedContent.RenderTransform = null;
-            ExpandedContent.Opacity = 0;
-            DockButton.IsVisible = false;
-            DockButton.Opacity = 1;
-            DockButton.RenderTransform = null;
-            Position = _quickPickOriginPosition;
-            ReassertNativeTopmost();
+        // 快选只能从展开态开始。即使某个后台布局回调在收尾期间把停靠标志改了，
+        // 也要按开始时的展开态恢复，不能把停靠动画的中间坐标带回配置。
+        _isDocked = false;
+        WindowBorder.IsVisible = true;
+        ExpandedContent.IsVisible = true;
+        // 收起那一下留的缩放/透明度缓动先清掉，再由动画从 0.96 淡入到 1；
+        // 低配模式里 AnimateControlAsync 会直接落终值，不播动画。
+        ExpandedContent.RenderTransform = null;
+        ExpandedContent.Opacity = 0;
+        DockButton.IsVisible = false;
+        DockButton.Opacity = 1;
+        DockButton.RenderTransform = null;
+        Position = _quickPickOriginPosition;
+        ReassertNativeTopmost();
 
-            // 交回 SizeToContent 之后，展开尺寸要等布局跑完才成立，窗口可能在那一下被重新摆放。
-            // 等这一帧的布局落地再把原位钉一次，避免"松手后窗口自己漂一下"。
-            var settleRevision = _quickPickRevision;
-            Dispatcher.UIThread.Post(
-                () =>
+        // 交回 SizeToContent 之后，展开尺寸要等布局跑完才成立，窗口可能在那一下被重新摆放。
+        // 等这一帧的布局落地再把原位和持久化坐标一起钉回去。
+        var settleRevision = _quickPickRevision;
+        Dispatcher.UIThread.Post(
+            () =>
+            {
+                if (_quickPickRevision != settleRevision)
                 {
-                    if (_quickPickRevision != settleRevision
-                        || _isDocked
-                        || _isDockTransitioning
-                        || _isPendingWindowDrag
-                        || _isMovingWindow)
-                    {
-                        _quickPickRestoring = false;
-                        return;
-                    }
-
-                    Position = _quickPickOriginPosition;
                     _quickPickRestoring = false;
-                },
-                DispatcherPriority.Render);
+                    return;
+                }
 
-            // 恢复展开态要有动画，不然长按结束后那一下就"跳"回来了。
-            _ = AnimateControlAsync(
-                ExpandedContent,
-                0,
-                1,
-                0.96,
-                1,
-                GetDockTransformOrigin(),
-                _quickPickRevision);
+                RestoreQuickPickOrigin();
+                _quickPickRestoring = false;
+            },
+            DispatcherPriority.Render);
 
-            // 刚把 SizeToContent 交回去时 Bounds 还停在快选那块小面板的尺寸上，这时判断"贴边"
-            // 会算出错误的距离，自动收纳就再也不排了；等一帧把展开尺寸量回来再判断。
-            Dispatcher.UIThread.Post(ScheduleDockIfAtEdge, DispatcherPriority.Render);
-        }
+        // 恢复展开态要有动画，不然长按结束后那一下就"跳"回来了。
+        _ = AnimateControlAsync(
+            ExpandedContent,
+            0,
+            1,
+            0.96,
+            1,
+            GetDockTransformOrigin(),
+            _quickPickRevision);
+
+        // 刚把 SizeToContent 交回去时 Bounds 还停在快选那块小面板的尺寸上，这时判断"贴边"
+        // 会算出错误的距离，自动收纳就再也不排了；等一帧把展开尺寸量回来再判断。
+        Dispatcher.UIThread.Post(ScheduleDockIfAtEdge, DispatcherPriority.Render);
 
         if (draw)
             App.ShowQuickDrawWindow(count, noticeAnchor: this);
+    }
+
+    /// <summary>
+    ///     快选面板使用临时尺寸和位置；布局完成后把窗口内部状态及已经可能被后台回调写入的
+    ///     配置一并恢复到按下前的展开态。
+    /// </summary>
+    private void RestoreQuickPickOrigin()
+    {
+        _isPendingWindowDrag = false;
+        _isMovingWindow = false;
+        _isNativeWindowDrag = false;
+        _isMovingDockHandle = false;
+        _isDocked = _quickPickOriginWasDocked;
+        _isDockedOnLeft = _quickPickOriginWasDockedOnLeft;
+        _dockWorkingArea = _quickPickOriginDockWorkingArea;
+        _dockAnchorCenterY = _quickPickOriginAnchorCenterY;
+        _expandedWindowWidth = _quickPickOriginExpandedWindowWidth;
+        _expandedWindowHeight = _quickPickOriginExpandedWindowHeight;
+        Position = _quickPickOriginPosition;
+
+        var config = ViewModel.Config;
+        var changed = config.FloatPosition.X != _quickPickOriginFloatPositionX
+                      || config.FloatPosition.Y != _quickPickOriginFloatPositionY;
+        if (changed)
+        {
+            config.FloatPosition = new FloatPositionConfig
+            {
+                X = _quickPickOriginFloatPositionX,
+                Y = _quickPickOriginFloatPositionY
+            };
+        }
+
+        var settings = EffectiveFloatingWindowSettings;
+        if (settings.SecondaryAnchorCenterY != _quickPickOriginSecondaryAnchorCenterY)
+        {
+            settings.SecondaryAnchorCenterY = _quickPickOriginSecondaryAnchorCenterY;
+            changed = true;
+        }
+
+        if (changed && !IsSimpleMode)
+            IAppHost.TryGetService<MainConfigHandler>()?.Save();
     }
 }

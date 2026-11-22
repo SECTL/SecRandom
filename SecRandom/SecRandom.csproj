@@ -6,6 +6,7 @@
         <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
         <GenerateResourceDesigner>true</GenerateResourceDesigner>
         <HotAvaloniaIncludeExtensions>True</HotAvaloniaIncludeExtensions>
+        <IntegrationPublicKey Condition="'$(IntegrationPublicKey)' == ''">$(SECRANDOM_INTEGRATION_PUBLIC_KEY_SPKI_BASE64)</IntegrationPublicKey>
         <!-- These views are created with DI/state constructors and load AXAML into an existing instance. -->
         <NoWarn>$(NoWarn);AVLN3001</NoWarn>
     </PropertyGroup>
@@ -591,4 +592,29 @@
     </ItemGroup>
 
     <Import Project="..\Global.props" />
+
+    <Target Name="GenerateSecRandomIntegrationTrustMetadata" BeforeTargets="CoreCompile">
+        <!-- CI or an explicit MSBuild property takes precedence over the local .env file. -->
+        <ReadLinesFromFile File="$(MSBuildProjectDirectory)/../.env"
+                           Condition="'$(IntegrationPublicKey)' == '' and Exists('$(MSBuildProjectDirectory)/../.env')">
+            <Output TaskParameter="Lines" ItemName="_IntegrationEnvLine" />
+        </ReadLinesFromFile>
+        <ItemGroup Condition="'$(IntegrationPublicKey)' == ''">
+            <_IntegrationPublicKeyLine Include="@(_IntegrationEnvLine)"
+                Condition="$([System.String]::Copy('%(Identity)').StartsWith('SECRANDOM_INTEGRATION_PUBLIC_KEY_SPKI_BASE64='))" />
+        </ItemGroup>
+        <PropertyGroup Condition="'$(IntegrationPublicKey)' == '' and '@(_IntegrationPublicKeyLine)' != ''">
+            <_IntegrationPublicKeyAssignment>@(_IntegrationPublicKeyLine)</_IntegrationPublicKeyAssignment>
+            <IntegrationPublicKey>$([System.String]::Copy('$(_IntegrationPublicKeyAssignment)').Replace('SECRANDOM_INTEGRATION_PUBLIC_KEY_SPKI_BASE64=', ''))</IntegrationPublicKey>
+        </PropertyGroup>
+        <PropertyGroup Condition="'$(IntegrationPublicKey)' != ''">
+            <_IntegrationTrustMetadataPath>$(IntermediateOutputPath)IntegrationTrustMetadata.g.cs</_IntegrationTrustMetadataPath>
+        </PropertyGroup>
+        <WriteLinesToFile File="$(_IntegrationTrustMetadataPath)"
+                          Lines="[assembly: System.Reflection.AssemblyMetadataAttribute(&quot;SecRandomIntegrationPublicKey&quot;, &quot;$(IntegrationPublicKey)&quot;)]"
+                          Overwrite="true" Condition="'$(IntegrationPublicKey)' != ''" />
+        <ItemGroup Condition="'$(IntegrationPublicKey)' != ''">
+            <Compile Include="$(_IntegrationTrustMetadataPath)" />
+        </ItemGroup>
+    </Target>
 </Project>

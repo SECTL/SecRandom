@@ -394,6 +394,7 @@ public sealed class MusicLibraryService(
 
             return Directory.EnumerateFiles(directory, "*", SearchOption.TopDirectoryOnly)
                 .Select(Path.GetFileName)
+                .OfType<string>()
                 .Where(name => !string.IsNullOrWhiteSpace(name) &&
                                !name.EndsWith(Utils.RosterLegacyBackupExtension, StringComparison.OrdinalIgnoreCase) &&
                                (name.EndsWith(Utils.RosterDatabaseExtension, StringComparison.OrdinalIgnoreCase) ||

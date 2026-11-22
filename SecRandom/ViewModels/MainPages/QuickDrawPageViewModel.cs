@@ -15,6 +15,8 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Abstraction.Services.Messaging;
+using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Interfaces;
@@ -60,6 +62,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private readonly CourseRosterMappingService? _courseRosterMapping;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly IHistoryGroupCatalog _historyGroupCatalog;
+    private readonly IPluginEventBus? _eventBus;
     private readonly IProfileCatalogManager? _profileCatalogManager;
     private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
     private readonly NotificationService? _notificationService;
@@ -100,7 +103,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         IOrchestrationStore? orchestrationStore = null,
         OrchestrationScheduler? orchestrationScheduler = null,
         IProfileCatalogManager? profileCatalogManager = null,
-        CourseRosterMappingService? courseRosterMapping = null)
+        CourseRosterMappingService? courseRosterMapping = null,
+        IPluginEventBus? eventBus = null)
         : base(configHandler)
     {
         _configHandler = configHandler;
@@ -115,6 +119,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         _courseRosterMapping = courseRosterMapping;
         _verificationDrawCoordinator = verificationDrawCoordinator;
         _historyGroupCatalog = historyGroupCatalog;
+        _eventBus = eventBus;
         _profileCatalogManager = profileCatalogManager;
         _voiceAnnouncementService = voiceAnnouncementService;
         _notificationService = notificationService;
@@ -489,7 +494,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             var weights = orchestrationPlan is null
                 ? BuildWeightSnapshot(drawn, drawOutcome.FrozenWeights)
                 : drawn.ToDictionary(student => (Student)student, _ => 1d);
-            _drawCommitService.CommitStudentDraw(new StudentDrawCommit(
+            var drawRoundId = _drawCommitService.CommitStudentDraw(new StudentDrawCommit(
                 drawn,
                 DateTime.Now,
                 count,
@@ -499,6 +504,12 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 CourseName: courseName,
                 HistoryGroup: historyGroup,
                 RecordGroup: historyGroup ?? _recordGroup));
+            _eventBus?.Publish(new HostEvents.DrawCompleted(
+                DrawPresentationChannel.RollCall, drawn, [], SelectedStudentListName,
+                string.Empty, drawRoundId, DateTime.Now, count)
+            {
+                DrawType = Config.EffectiveQuickDrawSettings.DrawType
+            });
             try
             {
                 _verificationDrawCoordinator.Publish(drawOutcome);

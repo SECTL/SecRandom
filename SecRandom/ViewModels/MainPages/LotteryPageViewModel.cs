@@ -85,6 +85,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private bool _isStudentListRefreshQueued;
     private bool _historyGroupDefaultApplied;
     private bool _isApplyingCourseBinding;
+    private bool _isApplyingProofPlaybackState;
 
     [ObservableProperty] private string _selectedPrizeListName = string.Empty;
     [ObservableProperty] private string _selectedStudentListName = NoStudentOption;
@@ -307,6 +308,9 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     partial void OnSelectedPrizeListNameChanged(string value)
     {
+        if (_isApplyingProofPlaybackState)
+            return;
+
         if (string.IsNullOrWhiteSpace(value) || _isApplyingSelectionRefresh)
             return;
 
@@ -371,6 +375,9 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     partial void OnDrawCountChanged(int value)
     {
+        if (_isApplyingProofPlaybackState)
+            return;
+
         var normalized = Math.Clamp(value, 1, MaximumDrawCount);
         if (normalized != value)
         {
@@ -1497,15 +1504,24 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     {
         var state = new ProofPlaybackDisplayState(
             this,
-            _selectedPrizeListName,
-            _drawCount,
+            SelectedPrizeListName,
+            DrawCount,
             TotalCount,
             RemainingCount);
 
-        if (!string.IsNullOrWhiteSpace(rosterName) && PrizeListNames.Contains(rosterName))
-            _selectedPrizeListName = rosterName;
+        _isApplyingProofPlaybackState = true;
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(rosterName) && PrizeListNames.Contains(rosterName))
+                SelectedPrizeListName = rosterName;
 
-        _drawCount = Math.Clamp(resultCount, 1, Math.Max(1, candidateCount));
+            DrawCount = Math.Clamp(resultCount, 1, Math.Max(1, candidateCount));
+        }
+        finally
+        {
+            _isApplyingProofPlaybackState = false;
+        }
+
         TotalCount = Math.Max(0, candidateCount);
         RemainingCount = TotalCount;
         NotifyProofPlaybackDisplayState();
@@ -1542,8 +1558,17 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 return;
 
             _disposed = true;
-            owner._selectedPrizeListName = selectedPrizeListName;
-            owner._drawCount = drawCount;
+            owner._isApplyingProofPlaybackState = true;
+            try
+            {
+                owner.SelectedPrizeListName = selectedPrizeListName;
+                owner.DrawCount = drawCount;
+            }
+            finally
+            {
+                owner._isApplyingProofPlaybackState = false;
+            }
+
             owner.TotalCount = totalCount;
             owner.RemainingCount = remainingCount;
             owner.NotifyProofPlaybackDisplayState();
