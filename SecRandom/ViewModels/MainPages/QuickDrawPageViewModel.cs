@@ -14,6 +14,8 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Abstraction.Services.Messaging;
+using SecRandom.Core.Abstraction.Services.Presentation;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.AttachedSettings;
@@ -51,6 +53,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly IHistoryGroupCatalog _historyGroupCatalog;
+    private readonly IPluginEventBus? _eventBus;
     private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
     private readonly NotificationService? _notificationService;
     private bool _isDrawCommandRunning;
@@ -81,7 +84,8 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         VerificationDrawCoordinator verificationDrawCoordinator,
         IHistoryGroupCatalog historyGroupCatalog,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
-        NotificationService? notificationService = null)
+        NotificationService? notificationService = null,
+        IPluginEventBus? eventBus = null)
         : base(configHandler)
     {
         _configHandler = configHandler;
@@ -95,6 +99,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         _linkageDrawCoordinator = linkageDrawCoordinator;
         _verificationDrawCoordinator = verificationDrawCoordinator;
         _historyGroupCatalog = historyGroupCatalog;
+        _eventBus = eventBus;
         _voiceAnnouncementService = voiceAnnouncementService;
         _notificationService = notificationService;
         ResultItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ResultFontSize));
@@ -349,7 +354,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
             }
 
             var weights = BuildWeightSnapshot(drawn, drawOutcome.FrozenWeights);
-            _drawCommitService.CommitStudentDraw(new StudentDrawCommit(
+            var drawRoundId = _drawCommitService.CommitStudentDraw(new StudentDrawCommit(
                 drawn,
                 DateTime.Now,
                 count,
@@ -358,6 +363,18 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
                 Weights: weights,
                 CourseName: courseName,
                 HistoryGroup: historyGroup));
+            _eventBus?.Publish(new HostEvents.DrawCompleted(
+                DrawPresentationChannel.RollCall,
+                drawn,
+                [],
+                SelectedStudentListName,
+                string.Empty,
+                drawRoundId,
+                DateTime.Now,
+                count)
+            {
+                DrawType = Config.EffectiveQuickDrawSettings.DrawType
+            });
             try
             {
                 _verificationDrawCoordinator.Publish(drawOutcome);

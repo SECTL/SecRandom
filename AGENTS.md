@@ -15,7 +15,7 @@ Maintenance contract:
 - `docs/project_rules.md` is the source of truth when a convention conflicts with this summary.
 -->
 
-**Last Update:** 2026-11-01
+**Last Update:** 2026-11-21
 **Last Submit:** 51f7f7fd
 **Last modified model:** MiMoCode
 
@@ -75,6 +75,7 @@ Nested instruction files:
 | Settings navigation | `SecRandom/Views/SettingsView.axaml.cs` | Default page `settings.overview`; has back stack + restart dialog. General group now includes `settings.general.basic`, `settings.general.privacy`, `settings.general.backup`, and `settings.general.control`. |
 | Page registration helpers | `SecRandom.Core/Extensions/Registry/` | `AddMainPage`, `AddSettingsPage`, group, and separator helpers. |
 | ClassIsland notifications | `SecRandom/Services/Notification/`, `SecRandom4Ci.Interface/` | Typed v2 IPC client for the installed SecRandom4Ci ClassIsland plugin. |
+| Official SDK integration | `SecRandom/Services/Integration/`, `SecRandom/Views/SettingsPages/Linkage/`, `../SecRandom-Integration-SDK/docs/integration-v1.md` | Local signed-SDK discovery, user-approved result channels, per-channel display name/delivery/linkage management, and floating-window linkage leases; verification requires the compiled ECDSA public key and a matching live IPC peer process. Unverified endpoints cannot be added manually. |
 | Control-plane node (集控) | `docs/client-protocol.md`, `SecRandom.Core/Services/ControlNode/`, `SecRandom/Services/ControlNode/`, `SecRandom/Views/SettingsPages/General/ControlSettingsPage.axaml(.cs)` | v4.1 集控节点：WebSocket 打 `wss://sectl.cn/control/ws`（凭据放首帧 `hello.payload`，不在 URL/请求头），三分信封 `req`/`res`/`evt`；命令是 `evt cmd` + 两帧回执 `req cmd.ack`/`req cmd.result`（`id` 回填 `command_id`），`expires_at` 为 Unix 毫秒、过期即丢且不补投；期望状态 `evt desired_state` 带单调 `revision` 与 `draw_locked`（缺失按 true），客户端只接受严格更新的 revision 并把 `applied_state_revision` 落盘；接入是双因子「地点ID + 配对码」（`POST /control/api/enroll`），之后 `POST /control/api/device/tree` 拉年级/班级、`POST /control/api/device/assign` 保存，握手成功后用 `class.select`/`class.release` 占班（占班=上课=允许抽取）；本地开关 `RemoteControlEnabled`（默认关）仍是最终否决权。协议规范、命令表与错误码以 `../SECTL-auth/docs/control-center-protocol-v4.md` 为唯一事实源；v1 的 `srn_` 令牌 / `group_id` / 单码接入已断代。 |
 | Crash recovery | `SecRandom/Services/CrashRecovery/`, `SecRandom/Views/CrashRecoveryWindow.axaml.cs` | Fatal/dispatcher crash report prompt, guarded auto-restart, and shared desktop relaunch logic. |
 | Page registry state | `SecRandom.Core/Services/PagesRegistryService.cs` | Main/settings/group collections. |
@@ -113,6 +114,7 @@ Keep this map short and stable. When code moves, AI agents should re-read the mo
 | `CrashRecoveryRuntime` | app service helper | `SecRandom/Services/CrashRecovery/CrashRecoveryRuntime.cs` | Reads crash recovery mode, writes bounded crash reports, and builds restart process plans. |
 | `ISecurityService` | app service contract | `SecRandom/Services/Security/` | Owns credential verification, lockout policy, selected-factor authorization, and protected-operation gating. |
 | `ProtocolCommandRouter` | app service | `SecRandom/Services/Ipc/ProtocolCommandRouter.cs` | Normalizes URL/IPC routes, routes protected commands, and returns structured IPC results. |
+| `IntegrationChannelService` | app service | `SecRandom/Services/Integration/IntegrationChannelService.cs` | Verifies official SDK process proofs, discovers and persists approved local notification channels, applies per-channel delivery/linkage switches, forwards committed draws, and tracks IPC linkage leases. |
 | `DeviceUuidStore` | app service | `SecRandom/Services/Config/DeviceUuidStore.cs` | Persists the pseudo-anonymous device UUID separately in `data/config/device-uuid.json` and migrates legacy settings values. |
 | `AttachedSettingsRegistryService` | registry | `SecRandom.Core/Services/AttachedSettingsRegistryService.cs` | Static collections for attached-settings controls. |
 | `ViewModelBase` | base VM | `SecRandom/ViewModels/ViewModelBase.cs` | Base VM exposing `MainConfig`; inherits `ObservableRecipient`. |

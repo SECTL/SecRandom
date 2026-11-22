@@ -176,7 +176,10 @@ public sealed class RollCallDrawService(
             string.Empty,
             drawRoundId,
             DateTime.Now,
-            count));
+            count)
+        {
+            DrawType = configHandler.Data.EffectiveRollCallSettings.DrawType
+        });
         return new RollCallDrawResult(outcome.Winners, outcome.Proof.ProofId, drawRoundId, outcome.FrozenWeights,
             edit?.Note, edit?.SuppressPresentation ?? false);
     }
@@ -247,7 +250,10 @@ public sealed class RollCallDrawService(
             string.Empty,
             drawRoundId,
             DateTime.Now,
-            count));
+            count)
+        {
+            DrawType = configHandler.Data.EffectiveRollCallSettings.DrawType
+        });
         return new RollCallNumberDrawResult(outcome.Winners, outcome.Proof.ProofId, drawRoundId, outcome.FrozenWeights);
     }
 

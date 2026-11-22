@@ -157,4 +157,27 @@
   <data name="M_ScheduleError_ClassIslandScheduleUnloaded"><value>ClassIsland が当日の時間割を読み込んでいません</value></data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState"><value>ClassIsland から未対応の現在状態が返されました: {0}</value></data>
   <data name="M_ScheduleError_ClassIslandReadFailed"><value>ClassIsland の授業状態を読み取れません</value></data>
+  <data name="S_IntegrationChannels"><value>SDK 通知チャネル</value></data>
+  <data name="S_IntegrationChannels_D"><value>承認済み SDK チャネル、結果送信、フローティングウィンドウ連携を管理します</value></data>
+  <data name="C_IntegrationScan"><value>今すぐスキャン</value></data>
+  <data name="C_IntegrationRemove"><value>削除</value></data>
+  <data name="C_IntegrationRename"><value>名前を変更</value></data>
+  <data name="M_IntegrationApprovalTitle"><value>通知チャネルを保存</value></data>
+  <data name="M_IntegrationApprovalContent"><value>公式 SecRandom Integration SDK アプリ「{0}」（{1}）が見つかりました。保存すると結果を受信でき、連携が有効な場合はフローティングウィンドウの非表示を要求できます</value></data>
+  <data name="M_IntegrationNoChannels"><value>保存済みの SDK 通知チャネルはありません</value></data>
+  <data name="M_IntegrationOnline"><value>オンライン</value></data>
+  <data name="M_IntegrationOffline"><value>オフライン</value></data>
+  <data name="M_IntegrationDelivery"><value>結果送信</value></data>
+  <data name="M_IntegrationLinkage"><value>ウィンドウ連携</value></data>
+  <data name="M_IntegrationEnabled"><value>抽選結果の送信を許可</value></data>
+  <data name="M_IntegrationDisabled"><value>抽選結果の送信を停止</value></data>
+  <data name="M_IntegrationLinkageEnabled"><value>SDK によるフローティングウィンドウの非表示を許可</value></data>
+  <data name="M_IntegrationLinkageDisabled"><value>ウィンドウ連携は無効です</value></data>
+  <data name="M_IntegrationScanned"><value>通知チャネルをスキャンしました</value></data>
+  <data name="M_IntegrationRenameTitle"><value>通知チャネル名を変更</value></data>
+  <data name="M_IntegrationRenamePlaceholder"><value>空欄の場合は公式名を使用します</value></data>
+  <data name="M_IntegrationRenamed"><value>通知チャネル名を変更しました</value></data>
+  <data name="M_IntegrationRemoveTitle"><value>通知チャネルを削除</value></data>
+  <data name="M_IntegrationRemoveContent"><value>「{0}」への抽選結果の送信を停止します</value></data>
+  <data name="M_IntegrationRemoved"><value>通知チャネルを削除しました</value></data>
 </root>
