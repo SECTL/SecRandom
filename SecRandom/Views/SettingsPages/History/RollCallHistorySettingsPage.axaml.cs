@@ -14,14 +14,36 @@ namespace SecRandom.Views.SettingsPages.History;
 [PageInfo("settings.history.rollCall", FluentIcons.PersonFilled, "settings.history")]
 public partial class RollCallHistorySettingsPage : UserControl
 {
+    private bool _showHistoryGroupMigration = true;
+    private bool _isInitialized;
+
     public RollCallHistorySettingsPage()
     {
         ViewModel = IAppHost.GetService<RollCallHistoryViewModel>();
         DataContext = ViewModel;
         InitializeComponent();
+        _isInitialized = true;
+        ApplyHistoryGroupMigrationVisibility();
     }
 
     public RollCallHistoryViewModel ViewModel { get; }
+
+    /// <summary>
+    ///     The main history surface is read-only for record-group organization; settings keeps the migration command.
+    /// </summary>
+    public bool ShowHistoryGroupMigration
+    {
+        get => _showHistoryGroupMigration;
+        set
+        {
+            if (_showHistoryGroupMigration == value)
+                return;
+
+            _showHistoryGroupMigration = value;
+            if (_isInitialized)
+                ApplyHistoryGroupMigrationVisibility();
+        }
+    }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
@@ -29,6 +51,7 @@ public partial class RollCallHistorySettingsPage : UserControl
         ViewModel.Config.LinkageSettings.PropertyChanged += LinkageSettingsOnPropertyChanged;
         ViewModel.RefreshSubjectFiltering();
         UpdateColumns();
+        ApplyHistoryGroupMigrationVisibility();
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
@@ -43,8 +66,12 @@ public partial class RollCallHistorySettingsPage : UserControl
         if (e.PropertyName is nameof(RollCallHistoryViewModel.SelectedMode)
                            or nameof(RollCallHistoryViewModel.HasWeightRows)
                            or nameof(RollCallHistoryViewModel.ShouldShowSubjectColumn)
-                           or nameof(RollCallHistoryViewModel.ShouldShowHistoryGroupColumn))
+                           or nameof(RollCallHistoryViewModel.ShouldShowHistoryGroupColumn)
+                           or nameof(RollCallHistoryViewModel.HasMoveStatus))
+        {
             UpdateColumns();
+            ApplyHistoryGroupMigrationVisibility();
+        }
     }
 
     private void LinkageSettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -54,6 +81,17 @@ public partial class RollCallHistorySettingsPage : UserControl
     }
 
     /// <summary>表格选中项变化 → 同步给 ViewModel，作为「移到另一组」的作用对象。</summary>
+    private void OnHistoryGridSorting(object? sender, DataGridColumnEventArgs e)
+    {
+        e.Handled = true;
+        ViewModel.Pagination.Sort(e.Column.SortMemberPath);
+    }
+
+    private void OnPageInputLostFocus(object? sender, RoutedEventArgs e)
+    {
+        ViewModel.Pagination.CommitPageInput();
+    }
+
     private void OnHistoryGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         ViewModel.SetSelectedRows(HistoryGrid.SelectedItems.OfType<HistoryDisplayRow>());
@@ -63,6 +101,12 @@ public partial class RollCallHistorySettingsPage : UserControl
     {
         // 命令已由 Command 绑定执行，这里只负责收起 Flyout
         MoveHistoryGroupButton.Flyout?.Hide();
+    }
+
+    private void ApplyHistoryGroupMigrationVisibility()
+    {
+        MoveHistoryGroupButton.IsVisible = ShowHistoryGroupMigration;
+        HistoryGroupMoveStatus.IsVisible = ShowHistoryGroupMigration && ViewModel.HasMoveStatus;
     }
 
     /// <summary>

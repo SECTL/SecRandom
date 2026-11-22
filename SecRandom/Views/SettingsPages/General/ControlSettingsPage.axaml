@@ -13,10 +13,7 @@
              x:Class="SecRandom.Views.SettingsPages.General.ControlSettingsPage"
              x:DataType="vm:ControlSettingsPageViewModel">
     <ScrollViewer>
-        <!-- 分类顺序固定为：远程控制 → 集控平台 → 集控接入 → 连接与状态。
-             两条服务端地址（节点通道 / 控制面）不提供设置入口：本机不能从界面被指向第三方服务器。
-             接入卡按 v4 的双因子拆成三段：未接入（地点 ID + 配对码）、已接入（地点/本机信息）、班级选择。
-             未接入时后两段隐藏，避免用户以为"填个班级就能被控制"。 -->
+        <!-- 接入表单只在未接入时显示；已接入状态与清除动作放在下方。 -->
         <StackPanel Classes="page-container animated-intro settings">
             <sr:IconText x:Name="S_RemoteControl"
                          Text="{x:Static lc:Resources.S_RemoteControl}"
@@ -73,22 +70,29 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <sr:IconText x:Name="S_Enrollment"
-                         Text="{x:Static lc:Resources.S_Enrollment}"
-                         Glyph="{sr:Fi ShieldCheckmarkFilled}"
-                         Margin="0 12 0 4" />
+            <!-- 当前只显示一种接入表单；设备已有凭据时必须先从下方已接入卡清除。 -->
+            <fa:FASettingsExpander x:Name="S_Enrollment"
+                                   Header="{x:Static lc:Resources.S_Enrollment}"
+                                   Description="{Binding EnrollmentModeDescription}"
+                                   IsVisible="{Binding !IsEnrolled}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ShieldCheckmarkFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="{x:Static lc:Resources.S_Enrollment_Source}"
+                                   Opacity="0.7"
+                                   VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding EnrollmentModeLabel}"
+                                   VerticalAlignment="Center" />
+                        <Button Content="{Binding SwitchEnrollmentModeLabel}"
+                                Command="{Binding SwitchEnrollmentModeCommand}"
+                                IsEnabled="{Binding CanSwitchEnrollmentMode}" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
 
-            <!-- 账号通道：桌面/平板登录账号后自动列出地点、年级、班级；手机端只有这一条通道。
-                 它和下面的配对码通道写的是同一条设备接入记录，节点连接逻辑不需要区分来源。
-                 三行分别是地点/年级/班级（逐级窄化），全部选完才允许接入：班级决定"这台设备上课的班"，
-                 不选班级的接入记录既不能占班也不能被控制台下发抽取。 -->
-            <fa:FASettingsExpander x:Name="S_AccountEnrollment"
-                                   Header="{x:Static lc:Resources.S_AccountEnrollment}"
-                                   Description="{x:Static lc:Resources.S_AccountEnrollment_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}">
-
+                <!-- 账号方式：地点、年级、班级逐级筛选，三项选完后才能接入。 -->
                 <fa:FASettingsExpanderItem x:Name="AccountEnrollmentSiteRow"
-                                           Content="{x:Static lc:Resources.S_AccountSite}">
+                                           Content="{x:Static lc:Resources.S_AccountSite}"
+                                           IsVisible="{Binding IsAccountEnrollmentMode}">
                     <fa:FASettingsExpanderItem.Footer>
                         <ComboBox ItemsSource="{Binding AccountSites}"
                                   SelectedItem="{Binding SelectedAccountSite}"
@@ -110,7 +114,8 @@
                 </fa:FASettingsExpanderItem>
 
                 <fa:FASettingsExpanderItem x:Name="AccountEnrollmentGradeRow"
-                                           Content="{x:Static lc:Resources.S_AccountGrade}">
+                                           Content="{x:Static lc:Resources.S_AccountGrade}"
+                                           IsVisible="{Binding IsAccountEnrollmentMode}">
                     <fa:FASettingsExpanderItem.Footer>
                         <ComboBox ItemsSource="{Binding AccountGrades}"
                                   SelectedItem="{Binding SelectedAccountGrade}"
@@ -127,7 +132,8 @@
                 </fa:FASettingsExpanderItem>
 
                 <fa:FASettingsExpanderItem x:Name="AccountEnrollmentClassRow"
-                                           Content="{x:Static lc:Resources.S_AccountClass}">
+                                           Content="{x:Static lc:Resources.S_AccountClass}"
+                                           IsVisible="{Binding IsAccountEnrollmentMode}">
                     <fa:FASettingsExpanderItem.Footer>
                         <ComboBox ItemsSource="{Binding AccountClasses}"
                                   SelectedItem="{Binding SelectedAccountClass}"
@@ -143,7 +149,10 @@
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
 
-                <fa:FASettingsExpander.Footer>
+                <fa:FASettingsExpanderItem x:Name="AccountEnrollmentActions"
+                                           Content="{x:Static lc:Resources.S_AccountCurrent}"
+                                           IsVisible="{Binding IsAccountEnrollmentMode}">
+                    <fa:FASettingsExpanderItem.Footer>
                     <StackPanel Spacing="8">
                         <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding !IsAccountSignedIn}">
                             <Button Content="{x:Static lc:Resources.C_SignInAccount}"
@@ -154,9 +163,6 @@
                                        VerticalAlignment="Center" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsAccountSignedIn}">
-                            <TextBlock Text="{x:Static lc:Resources.S_AccountCurrent}"
-                                       Opacity="0.7"
-                                       VerticalAlignment="Center" />
                             <SelectableTextBlock Text="{Binding AccountName}" VerticalAlignment="Center" />
                             <Button Content="{x:Static lc:Resources.C_RefreshAccount}"
                                     Command="{Binding RefreshAccountCommand}"
@@ -166,26 +172,19 @@
                             <Button Content="{x:Static lc:Resources.C_EnrollAccount}"
                                     Command="{Binding EnrollWithAccountCommand}"
                                     IsEnabled="{Binding CanEnrollWithAccount}" />
-                            <TextBlock Text="{x:Static lc:Resources.S_AccountClass_Optional}"
-                                       Opacity="0.7"
-                                       TextWrapping="Wrap"
-                                       VerticalAlignment="Center" />
                         </StackPanel>
                         <ProgressBar IsIndeterminate="True"
                                      Height="4"
                                      IsVisible="{Binding IsAccountBusy}" />
                     </StackPanel>
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
 
-            <!-- 未接入：地点 ID + 配对码。两个输入框缺一不可(双因子)，按钮只在两个都归一化成功时可点。
-                 "清除接入"在未接入状态下也可能需要（记录损坏要重接），所以它跟"接入"同排常显。 -->
-            <fa:FASettingsExpander x:Name="S_NodeEnrollment"
-                                   Header="{x:Static lc:Resources.S_NodeEnrollment}"
-                                   Description="{x:Static lc:Resources.S_NodeEnrollment_D}"
-                                   IsVisible="{Binding !IsEnrolled}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ShieldCheckmarkFilled}}">
-                <fa:FASettingsExpander.Footer>
+                <!-- 默认地点码方式。清除动作只放在下方已接入卡。 -->
+                <fa:FASettingsExpanderItem x:Name="PairCodeEnrollmentRow"
+                                           Content="{x:Static lc:Resources.S_NodeEnrollment}"
+                                           IsVisible="{Binding !IsAccountEnrollmentMode}">
+                    <fa:FASettingsExpanderItem.Footer>
                     <StackPanel Spacing="8">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBox Text="{Binding SiteIdInput}"
@@ -201,23 +200,16 @@
                             <Button Content="{x:Static lc:Resources.C_Enroll}"
                                     Command="{Binding EnrollCommand}"
                                     IsEnabled="{Binding CanEnroll}" />
-                            <Button Content="{x:Static lc:Resources.C_ClearEnrollment}"
-                                    Command="{Binding ClearEnrollmentCommand}"
-                                    IsEnabled="{Binding CanClearEnrollment}" />
                         </StackPanel>
-                        <!-- 提示统一走 Toast（右上角浮条），这里不再留一行内联文字：
-                             内联不讲成功/失败颜色、也不吸引视线，用户很容易点完按钮什么都没看见。 -->
                     </StackPanel>
-                </fa:FASettingsExpander.Footer>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
             </fa:FASettingsExpander>
 
-            <!-- 已接入：地点（名称 + 公开 ID）、本机名、当前班级，一个"断开接入"动作。
-                 重新接入的路径就是先断开再填新码：设备凭据只在接入时签发一次，
-                 不存在"换地点但保留旧凭据"这种半吊子状态。 -->
             <fa:FASettingsExpander x:Name="S_Enrolled"
                                    Header="{x:Static lc:Resources.S_Enrolled}"
-                                   Description="{x:Static lc:Resources.S_Enrolled_D}"
-                                   IsVisible="{Binding IsEnrolled}"
+                                   Description="{Binding EnrollmentStatusText}"
+                                   IsVisible="{Binding ShowEnrollmentStatus}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PeopleFilled}}">
                 <fa:FASettingsExpander.Footer>
                     <StackPanel Spacing="8">
@@ -239,17 +231,9 @@
                                        VerticalAlignment="Center" />
                             <SelectableTextBlock Text="{Binding EnrollmentSourceText}" />
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="{Binding EnrollmentStatusText}"
-                                       TextAlignment="Right"
-                                       TextWrapping="NoWrap"
-                                       TextTrimming="CharacterEllipsis"
-                                       VerticalAlignment="Center"
-                                       ToolTip.Tip="{x:Static lc:Resources.M_Enroll_TokenHint}" />
-                            <Button Content="{x:Static lc:Resources.C_ClearEnrollment}"
-                                    Command="{Binding ClearEnrollmentCommand}"
-                                    IsEnabled="{Binding CanClearEnrollment}" />
-                        </StackPanel>
+                        <Button Content="{x:Static lc:Resources.C_ClearEnrollment}"
+                                Command="{Binding ClearEnrollmentCommand}"
+                                IsEnabled="{Binding CanClearEnrollment}" />
                     </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>

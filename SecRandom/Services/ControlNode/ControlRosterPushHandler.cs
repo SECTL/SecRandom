@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Avalonia.Threading;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Shared;
@@ -162,16 +163,19 @@ public sealed class ControlRosterPushHandler(
     {
         try
         {
-            var source = Utils.GetFilePath(
-                "list", prizeRoster ? "lottery_list" : "roll_call_list", $"{listName}.json");
-            if (!File.Exists(source))
+            // The roster is SQLite now; load through the catalog so this also handles a
+            // legacy JSON file and preserves stable RecordId values in the backup.
+            object? snapshot = prizeRoster
+                ? catalog.LoadPrizeList(listName)
+                : catalog.LoadStudentList(listName);
+            if (snapshot is null)
                 return null;
 
             var target = Utils.GetFilePath(
                 "backup", "roster", $"{Sanitize(listName)}_{DateTime.Now:yyyyMMdd-HHmmss}.json");
-
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            File.Copy(source, target, overwrite: true);
+            File.WriteAllText(target, JsonSerializer.Serialize(snapshot, snapshot.GetType(),
+                ConfigServiceBase.JsonOptions));
             return target;
         }
         catch (Exception exception)

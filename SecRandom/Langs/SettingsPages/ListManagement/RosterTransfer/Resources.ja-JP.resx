@@ -31,6 +31,7 @@
 <data name="C_SessionCodeExport"><value>セッションコードでエクスポート</value></data>
 <data name="C_SyncPortalDescription"><value>別のデバイスのブラウザーでこのアドレスを開くと、アプリをインストールせずにリストファイルをリモートで受信できます</value></data>
 <data name="C_CopySyncPortalAddress"><value>リンクをコピー</value></data>
+  <data name="C_OpenMainWebsite"><value>公式サイトを開く</value></data>
   <data name="C_CameraOne"><value>カメラ 1</value></data>
   <data name="C_CameraTwo"><value>カメラ 2</value></data>
   <data name="C_ImportRegion"><value>取り込み範囲</value></data>

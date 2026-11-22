@@ -21,8 +21,10 @@ SecRandom/Services/Linkage/
 |-- CsesScheduleStore.cs            # data/CSES/cses_schedule.yml 的读写与校验
 |-- CsesScheduleSource.cs           # CSES 源：存储变更 -> 快照
 |-- ICsesScheduleStore.cs           # CSES 存储契约（页面只认这个）
-|-- ClassIslandIpcConnection.cs     # 唯一 IPC 管道：课程查询 + 上下课通知 + 重连退避
-|-- ClassIslandScheduleSource.cs    # ClassIsland -> CourseScheduleSnapshot
+|-- ClassIslandIpcConnection.cs     # 唯一 IPC 管道：课程/档案查询 + 上下课通知 + 重连退避
+|-- ClassIslandScheduleSource.cs    # ClassIsland -> CourseScheduleSnapshot + subject catalog
+|-- CourseRosterCourseCatalog.cs    # selected source -> course names for the mapping page
+|-- CourseRosterMappingService.cs   # resolves current subject to roll-call/quick-draw/lottery targets
 |-- CourseLinkageService.cs         # 单例状态：快照、闸门判定、刷新调度、科目过滤
 |-- CourseLinkageHostedService.cs   # 唯一课程边界调度器 + 课前重置执行
 |-- LinkageDrawCoordinator.cs       # 抽取授权闸门（本地/协议/快捷键共用）
@@ -60,9 +62,17 @@ SecRandom/Services/Linkage/
   `M_ClassTimeDrawBlocked`（带下一节课与分钟数）与 `M_ClassTimeDrawBlockedGeneric`。
   取值走 `Resources.ResourceManager.GetString(key, Resources.Culture)`，不要手改
   `Resources.Designer.cs`。
-- 快照比较只看语义字段（`SnapshotsEqual`），排除倒计时，否则每次刷新都会自激（issue #274）。
+- 快照比较排除倒计时，但课前解禁或课后延迟结束导致 `IsConfirmedBreakTime` 翻转时必须通知订阅者；浮窗隐藏与恢复依赖该通知。其他倒计时变化不通知，避免刷新自激（issue #274）。课后延迟为零时不豁免边界时刻。
+- 闪抽授权被拒绝时使用 `DesktopDrawNotice` 的独立小提示条，即使主窗口隐藏也能提示；不能打开闪抽结果窗口，否则会露出旧结果。点名和抽奖仍在主窗口显示提示。
 - ClassIsland 类型只允许出现在 `ClassIslandScheduleSource` 与 `ClassIslandIpcConnection`；
   其他文件接触它就是把 IPC 依赖漏进业务层。
+- The course mapping page is available only when `LinkageSettingsConfig.DataSource` is not Off.
+  CSES names come from `CsesScheduleStore`; ClassIsland names come from all
+  `IPublicProfileService.Profile.Subjects`, independent of whether `CurrentClassPlan` is loaded.
+  Empty channel mappings resolve to
+  the channel's configured default list and never write that default back when the current course
+  changes. Custom subjects are kept as `CourseRosterBinding.IsCustomCourse` entries so a source refresh
+  cannot silently remove a manually added row.
 
 ## ANTI-PATTERNS
 

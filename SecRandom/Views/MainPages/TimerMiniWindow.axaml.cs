@@ -12,12 +12,14 @@ namespace SecRandom.Views.MainPages;
 public sealed partial class TimerMiniWindow : Window
 {
     private readonly Action _restore;
+    private readonly Action _fullScreen;
     private readonly TimerViewModel _viewModel;
     private bool _allowClose;
 
-    public TimerMiniWindow(TimerViewModel viewModel, Action restore)
+    public TimerMiniWindow(TimerViewModel viewModel, Action restore, Action fullScreen)
     {
         _restore = restore;
+        _fullScreen = fullScreen;
         _viewModel = viewModel;
         DataContext = viewModel;
         InitializeComponent();
@@ -48,6 +50,8 @@ public sealed partial class TimerMiniWindow : Window
     }
 
     private void Restore(object? sender, RoutedEventArgs e) => _restore();
+
+    private void FullScreen(object? sender, RoutedEventArgs e) => _fullScreen();
 
     private void OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {

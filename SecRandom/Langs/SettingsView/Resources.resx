@@ -289,6 +289,7 @@
   <data name="M_TransferFailed" xml:space="preserve"><value>传输失败：{0}</value></data>
   <data name="M_TransferWrongContent" xml:space="preserve"><value>收到的传输类型与当前操作不匹配</value></data>
   <data name="C_TransferCopyAddress" xml:space="preserve"><value>复制地址</value></data>
+  <data name="C_TransferOpenMainWebsite" xml:space="preserve"><value>打开主站</value></data>
   <data name="C_TransferSessionCodeLabel" xml:space="preserve"><value>会话码</value></data>
   <data name="C_TransferFrames" xml:space="preserve"><value>传输帧</value></data>
   <data name="C_TransferSpeed" xml:space="preserve"><value>传输速度</value></data>

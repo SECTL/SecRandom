@@ -65,7 +65,16 @@
             </fa:FASettingsExpander>
 
             <!-- 默认记录组：抽奖页打开时选择器先落到这里，用户当场换组仍然是纯界面状态、不写配置。
-                 选「默认记录组」表示只算未分组的记录；总开关关闭时整张卡隐藏。 -->
+                 选「默认记录组」表示只算未分组的记录。 -->
+            <fa:FASettingsExpander x:Name="S_LotteryGroupMember"
+                                   Header="{x:Static lp:Resources.S_LotteryGroupMember}"
+                                   Description="{x:Static lp:Resources.S_LotteryGroupMember_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleListFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.ShowGroupMember}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <fa:FASettingsExpander x:Name="S_LotteryHistoryGroup"
                                    Header="{x:Static lp:Resources.S_LotteryHistoryGroup}"
                                    Description="{x:Static lp:Resources.S_LotteryHistoryGroup_D}"

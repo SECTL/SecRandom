@@ -15,4 +15,7 @@ public partial class App
     public static bool SupportsProgrammaticWindowPositioning { get; } = !OperatingSystem.IsLinux()
         || (string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("WAYLAND_DISPLAY"))
             && !string.Equals(Environment.GetEnvironmentVariable("XDG_SESSION_TYPE"), "wayland", StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>Linux/macOS 使用窗口后端的原生移动循环，避免合成器拒绝应用自行写入窗口坐标。</summary>
+    public static bool UsesNativeWindowDrag { get; } = OperatingSystem.IsLinux() || OperatingSystem.IsMacOS();
 }

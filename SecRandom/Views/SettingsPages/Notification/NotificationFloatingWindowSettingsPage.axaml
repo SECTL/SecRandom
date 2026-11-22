@@ -8,8 +8,9 @@
              x:DataType="notification:NotificationFloatingWindowSettingsPage">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro settings">
-            <sr:IconText x:Name="S_FloatingWindow" Text="{x:Static lsp:Resources.S_FloatingWindow}"
-                         Glyph="{sr:Fi PictureInPictureFilled}" Margin="0 0 0 4" />
+            <sr:IconText x:Name="S_FloatingWindow_Appearance"
+                         Text="{x:Static lsp:Resources.S_FloatingWindow_Appearance}"
+                         Glyph="{sr:Fi PaintBrushFilled}" Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_FloatingWindow_WindowPosition"
                                    Header="{x:Static lsp:Resources.S_FloatingWindow_WindowPosition}"
@@ -72,6 +73,141 @@
                     </Grid>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_FloatingWindow_BackgroundStyle"
+                                   Header="{x:Static lsp:Resources.S_FloatingWindow_BackgroundStyle}"
+                                   Description="{x:Static lsp:Resources.S_FloatingWindow_BackgroundStyle_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox MinWidth="180"
+                              ItemsSource="{Binding BackgroundStyleOptions}"
+                              SelectedItem="{Binding SelectedBackgroundStyle, Mode=TwoWay}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="notification:BackgroundStyleOption">
+                                <TextBlock Text="{Binding Label}" />
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_FloatingWindow_ThemeBackgroundOpacity"
+                                   IsVisible="{Binding IsThemeBackgroundMode}"
+                                   Header="{x:Static lsp:Resources.S_FloatingWindow_ThemeBackgroundOpacity}"
+                                   Description="{x:Static lsp:Resources.S_FloatingWindow_ThemeBackgroundOpacity_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LayerFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <Grid Width="280" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Slider Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True"
+                                Value="{Binding Settings.ThemeBackgroundOpacity, Mode=TwoWay}" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                            <TextBlock Width="32" TextAlignment="Right" Text="{Binding Settings.ThemeBackgroundOpacity}" />
+                            <TextBlock Text="%" />
+                        </StackPanel>
+                    </Grid>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_FloatingWindow_BackgroundColor"
+                                   IsVisible="{Binding IsSolidBackgroundMode}"
+                                   Header="{x:Static lsp:Resources.S_FloatingWindow_BackgroundColor}"
+                                   Description="{x:Static lsp:Resources.S_FloatingWindow_BackgroundColor_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PaintBrushFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ColorPicker Color="{Binding Settings.BackgroundColor, Mode=TwoWay}"
+                                 Width="240" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_FloatingWindow_BackgroundGradient"
+                                   IsVisible="{Binding IsGradientBackgroundMode}"
+                                   Header="{x:Static lsp:Resources.S_FloatingWindow_BackgroundGradient}"
+                                   Description="{x:Static lsp:Resources.S_FloatingWindow_BackgroundGradient_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ColorFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                        <ColorPicker Color="{Binding Settings.BackgroundGradientStart, Mode=TwoWay}"
+                                     Width="200" />
+                        <TextBlock Text="→" VerticalAlignment="Center" />
+                        <ColorPicker Color="{Binding Settings.BackgroundGradientEnd, Mode=TwoWay}"
+                                     Width="200" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_FloatingWindow_BackgroundGradientAngle"
+                                   IsVisible="{Binding IsGradientBackgroundMode}"
+                                   Header="{x:Static lsp:Resources.S_FloatingWindow_BackgroundGradientAngle}"
+                                   Description="{x:Static lsp:Resources.S_FloatingWindow_BackgroundGradientAngle_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi RotateRightFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <Grid Width="280" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Slider Minimum="0" Maximum="360" TickFrequency="1" IsSnapToTickEnabled="True"
+                                Value="{Binding Settings.BackgroundGradientAngle, Mode=TwoWay}" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                            <TextBlock Width="32" TextAlignment="Right"
+                                       Text="{Binding Settings.BackgroundGradientAngle}" />
+                            <TextBlock Text="°" />
+                        </StackPanel>
+                    </Grid>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_FloatingWindow_BackgroundImage"
+                                   IsVisible="{Binding IsBackgroundImageMode}"
+                                   Header="{x:Static lsp:Resources.S_FloatingWindow_BackgroundImage}"
+                                   Description="{x:Static lsp:Resources.S_FloatingWindow_BackgroundImage_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ImageFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <Border Width="96" Height="54" CornerRadius="4" ClipToBounds="True"
+                                IsVisible="{Binding HasBackgroundImage}"
+                                Background="{DynamicResource ControlFillColorDefaultBrush}">
+                            <Image Source="{Binding BackgroundImagePreview}" Stretch="UniformToFill" />
+                        </Border>
+                        <Button Classes="accent" Click="ImportBackgroundImage_OnClick">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <sr:FluentIcon Glyph="{sr:Fi ImageAddFilled}" />
+                                <TextBlock Text="{x:Static lsp:Resources.C_FloatingWindow_ImportImage}" />
+                            </StackPanel>
+                        </Button>
+                        <Button Click="ClearBackgroundImage_OnClick"
+                                IsEnabled="{Binding HasBackgroundImage}"
+                                Content="{x:Static lsp:Resources.C_FloatingWindow_ClearImage}" />
+                    </StackPanel>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_FloatingWindow_BackgroundOpacity"
+                                   IsVisible="{Binding IsBackgroundImageMode}"
+                                   Header="{x:Static lsp:Resources.S_FloatingWindow_BackgroundOpacity}"
+                                   Description="{x:Static lsp:Resources.S_FloatingWindow_BackgroundOpacity_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LayerFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <Grid Width="280" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Slider Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True"
+                                Value="{Binding Settings.BackgroundOpacity, Mode=TwoWay}" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                            <TextBlock Width="32" TextAlignment="Right" Text="{Binding Settings.BackgroundOpacity}" />
+                            <TextBlock Text="%" />
+                        </StackPanel>
+                    </Grid>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_FloatingWindow_AdaptiveForeground"
+                                   Header="{x:Static lsp:Resources.S_FloatingWindow_AdaptiveForeground}"
+                                   Description="{x:Static lsp:Resources.S_FloatingWindow_AdaptiveForeground_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi DesktopPulseFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding AdaptiveForegroundEnabled, Mode=TwoWay}"
+                                  IsEnabled="{Binding IsAdaptiveForegroundAvailable}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <sr:IconText x:Name="S_FloatingWindow_Playback"
+                         Text="{x:Static lsp:Resources.S_FloatingWindow_Playback}"
+                         Glyph="{sr:Fi PlayFilled}" Margin="0 12 0 4" />
 
             <fa:FASettingsExpander x:Name="S_FloatingWindow_CountdownStyle"
                                    Header="{x:Static lsp:Resources.S_FloatingWindow_CountdownStyle}"
@@ -150,13 +286,18 @@
                     </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
-            <fa:FASettingsExpander x:Name="S_FloatingWindow_AdaptiveForeground"
-                                   Header="{x:Static lsp:Resources.S_FloatingWindow_AdaptiveForeground}"
-                                   Description="{x:Static lsp:Resources.S_FloatingWindow_AdaptiveForeground_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi DesktopPulseFilled}}">
+
+            <fa:FASettingsExpander x:Name="S_FloatingWindow_Preview"
+                                   Header="{Binding PreviewTitle}"
+                                   Description="{Binding PreviewDescription}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ZoomFitFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding AdaptiveForegroundEnabled, Mode=TwoWay}"
-                                  IsEnabled="{Binding IsAdaptiveForegroundAvailable}" />
+                    <Button Classes="accent" Click="TestNotification_OnClick">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <sr:FluentIcon Glyph="{sr:Fi PlayFilled}" />
+                            <TextBlock Text="{Binding PreviewButtonText}" />
+                        </StackPanel>
+                    </Button>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
         </StackPanel>

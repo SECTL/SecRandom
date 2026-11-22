@@ -27,9 +27,6 @@ public class DebugStrings
     public string S_Plugins => Get(nameof(S_Plugins));
     public string C_ShowPluginSettings => Get(nameof(C_ShowPluginSettings));
     public string C_ShowPluginSettings_D => Get(nameof(C_ShowPluginSettings_D));
-    public string S_InternalSettings => Get(nameof(S_InternalSettings));
-    public string C_EnableInternalSettings => Get(nameof(C_EnableInternalSettings));
-    public string C_EnableInternalSettings_D => Get(nameof(C_EnableInternalSettings_D));
     public string S_UpdateDiagnostics => Get(nameof(S_UpdateDiagnostics));
     public string C_RefreshUpdate => Get(nameof(C_RefreshUpdate));
     public string C_RefreshUpdate_D => Get(nameof(C_RefreshUpdate_D));

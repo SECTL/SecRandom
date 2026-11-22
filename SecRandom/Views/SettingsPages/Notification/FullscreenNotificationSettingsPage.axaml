@@ -28,6 +28,23 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <fa:FASettingsExpander x:Name="S_Fullscreen_ThemeBackgroundOpacity"
+                                   IsVisible="{Binding IsThemeBackgroundMode}"
+                                   Header="{x:Static lsp:Resources.S_Fullscreen_ThemeBackgroundOpacity}"
+                                   Description="{x:Static lsp:Resources.S_Fullscreen_ThemeBackgroundOpacity_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi LayerFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <Grid Width="280" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                        <Slider Minimum="0" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True"
+                                Value="{Binding Settings.ThemeBackgroundOpacity, Mode=TwoWay}" />
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="2">
+                            <TextBlock Width="32" TextAlignment="Right" Text="{Binding Settings.ThemeBackgroundOpacity}" />
+                            <TextBlock Text="%" />
+                        </StackPanel>
+                    </Grid>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
             <StackPanel Spacing="4" IsVisible="{Binding IsSolidBackgroundMode}">
                 <fa:FASettingsExpander x:Name="S_Fullscreen_BackgroundColor"
                                        Header="{x:Static lsp:Resources.S_Fullscreen_BackgroundColor}"
@@ -96,21 +113,6 @@
                                     IsEnabled="{Binding HasBackgroundImage}"
                                     Content="{x:Static lsp:Resources.C_FullscreenClearImage}" />
                         </StackPanel>
-                    </fa:FASettingsExpander.Footer>
-                </fa:FASettingsExpander>
-
-                <fa:FASettingsExpander x:Name="S_Fullscreen_BackgroundBlur"
-                                       Header="{x:Static lsp:Resources.S_Fullscreen_BackgroundBlur}"
-                                       Description="{x:Static lsp:Resources.S_Fullscreen_BackgroundBlur_D}"
-                                       IconSource="{sr:FluentIconSource {sr:Fi BlurFilled}}">
-                    <fa:FASettingsExpander.Footer>
-                        <Grid Width="280" ColumnDefinitions="*,Auto" ColumnSpacing="12"
-                              IsEnabled="{Binding !IsLowSpecModeActive}">
-                            <Slider Minimum="0" Maximum="64" TickFrequency="1" IsSnapToTickEnabled="True"
-                                    Value="{Binding BackgroundBlurRadius, Mode=TwoWay}" />
-                            <TextBlock Grid.Column="1" Width="32" TextAlignment="Right"
-                                       Text="{Binding BackgroundBlurRadius}" />
-                        </Grid>
                     </fa:FASettingsExpander.Footer>
                 </fa:FASettingsExpander>
 

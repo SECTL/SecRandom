@@ -13,6 +13,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction.Services;
@@ -27,6 +28,7 @@ using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Services.Linkage;
 using SecRandom.Core.Services.Profiles;
 using SecRandom.Helpers;
 using SecRandom.Services.Draw;
@@ -50,6 +52,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
 {
     private static string NoStudentOption => SR.O_NoStudentAssignment;
     private static string AllGroupsOption => SR.O_AllGroups;
+    private static string DrawGroupsOption => SR.O_DrawGroups;
     private static string AllGendersOption => SR.O_AllGenders;
     private static string DefaultHistoryGroupOption => SR.O_HistoryGroupDefault;
     private static string NoListOption => SR.O_NoList;
@@ -64,6 +67,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private readonly ILogger<LotteryPageViewModel> _logger;
     private readonly ISecurityService _securityService;
     private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
+    private readonly CourseRosterMappingService? _courseRosterMapping;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly LotteryDrawService _lotteryDrawService;
     private readonly IProfileCatalogManager _profileCatalogManager;
@@ -80,6 +84,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     private bool _isPrizeListRefreshQueued;
     private bool _isStudentListRefreshQueued;
     private bool _historyGroupDefaultApplied;
+    private bool _isApplyingCourseBinding;
 
     [ObservableProperty] private string _selectedPrizeListName = string.Empty;
     [ObservableProperty] private string _selectedStudentListName = NoStudentOption;
@@ -113,7 +118,8 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         IProfileCatalogManager profileCatalogManager,
         IHistoryGroupCatalog historyGroupCatalog,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
-        NotificationService? notificationService = null)
+        NotificationService? notificationService = null,
+        CourseRosterMappingService? courseRosterMapping = null)
         : base(configHandler)
     {
         _configHandler = configHandler;
@@ -126,6 +132,7 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         _logger = logger;
         _securityService = securityService;
         _linkageDrawCoordinator = linkageDrawCoordinator;
+        _courseRosterMapping = courseRosterMapping;
         _verificationDrawCoordinator = verificationDrawCoordinator;
         _lotteryDrawService = lotteryDrawService;
         _profileCatalogManager = profileCatalogManager;
@@ -145,11 +152,13 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
         Config.EffectiveLotterySettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.EffectiveDefaultDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.EffectiveMoreSettings.PropertyChanged += SettingsOnPropertyChanged;
-        Config.EffectiveHistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
         Config.RandomNumberSettings.PropertyChanged += RandomNumberSettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged += SettingsOnPropertyChanged;
+        if (_courseRosterMapping is not null)
+            _courseRosterMapping.SelectionChanged += CourseRosterSelectionChanged;
         RefreshPrizeLists();
         RefreshStudentLists();
+        ApplyCourseBinding();
         RefreshCounts();
         ApplyRandomNumberDefaults();
     }
@@ -205,18 +214,21 @@ public sealed partial class LotteryPageViewModel : ViewModelBase, IDisposable
     public bool IsGenderSelectorVisible => MoreSettings.LotteryGenderSelector && IsStudentAssignmentEnabled && !IsNumberPrizeMode;
 
     /// <summary>
-    ///     记录组选择器是否出现：功能总闸 + 本页显隐开关 + 真实奖池（数字奖池不写任何历史，标记无意义）。
+    ///     记录组选择器是否出现：本页显隐开关 + 真实奖池（数字奖池不写任何历史，标记无意义）。
     ///     未指派学生名单时照样显示：此时没有「人的历史」可隔离，组名仍会作为本次奖品记录的标记写入。
     /// </summary>
     public bool IsHistoryGroupSelectorVisible =>
-        Config.EffectiveHistoryGroups.Enabled
-        && MoreSettings.LotteryHistoryGroupSelector
+        MoreSettings.LotteryHistoryGroupSelector
         && !IsNumberPrizeMode;
 
     /// <summary>剩余名单只对真实奖池有意义：数字奖池的剩余情况由计数摘要承担。</summary>
     public bool IsRemainingListVisible => MoreSettings.LotteryRemainingButton && !IsNumberPrizeMode;
 
     public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0);
+    public string DrawUnavailableMessage => !IsDrawing && !_isDrawCommandRunning && TotalCount == 0
+        ? SR.M_NoPrizes
+        : string.Empty;
+    public bool IsDrawUnavailableNoticeVisible => !string.IsNullOrEmpty(DrawUnavailableMessage);
     public string DrawButtonText => IsDrawing ? SR.C_Stop : SR.C_Start;
     public bool CanDecreaseCount => DrawCount > 1;
     public bool CanIncreaseCount => DrawCount < MaximumDrawCount;
@@ -259,7 +271,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     private int LotteryImageSize => Config.EffectiveLotterySettings.OverrideStudentImageSettings
         ? Config.EffectiveLotterySettings.LotteryImageSize
         : Config.EffectiveDefaultDrawSettings.StudentImageSize;
-    private string CurrentGroupScope => SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup;
+    private bool IsGroupDraw => IsGroupSelectorVisible && SelectedGroup == DrawGroupsOption;
+    private string CurrentGroupScope => SelectedGroup == AllGroupsOption || IsGroupDraw ? string.Empty : SelectedGroup;
     private string CurrentGenderScope => SelectedGender == AllGendersOption ? string.Empty : SelectedGender;
 
     /// <summary>
@@ -299,7 +312,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
         // 自动刷新解析出的选择（奖池被删、奖品暂时抽空等）不算用户决策：
         // 依然按该选择加载档案/计数，但不得覆盖用户配置的默认奖池。
-        var persistSelection = !_isRefreshingLists;
+        var persistSelection = !_isRefreshingLists && !_isApplyingCourseBinding;
         if (value == NoListOption)
         {
             // 数字奖池没有可加载的奖池档案：只把「不使用名单」记成默认奖池。
@@ -419,6 +432,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     partial void OnIsDrawingChanged(bool value)
     {
         OnPropertyChanged(nameof(CanStartDraw));
+        OnPropertyChanged(nameof(DrawUnavailableMessage));
+        OnPropertyChanged(nameof(IsDrawUnavailableNoticeVisible));
         OnPropertyChanged(nameof(DrawButtonText));
     }
 
@@ -448,7 +463,10 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     private async Task StartDrawAsync()
     {
         if (!_featureAvailability.IsLotteryEnabled)
+        {
+            ShowDrawUnavailableToast(SR.M_LotteryDisabled);
             return;
+        }
 
         if (IsDrawing)
         {
@@ -456,9 +474,16 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             return;
         }
 
-        if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.LotteryStart, () => Task.CompletedTask) ||
-            !_featureAvailability.IsLotteryEnabled)
+        if (!await _linkageDrawCoordinator.AuthorizeAsync(
+                SecurityOperation.LotteryStart,
+                () => Task.CompletedTask,
+                onBlocked: ShowDrawAuthorizationNotice))
             return;
+        if (!_featureAvailability.IsLotteryEnabled)
+        {
+            ShowDrawUnavailableToast(SR.M_LotteryDisabled);
+            return;
+        }
         await StartDrawCoreAsync();
     }
 
@@ -466,6 +491,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     {
         if (IsDrawing)
             return;
+
+        ApplyCourseBinding();
 
         if (IsNumberPrizeMode)
         {
@@ -480,6 +507,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         if (!CanStartDraw)
         {
             StatusText = TotalCount == 0 ? SR.M_NoPrizes : SR.M_NoRemainingPrizes;
+            ShowDrawUnavailableToast(StatusText);
             return;
         }
 
@@ -487,10 +515,22 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         if (prizes.Count == 0)
         {
             StatusText = SR.M_NoPrizes;
+            ShowDrawUnavailableToast(StatusText);
             return;
         }
 
         var count = Math.Clamp(DrawCount, 1, Math.Max(1, RemainingCount > 0 ? RemainingCount : prizes.Count));
+        if (IsGroupDraw)
+        {
+            var groupCount = _lotteryDrawService.GetEligibleGroups(CurrentGenderScope).Count;
+            if (groupCount == 0)
+            {
+                StatusText = SR.M_NoCandidates;
+                ShowDrawUnavailableToast(StatusText);
+                return;
+            }
+            count = Math.Min(count, groupCount);
+        }
         // 记录组与候选池同一刻冻结：可分配学生按这一刻的组权重挑，记录也落进同一个组。
         var historyGroup = CurrentHistoryGroup;
         SetDrawCommandRunning(true);
@@ -532,7 +572,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 CurrentGenderScope,
                 count,
                 courseName,
-                historyGroup));
+                historyGroup, IsGroupDraw));
             var previewTask = ShowPreviewAsync(prizes, count, previewStudents, MusicSettings.AnimationMusic);
             List<Prize> drawn;
             List<Student> assignedStudents;
@@ -550,6 +590,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                     IsResultVisible = false;
                     _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.Lottery);
                     StatusText = SR.M_NoCandidates;
+                    ShowDrawUnavailableToast(StatusText);
                     return;
                 }
 
@@ -573,6 +614,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 IsResultVisible = false;
                 _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.Lottery);
                 StatusText = SR.M_DrawFailed;
+                ShowDrawUnavailableToast(StatusText, FAInfoBarSeverity.Error);
                 return;
             }
 
@@ -589,7 +631,16 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 MusicSettings.AnimationMusicFadeOut).ConfigureAwait(false);
             if (_notificationService is not null)
             {
-                _notificationService.QueueLottery(SelectedPrizeListName, drawn, assignedStudents);
+                var notificationStudents = IsGroupDraw
+                    ? assignedStudents.Select(student => new Student
+                    {
+                        Name = Config.EffectiveLotterySettings.ShowGroupMember && !string.IsNullOrWhiteSpace(student.Name)
+                            ? $"{student.Group} - {student.Name}" : student.Group,
+                        Group = student.Group
+                    }).ToArray()
+                    : assignedStudents.ToArray();
+                _notificationService.QueueLottery(SelectedPrizeListName, drawn, notificationStudents,
+                    IsGroupDraw ? _lastResultPrizes.Select(item => item.DisplayText).ToArray() : null);
 
                 if (_notificationService.UsesFullscreenNotificationService(NotificationSettingsType.Lottery))
                     _notificationService.CompleteFullscreenPresentation(
@@ -632,6 +683,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         if (TotalCount <= 0 || RemainingCount <= 0)
         {
             StatusText = SR.M_NoRemainingPrizes;
+            ShowDrawUnavailableToast(StatusText);
             return;
         }
 
@@ -695,6 +747,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                     IsResultVisible = false;
                     _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.Lottery);
                     StatusText = SR.M_NoCandidates;
+                    ShowDrawUnavailableToast(StatusText);
                     return;
                 }
 
@@ -718,6 +771,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 IsResultVisible = false;
                 _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.Lottery);
                 StatusText = SR.M_DrawFailed;
+                ShowDrawUnavailableToast(StatusText, FAInfoBarSeverity.Error);
                 return;
             }
 
@@ -802,7 +856,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             _lotteryDrawService.Reset(
                 IsStudentAssignmentEnabled ? SelectedStudentListName : string.Empty,
                 CurrentGroupScope,
-                CurrentGenderScope);
+                CurrentGenderScope, IsGroupDraw);
         IsResultVisible = false;
         StatusText = SR.M_ResetDone;
         if (showToast)
@@ -977,9 +1031,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             PrizeListNames.Clear();
             // 首项永远是本地化的「不使用名单」：选中它即进入数字范围抽取，既不是奖池文件也不是活动档案。
             PrizeListNames.Add(NoListOption);
-            foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "lottery_list"), "*.json")
-                         .OrderBy(Path.GetFileName))
-                PrizeListNames.Add(Path.GetFileNameWithoutExtension(file));
+            foreach (var name in _profileCatalogManager.GetPrizeListNames())
+                PrizeListNames.Add(name);
 
             var selected = ResolvePrizeListSelection(previousName);
 
@@ -1040,6 +1093,34 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         return realNames[0];
     }
 
+    private void ApplyCourseBinding()
+    {
+        var mappedList = _courseRosterMapping?.ResolvePrizeList();
+        var configuredList = Config.LotterySettings.DefaultPool;
+        var selected = !string.IsNullOrWhiteSpace(mappedList) && PrizeListNames.Contains(mappedList)
+            ? mappedList
+            : RosterSelection.IsNone(configuredList) ? NoListOption : configuredList;
+        if (!PrizeListNames.Contains(selected) || SelectedPrizeListName == selected)
+            return;
+
+        _isApplyingCourseBinding = true;
+        try
+        {
+            SelectedPrizeListName = selected;
+        }
+        finally
+        {
+            _isApplyingCourseBinding = false;
+        }
+    }
+
+    private void CourseRosterSelectionChanged(object? sender, EventArgs e) => Dispatcher.UIThread.Post(() =>
+    {
+        RefreshPrizeLists();
+        ApplyCourseBinding();
+        RefreshCounts();
+    });
+
     private bool HasDrawablePrize()
     {
         foreach (var name in _profileCatalogManager.GetPrizeListNames())
@@ -1058,9 +1139,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         StudentListNames.Clear();
         StudentListNames.Add(NoStudentOption);
 
-        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "roll_call_list"), "*.json")
-                     .OrderBy(Path.GetFileName))
-            StudentListNames.Add(Path.GetFileNameWithoutExtension(file));
+        foreach (var name in _profileCatalogManager.GetStudentListNames())
+            StudentListNames.Add(name);
 
         var selected = StudentListNames.Contains(previousName) ? previousName : NoStudentOption;
         // 同 RollCall：刷新期间下拉框回写的空值恢复不算真实选择变化，不切换共享档案。
@@ -1096,7 +1176,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     private FileSystemWatcher CreatePrizeListWatcher()
     {
-        var watcher = new FileSystemWatcher(Utils.GetDirectoryPath("list", "lottery_list"), "*.json")
+        var watcher = new FileSystemWatcher(Utils.GetDirectoryPath("list"), "*")
         {
             NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.CreationTime
         };
@@ -1111,8 +1191,18 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     private void PrizeListFiles_OnChanged(object? sender, FileSystemEventArgs e)
     {
+        if (!IsRosterFileEvent(e))
+            return;
         QueuePrizeListRefresh();
     }
+
+    private static bool IsRosterFileEvent(FileSystemEventArgs e) =>
+        e.Name is { } name &&
+        (name.Equals($"lottery{Utils.RosterDatabaseExtension}", StringComparison.OrdinalIgnoreCase) ||
+         name.EndsWith(Utils.RosterDatabaseExtension, StringComparison.OrdinalIgnoreCase) ||
+         name.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) &&
+        !name.EndsWith(Utils.RosterLegacyBackupExtension, StringComparison.OrdinalIgnoreCase) &&
+        !name.EndsWith(Utils.RosterDatabaseMigratedExtension, StringComparison.OrdinalIgnoreCase);
 
     private void QueuePrizeListRefresh()
     {
@@ -1141,7 +1231,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     private FileSystemWatcher CreateStudentListWatcher()
     {
-        var watcher = new FileSystemWatcher(Utils.GetDirectoryPath("list", "roll_call_list"), "*.json")
+        var watcher = new FileSystemWatcher(Utils.GetDirectoryPath("list"), "*")
         {
             NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.CreationTime
         };
@@ -1156,6 +1246,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     private void StudentListFiles_OnChanged(object? sender, FileSystemEventArgs e)
     {
+        if (!IsRosterFileEvent(e))
+            return;
         QueueStudentListRefresh();
     }
 
@@ -1219,6 +1311,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         OnPropertyChanged(nameof(MaximumDrawCount));
         OnPropertyChanged(nameof(CountSummary));
         OnPropertyChanged(nameof(CanStartDraw));
+        OnPropertyChanged(nameof(DrawUnavailableMessage));
+        OnPropertyChanged(nameof(IsDrawUnavailableNoticeVisible));
         OnPropertyChanged(nameof(CanDecreaseCount));
         OnPropertyChanged(nameof(CanIncreaseCount));
     }
@@ -1372,11 +1466,133 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
         _isDrawCommandRunning = value;
         OnPropertyChanged(nameof(CanStartDraw));
+        OnPropertyChanged(nameof(DrawUnavailableMessage));
+        OnPropertyChanged(nameof(IsDrawUnavailableNoticeVisible));
+    }
+
+    private void ShowDrawAuthorizationNotice(LinkageDrawGate gate, string? detail)
+    {
+        var message = gate switch
+        {
+            LinkageDrawGate.BlockedByClassTime => detail ?? SR.M_DrawAuthorizationDenied,
+            LinkageDrawGate.BlockedByRemoteLock => SR.M_DrawLocked,
+            _ => SR.M_DrawAuthorizationDenied
+        };
+        MainView.ShowToast(message, FAInfoBarSeverity.Warning);
+    }
+
+    private static void ShowDrawUnavailableToast(string message, FAInfoBarSeverity severity = FAInfoBarSeverity.Warning)
+    {
+        if (!string.IsNullOrWhiteSpace(message))
+            MainView.ShowToast(message, severity);
     }
 
     private void TriggerPreviewAnimation()
     {
         PreviewAnimationRevision++;
+    }
+
+    /// <summary>Temporarily aligns the visible prize-pool selector and counters with a proof playback.</summary>
+    public IDisposable BeginProofPlayback(string? rosterName, int candidateCount, int resultCount)
+    {
+        var state = new ProofPlaybackDisplayState(
+            this,
+            _selectedPrizeListName,
+            _drawCount,
+            TotalCount,
+            RemainingCount);
+
+        if (!string.IsNullOrWhiteSpace(rosterName) && PrizeListNames.Contains(rosterName))
+            _selectedPrizeListName = rosterName;
+
+        _drawCount = Math.Clamp(resultCount, 1, Math.Max(1, candidateCount));
+        TotalCount = Math.Max(0, candidateCount);
+        RemainingCount = TotalCount;
+        NotifyProofPlaybackDisplayState();
+        return state;
+    }
+
+    private void NotifyProofPlaybackDisplayState()
+    {
+        OnPropertyChanged(nameof(SelectedPrizeListName));
+        OnPropertyChanged(nameof(IsNumberPrizeMode));
+        OnPropertyChanged(nameof(IsRemainingListVisible));
+        OnPropertyChanged(nameof(DrawCount));
+        OnPropertyChanged(nameof(TotalCount));
+        OnPropertyChanged(nameof(RemainingCount));
+        OnPropertyChanged(nameof(CountSummary));
+        OnPropertyChanged(nameof(MaximumDrawCount));
+        OnPropertyChanged(nameof(CanDecreaseCount));
+        OnPropertyChanged(nameof(CanIncreaseCount));
+        OnPropertyChanged(nameof(CanStartDraw));
+    }
+
+    private sealed class ProofPlaybackDisplayState(
+        LotteryPageViewModel owner,
+        string selectedPrizeListName,
+        int drawCount,
+        int totalCount,
+        int remainingCount) : IDisposable
+    {
+        private bool _disposed;
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            owner._selectedPrizeListName = selectedPrizeListName;
+            owner._drawCount = drawCount;
+            owner.TotalCount = totalCount;
+            owner.RemainingCount = remainingCount;
+            owner.NotifyProofPlaybackDisplayState();
+        }
+    }
+
+    /// <summary>Replays a stored proof directly in the lottery page without consuming inventory or writing history.</summary>
+    public async Task PlayProofPlaybackAsync(
+        IReadOnlyList<string> candidates,
+        IReadOnlyList<string> results,
+        CancellationToken cancellationToken)
+    {
+        IsDrawing = true;
+        try
+        {
+            var pool = candidates.Where(static value => !string.IsNullOrWhiteSpace(value)).ToArray();
+            var playbackCount = Math.Max(1, results.Count);
+            for (var iteration = 0; iteration < 16; iteration++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var offset = pool.Length == 0 ? 0 : iteration % pool.Length;
+                var frame = pool.Length == 0
+                    ? results.Take(playbackCount).ToArray()
+                    : pool.Skip(offset).Concat(pool.Take(offset)).Take(playbackCount).ToArray();
+                ReplaceResults(frame.Select(static text =>
+                    {
+                        var prize = new Prize { Name = text, Id = text };
+                        return new LotteryDisplayPrize(prize, text, string.Empty);
+                    }).ToArray());
+                IsResultVisible = true;
+                TriggerPreviewAnimation();
+                await Task.Delay(90, cancellationToken).ConfigureAwait(true);
+            }
+
+            ReplaceResults(results.Take(playbackCount).Select(static text =>
+            {
+                var prize = new Prize { Name = text, Id = text };
+                return new LotteryDisplayPrize(prize, text, string.Empty);
+            }).ToArray());
+            IsResultVisible = true;
+            RemainingCount = Math.Max(0, pool.Length - results.Count);
+            OnPropertyChanged(nameof(RemainingCount));
+            OnPropertyChanged(nameof(CountSummary));
+            TriggerResultAnimation();
+        }
+        finally
+        {
+            IsDrawing = false;
+        }
     }
 
     private void ReplaceResults(IReadOnlyList<LotteryDisplayPrize> prizes)
@@ -1500,6 +1716,11 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         if (!IsStudentAssignmentEnabled)
             return [];
 
+        if (IsGroupDraw)
+            return _lotteryDrawService.GetEligibleGroups(CurrentGenderScope)
+                .Select(group => GroupDrawCandidates.SampleMember(group, new CryptoRandomSource())
+                    ?? new Student { Group = group.Name, Name = group.Name });
+
         var threshold = DrawRepeatPolicy.ResolveThreshold(Config.EffectiveRollCallSettings.DrawMode, Config.EffectiveRollCallSettings.HalfRepeat);
         var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
         return DrawCandidateFilter.FilterEligibleStudents(
@@ -1548,11 +1769,23 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
         if (IsStudentAssignmentEnabled)
         {
+            if (IsGroupDraw)
+            {
+                var groups = GroupDrawCandidates.Build(_profileService.CurrentStudentList?.Students ?? [], CurrentGenderScope);
+                if (groups.Count > 0 && _lotteryDrawService.GetEligibleGroups(CurrentGenderScope).Count == 0)
+                {
+                    _temporaryRecordService.ClearGroups(SelectedStudentListName);
+                    reset = true;
+                }
+            }
+            else
+            {
             var studentPool = GetStudentPoolCandidates().ToList();
             if (studentPool.Count > 0 && !GetStudentCandidates().Any())
             {
                 _temporaryRecordService.ResetStudentList(SelectedStudentListName);
                 reset = true;
+            }
             }
         }
 
@@ -1592,6 +1825,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             .ToList();
 
         ReplaceOptions(GroupOptions, AllGroupsOption, students.Select(student => student.Group));
+        GroupOptions.Insert(1, DrawGroupsOption);
         ReplaceOptions(GenderOptions, AllGendersOption, students.Select(student => student.Gender));
 
         if (!GroupOptions.Contains(SelectedGroup))
@@ -1658,14 +1892,19 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         var template = Config.GetLotteryProcessDisplayTemplate();
         // 数字奖池里「奖品」就是数字本身：再拼一个序号会显示成「序号 数字」，这里让数字直接占位。
         var id = IsNumberPrizeMode ? string.Empty : displayId.ToString();
-        return LotteryProcessDisplayFormatter.Format(
+        var groupOnly = IsGroupDraw && !Config.EffectiveLotterySettings.ShowGroupMember;
+        var formatted = LotteryProcessDisplayFormatter.Format(
             template,
             id,
             prize.Id,
             prize.Name,
             student?.Group,
-            student?.Id,
-            student?.Name);
+            groupOnly ? null : student?.Id,
+            groupOnly ? null : student?.Name);
+        if (IsGroupDraw && student is not null && !string.IsNullOrWhiteSpace(student.Group)
+            && !template.Contains("{group}", StringComparison.Ordinal))
+            formatted = $"{formatted}\n{student.Group}";
+        return formatted;
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -1678,11 +1917,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             OnPropertyChanged(nameof(IsGroupSelectorVisible));
             OnPropertyChanged(nameof(IsGenderSelectorVisible));
             OnPropertyChanged(nameof(IsRemainingListVisible));
-        }
-
-        if (sender == Config.EffectiveMoreSettings || sender == Config.EffectiveHistoryGroups)
-        {
-            // 选择器显隐会改变「当前生效的组」的含义（隐藏即不做组隔离），两种开关变化都要重算并刷新一轮。
+            // 选择器显隐会改变「当前生效的组」的含义（隐藏即不做组隔离），要重算并刷新一轮。
             OnPropertyChanged(nameof(IsHistoryGroupSelectorVisible));
             RefreshHistoryGroupOptions();
             RefreshCounts();
@@ -1712,13 +1947,14 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     public void Dispose()
     {
+        if (_courseRosterMapping is not null)
+            _courseRosterMapping.SelectionChanged -= CourseRosterSelectionChanged;
         StopPreview();
         PrizeListNames.CollectionChanged -= PrizeListNamesOnCollectionChanged;
         StudentListNames.CollectionChanged -= StudentListNamesOnCollectionChanged;
         Config.EffectiveLotterySettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.EffectiveDefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.EffectiveMoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
-        Config.EffectiveHistoryGroups.PropertyChanged -= SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged -= SettingsOnPropertyChanged;
         _prizeListDebouncer?.Dispose();
         _studentListDebouncer?.Dispose();

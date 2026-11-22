@@ -8,7 +8,17 @@
              x:DataType="notification:DefaultNotificationSettingsPage">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro settings">
-            <sr:IconText Text="{Binding NotificationServiceTitle}" Glyph="{sr:Fi CommentNoteFilled}" Margin="0 0 0 4" />
+            <fa:FASettingsExpander x:Name="S_Common_Test" Header="{Binding TestTitle}"
+                                   Description="{Binding TestDescription}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PlayFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <Button Classes="accent"
+                            Content="{Binding TestButtonText}"
+                            Click="TestNotification_OnClick" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <sr:IconText Text="{Binding NotificationServiceTitle}" Glyph="{sr:Fi CommentNoteFilled}" Margin="0 12 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Default_NotificationServiceType" Header="{Binding NotificationServiceTypeTitle}"
                                    Description="{Binding NotificationServiceTypeDescription}"

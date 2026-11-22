@@ -4,6 +4,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Avalonia.Collections;
 using Avalonia.Controls;
@@ -29,11 +30,12 @@ using LR = SecRandom.Langs.SettingsPages.FloatingWindow.Resources;
 namespace SecRandom.Views.SettingsPages.Personalized;
 
 [PageInfo("settings.personalized.floatingWindow", FluentIcons.WindowAppsFilled, "settings.personalized")]
-public partial class FloatingWindowSettingsPage : UserControl
+public partial class FloatingWindowSettingsPage : UserControl, INotifyPropertyChanged
 {
     private const string CustomButtonsPageId = "settings.personalized.floatingWindowButtons";
     private bool _isSettingsSubscribed;
     private readonly IFloatingWindowButtonRegistry _floatingWindowButtonRegistry = IAppHost.GetService<IFloatingWindowButtonRegistry>();
+    public new event PropertyChangedEventHandler? PropertyChanged;
 
     public FloatingWindowSettingsPage()
     {
@@ -59,6 +61,23 @@ public partial class FloatingWindowSettingsPage : UserControl
     public string TopmostModeDescription => IsUiAccessSupported
         ? LR.S_Display_TopmostMode_Windows_D
         : LR.S_Display_TopmostMode_D;
+
+    public double DockTextProgress
+    {
+        get
+        {
+            var maxLength = FloatingWindowDockHandle.GetMaxTextLength(CultureInfo.CurrentUICulture);
+            if (maxLength <= 0)
+                return 0;
+
+            var text = FloatingWindowDockHandle.NormalizeText(
+                Settings.StickToEdgeDisplayText,
+                maxLength);
+            var length = text.EnumerateRunes().Count();
+            return Math.Clamp(length / (double)maxLength, 0, 1);
+        }
+    }
+
     public bool SupportsProgrammaticWindowPositioning => App.SupportsProgrammaticWindowPositioning;
 
     /// <summary>
@@ -100,6 +119,7 @@ public partial class FloatingWindowSettingsPage : UserControl
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+
         ConfigHandler.Save();
         if (e.PropertyName == nameof(Settings.CustomButtons))
             RefreshCustomButtonsSummary();
@@ -114,6 +134,9 @@ public partial class FloatingWindowSettingsPage : UserControl
             && !DesktopIntegration.IsUiAccessAvailable())
             SettingsView.Current?.RequestRestartApp();
     }
+
+    private void OnPropertyChanged(string propertyName) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
     private void RefreshCustomButtonsSummary()
     {
@@ -201,6 +224,11 @@ public partial class FloatingWindowSettingsPage : UserControl
         return new AvaloniaList<MultiSelectSettingOption>(options.Where(option => option.IsSelected));
     }
 
+    private static string Text(string fallback, string key)
+    {
+        return LR.ResourceManager.GetString(key, LR.Culture) ?? fallback;
+    }
+
     private bool NormalizeFloatingWindowSize()
     {
         var size = Settings.FloatingWindowSize <= 6
@@ -242,13 +270,17 @@ public partial class FloatingWindowSettingsPage : UserControl
     }
 
     /// <summary>
-    ///     文字样式只允许中文一个字、其它语言四个字符；旧配置里超长或带 emoji 的值在打开页面时清掉。
+    ///     文字样式只允许中文一个字、其它语言四个字符；旧配置里超长或带 emoji 的值在打开页面时清掉，
+    ///     空值则补成本地化默认文字。
     /// </summary>
     private bool NormalizeDockHandleText()
     {
         var text = FloatingWindowDockHandle.NormalizeText(
             Settings.StickToEdgeDisplayText,
             FloatingWindowDockHandle.StoredMaxTextLength);
+        if (text.Length == 0)
+            text = Langs.Common.Resources.C_PickButtonText;
+
         if (string.Equals(text, Settings.StickToEdgeDisplayText, StringComparison.Ordinal))
             return false;
 
@@ -265,10 +297,7 @@ public partial class FloatingWindowSettingsPage : UserControl
 
         var maxLength = FloatingWindowDockHandle.GetMaxTextLength(CultureInfo.CurrentUICulture);
         DockTextInput.MaxLength = maxLength;
-        DockTextLimitLabel.Text = string.Format(
-            CultureInfo.CurrentCulture,
-            LR.S_Dock_Text_Limit,
-            maxLength);
+        OnPropertyChanged(nameof(DockTextProgress));
 
         RefreshDockIconPreview();
     }
@@ -299,6 +328,7 @@ public partial class FloatingWindowSettingsPage : UserControl
 
         box.Text = text;
         box.CaretIndex = text.Length;
+        OnPropertyChanged(nameof(DockTextProgress));
     }
 
     private async void DockIconPick_OnClick(object? sender, RoutedEventArgs e)

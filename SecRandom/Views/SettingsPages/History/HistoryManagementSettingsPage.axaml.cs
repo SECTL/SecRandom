@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using Avalonia.Collections;
@@ -18,8 +17,6 @@ using SecRandom.Core.Controls;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
-using SecRandom.Core.Models.SubConfigs.General;
-using SecRandom.Core.Services.Config;
 using LR = SecRandom.Langs.SettingsPages.HistoryManagement.Resources;
 
 namespace SecRandom.Views.SettingsPages.History;
@@ -35,76 +32,27 @@ public partial class HistoryManagementSettingsPage : UserControl
     private const string SortAscending = "asc";
     private const string BreakCourseMarker = "__break__";
 
-    private bool _isHistoryGroupsSubscribed;
     private IHistoryGroupCatalog? _historyGroupCatalog;
 
     public HistoryManagementSettingsPage()
     {
-        HistoryGroups = IAppHost.GetService<MainConfigHandler>().Data.General.HistoryGroups;
         DataContext = this;
         InitializeComponent();
         InitializeExportOptions();
         RefreshCombos();
-        SubscribeHistoryGroups();
         RefreshHistoryGroups();
     }
 
-    public HistoryGroupSettingsConfig HistoryGroups { get; }
     public ObservableCollection<HistoryGroupRow> HistoryGroupRows { get; } = [];
 
-    private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private IHistoryGroupCatalog? HistoryGroupCatalog => _historyGroupCatalog ??= IAppHost.TryGetService<IHistoryGroupCatalog>();
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        SubscribeHistoryGroups();
         RefreshHistoryGroups();
-    }
-
-    private void OnUnloaded(object? sender, RoutedEventArgs e)
-    {
-        UnsubscribeHistoryGroups();
     }
 
     // ============ 历史记录组 ============
-
-    private void HistoryGroupsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        // 本页的保存边界：子配置属性一变就落盘。
-        ConfigHandler.Save();
-
-        if (e.PropertyName == nameof(HistoryGroupSettingsConfig.Enabled))
-            SyncHistoryGroupSection();
-    }
-
-    private void SubscribeHistoryGroups()
-    {
-        if (_isHistoryGroupsSubscribed)
-            return;
-
-        HistoryGroups.PropertyChanged += HistoryGroupsOnPropertyChanged;
-        _isHistoryGroupsSubscribed = true;
-    }
-
-    private void UnsubscribeHistoryGroups()
-    {
-        if (!_isHistoryGroupsSubscribed)
-            return;
-
-        HistoryGroups.PropertyChanged -= HistoryGroupsOnPropertyChanged;
-        _isHistoryGroupsSubscribed = false;
-    }
-
-    private void SyncHistoryGroupSection()
-    {
-        if (!HistoryGroups.Enabled)
-        {
-            ShowHistoryGroupMessage(string.Empty);
-            return;
-        }
-
-        RefreshHistoryGroups();
-    }
 
     /// <summary>
     ///     重新从记录组目录拉取点名历史的记录组，并重建行列表。

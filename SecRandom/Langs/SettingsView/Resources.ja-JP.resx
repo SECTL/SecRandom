@@ -109,6 +109,7 @@
   <data name="M_TransferFailed" xml:space="preserve"><value>転送に失敗しました: {0}</value></data>
   <data name="M_TransferWrongContent" xml:space="preserve"><value>受信した転送の種類が現在の操作と一致しません</value></data>
   <data name="C_TransferCopyAddress" xml:space="preserve"><value>アドレスをコピー</value></data>
+  <data name="C_TransferOpenMainWebsite" xml:space="preserve"><value>公式サイトを開く</value></data>
   <data name="C_TransferSessionCodeLabel" xml:space="preserve"><value>セッションコード</value></data>
   <data name="C_TransferFrames" xml:space="preserve"><value>転送フレーム</value></data>
   <data name="C_TransferSpeed" xml:space="preserve"><value>転送速度</value></data>

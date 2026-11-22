@@ -49,8 +49,7 @@ namespace SecRandom.Views;
 ///         ESC 让位给弹窗，避免把正在验证的 root window 关掉（方案 R1）。
 ///     </para>
 ///     <para>
-///         整窗不透明度放在根 <c>RootBorder.Opacity</c>（QuickDrawPage 先例），不使用
-///         <see cref="Window.Opacity" />；根 Border 的 Opacity 同时承担淡入。
+///         根 <c>RootBorder.Opacity</c> 只用于进场淡入，设置里的不透明度只作用于各自的背景层。
 ///     </para>
 /// </remarks>
 public partial class FullscreenNotificationWindow : Window
@@ -494,7 +493,7 @@ public partial class FullscreenNotificationWindow : Window
             Dispatcher.UIThread.Post(() =>
             {
                 PositionOnTargetScreen();
-                RootBorder.Opacity = GetWindowOpacity();
+                RootBorder.Opacity = 1;
                 ReassertTopmost();
             }, DispatcherPriority.Render);
 
@@ -706,13 +705,6 @@ public partial class FullscreenNotificationWindow : Window
         }
     }
 
-    private double GetWindowOpacity()
-    {
-        // 全屏结果窗是"整块屏幕"的展板：窗口本身始终不透明，透明度只作用在背景层
-        // （见 ApplyAppearance 里的 BackgroundOpacity），否则文字也会一起变淡、投影时看不清。
-        return 1.0;
-    }
-
     /// <summary>
     ///     解析本次展示的强调色：跟随主题时直接取主题强调色；自定义时用设置值，空/坏值回落主题色。
     /// </summary>
@@ -744,8 +736,6 @@ public partial class FullscreenNotificationWindow : Window
     /// <summary>应用背景、遮罩、强调色、文字配色与四边进度条外观。任何资源缺失都静默回落。</summary>
     private void ApplyAppearance(FullscreenNotificationSettings settings)
     {
-        var lowSpec = IsLowSpecMode();
-
         // 文字/遮罩配色跟着「背景」的明暗走，而不是跟着应用主题走：用户选了浅色纯色底时，
         // 哪怕应用是深色主题也必须换成深色文字，否则整屏白字糊在浅底上。
         var appearance = settings.ResolveBackgroundAppearance();
@@ -753,15 +743,10 @@ public partial class FullscreenNotificationWindow : Window
         _lightBackground = ResolveLightBackground(appearance);
         _bodyColor = _lightBackground ? LightThemeBodyColor : DarkThemeBodyColor;
 
-        ApplyBackground(settings, appearance, lowSpec);
+        ApplyBackground(settings, appearance);
         ApplyThemePalette();
 
-        // 底色层始终不透明：不透明度只作用于背景图（图片模式卡片里的那条滑杆），
-        // 否则把图片调淡会连带把窗口本身弄成半透明、露出桌面。
-        FallbackBackground.Opacity = 1.0;
-
-        // 遮罩浓度不再是设置项：主题/纯色/渐变本来就是用户选的配色，再压一层只会让它们变脏；
-        // 只有自定义图片才需要一层固定压暗来保证文字可读，所以这里直接按模式推出，不对外开放。
+        // 图片使用单独的固定遮罩。
         OverlayBorder.Opacity = appearance.UsesImage ? ImageOverlayOpacity : 0.0;
 
         var accentBrush = new SolidColorBrush(_accentColor);
@@ -826,8 +811,7 @@ public partial class FullscreenNotificationWindow : Window
 
     private void ApplyBackground(
         FullscreenNotificationSettings settings,
-        FullscreenBackgroundAppearance appearance,
-        bool lowSpec)
+        FullscreenBackgroundAppearance appearance)
     {
         if (_backgroundBitmap is not null)
         {
@@ -836,14 +820,16 @@ public partial class FullscreenNotificationWindow : Window
             _backgroundBitmap = null;
         }
 
-        BackgroundImage.Effect = null;
         BackgroundImage.IsVisible = false;
         BackgroundImage.Opacity = 0;
 
-        // 纯色 / 双色渐变各铺各的；跟随主题（以及图片模式没选到图时）铺主题渐变。
-        // 图片模式永远先在底下留一层主题渐变：图丢了、读不出来时整屏仍然是正常的板子，不是一片黑。
         switch (appearance.Mode)
         {
+            case FullscreenBackgroundMode.Theme:
+                FallbackBackground.Background = new SolidColorBrush(
+                    ResolveThemeSurfaceColor(), Math.Clamp(settings.ThemeBackgroundOpacity, 0, 100) / 100.0);
+                break;
+
             case FullscreenBackgroundMode.Solid:
                 FallbackBackground.Background = new SolidColorBrush(
                     appearance.SolidColor ?? FullscreenNotificationSettings.DefaultBackgroundColor);
@@ -857,7 +843,8 @@ public partial class FullscreenNotificationWindow : Window
                 break;
 
             default:
-                ApplyThemeBackground();
+                // 图片下始终保留主题底色，图片缺失时也能正常显示。
+                FallbackBackground.Background = new SolidColorBrush(ResolveThemeSurfaceColor());
                 break;
         }
 
@@ -879,10 +866,6 @@ public partial class FullscreenNotificationWindow : Window
             BackgroundImage.Source = bitmap;
             BackgroundImage.Opacity = settings.EffectiveBackgroundOpacity / 100.0;
             BackgroundImage.IsVisible = true;
-
-            var radius = settings.EffectiveBackgroundBlurRadius;
-            if (!lowSpec && radius > 0)
-                BackgroundImage.Effect = new BlurEffect { Radius = radius };
         }
         catch (Exception ex)
         {
@@ -942,54 +925,12 @@ public partial class FullscreenNotificationWindow : Window
     }
 
     /// <summary>
-    ///     跟随主题的底色：直接用应用主题的纯色背景铺满整屏。
-    /// </summary>
-    /// <remarks>
-    ///     这里刻意不再掺强调色、也不再画渐变：用户选「跟随主题」要的是应用本身的底色，
-    ///     掺了强调色会发蓝/发紫，渐变会让整块底色看起来"不纯"，投影时尤其明显。
-    ///     强调色只留给进度条、倒计时与结果强调，不参与背景。
-    /// </remarks>
-    private void ApplyThemeBackground()
-    {
-        FallbackBackground.Background = new SolidColorBrush(ResolveThemeSurfaceColor());
-    }
-
-    /// <summary>
     ///     解析应用主题的纯色背景：优先取 FluentAvalonia 的主题底色资源，取不到就按明暗主题回默认值。
     /// </summary>
     /// <remarks>
     ///     必须只接受不透明纯色：主题资源里也有半透明/画刷型条目，透出来会让整屏和桌面混色，同样是"不纯"。
     /// </remarks>
-    private Color ResolveThemeSurfaceColor()
-    {
-        var variant = ActualThemeVariant;
-        foreach (var key in ThemeSurfaceColorResourceKeys)
-        {
-            if (!Application.Current!.TryFindResource(key, variant, out var resource) || resource is null)
-                continue;
-
-            switch (resource)
-            {
-                case Color color when color.A == 0xFF:
-                    return color;
-                case ISolidColorBrush { Color.A: 0xFF } solid:
-                    return solid.Color;
-            }
-        }
-
-        return variant == ThemeVariant.Light ? DefaultLightThemeSurfaceColor : DefaultDarkThemeSurfaceColor;
-    }
-
-    private static readonly object[] ThemeSurfaceColorResourceKeys =
-    [
-        "SolidBackgroundFillColorBaseBrush",
-        "SolidBackgroundFillColorBase",
-        "ApplicationBackgroundBrush",
-        "SystemControlBackgroundAltHighBrush"
-    ];
-
-    private static readonly Color DefaultDarkThemeSurfaceColor = Color.FromRgb(0x20, 0x20, 0x20);
-    private static readonly Color DefaultLightThemeSurfaceColor = Color.FromRgb(0xF3, 0xF3, 0xF3);
+    private Color ResolveThemeSurfaceColor() => NotificationBackgroundBrushes.ResolveThemeSurfaceColor(ActualThemeVariant);
 
     private string? ResolveBackgroundPath(string? value)
     {
@@ -1282,18 +1223,6 @@ public partial class FullscreenNotificationWindow : Window
             return ResultTextColumnMaxWidth;
 
         return Math.Clamp(available, ResultTextColumnMinWidth, ResultTextColumnMaxWidth);
-    }
-
-    private static bool IsLowSpecMode()
-    {
-        try
-        {
-            return IAppHost.TryGetService<MainConfigHandler>()?.Data.General.PerformanceSettings.LowSpecMode == true;
-        }
-        catch
-        {
-            return false;
-        }
     }
 
     /// <summary>把"说一次语音"包成幂等回调：动画器和窗口都可以触发，但只真的说一次。</summary>

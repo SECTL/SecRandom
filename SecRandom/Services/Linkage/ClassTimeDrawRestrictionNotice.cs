@@ -30,14 +30,18 @@ internal static class ClassTimeDrawRestrictionNotice
     private static long _lastShownAt = long.MinValue;
 
     /// <summary>提示一次“当前不能抽取”，并带上下一节课的恢复时间。</summary>
-    public static void Show(CourseScheduleSnapshot snapshot)
+    public static void Show(CourseScheduleSnapshot snapshot, Action<string>? present = null)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
         if (!TryEnterThrottleWindow())
             return;
 
-        MainView.ShowToast(BuildMessage(snapshot), FAInfoBarSeverity.Warning);
+        var message = BuildMessage(snapshot);
+        if (present is null)
+            MainView.ShowToast(message, FAInfoBarSeverity.Warning);
+        else
+            present(message);
     }
 
     internal static string BuildMessage(CourseScheduleSnapshot snapshot)

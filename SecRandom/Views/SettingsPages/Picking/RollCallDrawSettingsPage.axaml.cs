@@ -10,7 +10,6 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Icons;
-using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
@@ -33,6 +32,7 @@ public partial class RollCallDrawSettingsPage : UserControl
         Settings = ViewModel.Config.RollCallSettings;
         DefaultClassSource = new DefaultRosterSettingSource(
             "roll_call_list",
+            ProfileCatalogManager,
             PickingResources.O_NoList,
             () => Settings.DefaultClass,
             value => Settings.DefaultClass = value,
@@ -41,7 +41,6 @@ public partial class RollCallDrawSettingsPage : UserControl
             PickingResources.O_HistoryGroupDefault,
             HistoryGroupKind.RollCall,
             HistoryGroupCatalog,
-            () => HistoryGroups.Enabled,
             () => SettingsView.Current?.IsPreviewMode == true,
             () => Settings.HistoryGroup,
             value => Settings.HistoryGroup = value);
@@ -140,10 +139,9 @@ public partial class RollCallDrawSettingsPage : UserControl
     }
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
+    private IProfileCatalogManager ProfileCatalogManager { get; } = IAppHost.GetService<IProfileCatalogManager>();
     private IHistoryGroupCatalog HistoryGroupCatalog { get; } = IAppHost.GetService<IHistoryGroupCatalog>();
     private MusicLibraryService MusicLibrary { get; } = IAppHost.GetService<MusicLibraryService>();
-    private HistoryGroupSettingsConfig HistoryGroups => ViewModel.Config.General.HistoryGroups;
-
     /// <summary>
     ///     用户在这一行里换了组：写回配置。重建候选值期间下拉框会先清空选中项，那不是用户选择。
     /// </summary>
@@ -199,7 +197,6 @@ public partial class RollCallDrawSettingsPage : UserControl
         RefreshHistoryGroupSelection();
         ApplyFairDrawModeVisibility();
         ApplyDefaultClassCardVisibility();
-        ApplyHistoryGroupCardVisibility();
         SubscribeSettings();
     }
 
@@ -209,18 +206,7 @@ public partial class RollCallDrawSettingsPage : UserControl
             return;
 
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
-        HistoryGroups.PropertyChanged -= HistoryGroupsOnPropertyChanged;
         _isSubscribed = false;
-    }
-
-    private void HistoryGroupsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName is not (nameof(HistoryGroupSettingsConfig.Enabled) or null or ""))
-            return;
-
-        HistoryGroup.Refresh();
-        ApplyHistoryGroupSelection();
-        ApplyHistoryGroupCardVisibility();
     }
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -261,7 +247,6 @@ public partial class RollCallDrawSettingsPage : UserControl
             return;
 
         Settings.PropertyChanged += SettingsOnPropertyChanged;
-        HistoryGroups.PropertyChanged += HistoryGroupsOnPropertyChanged;
         _isSubscribed = true;
     }
 
@@ -270,7 +255,6 @@ public partial class RollCallDrawSettingsPage : UserControl
     {
         DefaultClassSource.Refresh(DefaultClassSelector);
         ApplyDefaultClassCardVisibility();
-        ApplyHistoryGroupCardVisibility();
     }
 
     private void DefaultClassSelectorOnSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -332,12 +316,6 @@ public partial class RollCallDrawSettingsPage : UserControl
             card.IsVisible = DefaultClassSource.HasRosters;
     }
 
-    /// <summary>历史记录组总开关关闭时整卡隐藏：没有地方能解释一个不存在功能的选择器。</summary>
-    private void ApplyHistoryGroupCardVisibility()
-    {
-        if (this.FindControl<FluentAvalonia.UI.Controls.FASettingsExpander>("S_RollCallHistoryGroup") is { } card)
-            card.IsVisible = HistoryGroups.Enabled;
-    }
 }
 
 public sealed record RollCallAlgorithmOption(string Id, string Name);

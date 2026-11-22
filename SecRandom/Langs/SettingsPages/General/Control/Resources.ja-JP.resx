@@ -10,7 +10,7 @@
     <value>リモート制御を許可</value>
   </data>
   <data name="S_RemoteControl_Enabled_D">
-    <value>このスイッチは本機だけが持つもので、オフの間はサービスから何が届いても実行しません</value>
+    <value>本機で集控コマンドを受け取る</value>
   </data>
   <data name="S_RemoteControl_GroupId">
     <value>所属グループ ID</value>
@@ -28,19 +28,19 @@
     <value>表示名</value>
   </data>
   <data name="S_RemoteControl_DisplayName_D">
-    <value>コンソールの端末一覧に表示される名前で、空欄ならホスト名を報告します</value>
+    <value>空欄の場合はホスト名を使用</value>
   </data>
   <data name="S_RemoteControl_Status">
     <value>接続状態</value>
   </data>
   <data name="S_RemoteControl_Status_D">
-    <value>切断後はバックオフで自動再接続し、再試行しても解決しない失敗はここで待機します</value>
+    <value>接続状態を表示し、手動で再接続</value>
   </data>
   <data name="S_RemoteControl_DrawLocked">
     <value>抽選ロック</value>
   </data>
   <data name="S_RemoteControl_DrawLocked_D">
-    <value>コンソールから設定され、ロック中は本機で抽選できません</value>
+    <value>コンソール設定です。ロック中は抽選不可</value>
   </data>
   <data name="C_Reconnect">
     <value>今すぐ再接続</value>
@@ -100,7 +100,7 @@
     <value>集控プラットフォーム</value>
   </data>
   <data name="S_OpenControlPlane_D">
-    <value>ブラウザーで集控プラットフォームの Web コンソールを開き、このグループの端末を管理します</value>
+    <value>設定済みの集控プラットフォームを開く</value>
   </data>
   <data name="C_OpenControlPlane_Official">
     <value>SecRandom 集控プラットフォームを開く</value>
@@ -112,13 +112,13 @@
     <value>メイン画面にリモート抽選ページを表示</value>
   </data>
   <data name="S_RemoteDrawPage_D">
-    <value>オンにするとメイン画面のサイドバーに「リモート抽選」が現れ、同じグループの他の端末へ抽選を送れます。利用にはアカウントのサインインが必要で、実行可否はサーバーがグループ内の役割で判定します。オフにすると即座に非表示になります</value>
+    <value>メイン画面にリモート抽選を表示</value>
   </data>
   <data name="S_NodeEnrollment">
-    <value>自建集控に接続</value>
+    <value>地点コード接続</value>
   </data>
   <data name="S_NodeEnrollment_D">
-    <value>コンソールが発行した接続コードで自建集控に接続し、SECTL ログインは不要です</value>
+    <value>地点 ID とペアリングコードを入力</value>
   </data>
   <data name="S_NodeEnrollment_Code">
     <value>接続コード</value>
@@ -128,6 +128,12 @@
   </data>
   <data name="C_Enroll">
     <value>接続</value>
+  </data>
+  <data name="C_SwitchToAccount" xml:space="preserve">
+    <value>アカウント接続に切替</value>
+  </data>
+  <data name="C_SwitchToPairCode" xml:space="preserve">
+    <value>地点コード接続に切替</value>
   </data>
   <data name="C_ClearEnrollment">
     <value>接続を解除</value>
@@ -163,13 +169,13 @@
     <value>SC-A1B2C3</value>
   </data>
   <data name="S_Enrollment_SiteId_D">
-    <value>管理者がコンソールで示す SC-K7Q2M9 形式の地点 ID です</value>
+    <value>管理者が発行した地点 ID</value>
   </data>
   <data name="S_Enrollment_PairingCode_Ph">
     <value>ABCD-7KQ2</value>
   </data>
   <data name="S_Enrollment_PairingCode_D">
-    <value>管理者が発行する一度限りのペアリングコードで、接続時のみ使います</value>
+    <value>管理者が発行する一度限りのコード</value>
   </data>
   <data name="S_Enrolled">
     <value>接続済み</value>
@@ -190,7 +196,7 @@
     <value>クラス</value>
   </data>
   <data name="S_Enrollment_Class_D">
-    <value>本機の学年とクラスを選びます。両方選ばないと保存できません。クラスを変更するときは先に現在のクラスを解除してください</value>
+    <value>学年とクラスを選択。変更前に解除</value>
   </data>
   <data name="S_Enrollment_Class_Ph">
     <value>クラスを選択</value>
@@ -313,7 +319,7 @@
     <value>アカウント接続</value>
   </data>
   <data name="S_AccountEnrollment_D" xml:space="preserve">
-    <value>SECTL アカウントでサインインし、拠点・学年・クラスを順に選択します。3 つすべて選ぶまでこの端末は接続できません。スマートフォンはこの経路のみ利用できます</value>
+    <value>ログイン後に拠点・学年・クラスを選択</value>
   </data>
   <data name="S_AccountCurrent" xml:space="preserve">
     <value>サインイン中</value>

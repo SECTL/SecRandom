@@ -86,8 +86,8 @@ SecRandom 以 GNU GPLv3 许可发布；GPLv3 允许您运行、研究、修改�
   <data name="C_ThemeColorDescription" xml:space="preserve"><value>使用系统主题色，或选择自定义的应用主题色</value></data>
   <data name="O_SystemColor" xml:space="preserve"><value>系统主题色</value></data>
   <data name="O_CustomColor" xml:space="preserve"><value>自定义主题色</value></data>
-  <data name="C_Opacity" xml:space="preserve"><value>浮窗透明度</value></data>
-  <data name="C_OpacityDescription" xml:space="preserve"><value>透明度会在完成设置后应用到浮窗</value></data>
+  <data name="C_Opacity" xml:space="preserve"><value>浮窗不透明度</value></data>
+  <data name="C_OpacityDescription" xml:space="preserve"><value>不透明度会在完成设置后应用到浮窗</value></data>
   <data name="C_DesktopTitle" xml:space="preserve"><value>桌面集成</value></data>
   <data name="C_DesktopDescription" xml:space="preserve"><value>这些选项会在完成时写入系统；若平台拒绝操作，设置会保持关闭并可稍后重试</value></data>
   <data name="C_Autostart" xml:space="preserve"><value>开机启动</value></data>

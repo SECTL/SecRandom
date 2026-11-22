@@ -11,6 +11,7 @@ namespace SecRandom.Langs.MainPages.Lottery {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     public class Resources {
+        public static string O_DrawGroups => ResourceManager.GetString("O_DrawGroups", resourceCulture);
         private static global::System.Resources.ResourceManager resourceMan;
         private static global::System.Globalization.CultureInfo resourceCulture;
 
@@ -42,6 +43,9 @@ namespace SecRandom.Langs.MainPages.Lottery {
         public static string C_Stop => ResourceManager.GetString("C_Stop", resourceCulture);
         public static string M_CountSummaryFormat => ResourceManager.GetString("M_CountSummaryFormat", resourceCulture);
         public static string M_DrawFailed => ResourceManager.GetString("M_DrawFailed", resourceCulture);
+        public static string M_DrawAuthorizationDenied => ResourceManager.GetString("M_DrawAuthorizationDenied", resourceCulture);
+        public static string M_DrawLocked => ResourceManager.GetString("M_DrawLocked", resourceCulture);
+        public static string M_LotteryDisabled => ResourceManager.GetString("M_LotteryDisabled", resourceCulture);
         public static string M_Drawing => ResourceManager.GetString("M_Drawing", resourceCulture);
         public static string M_DrawnCountFormat => ResourceManager.GetString("M_DrawnCountFormat", resourceCulture);
         public static string M_InvalidWeight => ResourceManager.GetString("M_InvalidWeight", resourceCulture);

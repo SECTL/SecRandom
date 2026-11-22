@@ -5,6 +5,7 @@
              xmlns:langs="using:SecRandom.Langs.MainPages.Lottery"
              xmlns:system="clr-namespace:System;assembly=System.Runtime"
              xmlns:vm="using:SecRandom.ViewModels.MainPages"
+             xmlns:fa="using:FluentAvalonia.UI.Controls"
              x:Class="SecRandom.Views.MainPages.LotteryPage"
              x:DataType="vm:LotteryPageViewModel">
     <UserControl.Resources>
@@ -154,5 +155,12 @@
                 IsVisible="{Binding IsControlPanelOnRight}">
             <ContentControl Content="{Binding}" ContentTemplate="{StaticResource LotteryControlPanelTemplate}" />
         </Border>
+        <fa:FAInfoBar Grid.ColumnSpan="3"
+                      HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                      Margin="12,12,24,24" MaxWidth="360"
+                      IsOpen="{Binding IsDrawUnavailableNoticeVisible}"
+                      IsVisible="{Binding IsDrawUnavailableNoticeVisible}"
+                      IsClosable="False" Severity="Warning"
+                      Message="{Binding DrawUnavailableMessage}" />
     </Grid>
 </UserControl>

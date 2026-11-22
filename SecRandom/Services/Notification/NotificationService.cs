@@ -15,6 +15,7 @@ using SecRandom4Ci.Interface.Enums;
 using SecRandom4Ci.Interface.Models;
 using SecRandom4Ci.Interface.Services;
 using ProfileStudent = SecRandom.Shared.Models.Profile.Student;
+using NotificationResources = SecRandom.Langs.SettingsPages.Notification.Resources;
 
 namespace SecRandom.Services.Notification;
 
@@ -118,7 +119,8 @@ public sealed class NotificationService : IDisposable
     public void QueueLottery(
         string className,
         IReadOnlyList<Prize> prizes,
-        IReadOnlyList<ProfileStudent> assignedStudents)
+        IReadOnlyList<ProfileStudent> assignedStudents,
+        IReadOnlyList<string>? formattedResults = null)
     {
         List<NotificationItem> items = [];
         List<string> displayItems = [];
@@ -135,7 +137,8 @@ public sealed class NotificationService : IDisposable
                 StudentName = student is null ? string.Empty : DisplayValue(student.Name, student.Id),
                 Exists = prize.Exists && (student?.Exists ?? true)
             });
-            displayItems.Add(prizeName);
+            displayItems.Add(formattedResults is not null && index < formattedResults.Count
+                ? formattedResults[index] : prizeName);
         }
 
         Queue(NotificationSettingsType.Lottery, className, items, displayItems);
@@ -160,6 +163,124 @@ public sealed class NotificationService : IDisposable
         _quickDrawBuiltInPreviewActive = true;
         await App.ShowQuickDrawNotificationPreviewWindowAsync(windowSettings);
         return true;
+    }
+
+    /// <summary>
+    ///     显示一次设置页使用的内置浮窗测试通知。测试不读取渠道的启用开关、阈值或服务类型，
+    ///     因为它验证的是浮窗外观本身，而不是自动送达配置。
+    /// </summary>
+    public bool ShowBuiltInTestNotification(NotificationChannelSettings windowSettings)
+    {
+        if (_isDisposed)
+            return false;
+
+        var (items, displayItems) = CreateTestNotification(NotificationSettingsType.QuickDraw);
+        ShowBuiltIn(
+            NotificationSettingsType.QuickDraw,
+            displayItems,
+            windowSettings,
+            windowSettings,
+            windowSettings,
+            preserveQuickDrawResult: false,
+            showPreview: true);
+        return items.Count > 0;
+    }
+
+    /// <summary>
+    ///     按通知渠道当前选择的后端显示一次测试通知。测试绕过启用开关与数量阈值，
+    ///     但保留服务类型、动画、时长、失败回落和全屏外观等用户配置。
+    /// </summary>
+    public Task<bool> ShowTestNotificationAsync(
+        NotificationSettingsType type,
+        NotificationChannelSettings? settingsOverride = null)
+    {
+        if (_isDisposed)
+            return Task.FromResult(false);
+
+        var config = _configHandler.Data;
+        var basicSettings = settingsOverride ?? config.GetOverrideNotificationSettings(
+            type,
+            OverridableNotificationSettingsType.Basic);
+        var serviceSettings = settingsOverride ?? config.GetOverrideNotificationSettings(
+            type,
+            OverridableNotificationSettingsType.Service);
+        var windowSettings = settingsOverride ?? config.GetOverrideNotificationSettings(
+            type,
+            OverridableNotificationSettingsType.NotificationWindow);
+        var (items, displayItems) = CreateTestNotification(type);
+
+        // 全屏是独立后端。预览使用固定的 3 秒倒计时，不改写渠道真实时长。
+        if (serviceSettings.UsesFullscreenNotificationService && IsFullscreenPresentationAvailable)
+        {
+            var presenter = TryGetFullscreenPresenter();
+            if (presenter is not null)
+            {
+                var fullscreenItems = items.Select(static item => item.IsLottery
+                        ? new FullscreenResultItem(item.LotteryName, null)
+                        : new FullscreenResultItem(item.StudentName, item.StudentId.ToString()))
+                    .ToList();
+                var fullscreenResults = fullscreenItems.Take(1).ToList();
+                var seed = FullscreenNotificationComposer.CreateSeed(
+                    type,
+                    fullscreenItems,
+                    fullscreenItems.Count,
+                    fullscreenItems.Count,
+                    null);
+                var snapshot = FullscreenNotificationComposer.CreatePreviewSnapshot(
+                    type,
+                    fullscreenResults,
+                    fullscreenItems,
+                    fullscreenItems.Count,
+                    fullscreenItems.Count - fullscreenResults.Count);
+                presenter.Begin(type, seed);
+                presenter.Complete(type, snapshot, autoCloseSecondsOverride: 3);
+                return Task.FromResult(true);
+            }
+        }
+
+        var delivered = false;
+        // 移动端没有全屏窗口时，沿用正式通知链路的浮窗降级行为。
+        if (serviceSettings.UsesBuiltInNotificationService
+            || serviceSettings.UsesFullscreenNotificationService && !IsFullscreenPresentationAvailable)
+        {
+            ShowBuiltIn(
+                type,
+                displayItems,
+                basicSettings,
+                serviceSettings,
+                windowSettings,
+                preserveQuickDrawResult: false,
+                showPreview: true);
+            delivered = true;
+        }
+
+        if (serviceSettings.UsesExternalNotificationService)
+        {
+            var notification = new NotificationData
+            {
+                ClassName = TestText("SecRandom test", "M_NotificationTestClass"),
+                Items = items,
+                DrawCount = items.Count,
+                DisplayDuration = Math.Clamp(serviceSettings.DisplayDuration, 1, 60),
+                Animation = basicSettings.Animation,
+                ResultType = GetResultType(type)
+            };
+            Action? builtInFallback = serviceSettings.UseBuiltInOnServiceFailure
+                && !serviceSettings.UsesBuiltInNotificationService
+                ? () => ShowBuiltIn(
+                    type,
+                    displayItems,
+                    basicSettings,
+                    serviceSettings,
+                    windowSettings,
+                    preserveQuickDrawResult: false,
+                    showPreview: true)
+                : null;
+            _ = Task.Run(() => SendToClassIslandAsync(notification, builtInFallback));
+            delivered = true;
+        }
+
+        return Task.FromResult(delivered);
     }
 
     public bool UsesBuiltInNotificationService(NotificationSettingsType type)
@@ -554,6 +675,46 @@ public sealed class NotificationService : IDisposable
             _ => throw new ArgumentOutOfRangeException(nameof(type), type, null)
         };
     }
+
+    private static (List<NotificationItem> Items, List<string> DisplayItems) CreateTestNotification(
+        NotificationSettingsType type)
+    {
+        if (type == NotificationSettingsType.Lottery)
+        {
+            var prizes = new[]
+            {
+                TestText("Test prize 1", "M_NotificationTestPrize1"),
+                TestText("Test prize 2", "M_NotificationTestPrize2")
+            };
+            return (
+                prizes.Select(prize => new NotificationItem
+                    {
+                        IsLottery = true,
+                        LotteryName = prize,
+                        Exists = true
+                    })
+                    .ToList(),
+                prizes.ToList());
+        }
+
+        var students = new[]
+        {
+            (Id: 1001, Name: TestText("Test student 1", "M_NotificationTestStudent1")),
+            (Id: 1002, Name: TestText("Test student 2", "M_NotificationTestStudent2"))
+        };
+        return (
+            students.Select(student => new NotificationItem
+                {
+                    StudentId = student.Id,
+                    StudentName = student.Name,
+                    Exists = true
+                })
+                .ToList(),
+            students.Select(student => student.Name).ToList());
+    }
+
+    private static string TestText(string fallback, string key)
+        => NotificationResources.ResourceManager.GetString(key, NotificationResources.Culture) ?? fallback;
 
     private static int ParseStudentId(string value)
     {

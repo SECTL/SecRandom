@@ -149,14 +149,23 @@ namespace SecRandom;
 public partial class App : Application
 {
     private static FloatingWindow? _floatingWindow;
+
+    /// <summary>供独立的拦截提示定位到浮窗侧边；只读当前窗口，不改变浮窗可见性。</summary>
+    internal static FloatingWindow? FloatingWindowForNotice =>
+        _floatingWindow is { IsVisible: true } primary ? primary : _secondaryFloatingWindow;
     private static FloatingWindow? _secondaryFloatingWindow;
 
     /// <summary>一扇窗藏起来去同步另一扇时的重入闸，避免两窗互相触发。</summary>
     private static bool _syncingFloatingWindowVisibility;
 
-    /// <summary>快选（长按闪抽）进行时被临时让位的另一侧悬浮窗，结束后按原意还原。</summary>
-    private static readonly List<FloatingWindow> _quickPickSuppressedWindows = [];
+    /// <summary>快选（长按闪抽）期间的浮窗可见性快照，结束后按原意还原。</summary>
+    private static readonly List<QuickPickWindowSnapshot> _quickPickSuppressedWindows = [];
     private static bool _floatingWindowsSuppressedForQuickPick;
+
+    private sealed record QuickPickWindowSnapshot(
+        FloatingWindow Window,
+        bool WasVisible,
+        bool WantedVisible);
     private static Window? _quickDrawWindow;
     private static NotificationChannelSettings? _quickDrawNotificationSettings;
     private static bool _positioningQuickDrawWindow;
@@ -180,6 +189,8 @@ public partial class App : Application
     private static readonly TimeSpan NotificationFadeInStepDelay = TimeSpan.FromMilliseconds(15);
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
+    private static bool _timerSurfaceSuppressesMainWindow;
+    private static readonly List<Window> _timerSurfaceSuppressedWindows = [];
     private static Task? _runtimeServicesStartupTask;
     private NativeMenuItem? _floatingWindowMenuItem;
     private NativeMenuItem? _exitSudoModeMenuItem;
@@ -739,11 +750,16 @@ public partial class App : Application
         {
             foreach (var window in FloatingWindows())
             {
-                if (ReferenceEquals(window, source) || !window.IsVisible)
+                if (ReferenceEquals(window, source))
                     continue;
 
-                _quickPickSuppressedWindows.Add(window);
-                window.Hide();
+                var snapshot = new QuickPickWindowSnapshot(
+                    window,
+                    window.IsVisible,
+                    window.UserWantsVisible);
+                _quickPickSuppressedWindows.Add(snapshot);
+                if (snapshot.WasVisible)
+                    window.Hide();
             }
         }
         finally
@@ -765,10 +781,16 @@ public partial class App : Application
         _syncingFloatingWindowVisibility = true;
         try
         {
-            foreach (var window in restore)
+            foreach (var snapshot in restore)
             {
+                var window = snapshot.Window;
                 // 期间用户自己把它藏了、或课程联动接管了可见性，就让那条路径说了算。
-                if (window.IsVisible || !window.UserWantsVisible || window.IsHiddenByCourseLinkage)
+                // A window whose intent was still "visible" is restored even if a layout race
+                // made it invisible just before the snapshot was taken.
+                if (window.IsVisible
+                    || !snapshot.WantedVisible
+                    || !window.UserWantsVisible
+                    || window.IsHiddenByCourseLinkage)
                     continue;
 
                 RestoreWithoutActivating(window);
@@ -866,12 +888,18 @@ public partial class App : Application
     /// </summary>
     internal static void RequestFloatingWindowAnchorAlignment()
     {
+        if (FloatingWindows().Any(window => window.IsQuickPickActive))
+            return;
+
         Dispatcher.UIThread.Post(AlignFloatingWindowAnchors, DispatcherPriority.Render);
     }
 
     /// <summary>让两侧悬浮窗落到同一纵向高度；"两侧高度统一"关闭时什么也不做。</summary>
     private static void AlignFloatingWindowAnchors()
     {
+        if (FloatingWindows().Any(window => window.IsQuickPickActive))
+            return;
+
         if (_floatingWindow is not { } primary)
             return;
 
@@ -1340,6 +1368,7 @@ public partial class App : Application
                     services.AddSingleton<TimerViewService>();
                 }
                 services.AddSingleton<DrawProofExportService>();
+                services.AddSingleton<ProofPlaybackService>();
                 services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
                 services.AddHttpClient<IWitnessClient, WitnessClient>(client =>
                     client.Timeout = TimeSpan.FromSeconds(3));
@@ -1410,6 +1439,8 @@ public partial class App : Application
                 services.AddSingleton<CsesScheduleSource>();
                 services.AddSingleton<ClassIslandIpcConnection>();
                 services.AddSingleton<ClassIslandScheduleSource>();
+                services.AddSingleton<CourseRosterCourseCatalog>();
+                services.AddSingleton<CourseRosterMappingService>();
                 services.AddSingleton<CourseLinkageService>();
                 services.AddSingleton<LinkageDrawCoordinator>();
                 services.AddHostedService<CourseLinkageHostedService>();
@@ -1632,6 +1663,8 @@ public partial class App : Application
                     .Page_Title);
                 services.AddSettingsPage<VerificationSettingsPage>(Langs.SettingsPages.General.Verification
                     .Resources.Page_Title);
+                services.AddSettingsPage<ProofPlaybackSettingsPage>(Langs.SettingsPages.General.Verification
+                    .Resources.S_ProofPlayback);
                 services.AddSettingsPage<BackupSettingsPage>(Langs.Common.Resources.Settings_Backup);
                 if (!isMobile)
                 {
@@ -1665,6 +1698,7 @@ public partial class App : Application
                 services.AddSettingsPage<MusicSettingsPage>(Langs.SettingsPages.Personalized.Music.Resources
                     .Page_Title);
                 services.AddSettingsPage<LinkageSettingsPage>(Langs.Common.Resources.Settings_Linkage);
+                services.AddSettingsPage<CourseRosterSettingsPage>(Langs.SettingsPages.Linkage.Resources.S_External_CourseRoster);
                 services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
 
                 services.AddSettingsPageSeparator();
@@ -2447,6 +2481,104 @@ public partial class App : Application
 
     #region Windows
 
+    /// <summary>
+    /// Locks every desktop surface while a proof is being demonstrated. The snapshot is intentionally kept in
+    /// memory only: playback must restore the exact visibility, geometry and topmost state without changing config.
+    /// </summary>
+    internal static IDisposable EnterProofPlayback(string pageId)
+    {
+        var windows = _desktopLifetime?.Windows
+            .ToArray() ?? [];
+        var originalPageId = MainView.Current?.ViewModel.SelectedPageInfo?.Id;
+        var snapshots = windows.Select(window => new ProofPlaybackWindowSnapshot(
+            window,
+            window.IsVisible,
+            window.IsEnabled,
+            window.Topmost,
+            window.WindowState,
+            window.Position,
+            window.Width,
+            window.Height)).ToArray();
+
+        return new ProofPlaybackScope(
+            snapshots,
+            originalPageId,
+            hadMainWindow: _mainWindow is not null);
+    }
+
+    /// <summary>
+    ///     Switches the already-created main view to the proof's page and locks every desktop surface.
+    ///     The window snapshot is captured before the main window is shown, so a temporary main window can
+    ///     be closed again when playback finishes.
+    /// </summary>
+    internal static void ActivateProofPlayback(string pageId)
+    {
+        MainView.Current?.SelectNavigationItemById(pageId);
+        if (_mainWindow is { } mainWindow)
+        {
+            mainWindow.Show();
+            mainWindow.WindowState = WindowState.Normal;
+            mainWindow.Topmost = true;
+            mainWindow.IsEnabled = false;
+            mainWindow.Activate();
+        }
+
+        foreach (var window in _desktopLifetime?.Windows.ToArray() ?? [])
+        {
+            window.IsEnabled = false;
+            window.Topmost = true;
+            if (!ReferenceEquals(window, _mainWindow) && window.IsVisible)
+                window.Hide();
+        }
+    }
+
+    private sealed record ProofPlaybackWindowSnapshot(
+        Window Window,
+        bool IsVisible,
+        bool IsEnabled,
+        bool Topmost,
+        WindowState WindowState,
+        PixelPoint Position,
+        double Width,
+        double Height);
+
+    private sealed class ProofPlaybackScope(
+        ProofPlaybackWindowSnapshot[] snapshots,
+        string? originalPageId,
+        bool hadMainWindow) : IDisposable
+    {
+        private bool _disposed;
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            if (!hadMainWindow && _mainWindow is { } temporaryMainWindow)
+                temporaryMainWindow.Close();
+
+            if (originalPageId is not null)
+                MainView.Current?.SelectNavigationItemById(originalPageId);
+            foreach (var snapshot in snapshots)
+            {
+                var window = snapshot.Window;
+                window.IsEnabled = snapshot.IsEnabled;
+                window.Topmost = snapshot.Topmost;
+                window.WindowState = snapshot.WindowState;
+                window.Width = snapshot.Width;
+                window.Height = snapshot.Height;
+                if (snapshot.IsVisible && !window.IsVisible)
+                    window.Show();
+                else if (!snapshot.IsVisible && window.IsVisible)
+                    window.Hide();
+
+                if (window.PlatformImpl is not null)
+                    window.Position = snapshot.Position;
+            }
+        }
+    }
+
     /// <summary>集控协议里的平台标识：<c>windows</c> / <c>linux</c> / <c>macos</c> / <c>android</c> / <c>ios</c>。</summary>
     /// <remarks>
     ///     平板也是被控端，所以移动平台必须报出自己的真实平台名：一律回落成 <c>unknown</c> 的话，
@@ -2585,6 +2717,62 @@ public partial class App : Application
 
     /// <summary>主窗口当前是否可见；IPC 的 <c>state.windows</c> 用它读取真实状态。</summary>
     public static bool IsMainWindowVisible => _mainWindow is { IsVisible: true };
+
+    internal static void NotifyTimerSurfaceEntered()
+    {
+        if (_timerSurfaceSuppressesMainWindow)
+            return;
+
+        _timerSurfaceSuppressesMainWindow = true;
+        _timerSurfaceSuppressedWindows.Clear();
+        _syncingFloatingWindowVisibility = true;
+        try
+        {
+            foreach (var window in FloatingWindows().Cast<Window>().Append(_mainWindow))
+            {
+                if (window is null || !window.IsVisible)
+                    continue;
+
+                _timerSurfaceSuppressedWindows.Add(window);
+                window.Hide();
+            }
+        }
+        finally
+        {
+            _syncingFloatingWindowVisibility = false;
+        }
+    }
+
+    internal static void NotifyTimerSurfaceExited()
+    {
+        if (!_timerSurfaceSuppressesMainWindow)
+            return;
+
+        _timerSurfaceSuppressesMainWindow = false;
+        var restore = _timerSurfaceSuppressedWindows.ToArray();
+        _timerSurfaceSuppressedWindows.Clear();
+        if (Current.IsStopping)
+            return;
+
+        _syncingFloatingWindowVisibility = true;
+        try
+        {
+            foreach (var window in restore)
+            {
+                if (window is MainWindow mainWindow && !ReferenceEquals(_mainWindow, mainWindow))
+                    continue;
+                if (window is FloatingWindow floatingWindow
+                    && (!FloatingWindows().Contains(floatingWindow) || !floatingWindow.UserWantsVisible))
+                    continue;
+
+                RestoreWithoutActivating(window);
+            }
+        }
+        finally
+        {
+            _syncingFloatingWindowVisibility = false;
+        }
+    }
 
     /// <summary>设置窗口当前是否可见。</summary>
     public static bool IsSettingsWindowVisible => _settingsWindow is { IsVisible: true };
@@ -2786,9 +2974,9 @@ public partial class App : Application
     }
 
     /// <summary>打开闪抽；<paramref name="count" /> 是浮窗长按快选选好的人数，默认 1 人。</summary>
-    public static void ShowQuickDrawWindow(int count = 1)
+    public static void ShowQuickDrawWindow(int count = 1, FloatingWindow? noticeAnchor = null)
     {
-        ObserveTask(ShowQuickDrawWindowAsync(count), "Quick draw window action failed.");
+        ObserveTask(ShowQuickDrawWindowAsync(count, noticeAnchor), "Quick draw window action failed.");
     }
 
     public static void ShowQuickDrawNotificationWindow(
@@ -2828,6 +3016,7 @@ public partial class App : Application
         NotificationChannelSettings settings)
     {
         var window = GetOrCreateQuickDrawWindow();
+        ApplyQuickDrawWindowBackgroundStyle(window);
         quickDraw.NotificationOpacity = Math.Clamp(settings.Transparency, 20, 100);
 
         // 采样先扔到后台线程，再建窗/排版/定位：两者并行，CPU 抓屏的那几毫秒被窗口工作完全盖住。
@@ -3018,7 +3207,7 @@ public partial class App : Application
             DispatcherPriority.Render);
     }
 
-    private static async Task ShowQuickDrawWindowAsync(int count = 1)
+    private static async Task ShowQuickDrawWindowAsync(int count = 1, FloatingWindow? noticeAnchor = null)
     {
         TelemetryRuntimeService? telemetry = IAppHost.TryGetService<TelemetryRuntimeService>();
         using var transaction = telemetry?.StartTransaction("ui.quick_draw_window", "ui.navigation");
@@ -3031,12 +3220,17 @@ public partial class App : Application
             // 上一次结果还在展示（"抽取后禁用"秒数内）：这次触发直接丢掉，别让连点顶掉结果。
             if (!quickDraw.IsDrawing && quickDraw.IsCoolingDown)
             {
+                quickDraw.ShowCooldownNotice(message => DesktopDrawNotice.Show(message, noticeAnchor));
                 transaction?.Finish(SpanStatus.Ok);
                 return;
             }
 
             quickDraw.ClearNotificationPresentation();
-            if (!quickDraw.IsDrawing && !await quickDraw.AuthorizeTriggeredDrawAsync())
+            if (!quickDraw.IsDrawing && !await quickDraw.AuthorizeTriggeredDrawAsync(
+                    onBlocked: (gate, detail) => quickDraw.ShowDrawAuthorizationNotice(
+                        gate,
+                        detail,
+                        message => DesktopDrawNotice.Show(message, noticeAnchor))))
             {
                 transaction?.Finish(SpanStatus.PermissionDenied);
                 return;
@@ -3049,12 +3243,16 @@ public partial class App : Application
                 HideQuickDrawNotificationWindow();
                 if (!quickDraw.IsDrawing)
                     await quickDraw.StartAuthorizedTriggeredDrawAsync(count);
+                if (quickDraw.IsDrawBlockedNoticeVisible)
+                    await ShowQuickDrawBlockedNoticeWindowAsync(quickDraw);
                 transaction?.Finish(SpanStatus.Ok);
                 return;
             }
 
             if (!quickDraw.IsDrawing)
                 await quickDraw.StartAuthorizedTriggeredDrawAsync(count);
+            if (quickDraw.IsDrawBlockedNoticeVisible)
+                await ShowQuickDrawBlockedNoticeWindowAsync(quickDraw);
             transaction?.Finish(SpanStatus.Ok);
         }
         catch (Exception ex)
@@ -3065,8 +3263,16 @@ public partial class App : Application
         }
     }
 
+    private static async Task ShowQuickDrawBlockedNoticeWindowAsync(QuickDrawPageViewModel quickDraw)
+    {
+        var settings = quickDraw.Config.NotificationSettings.Default;
+        _quickDrawNotificationSettings = settings;
+        var window = await PrepareQuickDrawNotificationWindowAsync(quickDraw, settings);
+        PositionQuickDrawNotificationWindow(window, settings);
+    }
+
     /// <summary>
-    ///     闪抽/通知窗口固定在透明窗口上画卡片：不做亚克力，卡片颜色完全由采样结果决定。
+    ///     闪抽/通知窗口在透明窗口上画圆角卡片；背景样式由通知设置动态选择，默认使用透明背景。
     /// </summary>
     private static Window GetOrCreateQuickDrawWindow()
     {
@@ -3090,8 +3296,7 @@ public partial class App : Application
             CanResize = false,
             ShowInTaskbar = false,
             Background = Brushes.Transparent,
-            // 只请求透明：卡片自己画实色底并保留圆角。若请求 AcrylicBlur，DWM 材质会按系统明暗主题
-            // 重新给整窗上色，采样到的桌面亮度与前景色就对不上了（白底白字/黑底黑字）。
+            // 宿主保持透明，背景来源与模糊由通知页面的独立背景层负责。
             TransparencyLevelHint = [WindowTransparencyLevel.Transparent]
         };
         _quickDrawWindow.Loaded += (_, _) =>
@@ -3122,6 +3327,12 @@ public partial class App : Application
             _quickDrawNotificationTheme = null;
         };
         return _quickDrawWindow;
+    }
+
+    private static void ApplyQuickDrawWindowBackgroundStyle(Window window)
+    {
+        window.Background = Brushes.Transparent;
+        window.TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
     }
 
     /// <summary>

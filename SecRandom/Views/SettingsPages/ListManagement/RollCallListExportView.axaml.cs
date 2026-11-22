@@ -11,6 +11,7 @@ using Avalonia.Threading;
 using MiniExcelLibs;
 using SecRandom.Core.Abstraction;
 using SecRandom.Helpers;
+using SecRandom.Services.Desktop;
 using SecRandom.Services.RosterTransfer;
 using SecRandom.Shared.Models.Profile;
 using SecRandom.Views;
@@ -21,12 +22,14 @@ namespace SecRandom.Views.SettingsPages.ListManagement;
 public partial class RosterListExportView : UserControl, INotifyPropertyChanged, IDrawerCloseAware
 {
     private static readonly TimeSpan QrFrameInterval = TimeSpan.FromMilliseconds(150);
+    private const string MainWebsiteUrl = "https://secrandom.sectl.cn";
     private const string SyncPortalAddressValue = "secrandom-sync.sectl.cn";
     private readonly RosterTransferDocument _document;
     private readonly IReadOnlyList<Dictionary<string, object?>> _fileRows;
     private readonly Func<string, string> _getResource;
     private readonly RosterTransferService _transferService = IAppHost.GetService<RosterTransferService>();
     private readonly RosterSyncTransferService _syncTransferService = IAppHost.GetService<RosterSyncTransferService>();
+    private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
     private readonly DispatcherTimer _frameTimer;
     private IImage? _currentQrImage;
     private RosterCloudTransferInfo? _cloudTransfer;
@@ -131,6 +134,7 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged,
     public string SyncPortalAddress => SyncPortalAddressValue;
     public string SyncPortalDescription => GetResource("C_SyncPortalDescription");
     public string CopySyncPortalAddressLabel => GetResource("C_CopySyncPortalAddress");
+    public string OpenMainWebsiteLabel => GetResource("C_OpenMainWebsite");
     public string StatusValue { get => _statusValue; private set => SetField(ref _statusValue, value); }
 
     event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
@@ -315,6 +319,9 @@ public partial class RosterListExportView : UserControl, INotifyPropertyChanged,
         await (TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(SyncPortalAddress)
             ?? Task.CompletedTask);
     }
+
+    private void OpenMainWebsite_OnClick(object? sender, RoutedEventArgs e) =>
+        ExternalLauncher.TryOpenUri(MainWebsiteUrl);
 
     private IReadOnlyList<Dictionary<string, object?>> CreateFileRows() => _fileRows;
 

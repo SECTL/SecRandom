@@ -10,10 +10,9 @@ using SecRandom.Core.Abstraction;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
-using SecRandom.Services.Desktop;
 using SecRandom.Services.Verification;
-using SecRandom.Shared;
 using LR = SecRandom.Langs.SettingsPages.General.Verification.Resources;
+using SecRandom.Views;
 
 namespace SecRandom.Views.SettingsPages.General;
 
@@ -24,7 +23,6 @@ public partial class VerificationSettingsPage : UserControl
     private static readonly long[] StorageOptions = [16L * 1024 * 1024, 32L * 1024 * 1024, 64L * 1024 * 1024, 128L * 1024 * 1024, 256L * 1024 * 1024, 512L * 1024 * 1024, 1024L * 1024 * 1024];
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private DrawProofAttestationService AttestationService { get; } = IAppHost.GetService<DrawProofAttestationService>();
-    private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
     private bool _verificationModeSelectionReady;
     private bool _restoringVerificationModeSelection;
 
@@ -47,6 +45,9 @@ public partial class VerificationSettingsPage : UserControl
     {
         AttestationService.StatusChanged -= AttestationStatus_OnChanged;
     }
+
+    private void OpenProofPlayback_OnClick(object? sender, RoutedEventArgs e) =>
+        SettingsView.Current?.NavigateToPage("settings.general.proofPlayback");
 
     private void AttestationStatus_OnChanged(object? sender, EventArgs e)
     {
@@ -103,17 +104,6 @@ public partial class VerificationSettingsPage : UserControl
             ConfigHandler.Data.General.ProofRetention.RetentionDays = RetentionOptions[value];
             ConfigHandler.Save();
         }
-    }
-
-    private void OpenProofFolder_OnClick(object? sender, RoutedEventArgs e)
-    {
-        var directory = Utils.GetDirectoryPath("proofs");
-        ExternalLauncher.TryOpenPath(directory);
-    }
-
-    private void OpenVerificationWebsite_OnClick(object? sender, RoutedEventArgs e)
-    {
-        ExternalLauncher.TryOpenUri("https://fair.sectl.cn/");
     }
 
     public int SelectedStorageIndex

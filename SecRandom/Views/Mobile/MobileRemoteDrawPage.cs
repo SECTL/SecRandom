@@ -5,6 +5,7 @@ using Avalonia.Markup.Xaml;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
 using SecRandom.Core.Icons;
+using SecRandom.Services.Mobile;
 using SecRandom.ViewModels.Mobile;
 
 namespace SecRandom.Views.Mobile;
@@ -24,16 +25,21 @@ namespace SecRandom.Views.Mobile;
 ///         视图共用，UI 差异只是版式差异。谁为某个宿主复制一份 VM，协议一改就会有一边先烂掉。
 ///     </para>
 ///     <para>
-///         手机/平板没有「设置 → 集控」页，也没有配对码通道：未登录时页面内直接给登录卡，
+///         手机/平板没有「设置 → 集控」页，也没有配对码通道：未登录时引导用户打开设置页顶部账号区，
 ///         因此这里不再需要"重新接入"的导航兜底。
 ///     </para>
 /// </remarks>
 [PageInfo(MobilePageIds.RemoteDraw, FluentIcons.SendFilled, location: PageLocation.Top)]
 public sealed partial class MobileRemoteDrawPage : UserControl
 {
-    public MobileRemoteDrawPage(MobileRemoteDrawViewModel viewModel)
+    private readonly IMobileSettingsNavigator _settingsNavigator;
+
+    public MobileRemoteDrawPage(
+        MobileRemoteDrawViewModel viewModel,
+        IMobileSettingsNavigator settingsNavigator)
     {
         ViewModel = viewModel;
+        _settingsNavigator = settingsNavigator;
         DataContext = this;
         InitializeComponent();
         Loaded += OnLoaded;
@@ -51,6 +57,11 @@ public sealed partial class MobileRemoteDrawPage : UserControl
     private void OnDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e)
     {
         ViewModel.Dispose();
+    }
+
+    private async void OpenSettings_OnClick(object? sender, RoutedEventArgs e)
+    {
+        await _settingsNavigator.OpenAsync();
     }
 
     private void InitializeComponent() => AvaloniaXamlLoader.Load(this);

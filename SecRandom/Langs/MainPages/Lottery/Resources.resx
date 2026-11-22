@@ -84,6 +84,15 @@
   <data name="M_DrawFailed" xml:space="preserve">
     <value>抽奖失败</value>
   </data>
+  <data name="M_DrawAuthorizationDenied" xml:space="preserve">
+    <value>抽取未获授权，请完成验证后重试</value>
+  </data>
+  <data name="M_DrawLocked" xml:space="preserve">
+    <value>当前抽取已被控制台锁定</value>
+  </data>
+  <data name="M_LotteryDisabled" xml:space="preserve">
+    <value>抽奖功能当前已禁用</value>
+  </data>
   <data name="M_NoCandidates" xml:space="preserve">
     <value>没有可抽取的奖品</value>
   </data>
@@ -106,4 +115,5 @@
     <value>记录组</value>
   </data>
   <data name="O_HistoryGroupDefault" xml:space="preserve"><value>默认记录组</value></data>
-  </root>
+    <data name="O_DrawGroups" xml:space="preserve"><value>抽取全部小组</value></data>
+</root>

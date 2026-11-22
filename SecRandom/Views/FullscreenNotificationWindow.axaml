@@ -7,19 +7,17 @@
         Topmost="True"
         SizeToContent="Manual"
         Background="Transparent">
-    <!-- 根 Border：整窗不透明度只改这里（QuickDrawPage 先例），绝不改 Window.Opacity。 -->
+    <!-- 根 Border 的不透明度只用于进场淡入。 -->
     <Border x:Name="RootBorder" Background="Transparent" Opacity="0">
         <Panel x:Name="RootPanel">
-            <!-- 背景层 1：颜色/渐变兜底。背景图缺失或解码失败时保持这一层，绝不抛异常。 -->
-            <!-- 背景层 1：主题底色。构造后由 ApplyAppearance 按设置重铺（纯色/渐变/图片），
-                 这里先用主题纯色，避免窗口出现到第一次应用外观之间闪一帧有色渐变。 -->
+            <!-- 背景层 1：背景颜色底层。 -->
             <Border x:Name="FallbackBackground"
                     Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" />
 
             <!-- 背景层 2：用户背景图（Stretch=UniformToFill，铺满整窗）。 -->
             <Image x:Name="BackgroundImage" Stretch="UniformToFill" IsVisible="False" Opacity="0" />
 
-            <!-- 背景层 3：可调的黑色遮罩，保证前景文字始终可读。 -->
+            <!-- 背景层 3：图片专用的固定黑色遮罩。 -->
             <Border x:Name="OverlayBorder" Background="#FF000000" Opacity="0.35" IsHitTestVisible="False" />
 
             <!-- 背景层 4：上下渐变，压暗顶部/底部边缘。 -->

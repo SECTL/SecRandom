@@ -21,13 +21,6 @@
                 </TabStrip>
             </Viewbox>
 
-            <Button Grid.Column="2"
-                    HorizontalAlignment="Right"
-                    Theme="{StaticResource TransparentButton}"
-                    ToolTip.Tip="{Binding MiniWindowText}"
-                    Click="OpenMiniWindow">
-                <sr:FluentIcon Glyph="{sr:Fi WindowFilled}" />
-            </Button>
         </Grid>
 
         <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*" ColumnSpacing="24">
@@ -254,6 +247,33 @@
                         Command="{Binding ToggleStartPauseCommand}"
                         Classes="accent" />
             </Grid>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="8"
+                    HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                    IsVisible="{Binding IsFullScreen}">
+            <Button x:Name="ExitFullScreenButton"
+                    Theme="{StaticResource TransparentButton}"
+                    ToolTip.Tip="{Binding FullScreenHintText}"
+                    AutomationProperties.Name="{Binding FullScreenHintText}">
+                <sr:FluentIcon Glyph="{sr:Fi FullScreenMinimizeFilled}" />
+            </Button>
+            <ProgressBar x:Name="ExitHoldProgress" Width="100" Height="6"
+                         Minimum="0" Maximum="1" Value="0" IsVisible="False"
+                         VerticalAlignment="Center" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right"
+                    VerticalAlignment="Bottom">
+            <Button Theme="{StaticResource TransparentButton}"
+                    ToolTip.Tip="{Binding MiniWindowText}" Click="OpenMiniWindow">
+                <sr:FluentIcon Glyph="{sr:Fi WindowFilled}" />
+            </Button>
+            <Button Theme="{StaticResource TransparentButton}"
+                    IsVisible="{Binding !IsFullScreen}"
+                    ToolTip.Tip="{Binding FullScreenText}" Click="ToggleFullScreen">
+                <sr:FluentIcon Glyph="{Binding FullScreenIcon}" />
+            </Button>
         </StackPanel>
     </Grid>
 </local:TimerView>

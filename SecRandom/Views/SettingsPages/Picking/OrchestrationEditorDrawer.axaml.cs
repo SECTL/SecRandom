@@ -155,7 +155,7 @@ public partial class OrchestrationEditorDrawer : UserControl, INotifyPropertyCha
 
         var target = SelectedTargetIndex == 1 ? OrchestrationTarget.Lottery : OrchestrationTarget.RollCall;
         var name = string.IsNullOrWhiteSpace(ProfileName)
-            ? $"{SelectedSourceList} · {TargetModes[Math.Clamp(SelectedTargetIndex, 0, 1)]}"
+            ? $"{SelectedSourceList} | {TargetModes[Math.Clamp(SelectedTargetIndex, 0, 1)]}"
             : ProfileName.Trim();
         _apply(new OrchestrationEditorResult(name, target, SelectedSourceList,
             (int)Math.Clamp(RoundCount, 1, OrchestrationProfile.MaxRounds)));

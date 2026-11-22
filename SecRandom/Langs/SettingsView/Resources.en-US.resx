@@ -198,6 +198,7 @@
   <data name="M_TransferFailed" xml:space="preserve"><value>Transfer failed: {0}</value></data>
   <data name="M_TransferWrongContent" xml:space="preserve"><value>The received transfer does not match this operation</value></data>
   <data name="C_TransferCopyAddress" xml:space="preserve"><value>Copy address</value></data>
+  <data name="C_TransferOpenMainWebsite" xml:space="preserve"><value>Open main website</value></data>
   <data name="C_TransferSessionCodeLabel" xml:space="preserve"><value>Session code</value></data>
   <data name="C_TransferFrames" xml:space="preserve"><value>Transfer frames</value></data>
   <data name="C_TransferSpeed" xml:space="preserve"><value>Transfer speed</value></data>

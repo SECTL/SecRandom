@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using SecRandom.Core.Models.Linkage;
@@ -17,6 +18,13 @@ public sealed class CsesScheduleSource : ICourseScheduleSource
 
     public string SourceName => "CSES";
     public event EventHandler? StateChanged;
+
+    public System.Collections.Generic.IReadOnlyList<string> GetCourseNames() => _scheduleStore.Load()?.Courses
+        .Select(course => course.Name.Trim())
+        .Where(name => name.Length > 0)
+        .Distinct(StringComparer.Ordinal)
+        .OrderBy(name => name, StringComparer.CurrentCulture)
+        .ToArray() ?? [];
 
     public Task<CourseScheduleSnapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)
     {

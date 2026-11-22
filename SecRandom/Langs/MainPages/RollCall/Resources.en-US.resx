@@ -75,6 +75,12 @@
   <data name="M_DrawFailed" xml:space="preserve">
      <value>Draw failed</value>
   </data>
+  <data name="M_DrawAuthorizationDenied" xml:space="preserve">
+     <value>Drawing was not authorized. Complete verification and try again</value>
+  </data>
+  <data name="M_DrawLocked" xml:space="preserve">
+     <value>Drawing is locked by the control console</value>
+  </data>
   <data name="M_CountSummaryFormat" xml:space="preserve">
      <value>Total members: {0} | Remaining: {1}</value>
   </data>
@@ -111,4 +117,5 @@
   <data name="M_NumberRangeEnd" xml:space="preserve">
      <value>End</value>
   </data>
+  <data name="O_DrawGroups" xml:space="preserve"><value>Draw all groups</value></data>
 </root>

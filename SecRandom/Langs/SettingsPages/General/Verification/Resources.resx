@@ -75,5 +75,32 @@
   
   
   <data name="M_ProofQueueTimestampFailed" xml:space="preserve"><value>时间戳未完成 {0} 项</value></data>
+  <data name="M_FormalNotarizationUnsupportedForOrchestration" xml:space="preserve"><value>正式公示暂不支持编排抽取，请切换为随机或公平抽取后重试</value></data>
+  <data name="M_FormalNotarizationRosterMissing" xml:space="preserve"><value>正式公示需要与当前抽取名单匹配的名单摘要</value></data>
+  <data name="M_FormalNotarizationAlgorithmUnsupported" xml:space="preserve"><value>当前算法版本尚未登记为可正式公示算法</value></data>
   
+  <data name="S_ProofPlayback" xml:space="preserve"><value>证明演示中心</value></data>
+  <data name="S_ProofPlayback_D" xml:space="preserve"><value>按日期选择证明文件，在锁定的主界面中重现当次抽取动画和结果</value></data>
+  <data name="S_ProofPlaybackDate" xml:space="preserve"><value>证明日期</value></data>
+  <data name="S_ProofPlaybackFiles" xml:space="preserve"><value>当天证明</value></data>
+  <data name="C_ProofPlaybackStart" xml:space="preserve"><value>开始演示</value></data>
+  <data name="C_OpenProofPlayback" xml:space="preserve"><value>打开演示中心</value></data>
+  <data name="C_ProofPlaybackTime" xml:space="preserve"><value>时间</value></data>
+  <data name="C_ProofPlaybackKind" xml:space="preserve"><value>类型</value></data>
+  <data name="C_ProofPlaybackAlgorithm" xml:space="preserve"><value>算法</value></data>
+  <data name="C_ProofPlaybackCandidates" xml:space="preserve"><value>候选数</value></data>
+  <data name="C_ProofPlaybackResults" xml:space="preserve"><value>结果数</value></data>
+  <data name="C_ProofPlaybackStatus" xml:space="preserve"><value>状态</value></data>
+  <data name="C_ProofPlaybackProofId" xml:space="preserve"><value>ProofId</value></data>
+  <data name="O_ProofPlaybackStudent" xml:space="preserve"><value>点名</value></data>
+  <data name="O_ProofPlaybackPrize" xml:space="preserve"><value>抽奖</value></data>
+  <data name="O_ProofPlaybackNumber" xml:space="preserve"><value>随机数</value></data>
+  <data name="O_ProofPlaybackDraw" xml:space="preserve"><value>抽取</value></data>
+  <data name="C_ProofPlaybackNumberAlgorithm" xml:space="preserve"><value>范围内随机数</value></data>
+  <data name="C_ProofPlaybackGroupAlgorithm" xml:space="preserve"><value>小组等概率，组内成员等概率</value></data>
+  <data name="C_ProofPlaybackUnknownAlgorithm" xml:space="preserve"><value>未知算法</value></data>
+  <data name="M_ProofPlaybackNoFiles" xml:space="preserve"><value>还没有可演示的证明文件</value></data>
+  <data name="M_ProofPlaybackInvalid" xml:space="preserve"><value>该证明无法在本地重放</value></data>
+  <data name="S_ProofPlaybackVerified" xml:space="preserve"><value>本地重放一致</value></data>
+  <data name="S_ProofPlaybackUnverified" xml:space="preserve"><value>本地重放失败</value></data>
 </root>

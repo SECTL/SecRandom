@@ -76,7 +76,7 @@
             </fa:FASettingsExpander>
 
             <!-- 默认记录组：点名页打开时选择器先落到这里，用户当场换组仍然是纯界面状态、不写配置。
-                 选「默认记录组」表示只算未分组的记录；总开关关闭时整张卡隐藏。 -->
+                 选「默认记录组」表示只算未分组的记录。 -->
             <fa:FASettingsExpander x:Name="S_RollCallHistoryGroup"
                                    Header="{x:Static lp:Resources.S_RollCallHistoryGroup}"
                                    Description="{x:Static lp:Resources.S_RollCallHistoryGroup_D}"
@@ -86,6 +86,19 @@
                               MinWidth="220"
                               ItemsSource="{Binding HistoryGroup.Options}"
                               SelectionChanged="HistoryGroupSelectorOnSelectionChanged" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_GroupMemberDisplay"
+                                   Header="{x:Static lp:Resources.S_GroupMemberDisplay}"
+                                   Description="{x:Static lp:Resources.S_GroupMemberDisplay_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleListFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ComboBox SelectedIndex="{Binding Settings.GroupMemberDisplay}" MinWidth="220">
+                        <ComboBoxItem Content="{x:Static lp:Resources.O_GroupOnly}" />
+                        <ComboBoxItem Content="{x:Static lp:Resources.O_GroupMemberNewLine}" />
+                        <ComboBoxItem Content="{x:Static lp:Resources.O_GroupMemberDash}" />
+                    </ComboBox>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

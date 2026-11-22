@@ -1,13 +1,13 @@
 using System.ComponentModel;
 using System.Linq;
-using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Threading;
-using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Enums;
+using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Services.Notification;
 using SecRandom.ViewModels;
 using LR = SecRandom.Langs.SettingsPages.Notification.Resources;
 
@@ -19,9 +19,6 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
     // persisted encoding (0 built-in, 1 ClassIsland, 2 both, 3 fullscreen). The dropdown displays them in a
     // different order, which is why it binds a mapped option object instead of SelectedIndex.
     public const int FullscreenNotificationServiceType = 3;
-
-    private static readonly TimeSpan FullscreenConfirmUnlockDelay = TimeSpan.FromSeconds(3);
-    private bool _fullscreenQuickDrawConfirmed;
 
     protected NotificationChannelSettingsPageBase()
     {
@@ -43,14 +40,6 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
         {
             if (value is null || value.Value == ChannelSettings.NotificationServiceType)
                 return;
-
-            if (value.Value == FullscreenNotificationServiceType
-                && NeedsFullscreenQuickDrawConfirmation
-                && !_fullscreenQuickDrawConfirmed)
-            {
-                _ = ConfirmFullscreenQuickDrawAsync();
-                return;
-            }
 
             ApplyNotificationServiceType(value.Value);
         }
@@ -99,6 +88,9 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
     public virtual string UseMainWindowWhenExceedThresholdDescription => Text(nameof(UseMainWindowWhenExceedThresholdDescription), "S_Default_UseMainWindowWhenExceedThreshold_D");
     public virtual string MainWindowDisplayThresholdTitle => Text(nameof(MainWindowDisplayThresholdTitle), "S_Default_MainWindowDisplayThreshold");
     public virtual string MainWindowDisplayThresholdDescription => Text(nameof(MainWindowDisplayThresholdDescription), "S_Default_MainWindowDisplayThreshold_D");
+    public virtual string TestTitle => Text("Test notification", "S_Common_Test");
+    public virtual string TestDescription => Text("Show a sample result using this notification channel", "S_Common_Test_D");
+    public virtual string TestButtonText => Text("Show test", "C_TestNotification");
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
 
@@ -118,24 +110,6 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
         ];
     }
 
-    /// <summary>
-    /// A fullscreen result window animates through its own stage, so switching the channel to fullscreen while it
-    /// applies to quick draw makes that draw visibly slower. The confirmation is deliberately not persisted: it
-    /// only guards the switch inside this page instance.
-    /// </summary>
-    private bool NeedsFullscreenQuickDrawConfirmation
-    {
-        get
-        {
-            var notificationSettings = ViewModel.Config.NotificationSettings;
-            if (ReferenceEquals(ChannelSettings, notificationSettings.QuickDraw))
-                return OverrideSettings?.OverrideServiceSettings ?? true;
-
-            return ReferenceEquals(ChannelSettings, notificationSettings.Default)
-                   && !notificationSettings.QuickDraw.OverrideServiceSettings;
-        }
-    }
-
     private void ApplyNotificationServiceType(int value)
     {
         if (ChannelSettings.NotificationServiceType == value)
@@ -143,59 +117,6 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
 
         // The base page's PropertyChanged handler persists the config, so a single write is all that is needed here.
         ChannelSettings.NotificationServiceType = value;
-        NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedNotificationServiceOption)));
-    }
-
-    private async Task ConfirmFullscreenQuickDrawAsync()
-    {
-        var topLevel = TopLevel.GetTopLevel(this);
-        if (topLevel is null)
-        {
-            ApplyNotificationServiceType(FullscreenNotificationServiceType);
-            return;
-        }
-
-        var dialog = new FAContentDialog
-        {
-            Title = Text("Switch to fullscreen notification", "M_FullscreenQuickDrawConfirmTitle"),
-            Content = Text(
-                "Fullscreen animation is slower than the floating window, quick draw will be noticeably slower",
-                "M_FullscreenQuickDrawConfirmContent"),
-            PrimaryButtonText = Text("Use fullscreen anyway", "C_FullscreenQuickDrawConfirm"),
-            CloseButtonText = Text("Cancel", "C_Cancel"),
-            DefaultButton = FAContentDialogButton.Close,
-            IsPrimaryButtonEnabled = false
-        };
-
-        var unlockTimer = new DispatcherTimer { Interval = FullscreenConfirmUnlockDelay };
-        unlockTimer.Tick += (_, _) =>
-        {
-            unlockTimer.Stop();
-            dialog.IsPrimaryButtonEnabled = true;
-        };
-        unlockTimer.Start();
-
-        FAContentDialogResult result;
-        try
-        {
-            result = await dialog.ShowAsync(topLevel);
-        }
-        catch (Exception)
-        {
-            unlockTimer.Stop();
-            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedNotificationServiceOption)));
-            return;
-        }
-
-        unlockTimer.Stop();
-        if (result == FAContentDialogResult.Primary)
-        {
-            _fullscreenQuickDrawConfirmed = true;
-            ApplyNotificationServiceType(FullscreenNotificationServiceType);
-            return;
-        }
-
-        // Cancelling rolls the dropdown back to the persisted value.
         NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedNotificationServiceOption)));
     }
 
@@ -236,6 +157,37 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
             NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedNotificationServiceOption)));
         }
         ConfigHandler.Save();
+    }
+
+    internal async void HandleTestNotificationAsync(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var notificationService = IAppHost.GetService<NotificationService>();
+            var settings = ViewModel.Config.NotificationSettings;
+            if (ReferenceEquals(ChannelSettings, settings.Default))
+            {
+                var shownDefault = await notificationService.ShowTestNotificationAsync(
+                    NotificationSettingsType.QuickDraw,
+                    ChannelSettings);
+                if (!shownDefault)
+                    this.ShowWarningToast(Text("This notification channel is not available", "M_NotificationTestUnavailable"));
+                return;
+            }
+
+            var type = ReferenceEquals(ChannelSettings, settings.RollCall)
+                ? NotificationSettingsType.RollCall
+                : ReferenceEquals(ChannelSettings, settings.Lottery)
+                    ? NotificationSettingsType.Lottery
+                    : NotificationSettingsType.QuickDraw;
+            var shown = await notificationService.ShowTestNotificationAsync(type);
+            if (!shown)
+                this.ShowWarningToast(Text("This notification channel is not available", "M_NotificationTestUnavailable"));
+        }
+        catch (Exception ex)
+        {
+            this.ShowErrorToast(Text("The notification test is not available", "M_NotificationTestUnavailable"), ex);
+        }
     }
 }
 

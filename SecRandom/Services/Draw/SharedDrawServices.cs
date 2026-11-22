@@ -32,7 +32,7 @@ public sealed record RollCallDrawSnapshot(
 }
 
 public sealed record RollCallDrawRequest(string ListName, string Group, string Gender, int Count, string CourseName,
-    string? HistoryGroup = null);
+    string? HistoryGroup = null, bool DrawGroups = false);
 
 public sealed record RollCallDrawResult(
     IReadOnlyList<Student> Students,
@@ -69,7 +69,7 @@ public sealed record RollCallNumberSnapshot(int RangeStart, int RangeEnd, IReadO
 /// </summary>
 /// <remarks>
 ///     读取范围（<c>HistoryGroup</c>）和写入归属（<c>RecordGroup</c>）是两件事：读取范围为空表示“不按组筛历史”，
-///     写入则必须落在本抽取通道自己配置的默认记录组上。否则功能总开关关掉时，点名、闪抽、抽奖、编排的记录会
+///     写入则必须落在本抽取通道自己配置的默认记录组上。否则隐藏选择器时，点名、闪抽、抽奖、编排的记录会
 ///     一起挤进默认记录组，重新打开就再也拆不回各自的组。组目录读不到时保留配置名——组名只是标记，把记录
 ///     静默挪进默认组是不可逆的信息丢失。
 /// </remarks>
@@ -159,6 +159,8 @@ public sealed class RollCallDrawService(
     public async Task<RollCallDrawResult?> DrawAsync(RollCallDrawRequest request, CancellationToken cancellationToken = default)
     {
         SwitchList(request.ListName);
+        if (request.DrawGroups)
+            return await DrawGroupsAsync(request, cancellationToken).ConfigureAwait(false);
         var snapshot = GetSnapshot(request.Group, request.Gender);
         var count = Math.Clamp(request.Count, 1, snapshot.RemainingCount);
         if (snapshot.RemainingCount == 0)
@@ -173,7 +175,14 @@ public sealed class RollCallDrawService(
         if (plan is not null)
         {
             if (plan.Order.Count == 0)
+            {
+                if (plan.CanAdvanceWhenEmpty)
+                    AdvanceOrchestration(plan, request, 0);
                 return null;
+            }
+            // Exclude/defer rules may leave fewer drawable members than the requested count.
+            // Keep the proof, commit metadata, and event count aligned with the actual plan prefix.
+            count = Math.Min(count, plan.Order.Count);
             outcome = await verification.DrawOrchestratedStudentsAsync(
                 plan.Order.Take(count).ToArray(),
                 plan.Round,
@@ -260,6 +269,33 @@ public sealed class RollCallDrawService(
             edit?.Note, edit?.SuppressPresentation ?? false);
     }
 
+    private async Task<RollCallDrawResult?> DrawGroupsAsync(RollCallDrawRequest request, CancellationToken cancellationToken)
+    {
+        var settings = configHandler.Data.EffectiveRollCallSettings;
+        var groups = GroupDrawCandidates.Build(GetSnapshot("", request.Gender).Candidates, request.Gender);
+        var eligible = GroupDrawCandidates.Eligible(groups, temporaryRecords.GetGroupCounts(GetListName()),
+            settings.DrawMode == DrawMode.Orchestrated ? settings.SampledDrawMode : settings.DrawMode, settings.HalfRepeat);
+        if (eligible.Count == 0 || request.Count <= 0 || request.Count > eligible.Count)
+            return null;
+        var outcome = await verification.DrawGroupsAsync(request.Count, eligible, DrawSettingsType.RollCall,
+            DrawProofExportContext.ForStudents(GetListName(), "", request.Gender, request.CourseName),
+            courseName: request.CourseName, historyGroup: request.HistoryGroup, cancellationToken: cancellationToken,
+            drawMode: settings.DrawMode == DrawMode.Orchestrated ? settings.SampledDrawMode : settings.DrawMode,
+            halfRepeat: settings.HalfRepeat).ConfigureAwait(false);
+        if (outcome is null)
+            return null;
+        var roundId = drawCommits.CommitStudentDraw(new StudentDrawCommit(outcome.Winners, DateTime.Now,
+            request.Count, GetListName(), GenderScope: request.Gender,
+            CourseName: request.CourseName, HistoryGroup: request.HistoryGroup,
+            RecordGroup: HistoryRecordGroup.Resolve(historyGroupCatalog, logger, HistoryGroupKind.RollCall,
+                settings.HistoryGroup, request.HistoryGroup),
+            GroupWinners: outcome.Winners.Select(student => student.Group).ToArray(),
+            IncludeGroupMember: settings.GroupMemberDisplay != GroupMemberDisplayMode.GroupOnly));
+        verification.Publish(outcome);
+        usageReport.RecordRollCall();
+        return new RollCallDrawResult(outcome.Winners, outcome.Proof.ProofId, roundId, outcome.FrozenWeights);
+    }
+
     public void Reset(string group, string gender)
     {
         // 编排里「重置」也算一轮：即使没抽完，也按用户的语义进入下一轮。
@@ -286,19 +322,32 @@ public sealed class RollCallDrawService(
         var drawn = new HashSet<Guid>();
         foreach (var key in temporaryRecords.GetStudentCounts(GetListName(), request.Gender, request.Group).Keys)
         {
-            if (Guid.TryParseExact(key, "N", out var recordId))
+            if (Guid.TryParse(key, out var recordId))
                 drawn.Add(recordId);
         }
 
+        var round = profile.GetRound(runtime.Round);
         var order = orchestrationScheduler.OrderRound(
             profile,
-            profile.GetRound(runtime.Round),
+            round,
             snapshot.Remaining,
             drawn,
             randomSource ?? FallbackRandom,
             request.CourseName,
             request.HistoryGroup);
-        return new OrchestrationPlan(profile, runtime.Round, profile.EffectiveRoundCount, order);
+        var nonExcludedIds = snapshot.Remaining
+            .Select(student =>
+            {
+                ProfileRecordIdentity.EnsureRecordId(student);
+                return student.RecordId;
+            })
+            .Where(recordId => profile.FindMember(recordId) is not { IsExcluded: true })
+            .Distinct()
+            .ToArray();
+        var canAdvanceWhenEmpty = nonExcludedIds.Length > 0
+            && (nonExcludedIds.All(drawn.Contains)
+                || (profile.Rules.Defer && round.Skipped.Count > 0 && nonExcludedIds.All(round.Skipped.Contains)));
+        return new OrchestrationPlan(profile, runtime.Round, profile.EffectiveRoundCount, order, canAdvanceWhenEmpty);
     }
 
     private void AdvanceOrchestration(OrchestrationPlan plan, RollCallDrawRequest request, int drawnCount)
@@ -322,7 +371,8 @@ public sealed class RollCallDrawService(
         OrchestrationProfile Profile,
         int Round,
         int RoundCount,
-        IReadOnlyList<Student> Order);
+        IReadOnlyList<Student> Order,
+        bool CanAdvanceWhenEmpty);
 
     /// <summary>Temporary-record scope for number draws; deliberately not a real roster name.</summary>
     public const string NumberListName = "__number_list__";
@@ -455,7 +505,8 @@ public sealed record LotteryDrawRequest(
     string Gender,
     int Count,
     string CourseName,
-    string? HistoryGroup = null);
+    string? HistoryGroup = null,
+    bool DrawGroups = false);
 
 public sealed record LotteryDrawResult(
     IReadOnlyList<Prize> Prizes,
@@ -575,24 +626,42 @@ public sealed class LotteryDrawService(
         if (snapshot.RemainingCount == 0)
             return null;
         var count = Math.Clamp(request.Count, 1, snapshot.RemainingCount);
-        if (hasStudentAssignment && snapshot.EligibleStudents.Count < count)
-            return null;
         // 编排抽取不抽样：本轮的奖品顺序事先排定，抽取只是按序取奖。没有可用编排名单时静默回退随机抽奖，
         // 与点名通道一致（主页面不暴露编排状态，缺名单不该让抽奖按钮变成死键）。
         var plan = configHandler.Data.EffectiveLotterySettings.DrawMode == DrawMode.Orchestrated
             ? PrepareOrchestration(snapshot)
             : null;
-        VerificationDrawOutcome<Prize>? prizes;
         if (plan is not null)
         {
             if (plan.Order.Count == 0)
+            {
+                // A round with only deferred/already-drawn participants is complete even when the
+                // raw snapshot still contains entries. Global exclusion is different: keep the
+                // empty state visible instead of silently cycling through rounds forever.
+                if (plan.CanAdvanceWhenEmpty)
+                    AdvanceOrchestration(plan);
                 return null;
+            }
+            // Exclude/defer rules may leave fewer drawable inventory units than the raw
+            // snapshot. Commit and student assignment must use the actual planned count.
+            count = Math.Min(count, plan.Order.Count);
+        }
+        var groupCandidates = request.DrawGroups && hasStudentAssignment
+            ? GetEligibleGroups(request.Gender, request.CourseName)
+            : [];
+        if (hasStudentAssignment && (request.DrawGroups ? groupCandidates.Count : snapshot.EligibleStudents.Count) < count)
+            return null;
+
+        VerificationDrawOutcome<Prize>? prizes;
+        if (plan is not null)
+        {
             prizes = await verification.DrawOrchestratedPrizesAsync(
                 plan.Order.Take(count).ToArray(),
                 plan.Round,
                 plan.RoundCount,
                 DrawProofExportContext.ForPrizes(GetPrizePoolName()),
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken,
+                countMode: configHandler.Data.EffectiveLotterySettings.DrawType == LotteryDrawType.Count).ConfigureAwait(false);
         }
         else
         {
@@ -610,12 +679,16 @@ public sealed class LotteryDrawService(
         {
             // 抽奖轮里附带的「分配学生」是这一轮自己的随机分配：点名通道即使配了编排，也不能把点名排布
             // 塞进抽奖证明，所以这里显式按「无重复限制」抽样（候选集已在 GetSnapshot 里按点名设置过滤过）。
-            assignedOutcome = await verification.DrawStudentsAsync(count, snapshot.EligibleStudents, DrawSettingsType.RollCall,
+            assignedOutcome = request.DrawGroups
+                ? await verification.DrawGroupsAsync(count, groupCandidates, DrawSettingsType.RollCall,
+                    DrawProofExportContext.ForStudents(GetStudentListName(), request.Group, request.Gender, request.CourseName),
+                    parentProofId: prizes.Proof.ProofId, courseName: request.CourseName, historyGroup: request.HistoryGroup,
+                    drawMode: DrawMode.Repeat, channel: "lottery", cancellationToken: cancellationToken).ConfigureAwait(false)
+                : await verification.DrawStudentsAsync(count, snapshot.EligibleStudents, DrawSettingsType.RollCall,
                 DrawProofExportContext.ForStudents(GetStudentListName(), request.Group, request.Gender, request.CourseName),
                 prizes.Proof.ProofId, request.CourseName, request.HistoryGroup, cancellationToken,
                 configHandler.Data.EffectiveRollCallSettings.DrawMode == DrawMode.Orchestrated ? DrawMode.Repeat : null,
-                channel: "lottery")
-                .ConfigureAwait(false);
+                channel: "lottery").ConfigureAwait(false);
             if (assignedOutcome is null)
                 return null;
             assigned = assignedOutcome.Winners;
@@ -658,13 +731,17 @@ public sealed class LotteryDrawService(
                 edit?.OverrideRoundId,
                 request.HistoryGroup,
                 recordGroup,
-                studentRecordGroup));
+                studentRecordGroup,
+                request.DrawGroups ? assigned.Select(student => student.Group).ToArray() : null,
+                request.DrawGroups && configHandler.Data.EffectiveLotterySettings.ShowGroupMember));
         PublishProof(prizes);
         if (assignedOutcome is not null)
             PublishProof(assignedOutcome);
 
         // 一轮抽完（奖池被这次抽干，或剩无可抽）就推进到下一轮，并清掉本轮临时记录，否则下轮开局全员「已抽」。
-        if (plan is not null && count >= snapshot.RemainingCount)
+        // Advance once every drawable unit in the current plan has been consumed. The raw
+        // snapshot may still contain units excluded or deferred by orchestration rules.
+        if (plan is not null && count >= plan.Order.Count)
             AdvanceOrchestration(plan);
 
         usageReport.RecordLottery();
@@ -682,7 +759,7 @@ public sealed class LotteryDrawService(
             edit?.Note, edit?.SuppressPresentation ?? false);
     }
 
-    public void Reset(string studentListName, string group, string gender)
+    public void Reset(string studentListName, string group, string gender, bool drawGroups = false)
     {
         // 编排里「重置」也算一轮：即使没抽完，也按用户的语义进入下一轮。
         if (configHandler.Data.EffectiveLotterySettings.DrawMode == DrawMode.Orchestrated
@@ -695,7 +772,12 @@ public sealed class LotteryDrawService(
 
         temporaryRecords.ClearPrizeList(GetPrizePoolName());
         if (!string.IsNullOrWhiteSpace(studentListName))
-            temporaryRecords.ClearStudentScope(GetStudentListName(), gender, group);
+        {
+            if (drawGroups)
+                temporaryRecords.ClearGroups(GetStudentListName());
+            else
+                temporaryRecords.ClearStudentScope(GetStudentListName(), gender, group);
+        }
     }
 
     private LotteryOrchestrationPlan? PrepareOrchestration(LotteryDrawSnapshot snapshot)
@@ -710,17 +792,31 @@ public sealed class LotteryDrawService(
         var drawn = new Dictionary<Guid, int>();
         foreach (var entry in temporaryRecords.GetPrizeCounts(GetPrizePoolName()))
         {
-            if (Guid.TryParseExact(entry.Key, "N", out var recordId))
+            // Temporary prize records use the canonical D-format key, while older stores may use N.
+            // Accept both so Count orchestration expands only the inventory units still drawable.
+            if (Guid.TryParse(entry.Key, out var recordId))
                 drawn[recordId] = entry.Value;
         }
 
+        var round = profile.GetRound(runtime.Round);
+        var expandInventory = configHandler.Data.EffectiveLotterySettings.DrawType == LotteryDrawType.Count;
         var order = orchestrationScheduler.OrderRound(
             profile,
-            profile.GetRound(runtime.Round),
+            round,
             snapshot.Remaining,
             drawn,
-            randomSource ?? FallbackRandom);
-        return new LotteryOrchestrationPlan(profile, runtime.Round, profile.EffectiveRoundCount, order);
+            randomSource ?? FallbackRandom,
+            expandInventory: expandInventory);
+        var nonExcludedIds = snapshot.Remaining
+            .Select(prize => prize.RecordId)
+            .Where(recordId => profile.FindMember(recordId) is not { IsExcluded: true })
+            .Distinct()
+            .ToArray();
+        var canAdvanceWhenEmpty = nonExcludedIds.Length > 0
+            && (nonExcludedIds.All(recordId => drawn.GetValueOrDefault(recordId) > 0)
+                || (profile.Rules.Defer && round.Skipped.Count > 0 && nonExcludedIds.All(round.Skipped.Contains)));
+        return new LotteryOrchestrationPlan(profile, runtime.Round, profile.EffectiveRoundCount, order,
+            canAdvanceWhenEmpty);
     }
 
     private void AdvanceOrchestration(LotteryOrchestrationPlan plan)
@@ -744,7 +840,8 @@ public sealed class LotteryDrawService(
         OrchestrationProfile Profile,
         int Round,
         int RoundCount,
-        IReadOnlyList<Prize> Order);
+        IReadOnlyList<Prize> Order,
+        bool CanAdvanceWhenEmpty);
 
     private static readonly CryptoRandomSource FallbackRandom = new();
 
@@ -877,6 +974,18 @@ public sealed class LotteryDrawService(
             configHandler.Data.EffectiveRollCallSettings.HalfRepeat);
         return DrawCandidateFilter.FilterEligibleStudents(profileService.CurrentStudentList?.Students ?? [], group, gender,
             temporaryRecords.GetStudentCounts(GetStudentListName(), gender, group), threshold).ToArray();
+    }
+
+    public IReadOnlyList<GroupDrawCandidates.Group> GetEligibleGroups(string gender, string courseName = "")
+    {
+        var students = (profileService.CurrentStudentList?.Students ?? [])
+            .Where(student => DrawCandidateFilter.MatchesScope(student, "", gender)).ToArray();
+        var prizes = (profileService.CurrentPrizeList?.Prizes ?? []).Where(prize => prize.IsCandidate).ToArray();
+        var filtered = pipeline?.ApplyFilters(BuildLotteryContext("", gender, courseName, 0), students, prizes);
+        var groups = GroupDrawCandidates.Build(filtered?.Students ?? students, gender);
+        var settings = configHandler.Data.EffectiveRollCallSettings;
+        return GroupDrawCandidates.Eligible(groups, temporaryRecords.GetGroupCounts(GetStudentListName()),
+            settings.DrawMode == DrawMode.Orchestrated ? settings.SampledDrawMode : settings.DrawMode, settings.HalfRepeat);
     }
 
     private IReadOnlyList<string> GetStudentScopeValues(Func<Student, string> selector) =>

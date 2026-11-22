@@ -26,6 +26,58 @@ public sealed class MobileHistoryPageTests
     private static readonly SemaphoreSlim HostGate = new(1, 1);
 
     [AvaloniaFact]
+    public async Task BothHistoryViewsPageTheirFilteredRecords()
+    {
+        await HostGate.WaitAsync();
+        ServiceProvider? provider = null;
+        try
+        {
+            const string name = "名单";
+            var student = new Student { RecordId = Guid.NewGuid(), Name = "甲" };
+            var prize = new Prize { RecordId = Guid.NewGuid(), Name = "奖品" };
+            var items = Enumerable.Range(0, 75)
+                .Select(i => new HistoryItem { DrawTime = new DateTime(2026, 1, 1).AddMinutes(i), HistoryGroup = i < 10 ? "A" : "" })
+                .ToList();
+            var studentHistory = new StudentHistory(name);
+            studentHistory.Students[student.RecordId.ToString("D")] = new History { TotalCount = items.Count, Histories = new(items) };
+            var prizeHistory = new PrizeHistory(name);
+            prizeHistory.Prizes[prize.RecordId.ToString("D")] = new History { TotalCount = items.Count, Histories = new(items) };
+            provider = CreateProvider(
+                historyQueryService: new TestHistoryQueryService(studentHistory, prizeHistory),
+                catalogManager: new TestProfileCatalogManager(
+                    new StudentList(name) { Students = [student] },
+                    new PrizeList(name) { Prizes = [prize] }));
+            IAppHost.Host = new TestHost(provider);
+
+            var rollCall = provider.GetRequiredService<RollCallHistoryViewModel>();
+            var lottery = provider.GetRequiredService<LotteryHistoryViewModel>();
+            rollCall.SelectedMode = HistoryMode.Records;
+            lottery.SelectedMode = HistoryMode.Records;
+            Assert.Equal(50, rollCall.Rows.Count);
+            Assert.Equal(50, lottery.Rows.Count);
+            rollCall.Pagination.NextCommand.Execute(null);
+            lottery.Pagination.NextCommand.Execute(null);
+            Assert.Equal(25, rollCall.Rows.Count);
+            Assert.Equal(25, lottery.Rows.Count);
+            Assert.True(rollCall.ShouldShowHistoryGroupColumn);
+            Assert.True(lottery.ShouldShowHistoryGroupColumn);
+
+            rollCall.SelectedHistoryGroupFilter = rollCall.HistoryGroupOptions.Single(option => option.Value == "A");
+            lottery.SelectedHistoryGroupFilter = lottery.HistoryGroupOptions.Single(option => option.Value == "A");
+            Assert.Equal(1, rollCall.Pagination.Page);
+            Assert.Equal(1, lottery.Pagination.Page);
+            Assert.Equal(10, rollCall.Rows.Count);
+            Assert.Equal(10, lottery.Rows.Count);
+        }
+        finally
+        {
+            IAppHost.Host = null;
+            provider?.Dispose();
+            HostGate.Release();
+        }
+    }
+
+    [AvaloniaFact]
     public async Task LotteryTabIsHiddenWhenLotteryIsDisabled()
     {
         await HostGate.WaitAsync();

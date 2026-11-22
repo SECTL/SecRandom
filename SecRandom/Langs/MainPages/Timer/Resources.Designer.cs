@@ -116,6 +116,24 @@ namespace SecRandom.Langs.MainPages.Timer {
                 return ResourceManager.GetString("C_MiniWindow", resourceCulture);
             }
         }
+
+        public static string C_FullScreen {
+            get {
+                return ResourceManager.GetString("C_FullScreen", resourceCulture);
+            }
+        }
+
+        public static string C_ExitFullScreen {
+            get {
+                return ResourceManager.GetString("C_ExitFullScreen", resourceCulture);
+            }
+        }
+
+        public static string C_HoldExitFullScreen {
+            get {
+                return ResourceManager.GetString("C_HoldExitFullScreen", resourceCulture);
+            }
+        }
         
         public static string C_Restore {
             get {

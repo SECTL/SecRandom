@@ -9,7 +9,7 @@ using SecRandom.Core.Enums;
 namespace SecRandom.Views.SettingsPages.Picking;
 
 /// <summary>
-///     抽取设置页里那一行「默认记录组」：候选组、当前选中项，以及总开关关闭时整行不可选的显隐。
+///     抽取设置页里那一行「默认记录组」：候选组与当前选中项。
 /// </summary>
 /// <remarks>
 ///     <para>
@@ -20,8 +20,7 @@ namespace SecRandom.Views.SettingsPages.Picking;
 ///     <para>
 ///         两条细节是承重的。第一，重建 <see cref="Options" /> 时下拉框会先把选中项清成 <c>null</c>
 ///         再回写首项，用户并没有做任何选择，所以重建期间的写回一律忽略，否则每次进这个页面都会把
-///         存下来的组名抹掉。第二，总开关关闭时不读记录组目录，配置里的组名原样留着，等开关重新
-///         打开还能接着用；读取失败同样只降级成「默认记录组」，绝不因为一次读取失败就清掉配置。
+///         存下来的组名抹掉。读取失败只降级成「默认记录组」，绝不因为一次读取失败就清掉配置。
 ///     </para>
 ///     <para>
 ///         选中的组可能已被删除或改名：此时把配置清回空串（= 默认记录组），因为删除组只会把记录
@@ -32,7 +31,6 @@ public sealed class DrawHistoryGroupSetting : ObservableObject
 {
     private readonly IHistoryGroupCatalog _catalog;
     private readonly HistoryGroupKind _kind;
-    private readonly Func<bool> _isFeatureEnabled;
     private readonly Func<bool> _isPreviewMode;
     private readonly Func<string> _read;
     private readonly Action<string> _write;
@@ -41,7 +39,6 @@ public sealed class DrawHistoryGroupSetting : ObservableObject
     /// <param name="defaultOption">首项文案（当前语言的「默认记录组」）。</param>
     /// <param name="kind">这一页抽取读写的记录组类别。</param>
     /// <param name="catalog">记录组目录。</param>
-    /// <param name="isFeatureEnabled">历史记录组总开关是否打开。</param>
     /// <param name="isPreviewMode">设置预览模式：预览里绝不写配置。</param>
     /// <param name="read">读取本页配置里的组名（空串 = 默认记录组）。</param>
     /// <param name="write">写回本页配置的组名（空串 = 默认记录组）。</param>
@@ -49,7 +46,6 @@ public sealed class DrawHistoryGroupSetting : ObservableObject
         string defaultOption,
         HistoryGroupKind kind,
         IHistoryGroupCatalog catalog,
-        Func<bool> isFeatureEnabled,
         Func<bool> isPreviewMode,
         Func<string> read,
         Action<string> write)
@@ -57,7 +53,6 @@ public sealed class DrawHistoryGroupSetting : ObservableObject
         DefaultOption = defaultOption;
         _kind = kind;
         _catalog = catalog;
-        _isFeatureEnabled = isFeatureEnabled;
         _isPreviewMode = isPreviewMode;
         _read = read;
         _write = write;
@@ -118,7 +113,7 @@ public sealed class DrawHistoryGroupSetting : ObservableObject
         }
     }
 
-    /// <summary>重建候选值；总开关关闭或目录读取失败时只留默认记录组。</summary>
+    /// <summary>重建候选值；目录读取失败时只留默认记录组。</summary>
     public void Refresh()
     {
         _rebuilding = true;
@@ -127,8 +122,7 @@ public sealed class DrawHistoryGroupSetting : ObservableObject
             Options.Clear();
             Options.Add(DefaultOption);
 
-            if (_isFeatureEnabled())
-                RebuildGroupNames();
+            RebuildGroupNames();
         }
         finally
         {

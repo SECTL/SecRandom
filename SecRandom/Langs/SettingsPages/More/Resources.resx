@@ -129,7 +129,7 @@
     <value>执行闪抽</value>
   </data>
   <data name="S_Shortcut_QuickDraw_D" xml:space="preserve">
-    <value>设置执行快速抽取的快捷键</value>
+    <value>设置执行闪抽的快捷键</value>
   </data>
   <data name="S_Shortcut_OpenLotteryPage" xml:space="preserve">
     <value>打开抽奖页</value>
@@ -177,9 +177,51 @@
     <value>例如 Ctrl+Alt+L</value>
   </data>
   <data name="C_RollCallHistoryGroupSelector" xml:space="preserve">
-    <value>点名页面显示历史记录组选择</value>
+    <value>历史记录组</value>
   </data>
   <data name="C_LotteryHistoryGroupSelector" xml:space="preserve">
-    <value>抽奖页面显示历史记录组选择</value>
+    <value>历史记录组</value>
+  </data>
+  <data name="S_OverviewData" xml:space="preserve">
+    <value>概览数据</value>
+  </data>
+  <data name="S_OverviewData_D" xml:space="preserve">
+    <value>概览中的累计抽取统计与历史记录分开保存</value>
+  </data>
+  <data name="C_ClearOverview" xml:space="preserve">
+    <value>清空概览数据</value>
+  </data>
+  <data name="C_ClearOverview_All" xml:space="preserve">
+    <value>清空全部</value>
+  </data>
+  <data name="C_ClearOverview_RollCall" xml:space="preserve">
+    <value>点名</value>
+  </data>
+  <data name="C_ClearOverview_Lottery" xml:space="preserve">
+    <value>抽奖</value>
+  </data>
+  <data name="C_ClearOverview_RandomNumbers" xml:space="preserve">
+    <value>随机数</value>
+  </data>
+  <data name="M_ClearOverview_Title" xml:space="preserve">
+    <value>清空概览数据</value>
+  </data>
+  <data name="M_ClearOverview_Content" xml:space="preserve">
+    <value>这会清空点名、抽奖和随机数的累计统计，但不会删除历史记录</value>
+  </data>
+  <data name="M_ClearOverview_RollCallContent" xml:space="preserve">
+    <value>这会清空所有点名名单的概览统计，但不会删除历史记录</value>
+  </data>
+  <data name="M_ClearOverview_LotteryContent" xml:space="preserve">
+    <value>这会清空所有奖池的概览统计，但不会删除历史记录</value>
+  </data>
+  <data name="M_ClearOverview_RandomNumbersContent" xml:space="preserve">
+    <value>这会清空随机数的概览统计，但不会删除历史记录</value>
+  </data>
+  <data name="M_ClearOverview_ProfileContent" xml:space="preserve">
+    <value>这会清空“{0}”的概览统计，但不会删除历史记录</value>
+  </data>
+  <data name="M_ClearOverview_Failed" xml:space="preserve">
+    <value>清空概览数据失败</value>
   </data>
 </root>

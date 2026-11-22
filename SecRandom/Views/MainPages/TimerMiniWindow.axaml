@@ -36,6 +36,13 @@
                     <sr:FluentIcon Glyph="{sr:Fi DismissFilled}" FontSize="16"
                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Button>
+
+                 <Button Width="32" Height="32" CornerRadius="16" Padding="0"
+                         ToolTip.Tip="{Binding FullScreenText}"
+                         Click="FullScreen">
+                     <sr:FluentIcon Glyph="{Binding FullScreenIcon}" FontSize="16"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center" />
+                 </Button>
                 
                 <Button Width="32" Height="32" CornerRadius="16" Padding="0"
                         ToolTip.Tip="{Binding ResetText}"

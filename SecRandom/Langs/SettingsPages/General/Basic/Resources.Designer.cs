@@ -137,6 +137,30 @@ namespace SecRandom.Langs.SettingsPages.General.Basic {
             }
         }
 
+        public static string S_General {
+            get {
+                return ResourceManager.GetString("S_General", resourceCulture);
+            }
+        }
+
+        public static string S_StartupAndWindow {
+            get {
+                return ResourceManager.GetString("S_StartupAndWindow", resourceCulture);
+            }
+        }
+
+        public static string S_Integration {
+            get {
+                return ResourceManager.GetString("S_Integration", resourceCulture);
+            }
+        }
+
+        public static string S_Recovery {
+            get {
+                return ResourceManager.GetString("S_Recovery", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 自动保存窗口大小.
         /// </summary>

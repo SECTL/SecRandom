@@ -14,6 +14,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using FluentAvalonia.UI.Controls;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction.Services;
@@ -21,12 +22,14 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.AttachedSettings;
 using SecRandom.Core.Models.Draw;
+using SecRandom.Core.Models.Linkage;
 using SecRandom.Core.Models.Notification;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Services.Linkage;
 using SecRandom.Core.Services.Profiles;
 using SecRandom.Helpers;
 using SecRandom.Services.ControlNode;
@@ -48,6 +51,7 @@ namespace SecRandom.ViewModels.MainPages;
 public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
 {
     private static string AllGroupsOption => SR.O_AllGroups;
+    private static string DrawGroupsOption => SR.O_DrawGroups;
     private static string AllGendersOption => SR.O_AllGenders;
     private static string DefaultHistoryGroupOption => SR.O_HistoryGroupDefault;
 
@@ -65,6 +69,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private readonly ILogger<RollCallPageViewModel> _logger;
     private readonly ISecurityService _securityService;
     private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
+    private readonly CourseRosterMappingService? _courseRosterMapping;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly RollCallDrawService _rollCallDrawService;
     private readonly NotificationService? _notificationService;
@@ -72,12 +77,14 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     private readonly FileSystemWatcher? _studentListWatcher;
     private readonly FileWatcherDebouncer? _studentListDebouncer;
     private List<Student> _lastResultStudents = [];
+    private bool _lastResultWasGroupDraw;
     private int _studentIdPadWidth;
     private bool _isRefreshingLists;
     private bool _isApplyingSelectionRefresh;
     private bool _isStudentListRefreshQueued;
     private bool _isDrawCommandRunning;
     private bool _historyGroupDefaultApplied;
+    private bool _isApplyingCourseBinding;
     private CancellationTokenSource? _previewCts;
 
     [ObservableProperty] private string _selectedStudentListName = string.Empty;
@@ -108,7 +115,8 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         IHistoryGroupCatalog historyGroupCatalog,
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         DrawAudioService? drawAudioService = null,
-        NotificationService? notificationService = null)
+        NotificationService? notificationService = null,
+        CourseRosterMappingService? courseRosterMapping = null)
         : base(configHandler)
     {
         _configHandler = configHandler;
@@ -120,6 +128,7 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         _logger = logger;
         _securityService = securityService;
         _linkageDrawCoordinator = linkageDrawCoordinator;
+        _courseRosterMapping = courseRosterMapping;
         _verificationDrawCoordinator = verificationDrawCoordinator;
         _rollCallDrawService = rollCallDrawService;
         _historyGroupCatalog = historyGroupCatalog;
@@ -142,11 +151,13 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         Config.EffectiveRollCallSettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.EffectiveDefaultDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
         Config.EffectiveMoreSettings.PropertyChanged += SettingsOnPropertyChanged;
-        Config.EffectiveHistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
         Config.RandomNumberSettings.PropertyChanged += RandomNumberSettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged += SettingsOnPropertyChanged;
+        if (_courseRosterMapping is not null)
+            _courseRosterMapping.SelectionChanged += CourseRosterSelectionChanged;
 
         RefreshLists();
+        ApplyCourseBinding();
         RefreshFilterOptions();
         RefreshCounts();
         ApplyRandomNumberDefaults();
@@ -196,15 +207,14 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
         IsControlPanelOnLeft ? HorizontalAlignment.Left : HorizontalAlignment.Right;
 
     /// <summary>
-    ///     记录组选择器是否出现：既要功能开关打开，也要这一页的显隐开关打开。
+    ///     记录组选择器是否出现：由这一页的显隐开关控制；历史记录组本身始终可用。
     /// </summary>
     /// <remarks>
-    ///     功能开关落在 <c>General.HistoryGroups.Enabled</c>（设备功能总闸），显隐开关落在
-    ///     <c>MoreSettings</c>（与「范围/性别选择器」同一族，属于主页面布局偏好）。用派生属性而不是
+    ///     显隐开关落在 <c>MoreSettings</c>（与「范围/性别选择器」同一族，属于主页面布局偏好）。用派生属性而不是
     ///     手写 <c>IsVisible</c> 转换器，是为了让移动端复用同一份 VM 时自动一致。
     /// </remarks>
     public bool IsHistoryGroupSelectorVisible =>
-        Config.EffectiveHistoryGroups.Enabled && MoreSettings.RollCallHistoryGroupSelector && !IsNumberMode;
+        MoreSettings.RollCallHistoryGroupSelector && !IsNumberMode;
 
     /// <summary>
     ///     是否处于「不使用名单」的数字范围抽取模式：此时候选池是一段整数，与共享档案无关。
@@ -223,6 +233,10 @@ public sealed partial class RollCallPageViewModel : ViewModelBase, IDisposable
     public bool CanDecreaseCount => DrawCount > 1;
     public bool CanIncreaseCount => DrawCount < MaximumDrawCount;
     public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && TotalCount > 0);
+    public string DrawUnavailableMessage => !IsDrawing && !_isDrawCommandRunning && TotalCount == 0
+        ? SR.M_NoStudents
+        : string.Empty;
+    public bool IsDrawUnavailableNoticeVisible => !string.IsNullOrEmpty(DrawUnavailableMessage);
     public string DrawButtonText => IsDrawing ? SR.C_Stop : SR.C_Start;
     public int TotalCount { get; private set; }
     public int RemainingCount { get; private set; }
@@ -268,7 +282,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     private StudentList? CurrentStudentList => _profileService.CurrentStudentList;
     private StudentHistory? CurrentStudentHistory => _profileService.CurrentStudentHistory;
-    private string CurrentGroupScope => SelectedGroup == AllGroupsOption ? string.Empty : SelectedGroup;
+    private bool IsGroupDraw => SelectedGroup == DrawGroupsOption && IsGroupSelectorVisible;
+    private string CurrentGroupScope => SelectedGroup == AllGroupsOption || IsGroupDraw ? string.Empty : SelectedGroup;
     private string CurrentGenderScope => SelectedGender == AllGendersOption ? string.Empty : SelectedGender;
 
     /// <summary>
@@ -276,14 +291,14 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     /// </summary>
     /// <remarks>
     ///     <para>
-    ///         三态语义：<see langword="null" /> = 不按组过滤（功能关闭或本页选择器隐藏时的旧行为）；
+    ///         三态语义：<see langword="null" /> = 不按组过滤（本页选择器隐藏时的旧行为）；
     ///         空串 = 「默认记录组」，即 <c>HistoryItem.HistoryGroup</c> 为空串的未分组记录；
     ///         其余 = 该组的记录。空串与 <see langword="null" /> 必须分开，否则「默认记录组」这个
     ///         选项会把已分组记录也算进来，标签就成了假话。
     ///     </para>
     ///     <para>
-    ///         这里刻意把「选择器当前不可见」也算成 <see langword="null" />：功能总闸被关掉、或本页
-    ///         显隐开关被关掉之后，隐藏起来的选择器不可能再被用户看见，这时若继续沿用内存里残留的
+    ///         这里刻意把「选择器当前不可见」也算成 <see langword="null" />：本页显隐开关被关掉之后，
+    ///         隐藏起来的选择器不可能再被用户看见，这时若继续沿用内存里残留的
     ///         旧选择，抽取就会静默落进一个用户以为已经失效的组——这是这个功能最容易出的
     ///         「静默写错地方」，所以在唯一取值点上兜住。
     ///     </para>
@@ -304,7 +319,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             {
                 // 数字模式不读任何名单：不切换共享档案（否则会把别的会话的档案改成"数字名单"），
                 // 只把「默认抽取名单」记成哨兵值，下次进页面仍然是数字模式。
-                if (persistSelection && !RosterSelection.IsNone(Config.RollCallSettings.DefaultClass))
+                if (persistSelection && !_isApplyingCourseBinding && !RosterSelection.IsNone(Config.RollCallSettings.DefaultClass))
                 {
                     Config.RollCallSettings.DefaultClass = RosterSelection.None;
                     _configHandler.Save();
@@ -314,7 +329,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             {
                 _profileService.LoadStudentProfile(value);
                 EnsureRestartTemporaryRecordsCleared(value);
-                if (persistSelection && Config.RollCallSettings.DefaultClass != value)
+                if (persistSelection && !_isApplyingCourseBinding && Config.RollCallSettings.DefaultClass != value)
                 {
                     Config.RollCallSettings.DefaultClass = value;
                     _configHandler.Save();
@@ -407,6 +422,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     partial void OnIsDrawingChanged(bool value)
     {
         OnPropertyChanged(nameof(CanStartDraw));
+        OnPropertyChanged(nameof(DrawUnavailableMessage));
+        OnPropertyChanged(nameof(IsDrawUnavailableNoticeVisible));
         OnPropertyChanged(nameof(DrawButtonText));
     }
 
@@ -460,6 +477,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         ResultItems.Clear();
         if (IsNumberMode)
             _rollCallDrawService.ResetNumbers(Config.EffectiveRandomNumberSettings.ResetBehavior);
+        else if (IsGroupDraw)
+            _temporaryRecordService.ClearGroups(SelectedStudentListName);
         else
             _rollCallDrawService.Reset(CurrentGroupScope, CurrentGenderScope);
         IsResultVisible = false;
@@ -480,7 +499,10 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             return;
         }
 
-        if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.RollCallStart, () => Task.CompletedTask))
+        if (!await _linkageDrawCoordinator.AuthorizeAsync(
+                SecurityOperation.RollCallStart,
+                () => Task.CompletedTask,
+                onBlocked: ShowDrawAuthorizationNotice))
             return;
         await StartDrawCoreAsync();
     }
@@ -490,6 +512,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         if (IsDrawing)
             return;
 
+        ApplyCourseBinding();
+
         if (IsNumberMode)
         {
             await StartNumberDrawCoreAsync();
@@ -497,12 +521,14 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         }
 
         EnsureActiveProfileMatchesSelection();
+        _lastResultWasGroupDraw = IsGroupDraw;
 
         RefreshCounts();
         ResetForNewRoundIfExhausted();
         if (!CanStartDraw)
         {
             StatusText = TotalCount == 0 ? SR.M_NoStudents : SR.M_NoRemainingStudents;
+            ShowDrawUnavailableToast(StatusText);
             return;
         }
 
@@ -510,10 +536,14 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         if (candidates.Count == 0)
         {
             StatusText = SR.M_NoRemainingStudents;
+            ShowDrawUnavailableToast(StatusText);
             return;
         }
 
         var count = Math.Clamp(DrawCount, 1, candidates.Count);
+        // 组抽取的实际候选仍是一组一个单位；动画/通知需要在开启时带上该组的一名
+        // 代表成员，但不能把组内所有成员展开后改变组的等概率语义。
+        var presentationCandidates = BuildGroupPresentationCandidates(candidates);
         // 记录组与候选池同一刻冻结：候选用的是这一刻的组，记录也要落进同一个组，
         // 否则中途切组会让「按 A 组权重抽出来的人写进 B 组记录」。
         var historyGroup = CurrentHistoryGroup;
@@ -524,7 +554,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             if (_notificationService is not null
                 && _notificationService.UsesFullscreenNotificationService(NotificationSettingsType.RollCall))
             {
-                fullscreenPool = FullscreenNotificationComposer.MapStudents(candidates);
+                fullscreenPool = FullscreenNotificationComposer.MapStudents(presentationCandidates);
                 _notificationService.BeginFullscreenPresentation(
                     NotificationSettingsType.RollCall,
                     FullscreenNotificationComposer.CreateSeed(
@@ -539,13 +569,13 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 await _notificationService.BeginClassIslandAnimationAsync(
                     NotificationSettingsType.RollCall,
                     SelectedStudentListName,
-                    candidates,
+                    presentationCandidates,
                     count);
 
             var courseName = _linkageDrawCoordinator.GetCourseName();
             var drawTask = _rollCallDrawService.DrawAsync(new RollCallDrawRequest(
-                SelectedStudentListName, CurrentGroupScope, CurrentGenderScope, count, courseName, historyGroup));
-            var previewTask = ShowPreviewAsync(candidates, count, MusicSettings.AnimationMusic);
+                SelectedStudentListName, CurrentGroupScope, CurrentGenderScope, count, courseName, historyGroup, IsGroupDraw));
+            var previewTask = ShowPreviewAsync(presentationCandidates, count, MusicSettings.AnimationMusic);
             List<Student> drawnStudents;
             try
             {
@@ -561,6 +591,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                     ClearUncommittedPreview();
                     _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.RollCall);
                     StatusText = SR.M_NoCandidates;
+                    ShowDrawUnavailableToast(StatusText);
                     return;
                 }
 
@@ -580,6 +611,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 ClearUncommittedPreview();
                 _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.RollCall);
                 StatusText = SR.M_DrawFailed;
+                ShowDrawUnavailableToast(StatusText, FAInfoBarSeverity.Error);
                 return;
             }
 
@@ -595,19 +627,22 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             ResetForNewRoundIfExhausted();
             OnPropertyChanged(nameof(ResultText));
 
+            var notificationStudents = _lastResultWasGroupDraw
+                ? drawnStudents.Select(student => new Student { Name = FormatStudent(student), Group = student.Group }).ToList()
+                : drawnStudents;
             if (_notificationService is not null)
             {
                 _notificationService.QueueStudents(
                     NotificationSettingsType.RollCall,
                     SelectedStudentListName,
-                    drawnStudents);
+                    notificationStudents);
 
                 if (_notificationService.UsesFullscreenNotificationService(NotificationSettingsType.RollCall))
                     _notificationService.CompleteFullscreenPresentation(
                         NotificationSettingsType.RollCall,
                         FullscreenNotificationComposer.CreateSnapshot(
                             NotificationSettingsType.RollCall,
-                            FullscreenNotificationComposer.MapStudents(drawnStudents),
+                            FullscreenNotificationComposer.MapStudents(notificationStudents),
                             fullscreenPool,
                             TotalCount,
                             RemainingCount,
@@ -620,13 +655,40 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             var fullscreenVoiceActive = _notificationService?.UsesFullscreenNotificationService(NotificationSettingsType.RollCall) == true
                                         && Config.NotificationSettings.Fullscreen.ShowVoiceAnnouncement;
             if (!fullscreenVoiceActive && _voiceAnnouncementService is not null && VoiceAnnouncementSettings.VoiceAnnouncementEnabled)
-                await _voiceAnnouncementService.SpeakStudentsAsync(drawnStudents).ConfigureAwait(false);
+                await _voiceAnnouncementService.SpeakStudentsAsync(notificationStudents).ConfigureAwait(false);
         }
         finally
         {
             SetDrawCommandRunning(false);
         }
     }
+
+    private void ApplyCourseBinding()
+    {
+        var mappedList = _courseRosterMapping?.ResolveStudentList(CourseDrawChannel.RollCall);
+        var configuredList = Config.RollCallSettings.DefaultClass;
+        var listName = !string.IsNullOrWhiteSpace(mappedList) && StudentListNames.Contains(mappedList)
+            ? mappedList
+            : RosterSelection.IsNone(configuredList) ? NoListOption : configuredList;
+        if (string.IsNullOrWhiteSpace(listName) || !StudentListNames.Contains(listName))
+            return;
+        _isApplyingCourseBinding = true;
+        try
+        {
+            SelectedStudentListName = listName;
+        }
+        finally
+        {
+            _isApplyingCourseBinding = false;
+        }
+    }
+
+    private void CourseRosterSelectionChanged(object? sender, EventArgs e) => Dispatcher.UIThread.Post(() =>
+    {
+        RefreshLists();
+        ApplyCourseBinding();
+        RefreshCounts();
+    });
 
     /// <summary>
     ///     数字范围抽取：候选池是一段连续整数（每个整数一张"票"），与任何名单/共享档案无关。
@@ -649,6 +711,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         if (RemainingCount <= 0)
         {
             StatusText = TotalCount == 0 ? SR.M_NoStudents : SR.M_NoRemainingStudents;
+            ShowDrawUnavailableToast(StatusText);
             return;
         }
 
@@ -657,6 +720,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         if (frozenCandidates.Count == 0)
         {
             StatusText = SR.M_NoCandidates;
+            ShowDrawUnavailableToast(StatusText);
             return;
         }
 
@@ -704,6 +768,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                     ClearUncommittedPreview();
                     _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.RollCall);
                     StatusText = SR.M_NoCandidates;
+                    ShowDrawUnavailableToast(StatusText);
                     return;
                 }
 
@@ -723,6 +788,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 ClearUncommittedPreview();
                 _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.RollCall);
                 StatusText = SR.M_DrawFailed;
+                ShowDrawUnavailableToast(StatusText, FAInfoBarSeverity.Error);
                 return;
             }
 
@@ -821,6 +887,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             return RemoteDrawOutcome.Busy();
 
         RefreshLists();
+        ApplyCourseBinding();
         // 数字模式用稳定哨兵值表示：载荷里的空串与哨兵都映射成「不使用名单」；
         // null 仍保持旧语义——沿用本页当前选择。
         var listName = request.ListName is null ? SelectedStudentListName : request.ListName;
@@ -909,10 +976,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             // 首项永远是「不使用名单」：它既是"没有任何名单"时的默认值，也是数字范围抽取模式的入口。
             StudentListNames.Add(NoListOption);
 
-            var directory = Utils.GetDirectoryPath("list", "roll_call_list");
-            var realNames = Directory.GetFiles(directory, "*.json")
-                .OrderBy(Path.GetFileName)
-                .Select(file => Path.GetFileNameWithoutExtension(file) ?? string.Empty)
+            var realNames = _profileCatalogManager.GetStudentListNames()
                 .Where(RosterSelection.IsUsable)
                 .ToList();
             foreach (var name in realNames)
@@ -1014,13 +1078,14 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     public void Dispose()
     {
+        if (_courseRosterMapping is not null)
+            _courseRosterMapping.SelectionChanged -= CourseRosterSelectionChanged;
         StopPreview();
         _ = _drawAudioService?.StopAnimationMusicAsync(0, immediate: true);
         StudentListNames.CollectionChanged -= StudentListNamesOnCollectionChanged;
         Config.EffectiveRollCallSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.EffectiveDefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
         Config.EffectiveMoreSettings.PropertyChanged -= SettingsOnPropertyChanged;
-        Config.EffectiveHistoryGroups.PropertyChanged -= SettingsOnPropertyChanged;
         Config.Appearance.PropertyChanged -= SettingsOnPropertyChanged;
         _studentListDebouncer?.Dispose();
         _studentListWatcher?.Dispose();
@@ -1033,7 +1098,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     private FileSystemWatcher CreateStudentListWatcher()
     {
-        var watcher = new FileSystemWatcher(Utils.GetDirectoryPath("list", "roll_call_list"), "*.json")
+        var watcher = new FileSystemWatcher(Utils.GetDirectoryPath("list"), "*")
         {
             NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.CreationTime
         };
@@ -1048,8 +1113,18 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     private void StudentListFiles_OnChanged(object? sender, FileSystemEventArgs e)
     {
+        if (!IsRosterFileEvent(e))
+            return;
         QueueStudentListRefresh();
     }
+
+    private static bool IsRosterFileEvent(FileSystemEventArgs e) =>
+        e.Name is { } name &&
+        (name.Equals($"roll_call{Utils.RosterDatabaseExtension}", StringComparison.OrdinalIgnoreCase) ||
+         name.EndsWith(Utils.RosterDatabaseExtension, StringComparison.OrdinalIgnoreCase) ||
+         name.EndsWith(".json", StringComparison.OrdinalIgnoreCase)) &&
+        !name.EndsWith(Utils.RosterLegacyBackupExtension, StringComparison.OrdinalIgnoreCase) &&
+        !name.EndsWith(Utils.RosterDatabaseMigratedExtension, StringComparison.OrdinalIgnoreCase);
 
     private void QueueStudentListRefresh()
     {
@@ -1089,12 +1164,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             OnPropertyChanged(nameof(IsGenderSelectorVisible));
             OnPropertyChanged(nameof(IsGroupSelectorVisible));
             OnPropertyChanged(nameof(IsRemainingListButtonVisible));
-        }
-
-        if (sender == Config.EffectiveMoreSettings || sender == Config.EffectiveHistoryGroups)
-        {
-            // 选择器显隐会改变「当前生效的组」的含义（隐藏即不做组隔离），所以两种开关变化
-            // 都要重算派生属性、刷新可选组与计数。
+            // 选择器显隐会改变「当前生效的组」的含义（隐藏即不做组隔离），所以要重算
+            // 派生属性、刷新可选组与计数。
             OnPropertyChanged(nameof(IsHistoryGroupSelectorVisible));
             RefreshHistoryGroupOptions();
             RefreshCounts();
@@ -1211,6 +1282,25 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
         _isDrawCommandRunning = value;
         OnPropertyChanged(nameof(CanStartDraw));
+        OnPropertyChanged(nameof(DrawUnavailableMessage));
+        OnPropertyChanged(nameof(IsDrawUnavailableNoticeVisible));
+    }
+
+    private void ShowDrawAuthorizationNotice(LinkageDrawGate gate, string? detail)
+    {
+        var message = gate switch
+        {
+            LinkageDrawGate.BlockedByClassTime => detail ?? SR.M_DrawAuthorizationDenied,
+            LinkageDrawGate.BlockedByRemoteLock => SR.M_DrawLocked,
+            _ => SR.M_DrawAuthorizationDenied
+        };
+        MainView.ShowToast(message, FAInfoBarSeverity.Warning);
+    }
+
+    private static void ShowDrawUnavailableToast(string message, FAInfoBarSeverity severity = FAInfoBarSeverity.Warning)
+    {
+        if (!string.IsNullOrWhiteSpace(message))
+            MainView.ShowToast(message, severity);
     }
 
     private void TriggerPreviewAnimation()
@@ -1218,10 +1308,118 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         PreviewAnimationRevision++;
     }
 
+    /// <summary>Temporarily aligns the visible roster selector and counters with a proof playback.</summary>
+    public IDisposable BeginProofPlayback(
+        string? rosterName,
+        int candidateCount,
+        int resultCount,
+        int rosterEntryCount = 0)
+    {
+        var displayTotalCount = rosterEntryCount > 0 ? rosterEntryCount : candidateCount;
+        var state = new ProofPlaybackDisplayState(
+            this,
+            _selectedStudentListName,
+            _drawCount,
+            TotalCount,
+            RemainingCount);
+
+        if (!string.IsNullOrWhiteSpace(rosterName) && StudentListNames.Contains(rosterName))
+            _selectedStudentListName = rosterName;
+
+        _drawCount = Math.Clamp(resultCount, 1, Math.Max(1, candidateCount));
+        TotalCount = Math.Max(0, displayTotalCount);
+        // The proof may have filtered the roster; keep the remaining count tied to the frozen candidate pool.
+        RemainingCount = Math.Max(0, candidateCount);
+        NotifyProofPlaybackDisplayState();
+        return state;
+    }
+
+    private void NotifyProofPlaybackDisplayState()
+    {
+        OnPropertyChanged(nameof(SelectedStudentListName));
+        OnPropertyChanged(nameof(IsNumberMode));
+        OnPropertyChanged(nameof(IsRemainingListButtonVisible));
+        OnPropertyChanged(nameof(DrawCount));
+        OnPropertyChanged(nameof(TotalCount));
+        OnPropertyChanged(nameof(RemainingCount));
+        OnPropertyChanged(nameof(CountSummary));
+        OnPropertyChanged(nameof(MaximumDrawCount));
+        OnPropertyChanged(nameof(CanDecreaseCount));
+        OnPropertyChanged(nameof(CanIncreaseCount));
+        OnPropertyChanged(nameof(CanStartDraw));
+    }
+
+    private sealed class ProofPlaybackDisplayState(
+        RollCallPageViewModel owner,
+        string selectedStudentListName,
+        int drawCount,
+        int totalCount,
+        int remainingCount) : IDisposable
+    {
+        private bool _disposed;
+
+        public void Dispose()
+        {
+            if (_disposed)
+                return;
+
+            _disposed = true;
+            owner._selectedStudentListName = selectedStudentListName;
+            owner._drawCount = drawCount;
+            owner.TotalCount = totalCount;
+            owner.RemainingCount = remainingCount;
+            owner.NotifyProofPlaybackDisplayState();
+        }
+    }
+
+    /// <summary>Replays a stored proof directly in the point-call page without writing history.</summary>
+    public async Task PlayProofPlaybackAsync(
+        IReadOnlyList<string> candidates,
+        IReadOnlyList<string> results,
+        CancellationToken cancellationToken)
+    {
+        IsDrawing = true;
+        try
+        {
+            var pool = candidates.Where(static value => !string.IsNullOrWhiteSpace(value)).ToArray();
+            var playbackCount = Math.Max(1, results.Count);
+            for (var iteration = 0; iteration < 16; iteration++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var offset = pool.Length == 0 ? 0 : iteration % pool.Length;
+                var frame = pool.Length == 0
+                    ? results.Take(playbackCount).ToArray()
+                    : pool.Skip(offset).Concat(pool.Take(offset)).Take(playbackCount).ToArray();
+                _lastResultStudents = frame.Select(static text => new Student { Name = text, Id = text }).ToList();
+                RefreshResultItems();
+                IsResultVisible = true;
+                TriggerPreviewAnimation();
+                await Task.Delay(90, cancellationToken).ConfigureAwait(true);
+            }
+
+            _lastResultStudents = results.Take(playbackCount)
+                .Select(static text => new Student { Name = text, Id = text })
+                .ToList();
+            RefreshResultItems();
+            ResultText = string.Join(SR.M_ResultSeparator, ResultItems.Select(item => item.DisplayText));
+            IsResultVisible = true;
+            RemainingCount = Math.Max(0, pool.Length - results.Count);
+            OnPropertyChanged(nameof(RemainingCount));
+            OnPropertyChanged(nameof(CountSummary));
+            TriggerResultAnimation();
+            OnPropertyChanged(nameof(ResultText));
+        }
+        finally
+        {
+            IsDrawing = false;
+        }
+    }
+
     private void RefreshFilterOptions()
     {
         var students = GetVisibleStudents().ToList();
         ReplaceOptions(GroupOptions, AllGroupsOption, students.Select(s => s.Group));
+        GroupOptions.Insert(1, DrawGroupsOption);
         ReplaceOptions(GenderOptions, AllGendersOption, students.Select(s => s.Gender));
         RefreshHistoryGroupOptions();
 
@@ -1241,7 +1439,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     ///     </para>
     ///     <para>
     ///         选中项在刷新后仍然存在就保留，否则回落到默认项——但仅在选择器可见时才回写，
-    ///         免得功能关闭期间把用户的选择悄悄清掉。
+    ///         免得隐藏期间把用户的选择悄悄清掉。
     ///     </para>
     /// </remarks>
     private void RefreshHistoryGroupOptions()
@@ -1310,6 +1508,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         OnPropertyChanged(nameof(CanDecreaseCount));
         OnPropertyChanged(nameof(CanIncreaseCount));
         OnPropertyChanged(nameof(CanStartDraw));
+        OnPropertyChanged(nameof(DrawUnavailableMessage));
+        OnPropertyChanged(nameof(IsDrawUnavailableNoticeVisible));
     }
 
     public void RefreshRemainingList()
@@ -1365,6 +1565,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         // 数字模式没有名单临时记录，重置的是数字票那一份临时记录（与 ResetNumbers 同一口径）。
         if (IsNumberMode)
             _rollCallDrawService.ResetNumbers();
+        else if (IsGroupDraw)
+            _temporaryRecordService.ClearGroups(SelectedStudentListName);
         else
             _temporaryRecordService.ResetStudentList(SelectedStudentListName);
         RefreshCounts();
@@ -1392,11 +1594,39 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     private IEnumerable<Student> GetCandidates()
     {
+        if (IsGroupDraw)
+            return GroupDrawCandidates.Build(GetVisibleStudents(), CurrentGenderScope)
+                .Select(group => new Student { Group = group.Name, Name = group.Name, RecordId = Guid.NewGuid() });
         return GetVisibleStudents().Where(MatchesSelection);
+    }
+
+    private IReadOnlyList<Student> BuildGroupPresentationCandidates(IReadOnlyList<Student> candidates)
+    {
+        if (!IsGroupDraw || Config.EffectiveRollCallSettings.GroupMemberDisplay == GroupMemberDisplayMode.GroupOnly)
+            return candidates;
+
+        var groups = GroupDrawCandidates.Build(GetVisibleStudents(), CurrentGenderScope)
+            .ToDictionary(group => group.Name, StringComparer.Ordinal);
+        var random = new CryptoRandomSource();
+        return candidates.Select(candidate =>
+        {
+            if (!groups.TryGetValue(candidate.Group, out var group))
+                return candidate;
+
+            return GroupDrawCandidates.SampleMember(group, random) ?? candidate;
+        }).ToArray();
     }
 
     private IEnumerable<Student> GetEligibleCandidates(IEnumerable<Student>? candidates = null)
     {
+        if (IsGroupDraw)
+        {
+            var settings = Config.EffectiveRollCallSettings;
+            var groups = GroupDrawCandidates.Build(GetVisibleStudents(), CurrentGenderScope);
+            return GroupDrawCandidates.Eligible(groups, _temporaryRecordService.GetGroupCounts(SelectedStudentListName),
+                    settings.DrawMode == DrawMode.Orchestrated ? settings.SampledDrawMode : settings.DrawMode, settings.HalfRepeat)
+                .Select(group => new Student { Group = group.Name, Name = group.Name });
+        }
         var source = candidates ?? GetVisibleStudents();
         var threshold = DrawRepeatPolicy.ResolveThreshold(Config.EffectiveRollCallSettings.DrawMode, Config.EffectiveRollCallSettings.HalfRepeat);
         var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
@@ -1407,6 +1637,13 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     private bool HasReachedRepeatLimit(Student student)
     {
+        if (IsGroupDraw)
+        {
+            var settings = Config.EffectiveRollCallSettings;
+            var mode = settings.DrawMode == DrawMode.Orchestrated ? settings.SampledDrawMode : settings.DrawMode;
+            return DrawRepeatPolicy.HasReachedLimit(_temporaryRecordService.GetGroupCounts(SelectedStudentListName)
+                .GetValueOrDefault(student.Group), DrawRepeatPolicy.ResolveThreshold(mode, settings.HalfRepeat));
+        }
         var threshold = DrawRepeatPolicy.ResolveThreshold(Config.EffectiveRollCallSettings.DrawMode, Config.EffectiveRollCallSettings.HalfRepeat);
         var counts = _temporaryRecordService.GetStudentCounts(SelectedStudentListName, CurrentGenderScope, CurrentGroupScope);
         return DrawRepeatPolicy.HasReachedLimit(counts.GetValueOrDefault(ProfileRecordIdentity.EnsureRecordId(student)), threshold);
@@ -1471,6 +1708,18 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     private string FormatStudent(Student student)
     {
+        if (_lastResultWasGroupDraw)
+        {
+            var group = student.Group;
+            var member = student.Name == group ? string.Empty : student.Name;
+            return Config.EffectiveRollCallSettings.GroupMemberDisplay switch
+            {
+                GroupMemberDisplayMode.GroupOnly => group,
+                GroupMemberDisplayMode.GroupAndMemberOnSeparateLines when !string.IsNullOrWhiteSpace(member) => $"{group}\n{member}",
+                GroupMemberDisplayMode.GroupAndMemberWithDash when !string.IsNullOrWhiteSpace(member) => $"{group} - {member}",
+                _ => group
+            };
+        }
         // 数字票的 Id 与 Name 是同一个号码，套用"编号 + 名称"的显示格式会得到「7 7」这种结果，
         // 所以号码直接显示一次。这里按学生自身判定而不是记住上一次抽取的模式：切换名单后，
         // 上一次数字结果与剩余列表还要按各自的数据正确显示。
@@ -1498,6 +1747,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     private double BuildDisplayWeight(Student student)
     {
+        if (_lastResultWasGroupDraw)
+            return 1;
         if (Config.EffectiveRollCallSettings.DrawType != DrawType.Fair)
             return 1;
 

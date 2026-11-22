@@ -17,10 +17,28 @@
     <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
         <StackPanel MaxWidth="720" Margin="12" Spacing="10" Classes="animated-intro">
 
-            <!--
-                页面内不再重复标题：导航栏已经显示「远程抽取」（MobileRootView.Header = P_RemoteDraw）。
-                这一段引导语说明"手机只负责选与看，抽取发生在教室机"，因此比正文略暗。
-            -->
+            <!-- 未登录时统一从设置页顶部账号区登录，远程抽取页只提供明确的引导入口。 -->
+            <Border IsVisible="{Binding ViewModel.NeedsSignIn}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    CornerRadius="8"
+                    Padding="12">
+                <StackPanel Spacing="8">
+                    <TextBlock Text="{x:Static langs:Resources.RD_SignedOut}"
+                               TextWrapping="Wrap"
+                               FontWeight="SemiBold" />
+                    <TextBlock Text="{x:Static langs:Resources.RD_AccountHint}"
+                               FontSize="12"
+                               Opacity="0.7"
+                               TextWrapping="Wrap" />
+                    <Button Classes="accent"
+                            HorizontalAlignment="Stretch"
+                            HorizontalContentAlignment="Center"
+                            Click="OpenSettings_OnClick"
+                            Content="{x:Static langs:Resources.RD_SignInInstead}" />
+                </StackPanel>
+            </Border>
+
+            <!-- 页面内不再重复标题；登录入口置顶后，引导语紧随其后。 -->
             <TextBlock Text="{x:Static langs:Resources.RD_Hint}"
                        Opacity="0.75"
                        Margin="0 4 0 0"
@@ -74,29 +92,6 @@
                                Foreground="{DynamicResource SystemFillColorCriticalBrush}"
                                FontSize="12"
                                TextWrapping="Wrap" />
-                </StackPanel>
-            </Border>
-
-            <!--
-                未登录：手机/平板没有集控页，也没有配对码通道，唯一入口就是这里。
-                账号登录与设置页顶部的账号区是同一个账号（SectlAuthService），登录后自动加载地点。
-            -->
-            <Border IsVisible="{Binding ViewModel.NeedsSignIn}"
-                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
-                    CornerRadius="8"
-                    Padding="12">
-                <StackPanel Spacing="8">
-                    <TextBlock Text="{x:Static langs:Resources.RD_SignIn}" FontWeight="SemiBold" />
-                    <TextBlock Text="{x:Static langs:Resources.RD_AccountHint}"
-                               FontSize="12"
-                               Opacity="0.65"
-                               TextWrapping="Wrap" />
-                    <Button Classes="accent"
-                            Content="{x:Static langs:Resources.RD_SignIn}"
-                            Command="{Binding ViewModel.SignInCommand}"
-                            IsEnabled="{Binding !ViewModel.IsBusy}"
-                            HorizontalContentAlignment="Center"
-                            HorizontalAlignment="Stretch" />
                 </StackPanel>
             </Border>
 

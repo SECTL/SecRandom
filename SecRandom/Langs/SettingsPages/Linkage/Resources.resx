@@ -148,10 +148,10 @@
     <value>课前解禁时间</value>
   </data>
   <data name="S_SubjectHistory_Filter_D" xml:space="preserve">
-    <value>计算权重时只使用当前科目的历史记录</value>
+    <value>将当前科目写入抽取历史记录，不影响抽取权重</value>
   </data>
   <data name="S_SubjectHistory_Filter" xml:space="preserve">
-    <value>科目历史记录过滤</value>
+    <value>记录科目</value>
   </data>
   <data name="S_ClassTime_PreClassEnableTime_D" xml:space="preserve">
     <value>上课前多少秒提前解除课间禁用</value>
@@ -172,4 +172,22 @@
   <data name="M_ScheduleError_ClassIslandScheduleUnloaded" xml:space="preserve"><value>ClassIsland 尚未加载当天课程表</value></data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState" xml:space="preserve"><value>ClassIsland 返回了未支持的当前状态：{0}</value></data>
   <data name="M_ScheduleError_ClassIslandReadFailed" xml:space="preserve"><value>无法读取 ClassIsland 的课程状态</value></data>
+  <data name="C_AddCourse" xml:space="preserve"><value>添加科目</value></data>
+  <data name="C_RefreshCourseRoster" xml:space="preserve"><value>刷新课程</value></data>
+  <data name="C_Course" xml:space="preserve"><value>科目</value></data>
+  <data name="C_RollCallList" xml:space="preserve"><value>点名单</value></data>
+  <data name="C_QuickDrawList" xml:space="preserve"><value>闪抽名单</value></data>
+  <data name="C_LotteryPool" xml:space="preserve"><value>抽奖奖品池</value></data>
+  <data name="M_CourseSearch" xml:space="preserve"><value>搜索科目</value></data>
+  <data name="M_AddCoursePrompt" xml:space="preserve"><value>输入科目名称</value></data>
+  <data name="M_CourseNameRequired" xml:space="preserve"><value>请输入科目名称</value></data>
+  <data name="M_CourseAlreadyExists" xml:space="preserve"><value>该科目已存在</value></data>
+  <data name="M_CourseSourceOff" xml:space="preserve"><value>请先选择课程数据源</value></data>
+  <data name="M_CourseLoading" xml:space="preserve"><value>正在读取课程</value></data>
+  <data name="M_CourseUnavailable" xml:space="preserve"><value>未读取到课程</value></data>
+  <data name="M_CourseCount" xml:space="preserve"><value>共 {0} 个科目</value></data>
+  <data name="O_CourseRosterDefault" xml:space="preserve"><value>使用默认名单</value></data>
+  <data name="S_External_CourseRoster" xml:space="preserve"><value>课程名单映射</value></data>
+  <data name="S_External_CourseRoster_D" xml:space="preserve"><value>为课程绑定点名名单、闪抽名单和奖品池</value></data>
+  <data name="C_OpenCourseRoster" xml:space="preserve"><value>管理课程名单</value></data>
 </root>

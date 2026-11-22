@@ -139,6 +139,11 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     /// <summary>是否已经持有本机设备凭据。</summary>
     [ObservableProperty] private bool _isEnrolled;
 
+    /// <summary>
+    ///     未接入时显示的接入方式。只属于当前设置页，不落盘；默认使用地点 ID + 配对码。
+    /// </summary>
+    [ObservableProperty] private bool _isAccountEnrollmentMode;
+
     /// <summary>地点 ID 输入框（形如 <c>SC-K7Q2M9</c>）。</summary>
     [ObservableProperty] private string _siteIdInput = string.Empty;
 
@@ -215,6 +220,8 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     /// </summary>
     public bool CanEnrollWithAccount => _enrollmentStore is not null
                                         && _controlCenterClient is not null
+                                        && !IsEnrolled
+                                        && !IsEnrolling
                                         && !IsAccountBusy
                                         && IsAccountSignedIn
                                         && SelectedAccountSite is not null
@@ -240,7 +247,24 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     /// <summary>班级保存提示（与接入错误共用同一行，但文案分开）。</summary>
     [ObservableProperty] private string _classSaveMessage = string.Empty;
 
-    public bool CanEnroll => !IsEnrolling
+    /// <summary>接入设置卡表面显示当前方式，并提供切换到另一种方式的命令。</summary>
+    public string EnrollmentModeLabel => IsAccountEnrollmentMode
+        ? LR.S_AccountEnrollment
+        : LR.S_NodeEnrollment;
+
+    public string EnrollmentModeDescription => IsAccountEnrollmentMode
+        ? LR.S_AccountEnrollment_D
+        : LR.S_NodeEnrollment_D;
+
+    public string SwitchEnrollmentModeLabel => IsAccountEnrollmentMode
+        ? LR.C_SwitchToPairCode
+        : LR.C_SwitchToAccount;
+
+    public bool CanSwitchEnrollmentMode => !IsEnrolled && !IsEnrolling && !IsAccountBusy;
+
+    public bool ShowEnrollmentStatus => IsEnrolled || IsEnrollmentUnreadable;
+
+    public bool CanEnroll => !IsEnrolled && !IsEnrolling && !IsAccountBusy
                              && NodeEnrollmentClient.NormalizeSiteId(SiteIdInput) is not null
                              && NodeEnrollmentClient.NormalizePairingCode(PairingCodeInput) is not null;
 
@@ -386,6 +410,8 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     partial void OnIsEnrollingChanged(bool value)
     {
         OnPropertyChanged(nameof(CanEnroll));
+        OnPropertyChanged(nameof(CanEnrollWithAccount));
+        OnPropertyChanged(nameof(CanSwitchEnrollmentMode));
         OnPropertyChanged(nameof(CanSaveClass));
         OnPropertyChanged(nameof(CanClearClass));
         OnPropertyChanged(nameof(CanClearEnrollment));
@@ -393,6 +419,10 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
 
     partial void OnIsEnrolledChanged(bool value)
     {
+        OnPropertyChanged(nameof(CanEnroll));
+        OnPropertyChanged(nameof(CanEnrollWithAccount));
+        OnPropertyChanged(nameof(CanSwitchEnrollmentMode));
+        OnPropertyChanged(nameof(ShowEnrollmentStatus));
         OnPropertyChanged(nameof(CanClearEnrollment));
         OnPropertyChanged(nameof(CanSaveClass));
         OnPropertyChanged(nameof(CanClearClass));
@@ -400,8 +430,18 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         OnPropertyChanged(nameof(CanPickClass));
     }
 
-    partial void OnIsEnrollmentUnreadableChanged(bool value) =>
+    partial void OnIsEnrollmentUnreadableChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowEnrollmentStatus));
         OnPropertyChanged(nameof(CanClearEnrollment));
+    }
+
+    partial void OnIsAccountEnrollmentModeChanged(bool value)
+    {
+        OnPropertyChanged(nameof(EnrollmentModeLabel));
+        OnPropertyChanged(nameof(EnrollmentModeDescription));
+        OnPropertyChanged(nameof(SwitchEnrollmentModeLabel));
+    }
 
     partial void OnIsTreeLoadingChanged(bool value)
     {
@@ -460,6 +500,15 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     private void Reconnect() => _client.Wake();
 
     [RelayCommand]
+    private void SwitchEnrollmentMode()
+    {
+        if (!CanSwitchEnrollmentMode)
+            return;
+
+        IsAccountEnrollmentMode = !IsAccountEnrollmentMode;
+    }
+
+    [RelayCommand]
     private void OpenControlPlane()
     {
         // v4.1 起控制台是主站 SPA 的 /dashboard/control，直接打开基址会落到官网首页。
@@ -478,7 +527,7 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     [RelayCommand]
     private async Task EnrollAsync()
     {
-        if (_enrollmentStore is null || _enrollmentClient is null || IsEnrolling)
+        if (_enrollmentStore is null || _enrollmentClient is null || !CanEnroll)
             return;
 
         var siteId = NodeEnrollmentClient.NormalizeSiteId(SiteIdInput);
@@ -922,7 +971,40 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
             AccountClasses.Clear();
             NotifyAccountCollections();
 
-            SelectedAccountGrade = AccountGrades.Count == 1 ? AccountGrades[0] : null;
+            var gradeToSelect = AccountGrades.Count == 1 ? AccountGrades[0] : null;
+            var enrollment = _enrollmentStore?.Status;
+            var enrolledClassId = enrollment is { HasCredential: true }
+                                  && string.Equals(enrollment.EnrollmentMethod, NodeEnrollmentMethods.Account,
+                                      StringComparison.Ordinal)
+                ? enrollment.ClassId
+                : null;
+
+            // 账号接入只保存班级 ID。多年级学校里按当前班级反查年级，清除后可以直接复用原选择。
+            if (gradeToSelect is null && !string.IsNullOrWhiteSpace(enrolledClassId))
+            {
+                foreach (var grade in AccountGrades)
+                {
+                    if (!string.Equals(SelectedAccountSite?.PublicId, site.PublicId,
+                            StringComparison.OrdinalIgnoreCase)
+                        || SelectedAccountGrade is not null)
+                        return;
+
+                    var classes = await _controlCenterClient.GetClassesAsync(site.PublicId, grade.Id,
+                        CancellationToken.None).ConfigureAwait(true);
+                    if (classes.Any(item => string.Equals(item.Id, enrolledClassId, StringComparison.Ordinal)))
+                    {
+                        gradeToSelect = grade;
+                        break;
+                    }
+                }
+            }
+
+            if (!string.Equals(SelectedAccountSite?.PublicId, site.PublicId,
+                    StringComparison.OrdinalIgnoreCase)
+                || SelectedAccountGrade is not null)
+                return;
+
+            SelectedAccountGrade = gradeToSelect;
         }
         catch (ControlPlaneException exception)
         {
@@ -1027,6 +1109,8 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
 
     partial void OnIsAccountBusyChanged(bool value)
     {
+        OnPropertyChanged(nameof(CanEnroll));
+        OnPropertyChanged(nameof(CanSwitchEnrollmentMode));
         OnPropertyChanged(nameof(CanSignInAccount));
         OnPropertyChanged(nameof(CanEnrollWithAccount));
     }
@@ -1095,6 +1179,11 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     private void RefreshEnrollment()
     {
         var status = _enrollmentStore?.Status ?? NodeEnrollmentStatus.NotEnrolled;
+
+        // 已有接入记录时沿用它的来源：清除后回到同一套接入表单，账号接入不会跳回地点码。
+        if (status.HasCredential
+            && string.Equals(status.EnrollmentMethod, NodeEnrollmentMethods.Account, StringComparison.Ordinal))
+            IsAccountEnrollmentMode = true;
 
         IsEnrolled = status.HasCredential;
         IsEnrollmentUnreadable = status.IsUnreadable;

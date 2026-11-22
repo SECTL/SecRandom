@@ -25,6 +25,8 @@ public class SettingsSearchService
                 "S_Verification", "S_Verification_Password", "S_Verification_Totp", "S_Verification_UsbBinding",
                 "S_Protection_SensitiveOperations", "S_Protection_LinkageOperations"
             },
+            // 接入方式只是同一张接入卡的动态文案，不是独立设置行。
+            ["General.Control"] = new HashSet<string> { "S_NodeEnrollment", "S_AccountEnrollment" },
             ["General.Verification"] = new HashSet<string> { "S_Verification" },
             ["HistoryManagement"] = new HashSet<string>
             {

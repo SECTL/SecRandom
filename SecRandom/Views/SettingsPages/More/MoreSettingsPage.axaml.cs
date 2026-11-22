@@ -4,10 +4,14 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
+using SecRandom.Core.Abstraction.Services;
+using SecRandom.Core.Services.Stats;
+using MoreResources = SecRandom.Langs.SettingsPages.More.Resources;
 using SecRandom.Core.Services.Config;
 using SecRandom.Mobile;
 using SecRandom.Platforms.Abstractions;
@@ -19,6 +23,16 @@ namespace SecRandom.Views.SettingsPages.More;
 [PageInfo("settings.more", FluentIcons.MoreHorizontalFilled)]
 public partial class MoreSettingsPage : UserControl, INotifyPropertyChanged
 {
+    private enum OverviewClearKind
+    {
+        All,
+        RollCall,
+        Lottery,
+        RandomNumbers
+    }
+
+    private sealed record OverviewClearTarget(OverviewClearKind Kind, string? ProfileName = null);
+
     private static readonly string[] ShortcutConflictPropertyNames =
     [
         nameof(IsOpenRollCallPageShortcutConflicted),
@@ -130,6 +144,113 @@ public partial class MoreSettingsPage : UserControl, INotifyPropertyChanged
             SetShortcut(propertyName, string.Empty);
             EndShortcutInput();
         }
+    }
+
+    private void OverviewMenuFlyout_OnOpened(object? sender, EventArgs e)
+    {
+        PopulateOverviewMenu(M_ClearOverviewRollCall, OverviewClearKind.RollCall,
+            IAppHost.GetService<IProfileCatalogManager>().GetStudentListNames());
+        PopulateOverviewMenu(M_ClearOverviewLottery, OverviewClearKind.Lottery,
+            IAppHost.GetService<IProfileCatalogManager>().GetPrizeListNames());
+        PopulateOverviewMenu(M_ClearOverviewRandomNumbers, OverviewClearKind.RandomNumbers, []);
+    }
+
+    private void PopulateOverviewMenu(MenuItem parent, OverviewClearKind kind,
+        IEnumerable<string> profileNames)
+    {
+        parent.Items.Clear();
+        parent.Items.Add(CreateOverviewMenuItem(MoreResources.C_ClearOverview_All,
+            new OverviewClearTarget(kind)));
+        foreach (var profileName in profileNames)
+        {
+            if (!string.IsNullOrWhiteSpace(profileName))
+                parent.Items.Add(CreateOverviewMenuItem(profileName,
+                    new OverviewClearTarget(kind, profileName)));
+        }
+    }
+
+    private MenuItem CreateOverviewMenuItem(string header, OverviewClearTarget target)
+    {
+        var item = new MenuItem
+        {
+            Header = header,
+            Tag = target
+        };
+        item.Click += ClearOverviewMenuItem_OnClick;
+        return item;
+    }
+
+    private async void ClearOverviewMenuItem_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var target = sender switch
+        {
+            MenuItem { Tag: string tag } when string.Equals(tag, "all", StringComparison.Ordinal) =>
+                new OverviewClearTarget(OverviewClearKind.All),
+            MenuItem { Tag: OverviewClearTarget value } => value,
+            _ => null
+        };
+        if (target is null)
+            return;
+
+        var page = sender is Control control ? TopLevel.GetTopLevel(control) : null;
+        var result = await new FAContentDialog
+        {
+            Title = MoreResources.M_ClearOverview_Title,
+            Content = GetOverviewClearContent(target),
+            PrimaryButtonText = target.ProfileName is null
+                ? MoreResources.C_ClearOverview_All
+                : MoreResources.C_ClearOverview,
+            CloseButtonText = SecRandom.Langs.Common.Resources.C_Close,
+            DefaultButton = FAContentDialogButton.Close
+        }.ShowAsync(page);
+
+        if (result != FAContentDialogResult.Primary)
+            return;
+
+        try
+        {
+            var overview = IAppHost.GetService<IOverviewStatisticsService>();
+            switch (target.Kind)
+            {
+                case OverviewClearKind.All:
+                    overview.Clear();
+                    break;
+                case OverviewClearKind.RollCall:
+                    overview.ClearStudentStatistics(target.ProfileName);
+                    break;
+                case OverviewClearKind.Lottery:
+                    overview.ClearPrizeStatistics(target.ProfileName);
+                    break;
+                case OverviewClearKind.RandomNumbers:
+                    overview.ClearRandomNumberStatistics();
+                    break;
+            }
+        }
+        catch (Exception exception)
+        {
+            await new FAContentDialog
+            {
+                Title = MoreResources.M_ClearOverview_Failed,
+                Content = exception.Message,
+                CloseButtonText = SecRandom.Langs.Common.Resources.C_Close,
+                DefaultButton = FAContentDialogButton.Close
+            }.ShowAsync(page);
+        }
+    }
+
+    private static string GetOverviewClearContent(OverviewClearTarget target)
+    {
+        return target.Kind switch
+        {
+            OverviewClearKind.All => MoreResources.M_ClearOverview_Content,
+            OverviewClearKind.RollCall when string.IsNullOrWhiteSpace(target.ProfileName) =>
+                MoreResources.M_ClearOverview_RollCallContent,
+            OverviewClearKind.Lottery when string.IsNullOrWhiteSpace(target.ProfileName) =>
+                MoreResources.M_ClearOverview_LotteryContent,
+            OverviewClearKind.RandomNumbers => MoreResources.M_ClearOverview_RandomNumbersContent,
+            _ => string.Format(MoreResources.M_ClearOverview_ProfileContent,
+                target.ProfileName ?? string.Empty)
+        };
     }
 
     private void EndShortcutInput()

@@ -6,6 +6,9 @@
   <data name="M_NoMembers" xml:space="preserve"><value>No members are available to draw</value></data>
   <data name="M_Drawing" xml:space="preserve"><value>Drawing...</value></data>
   <data name="M_DrawFailed" xml:space="preserve"><value>Quick draw failed</value></data>
+  <data name="M_DrawAuthorizationDenied" xml:space="preserve"><value>Quick draw was not authorized. Complete verification and try again</value></data>
+  <data name="M_DrawLocked" xml:space="preserve"><value>Quick draw is locked by the control console</value></data>
+  <data name="M_Cooldown" xml:space="preserve"><value>Quick draw is temporarily disabled after a draw. Try again shortly</value></data>
   <data name="M_DrawnCountFormat" xml:space="preserve"><value>{0} member(s) drawn</value></data>
   <data name="M_ResetDone" xml:space="preserve"><value>Current list roll-call records cleared</value></data>
   <data name="M_DefaultListRequired" xml:space="preserve"><value>Select a default member list in Quick Draw settings first</value></data>

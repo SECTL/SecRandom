@@ -133,10 +133,10 @@
     <value>授業前の解除時刻</value>
   </data>
   <data name="S_SubjectHistory_Filter_D">
-    <value>重みの計算に現在の科目の履歴だけを使用します</value>
+    <value>現在の科目を抽選履歴に記録します。抽選の重みには影響しません</value>
   </data>
   <data name="S_SubjectHistory_Filter">
-    <value>科目履歴フィルター</value>
+    <value>科目を記録</value>
   </data>
   <data name="S_ClassTime_PreClassEnableTime_D">
     <value>授業の何秒前に制限を解除するか指定します</value>
@@ -157,4 +157,22 @@
   <data name="M_ScheduleError_ClassIslandScheduleUnloaded"><value>ClassIsland が当日の時間割を読み込んでいません</value></data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState"><value>ClassIsland から未対応の現在状態が返されました: {0}</value></data>
   <data name="M_ScheduleError_ClassIslandReadFailed"><value>ClassIsland の授業状態を読み取れません</value></data>
+  <data name="C_AddCourse"><value>科目を追加</value></data>
+  <data name="C_RefreshCourseRoster"><value>科目を更新</value></data>
+  <data name="C_Course"><value>科目</value></data>
+  <data name="C_RollCallList"><value>点呼名簿</value></data>
+  <data name="C_QuickDrawList"><value>クイック抽選名簿</value></data>
+  <data name="C_LotteryPool"><value>景品プール</value></data>
+  <data name="M_CourseSearch"><value>科目を検索</value></data>
+  <data name="M_AddCoursePrompt"><value>科目名を入力</value></data>
+  <data name="M_CourseNameRequired"><value>科目名を入力してください</value></data>
+  <data name="M_CourseAlreadyExists"><value>この科目は既に存在します</value></data>
+  <data name="M_CourseSourceOff"><value>先に授業データソースを選択してください</value></data>
+  <data name="M_CourseLoading"><value>科目を読み込み中</value></data>
+  <data name="M_CourseUnavailable"><value>科目が見つかりません</value></data>
+  <data name="M_CourseCount"><value>{0} 科目</value></data>
+  <data name="O_CourseRosterDefault"><value>既定の名簿を使用</value></data>
+  <data name="S_External_CourseRoster" xml:space="preserve"><value>コース名簿の割り当て</value></data>
+  <data name="S_External_CourseRoster_D" xml:space="preserve"><value>コースを点呼名簿、クイック抽選名簿、景品プールに割り当てます</value></data>
+  <data name="C_OpenCourseRoster" xml:space="preserve"><value>コース名簿を管理</value></data>
 </root>

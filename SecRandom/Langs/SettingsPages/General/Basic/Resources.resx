@@ -30,6 +30,10 @@
     <data name="S_Behavior" xml:space="preserve">
         <value>行为</value>
     </data>
+    <data name="S_General" xml:space="preserve"><value>常规</value></data>
+    <data name="S_StartupAndWindow" xml:space="preserve"><value>启动与窗口</value></data>
+    <data name="S_Integration" xml:space="preserve"><value>系统集成</value></data>
+    <data name="S_Recovery" xml:space="preserve"><value>崩溃恢复</value></data>
     <data name="S_Behavior_Autostart" xml:space="preserve">
         <value>开机自启</value>
     </data>

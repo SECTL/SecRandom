@@ -32,6 +32,7 @@ public sealed class ClassIslandIpcConnection : IDisposable
 
     private IpcClient? _client;
     private IPublicLessonsService? _lessonsService;
+    private IPublicProfileService? _profileService;
     private ISecRandomService? _notificationService;
     private DateTimeOffset _nextConnectAttempt = DateTimeOffset.MinValue;
     private TimeSpan _currentRetryDelay = MinRetryDelay;
@@ -60,6 +61,17 @@ public sealed class ClassIslandIpcConnection : IDisposable
         }
     }
 
+    public IPublicProfileService? ProfileService
+    {
+        get
+        {
+            lock (_stateLock)
+            {
+                return _profileService;
+            }
+        }
+    }
+
     public bool IsConnected
     {
         get
@@ -80,6 +92,12 @@ public sealed class ClassIslandIpcConnection : IDisposable
 
     public Task<IPublicLessonsService?> GetLessonsServiceAsync(CancellationToken cancellationToken = default)
         => WaitForLessonsServiceAsync(LessonsWaitTimeout, cancellationToken);
+
+    public async Task<IPublicProfileService?> GetProfileServiceAsync(CancellationToken cancellationToken = default)
+    {
+        await WaitForLessonsServiceAsync(LessonsWaitTimeout, cancellationToken).ConfigureAwait(false);
+        return ProfileService;
+    }
 
     /// <summary>
     /// 通知发送路径只等一个很短的窗口：拿不到就立刻走内置回退。等待时间过长会把内置通知
@@ -195,6 +213,16 @@ public sealed class ClassIslandIpcConnection : IDisposable
 
                 var lessons = GeneratedIpcFactory.CreateIpcProxy<IPublicLessonsService>(client.Provider, client.PeerProxy);
 
+                IPublicProfileService? profile = null;
+                try
+                {
+                    profile = GeneratedIpcFactory.CreateIpcProxy<IPublicProfileService>(client.Provider, client.PeerProxy);
+                }
+                catch (Exception exception)
+                {
+                    _logger.LogDebug(exception, "获取 ClassIsland 档案服务失败，课程状态仍可用。");
+                }
+
                 // 探测课程服务可用性；属性读取也带超时，避免 ClassIsland 卡住时连接流程被拖死
                 var lessonsProbe = await TryInvokeWithTimeoutAsync(() => lessons.IsTimerRunning, IpcCallTimeout)
                     .ConfigureAwait(false);
@@ -237,6 +265,7 @@ public sealed class ClassIslandIpcConnection : IDisposable
                 {
                     _client = client;
                     _lessonsService = lessons;
+                    _profileService = profile;
                     _notificationService = notification;
                 }
                 NextConnectAttempt = DateTimeOffset.MinValue;
@@ -335,6 +364,7 @@ public sealed class ClassIslandIpcConnection : IDisposable
             client = _client;
             _client = null;
             _lessonsService = null;
+            _profileService = null;
             _notificationService = null;
         }
         DisposeClient(client);

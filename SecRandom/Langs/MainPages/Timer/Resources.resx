@@ -16,6 +16,9 @@
   <data name="C_TotalTime" xml:space="preserve"><value>累计时间</value></data>
   <data name="C_ShowMilliseconds" xml:space="preserve"><value>显示毫秒</value></data>
   <data name="C_MiniWindow" xml:space="preserve"><value>打开小窗</value></data>
+  <data name="C_FullScreen" xml:space="preserve"><value>全屏</value></data>
+  <data name="C_ExitFullScreen" xml:space="preserve"><value>退出全屏</value></data>
+  <data name="C_HoldExitFullScreen" xml:space="preserve"><value>长按两秒退出全屏</value></data>
   <data name="C_Restore" xml:space="preserve"><value>还原</value></data>
   <data name="C_Presets" xml:space="preserve"><value>常用预设</value></data>
   <data name="C_CommonPresets" xml:space="preserve"><value>常用</value></data>

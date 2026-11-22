@@ -111,4 +111,7 @@
   <data name="C_Break" xml:space="preserve">
     <value>课间</value>
   </data>
+  <data name="C_PreviousPage" xml:space="preserve"><value>上一页</value></data>
+  <data name="C_NextPage" xml:space="preserve"><value>下一页</value></data>
+  <data name="C_PageStatus" xml:space="preserve"><value>第 {0} / {1} 页 · 共 {2} 条</value></data>
 </root>

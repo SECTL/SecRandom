@@ -123,7 +123,7 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 在悬浮窗中显示快速抽取入口。.
+        ///   Looks up a localized string similar to 在悬浮窗中显示闪抽入口。.
         /// </summary>
         public static string S_Buttons_QuickDraw_D {
             get {
@@ -186,7 +186,7 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
         }
 
         /// <summary>
-        ///   Looks up a localized string similar to 悬浮窗透明度.
+        ///   Looks up a localized string similar to 悬浮窗不透明度.
         /// </summary>
         public static string S_Display_Opacity {
             get {
@@ -815,13 +815,11 @@ namespace SecRandom.Langs.SettingsPages.FloatingWindow {
             }
         }
 
-        /// <summary>
-        ///   Looks up a localized string similar to 当前语言最多 {0} 个字符.
-        /// </summary>
-        public static string S_Dock_Text_Limit {
-            get {
-                return ResourceManager.GetString("S_Dock_Text_Limit", resourceCulture);
-            }
-        }
+
+
+
+
+
+
     }
 }

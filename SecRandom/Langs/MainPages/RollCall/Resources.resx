@@ -81,6 +81,12 @@
   <data name="M_DrawFailed" xml:space="preserve">
     <value>抽取失败</value>
   </data>
+  <data name="M_DrawAuthorizationDenied" xml:space="preserve">
+    <value>抽取未获授权，请完成验证后重试</value>
+  </data>
+  <data name="M_DrawLocked" xml:space="preserve">
+    <value>当前抽取已被控制台锁定</value>
+  </data>
   <data name="M_ResultSeparator" xml:space="preserve">
     <value>、</value>
   </data>
@@ -102,4 +108,5 @@
   <data name="M_NumberRangeEnd" xml:space="preserve">
     <value>终止</value>
   </data>
+  <data name="O_DrawGroups" xml:space="preserve"><value>抽取全部小组</value></data>
 </root>

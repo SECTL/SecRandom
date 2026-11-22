@@ -73,7 +73,7 @@
     <value>启用闪抽通知</value>
   </data>
   <data name="S_QuickDraw_Enabled_D" xml:space="preserve">
-    <value>快速抽取完成后显示通知结果</value>
+    <value>闪抽完成后显示通知结果</value>
   </data>
   <data name="S_Lottery" xml:space="preserve">
     <value>抽奖通知</value>
@@ -213,6 +213,9 @@
   <data name="S_FloatingWindow_Transparency_D" xml:space="preserve">
     <value>设置内置通知浮窗的不透明度</value>
   </data>
+  <data name="S_FloatingWindow_BackgroundStyle" xml:space="preserve"><value>背景样式</value></data>
+  <data name="S_FloatingWindow_BackgroundStyle_D" xml:space="preserve"><value>选择跟随主题、纯色、渐变或自定义图片</value></data>
+
   <data name="S_Common_NotificationService" xml:space="preserve">
     <value>通知服务</value>
   </data>
@@ -247,7 +250,7 @@
     <value>（主显示器）</value>
   </data>
   <data name="Page_Fullscreen" xml:space="preserve">
-    <value>全屏通知</value>
+    <value>全屏通知渠道</value>
   </data>
   <data name="S_Fullscreen" xml:space="preserve">
     <value>全屏通知</value>
@@ -262,14 +265,9 @@
     <value>背景图</value>
   </data>
   <data name="S_Fullscreen_BackgroundImage_D" xml:space="preserve">
-    <value>选择一张图片作为结果页背景，留空时使用内置深色渐变</value>
+    <value>选择背景图片，图片缺失时使用主题底色</value>
   </data>
-  <data name="S_Fullscreen_BackgroundBlur" xml:space="preserve">
-    <value>背景模糊</value>
-  </data>
-  <data name="S_Fullscreen_BackgroundBlur_D" xml:space="preserve">
-    <value>数值越大背景越虚化</value>
-  </data>
+
   <data name="S_Fullscreen_BackgroundOpacity" xml:space="preserve">
     <value>图片不透明度</value>
   </data>
@@ -408,15 +406,6 @@
   <data name="C_Cancel" xml:space="preserve">
     <value>取消</value>
   </data>
-  <data name="C_FullscreenQuickDrawConfirm" xml:space="preserve">
-    <value>仍然使用全屏</value>
-  </data>
-  <data name="M_FullscreenQuickDrawConfirmTitle" xml:space="preserve">
-    <value>全屏通知用于闪抽会更慢</value>
-  </data>
-  <data name="M_FullscreenQuickDrawConfirmContent" xml:space="preserve">
-    <value>全屏动画最长约 2.5 秒，之后还要等待倒计时；闪抽使用全屏通知时会压缩动画到约 1.2 秒</value>
-  </data>
   <data name="Page_TextLibrary" xml:space="preserve">
     <value>文案库</value>
   </data>
@@ -427,8 +416,12 @@
     <value>背景来源</value>
   </data>
   <data name="S_Fullscreen_BackgroundMode_D" xml:space="preserve">
-    <value>跟随主题使用应用配色，也可以改用纯色、双色渐变或自定义图片</value>
+    <value>选择跟随主题、纯色、渐变或自定义图片</value>
   </data>
+
+  <data name="S_Fullscreen_ThemeBackgroundOpacity" xml:space="preserve"><value>主题背景不透明度</value></data>
+  <data name="S_Fullscreen_ThemeBackgroundOpacity_D" xml:space="preserve"><value>调整主题底色的不透明度，0% 时完全露出桌面</value></data>
+
   <data name="O_FullscreenBackground_Theme" xml:space="preserve">
     <value>跟随主题</value>
   </data>
@@ -436,7 +429,7 @@
     <value>纯色底</value>
   </data>
   <data name="S_Fullscreen_BackgroundColor_D" xml:space="preserve">
-    <value>结果页整屏使用单一底色，投影时最稳妥</value>
+    <value>使用单一颜色作为通知背景</value>
   </data>
   <data name="S_Fullscreen_BackgroundGradient" xml:space="preserve">
     <value>渐变配色</value>
@@ -481,13 +474,37 @@
     <value>跟随主题色，或选择自定义颜色后自行取色</value>
   </data>
   <data name="Page_FloatingWindow" xml:space="preserve">
-    <value>内置通知浮窗</value>
+    <value>浮窗通知渠道</value>
+  </data>
+  <data name="S_FloatingWindow_Appearance" xml:space="preserve">
+    <value>外观</value>
+  </data>
+  <data name="S_FloatingWindow_Playback" xml:space="preserve">
+    <value>播放</value>
   </data>
 <data name="S_FloatingWindow_AdaptiveForeground" xml:space="preserve">
     <value>自适应前景色</value>
   </data>
   <data name="S_FloatingWindow_AdaptiveForeground_D" xml:space="preserve">
     <value>按浮窗背后的桌面亮度自动选用白色或黑色文字与描边，让结果卡片在任何壁纸上都清晰可读；低配模式下此项会被强制关闭</value>
+  </data>
+  <data name="S_FloatingWindow_BackgroundImage" xml:space="preserve">
+    <value>背景图片</value>
+  </data>
+  <data name="S_FloatingWindow_BackgroundImage_D" xml:space="preserve">
+    <value>为内置通知浮窗铺设自定义图片，图片会保存在应用数据目录中</value>
+  </data>
+  <data name="C_FloatingWindow_ImportImage" xml:space="preserve">
+    <value>导入图片</value>
+  </data>
+  <data name="C_FloatingWindow_ClearImage" xml:space="preserve">
+    <value>清除图片</value>
+  </data>
+  <data name="M_FloatingWindowImageImported" xml:space="preserve">
+    <value>通知浮窗背景图片已更新</value>
+  </data>
+  <data name="M_FloatingWindowImageImportFailed" xml:space="preserve">
+    <value>导入通知浮窗背景图片失败</value>
   </data>
   <data name="S_FloatingWindow_CountdownStyle" xml:space="preserve">
     <value>倒计时样式</value>
@@ -531,4 +548,27 @@
   <data name="C_CountdownColors_Preview" xml:space="preserve">
     <value>预览</value>
   </data>
+  <data name="S_Common_Test" xml:space="preserve"><value>测试通知</value></data>
+  <data name="S_Common_Test_D" xml:space="preserve"><value>使用当前通知渠道显示一条示例结果，不会执行真实抽取</value></data>
+  <data name="S_FloatingWindow_Preview" xml:space="preserve"><value>浮窗通知预览</value></data>
+  <data name="S_FloatingWindow_Preview_D" xml:space="preserve"><value>使用当前浮窗设置显示一条示例结果，不会执行真实抽取</value></data>
+  <data name="C_FloatingWindowPreview" xml:space="preserve"><value>显示预览</value></data>
+  <data name="C_TestNotification" xml:space="preserve"><value>显示测试</value></data>
+  <data name="M_NotificationTestUnavailable" xml:space="preserve"><value>通知测试暂时不可用</value></data>
+  <data name="M_NotificationTestClass" xml:space="preserve"><value>SecRandom 测试</value></data>
+  <data name="M_NotificationTestStudent1" xml:space="preserve"><value>测试学生 1</value></data>
+  <data name="M_NotificationTestStudent2" xml:space="preserve"><value>测试学生 2</value></data>
+  <data name="M_NotificationTestPrize1" xml:space="preserve"><value>测试奖品 1</value></data>
+  <data name="M_NotificationTestPrize2" xml:space="preserve"><value>测试奖品 2</value></data>
+
+  <data name="S_FloatingWindow_ThemeBackgroundOpacity" xml:space="preserve"><value>主题背景不透明度</value></data>
+  <data name="S_FloatingWindow_ThemeBackgroundOpacity_D" xml:space="preserve"><value>调整主题底色的不透明度，0% 时完全露出桌面</value></data>
+  <data name="S_FloatingWindow_BackgroundColor" xml:space="preserve"><value>纯色底</value></data>
+  <data name="S_FloatingWindow_BackgroundColor_D" xml:space="preserve"><value>使用单一颜色作为通知背景</value></data>
+  <data name="S_FloatingWindow_BackgroundGradient" xml:space="preserve"><value>渐变配色</value></data>
+  <data name="S_FloatingWindow_BackgroundGradient_D" xml:space="preserve"><value>选择渐变的起点色与终点色</value></data>
+  <data name="S_FloatingWindow_BackgroundGradientAngle" xml:space="preserve"><value>渐变角度</value></data>
+  <data name="S_FloatingWindow_BackgroundGradientAngle_D" xml:space="preserve"><value>0 度从左往右，数值增大顺时针旋转</value></data>
+  <data name="S_FloatingWindow_BackgroundOpacity" xml:space="preserve"><value>图片不透明度</value></data>
+  <data name="S_FloatingWindow_BackgroundOpacity_D" xml:space="preserve"><value>只对自定义背景图生效</value></data>
 </root>

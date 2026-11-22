@@ -9,8 +9,7 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
               x:Class="SecRandom.Views.SettingsPages.History.HistoryManagementSettingsPage"
               x:DataType="local:HistoryManagementSettingsPage"
-              Loaded="OnLoaded"
-              Unloaded="OnUnloaded">
+              Loaded="OnLoaded">
     <UserControl.Styles>
         <!-- 行内两步删除：第一次点击后该行保持高亮，直到第二次点击确认。 -->
         <Style Selector="Border.history-group-row.deleting">
@@ -25,20 +24,10 @@
                          Glyph="{sr:Fi HistoryFilled}"
                          Margin="0 0 0 4" />
 
-            <fa:FASettingsExpander x:Name="S_HistoryGroups_Enabled"
-                                   Header="{x:Static lsp:Resources.S_HistoryGroups_Enabled}"
-                                   Description="{x:Static lsp:Resources.S_HistoryGroups_Enabled_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding HistoryGroups.Enabled}" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
             <fa:FASettingsExpander x:Name="S_HistoryGroups_Manage"
                                    Header="{x:Static lsp:Resources.S_HistoryGroups_Manage}"
                                    Description="{x:Static lsp:Resources.S_HistoryGroups_Manage_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}"
-                                   IsVisible="{Binding HistoryGroups.Enabled}">
+                                   IconSource="{sr:FluentIconSource {sr:Fi HistoryFilled}}">
 
                 <!-- 展开后第一行就是"添加"：先加，再往下看全部组 -->
                 <fa:FASettingsExpanderItem Content="{x:Static lsp:Resources.S_HistoryGroups_Add}">

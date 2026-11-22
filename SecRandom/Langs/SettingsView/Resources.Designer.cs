@@ -879,5 +879,6 @@ namespace SecRandom.Langs.SettingsView {
         public static string C_TransferQuickQrImport => ResourceManager.GetString("C_TransferQuickQrImport", resourceCulture);
         public static string C_TransferOfflineQrImport => ResourceManager.GetString("C_TransferOfflineQrImport", resourceCulture);
         public static string C_TransferSessionCodeImport => ResourceManager.GetString("C_TransferSessionCodeImport", resourceCulture);
+        public static string C_TransferOpenMainWebsite => ResourceManager.GetString("C_TransferOpenMainWebsite", resourceCulture);
     }
 }

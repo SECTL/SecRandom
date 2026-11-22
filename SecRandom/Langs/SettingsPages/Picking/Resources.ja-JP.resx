@@ -58,10 +58,10 @@
     <value>この回数抽選された項目は候補に戻りません</value>
   </data>
   <data name="S_ClearRecord" xml:space="preserve">
-    <value>記録を消去</value>
+    <value>抽選の進捗をリセット</value>
   </data>
   <data name="S_ClearRecord_D" xml:space="preserve">
-    <value>抽選記録を消去するタイミングを指定します</value>
+    <value>再起動後に現在の抽選回数をリセットするかを選択でき、過去の結果は履歴で確認できます</value>
   </data>
   <data name="S_DrawType" xml:space="preserve">
     <value>抽選方法</value>
@@ -253,10 +253,10 @@
     <value>編成抽選</value>
   </data>
   <data name="O_Restarted" xml:space="preserve">
-    <value>再起動後に消去</value>
+    <value>再起動後にリセット</value>
   </data>
   <data name="O_Cleared" xml:space="preserve">
-    <value>手動で消去</value>
+    <value>再起動後も保持</value>
   </data>
   <data name="O_Random" xml:space="preserve">
     <value>ランダム抽選</value>
@@ -835,6 +835,12 @@
   <data name="M_Orchestration_ChannelSwitched" xml:space="preserve">
     <value>抽選方式を編成抽選に切り替えました</value>
   </data>
+  <data name="M_Orchestration_ActiveChanged" xml:space="preserve">
+    <value>編成リスト「{1}」を{0}にしました</value>
+  </data>
+  <data name="M_Orchestration_Synced" xml:space="preserve">
+    <value>参照リスト「{0}」を同期しました</value>
+  </data>
   <data name="S_Orchestration_SectionLists" xml:space="preserve">
     <value>5つのリスト</value>
   </data>
@@ -875,10 +881,10 @@
     <value>オフ</value>
   </data>
   <data name="C_Orchestration_ProfileSummary" xml:space="preserve">
-    <value>{0} · {1} · {2} 人</value>
+    <value>{0} | {1} | {2} 人</value>
   </data>
   <data name="C_Orchestration_ExcludeSummary" xml:space="preserve">
-    <value>{0} 人を除外 · 残り {1} 人は通常参加</value>
+    <value>{0} 人を除外 | 残り {1} 人は通常参加</value>
   </data>
   <data name="C_Orchestration_WeightSummary" xml:space="preserve">
     <value>{0} 人に手動重みあり</value>
@@ -956,7 +962,7 @@
     <value>編成リストが未選択</value>
   </data>
   <data name="C_Rule_Profile" xml:space="preserve">
-    <value>編成リスト：{0}（{1} · {2}）</value>
+    <value>編成リスト：{0}（{1} | {2}）</value>
   </data>
   <data name="C_Rule_NoProfile_D" xml:space="preserve">
     <value>先に編成抽選の概要でリストを選んでください</value>
@@ -1042,4 +1048,11 @@
   <data name="C_Rule_ConflictJoin" xml:space="preserve">
     <value>、</value>
   </data>
+  <data name="S_GroupMemberDisplay" xml:space="preserve"><value>グループのメンバー表示</value></data>
+  <data name="S_GroupMemberDisplay_D" xml:space="preserve"><value>抽選されたグループからランダムに選んだメンバーを表示</value></data>
+  <data name="O_GroupOnly" xml:space="preserve"><value>グループのみ</value></data>
+  <data name="O_GroupMemberNewLine" xml:space="preserve"><value>グループとメンバーを改行</value></data>
+  <data name="O_GroupMemberDash" xml:space="preserve"><value>グループ - メンバー</value></data>
+  <data name="S_LotteryGroupMember" xml:space="preserve"><value>グループのメンバーを表示</value></data>
+  <data name="S_LotteryGroupMember_D" xml:space="preserve"><value>抽選されたグループのメンバーをランダムに表示</value></data>
 </root>

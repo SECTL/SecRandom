@@ -12,6 +12,9 @@
   <data name="C_TotalTime"><value>Total</value></data>
   <data name="C_ShowMilliseconds"><value>Show milliseconds</value></data>
   <data name="C_MiniWindow"><value>Open mini window</value></data>
+  <data name="C_FullScreen"><value>Full screen</value></data>
+  <data name="C_ExitFullScreen"><value>Exit full screen</value></data>
+  <data name="C_HoldExitFullScreen"><value>Hold for two seconds to exit full screen</value></data>
   <data name="C_Restore"><value>Restore</value></data>
   <data name="C_Presets"><value>Presets</value></data>
   <data name="C_CommonPresets"><value>Common</value></data>

@@ -45,6 +45,7 @@
   <data name="S_Display_Opacity_D" xml:space="preserve">
     <value>同时应用到主悬浮窗和闪抽浮窗</value>
   </data>
+
   <data name="S_Display_TopmostMode" xml:space="preserve">
     <value>悬浮窗置顶模式</value>
   </data>
@@ -76,7 +77,7 @@
     <value>闪抽</value>
   </data>
   <data name="S_Buttons_QuickDraw_D" xml:space="preserve">
-    <value>在悬浮窗中显示快速抽取入口</value>
+    <value>在悬浮窗中显示闪抽入口</value>
   </data>
   <data name="S_Buttons_Lottery" xml:space="preserve">
     <value>抽奖</value>
@@ -252,9 +253,6 @@
   <data name="S_Dock_Text_D" xml:space="preserve">
     <value>收纳手柄上显示的文字，中文只允许一个字，其它语言最多四个字符</value>
   </data>
-  <data name="S_Dock_Text_Limit" xml:space="preserve">
-    <value>当前语言最多 {0} 个字符</value>
-  </data>
   <data name="S_Dock_Icon" xml:space="preserve">
     <value>手柄图标</value>
   </data>
@@ -276,4 +274,5 @@
   <data name="M_DockIconImportFailed" xml:space="preserve">
     <value>无法使用这张图片</value>
   </data>
+
 </root>

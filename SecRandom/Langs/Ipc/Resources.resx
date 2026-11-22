@@ -23,7 +23,7 @@
   <data name="M_RollCallStarted" xml:space="preserve"><value>点名已开始</value></data>
   <data name="M_RollCallStopped" xml:space="preserve"><value>点名已停止</value></data>
   <data name="M_RollCallReset" xml:space="preserve"><value>点名已重置</value></data>
-  <data name="M_QuickDrawSucceeded" xml:space="preserve"><value>点名成功</value></data>
+  <data name="M_QuickDrawSucceeded" xml:space="preserve"><value>闪抽成功</value></data>
   <data name="M_LotteryStarted" xml:space="preserve"><value>抽奖已开始</value></data>
   <data name="M_LotteryStopped" xml:space="preserve"><value>抽奖已停止</value></data>
   <data name="M_LotteryReset" xml:space="preserve"><value>抽奖已重置</value></data>

@@ -39,8 +39,8 @@ namespace SecRandom.Views.SettingsPages.About;
 public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
 {
     private const string ContributorsEndpoint = "https://api.github.com/repos/SECTL/SecRandom/contributors?per_page=30";
-    private const int InternalSettingsActivationClickCount = 20;
-    private static readonly TimeSpan InternalSettingsActivationClickInterval = TimeSpan.FromMilliseconds(200);
+    private const int DebugPageActivationClickCount = 20;
+    private static readonly TimeSpan DebugPageActivationClickInterval = TimeSpan.FromMilliseconds(200);
     private bool _isRefreshingContributors;
     private int _bannerClickCount;
     private DateTimeOffset _lastBannerClickAt;
@@ -120,12 +120,12 @@ public partial class AboutSettingsPage : UserControl, INotifyPropertyChanged
 
         e.Handled = true;
         var now = DateTimeOffset.UtcNow;
-        _bannerClickCount = now - _lastBannerClickAt <= InternalSettingsActivationClickInterval
+        _bannerClickCount = now - _lastBannerClickAt <= DebugPageActivationClickInterval
             ? _bannerClickCount + 1
             : 1;
         _lastBannerClickAt = now;
 
-        if (_bannerClickCount < InternalSettingsActivationClickCount)
+        if (_bannerClickCount < DebugPageActivationClickCount)
             return;
 
         _bannerClickCount = 0;

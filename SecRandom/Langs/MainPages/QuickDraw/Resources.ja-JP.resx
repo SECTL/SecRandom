@@ -6,6 +6,9 @@
   <data name="M_NoMembers" xml:space="preserve"><value>抽選できるメンバーがいません</value></data>
   <data name="M_Drawing" xml:space="preserve"><value>抽選中...</value></data>
   <data name="M_DrawFailed" xml:space="preserve"><value>クイック抽選に失敗しました</value></data>
+  <data name="M_DrawAuthorizationDenied" xml:space="preserve"><value>クイック抽選が許可されませんでした。認証を完了してもう一度お試しください</value></data>
+  <data name="M_DrawLocked" xml:space="preserve"><value>クイック抽選は制御コンソールによってロックされています</value></data>
+  <data name="M_Cooldown" xml:space="preserve"><value>抽選後は一時的に無効です。少し待ってからお試しください</value></data>
   <data name="M_DrawnCountFormat" xml:space="preserve"><value>{0} 人のメンバーを抽選しました</value></data>
   <data name="M_ResetDone" xml:space="preserve"><value>現在のリストの点呼記録を消去しました</value></data>
   <data name="M_DefaultListRequired" xml:space="preserve"><value>先にクイック抽選設定で既定のメンバーリストを選択してください</value></data>

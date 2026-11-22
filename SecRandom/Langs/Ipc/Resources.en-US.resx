@@ -23,7 +23,7 @@
   <data name="M_RollCallStarted" xml:space="preserve"><value>Roll call started</value></data>
   <data name="M_RollCallStopped" xml:space="preserve"><value>Roll call stopped</value></data>
   <data name="M_RollCallReset" xml:space="preserve"><value>Roll call reset</value></data>
-  <data name="M_QuickDrawSucceeded" xml:space="preserve"><value>Roll call succeeded</value></data>
+  <data name="M_QuickDrawSucceeded" xml:space="preserve"><value>Quick Draw succeeded</value></data>
   <data name="M_LotteryStarted" xml:space="preserve"><value>Lottery started</value></data>
   <data name="M_LotteryStopped" xml:space="preserve"><value>Lottery stopped</value></data>
   <data name="M_LotteryReset" xml:space="preserve"><value>Lottery reset</value></data>

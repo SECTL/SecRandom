@@ -18,6 +18,7 @@ using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Services.Linkage;
 using SecRandom.ViewModels;
+using SecRandom.Views;
 using LR = SecRandom.Langs.SettingsPages.Linkage.Resources;
 
 namespace SecRandom.Views.SettingsPages.Linkage;
@@ -30,6 +31,8 @@ public partial class LinkageSettingsPage : UserControl
         AvaloniaProperty.Register<LinkageSettingsPage, string>(nameof(CsesSummary));
     public static readonly StyledProperty<bool> IsOutdoorCourseRowVisibleProperty =
         AvaloniaProperty.Register<LinkageSettingsPage, bool>(nameof(IsOutdoorCourseRowVisible));
+    public static readonly StyledProperty<bool> IsCourseRosterRowVisibleProperty =
+        AvaloniaProperty.Register<LinkageSettingsPage, bool>(nameof(IsCourseRosterRowVisible));
 
     public LinkageSettingsPage()
     {
@@ -38,6 +41,7 @@ public partial class LinkageSettingsPage : UserControl
         InitializeComponent();
         RefreshCsesSummary();
         IsOutdoorCourseRowVisible = Settings.DataSource == LinkageDataSource.ClassIsland;
+        IsCourseRosterRowVisible = Settings.DataSource != LinkageDataSource.Off;
     }
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
@@ -55,6 +59,11 @@ public partial class LinkageSettingsPage : UserControl
         private set => SetValue(IsOutdoorCourseRowVisibleProperty, value);
     }
 
+    public bool IsCourseRosterRowVisible
+    {
+        get => GetValue(IsCourseRosterRowVisibleProperty);
+        private set => SetValue(IsCourseRosterRowVisibleProperty, value);
+    }
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private ICsesScheduleStore CsesStore { get; } = IAppHost.GetService<ICsesScheduleStore>();
 
@@ -65,6 +74,8 @@ public partial class LinkageSettingsPage : UserControl
         _isSubscribed = true;
         Settings.PropertyChanged += SettingsOnPropertyChanged;
         CsesStore.ScheduleChanged += CsesStoreOnScheduleChanged;
+        IsOutdoorCourseRowVisible = Settings.DataSource == LinkageDataSource.ClassIsland;
+        IsCourseRosterRowVisible = Settings.DataSource != LinkageDataSource.Off;
         RefreshCsesSummary();
     }
 
@@ -80,9 +91,13 @@ public partial class LinkageSettingsPage : UserControl
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         IsOutdoorCourseRowVisible = Settings.DataSource == LinkageDataSource.ClassIsland;
+        IsCourseRosterRowVisible = Settings.DataSource != LinkageDataSource.Off;
         ConfigHandler.Save();
         _ = IAppHost.GetService<CourseLinkageService>().RefreshAsync();
     }
+
+    private void OpenCourseRoster_OnClick(object? sender, RoutedEventArgs e) =>
+        SettingsView.Current?.NavigateToPage("settings.linkage.courseRoster");
 
     private void CsesStoreOnScheduleChanged(object? sender, EventArgs e)
     {

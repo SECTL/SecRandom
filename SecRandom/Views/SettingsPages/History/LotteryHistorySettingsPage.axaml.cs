@@ -13,19 +13,42 @@ namespace SecRandom.Views.SettingsPages.History;
 [PageInfo("settings.history.lottery", FluentIcons.LotteryFilled, "settings.history")]
 public partial class LotteryHistorySettingsPage : UserControl
 {
+    private bool _showHistoryGroupMigration = true;
+    private bool _isInitialized;
+
     public LotteryHistorySettingsPage()
     {
         ViewModel = IAppHost.GetService<LotteryHistoryViewModel>();
         DataContext = ViewModel;
         InitializeComponent();
+        _isInitialized = true;
+        ApplyHistoryGroupMigrationVisibility();
         ViewModel.PropertyChanged += ViewModelOnPropertyChanged;
     }
 
     public LotteryHistoryViewModel ViewModel { get; }
 
+    /// <summary>
+    ///     The main history surface is read-only for record-group organization; settings keeps the migration command.
+    /// </summary>
+    public bool ShowHistoryGroupMigration
+    {
+        get => _showHistoryGroupMigration;
+        set
+        {
+            if (_showHistoryGroupMigration == value)
+                return;
+
+            _showHistoryGroupMigration = value;
+            if (_isInitialized)
+                ApplyHistoryGroupMigrationVisibility();
+        }
+    }
+
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
         UpdateColumns();
+        ApplyHistoryGroupMigrationVisibility();
     }
 
     private void OnUnloaded(object? sender, RoutedEventArgs e)
@@ -37,8 +60,23 @@ public partial class LotteryHistorySettingsPage : UserControl
     private void ViewModelOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(LotteryHistoryViewModel.SelectedMode)
-            or nameof(LotteryHistoryViewModel.ShouldShowHistoryGroupColumn))
+            or nameof(LotteryHistoryViewModel.ShouldShowHistoryGroupColumn)
+            or nameof(LotteryHistoryViewModel.HasMoveStatus))
+        {
             UpdateColumns();
+            ApplyHistoryGroupMigrationVisibility();
+        }
+    }
+
+    private void OnHistoryGridSorting(object? sender, DataGridColumnEventArgs e)
+    {
+        e.Handled = true;
+        ViewModel.Pagination.Sort(e.Column.SortMemberPath);
+    }
+
+    private void OnPageInputLostFocus(object? sender, RoutedEventArgs e)
+    {
+        ViewModel.Pagination.CommitPageInput();
     }
 
     private void OnHistoryGridSelectionChanged(object? sender, SelectionChangedEventArgs e)
@@ -50,6 +88,12 @@ public partial class LotteryHistorySettingsPage : UserControl
     {
         // 命令已经执行完移动，这里只负责收起 Flyout（本页不用对话框）
         MoveHistoryGroupButton.Flyout?.Hide();
+    }
+
+    private void ApplyHistoryGroupMigrationVisibility()
+    {
+        MoveHistoryGroupButton.IsVisible = ShowHistoryGroupMigration;
+        HistoryGroupMoveStatus.IsVisible = ShowHistoryGroupMigration && ViewModel.HasMoveStatus;
     }
 
     private void UpdateColumns()

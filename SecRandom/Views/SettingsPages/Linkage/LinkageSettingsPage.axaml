@@ -47,16 +47,6 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander x:Name="S_External_OutdoorCourse"
-                                   Header="{x:Static lsp:Resources.S_External_OutdoorCourse}"
-                                   Description="{x:Static lsp:Resources.S_External_OutdoorCourse_D}"
-                                   IsVisible="{Binding IsOutdoorCourseRowVisible}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi RunFilled}}">
-                <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding Settings.DisableOnOutdoorCourse}" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
-
             <fa:FASettingsExpander x:Name="S_External_DataSource"
                                    Header="{x:Static lsp:Resources.S_External_DataSource}"
                                    Description="{x:Static lsp:Resources.S_External_DataSource_D}"
@@ -67,6 +57,27 @@
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_DataSource_Cses}" />
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_DataSource_ClassIsland}" />
                     </ComboBox>
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_External_CourseRoster"
+                                   Header="{x:Static lsp:Resources.S_External_CourseRoster}"
+                                   Description="{x:Static lsp:Resources.S_External_CourseRoster_D}"
+                                   IsVisible="{Binding IsCourseRosterRowVisible}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi PeopleListFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <Button Content="{x:Static lsp:Resources.C_OpenCourseRoster}"
+                            Click="OpenCourseRoster_OnClick" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_External_OutdoorCourse"
+                                   Header="{x:Static lsp:Resources.S_External_OutdoorCourse}"
+                                   Description="{x:Static lsp:Resources.S_External_OutdoorCourse_D}"
+                                   IsVisible="{Binding IsOutdoorCourseRowVisible}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi RunFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.DisableOnOutdoorCourse}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

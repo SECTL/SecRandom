@@ -103,6 +103,36 @@ namespace SecRandom.Langs.SettingsPages.Linkage {
                 return ResourceManager.GetString("C_CsesView", resourceCulture);
             }
         }
+
+        public static string C_AddCourse {
+            get { return ResourceManager.GetString("C_AddCourse", resourceCulture); }
+        }
+
+        public static string C_Course {
+            get { return ResourceManager.GetString("C_Course", resourceCulture); }
+        }
+
+        public static string C_LotteryPool {
+            get { return ResourceManager.GetString("C_LotteryPool", resourceCulture); }
+        }
+
+        public static string C_QuickDrawList {
+            get { return ResourceManager.GetString("C_QuickDrawList", resourceCulture); }
+        }
+
+        public static string C_RefreshCourseRoster {
+            get { return ResourceManager.GetString("C_RefreshCourseRoster", resourceCulture); }
+        }
+
+        public static string C_RollCallList {
+            get { return ResourceManager.GetString("C_RollCallList", resourceCulture); }
+        }
+
+        public static string C_OpenCourseRoster {
+            get {
+                return ResourceManager.GetString("C_OpenCourseRoster", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to 确定要清除当前导入的 CSES 课程表吗？.
@@ -147,6 +177,38 @@ namespace SecRandom.Langs.SettingsPages.Linkage {
             get {
                 return ResourceManager.GetString("M_CsesMissing", resourceCulture);
             }
+        }
+
+        public static string M_AddCoursePrompt {
+            get { return ResourceManager.GetString("M_AddCoursePrompt", resourceCulture); }
+        }
+
+        public static string M_CourseAlreadyExists {
+            get { return ResourceManager.GetString("M_CourseAlreadyExists", resourceCulture); }
+        }
+
+        public static string M_CourseCount {
+            get { return ResourceManager.GetString("M_CourseCount", resourceCulture); }
+        }
+
+        public static string M_CourseLoading {
+            get { return ResourceManager.GetString("M_CourseLoading", resourceCulture); }
+        }
+
+        public static string M_CourseNameRequired {
+            get { return ResourceManager.GetString("M_CourseNameRequired", resourceCulture); }
+        }
+
+        public static string M_CourseSearch {
+            get { return ResourceManager.GetString("M_CourseSearch", resourceCulture); }
+        }
+
+        public static string M_CourseSourceOff {
+            get { return ResourceManager.GetString("M_CourseSourceOff", resourceCulture); }
+        }
+
+        public static string M_CourseUnavailable {
+            get { return ResourceManager.GetString("M_CourseUnavailable", resourceCulture); }
         }
         
         /// <summary>
@@ -201,6 +263,10 @@ namespace SecRandom.Langs.SettingsPages.Linkage {
             get {
                 return ResourceManager.GetString("O_DataSource_Off", resourceCulture);
             }
+        }
+
+        public static string O_CourseRosterDefault {
+            get { return ResourceManager.GetString("O_CourseRosterDefault", resourceCulture); }
         }
         
         /// <summary>
@@ -346,6 +412,14 @@ namespace SecRandom.Langs.SettingsPages.Linkage {
                 return ResourceManager.GetString("S_External", resourceCulture);
             }
         }
+
+        public static string S_External_CourseRoster {
+            get { return ResourceManager.GetString("S_External_CourseRoster", resourceCulture); }
+        }
+
+        public static string S_External_CourseRoster_D {
+            get { return ResourceManager.GetString("S_External_CourseRoster_D", resourceCulture); }
+        }
         
         /// <summary>
         ///   Looks up a localized string similar to 数据源.
@@ -364,7 +438,7 @@ namespace SecRandom.Langs.SettingsPages.Linkage {
                 return ResourceManager.GetString("S_External_DataSource_D", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 限制非上课时段操作.
         /// </summary>

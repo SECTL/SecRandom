@@ -587,18 +587,6 @@ namespace SecRandom.Langs.SettingsPages.HistoryManagement {
             }
         }
 
-        public static string S_HistoryGroups_Enabled {
-            get {
-                return ResourceManager.GetString("S_HistoryGroups_Enabled", resourceCulture);
-            }
-        }
-
-        public static string S_HistoryGroups_Enabled_D {
-            get {
-                return ResourceManager.GetString("S_HistoryGroups_Enabled_D", resourceCulture);
-            }
-        }
-
         public static string S_HistoryGroups_Manage {
             get {
                 return ResourceManager.GetString("S_HistoryGroups_Manage", resourceCulture);

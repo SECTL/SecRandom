@@ -70,9 +70,10 @@ public sealed class CourseLinkageService
             // 语义比较只用来决定“是否通知订阅者”：倒计时字段每秒都在变，按 record 全量相等判断会不断
             // 触发 StateChanged，把 CourseLinkageHostedService 变成自激刷新循环（issue #274）。
             // 但快照本身必须始终更新 —— 课前解禁、课后禁用延迟、课前重置和刷新调度都只从这里读倒计时。
+            var wasConfirmedBreakTime = IsConfirmedBreakTime;
             var stateChangedSemantically = !SnapshotsEqual(_snapshot, next);
             _snapshot = next;
-            if (!stateChangedSemantically)
+            if (!stateChangedSemantically && wasConfirmedBreakTime == IsConfirmedBreakTime)
                 return;
 
             stateChanged = true;
@@ -185,6 +186,12 @@ public sealed class CourseLinkageService
         };
     }
 
+    /// <summary>Returns the actual course currently in progress, independent of history recording settings.</summary>
+    public string GetCurrentCourseName() => _snapshot.IsAvailable
+        && _snapshot.State == CourseTimeState.OnClass
+        ? _snapshot.CurrentCourse?.Name ?? string.Empty
+        : string.Empty;
+
     public TimeSpan GetNextRefreshDelay()
     {
         // Only poll when completely unavailable - otherwise rely on events
@@ -239,7 +246,7 @@ public sealed class CourseLinkageService
             return true;
         if (snapshot.TimeSincePreviousCourseEnd is { } sinceEnd
             && sinceEnd >= TimeSpan.Zero
-            && sinceEnd <= TimeSpan.FromSeconds(Math.Clamp(Settings.PostClassDisableDelay, 0, 3600)))
+            && sinceEnd < TimeSpan.FromSeconds(Math.Clamp(Settings.PostClassDisableDelay, 0, 3600)))
             return true;
         return false;
     }

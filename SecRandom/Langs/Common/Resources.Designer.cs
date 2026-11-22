@@ -78,15 +78,6 @@ namespace SecRandom.Langs.Common {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 内幕设置.
-        /// </summary>
-        public static string AttachedSettings_BehindScene {
-            get {
-                return ResourceManager.GetString("AttachedSettings_BehindScene", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 关闭.
         /// </summary>
         public static string C_Close {

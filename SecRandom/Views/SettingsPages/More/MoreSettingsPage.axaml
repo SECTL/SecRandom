@@ -163,6 +163,30 @@
                      <CheckBox Content="{x:Static lsp:Resources.C_LotteryQuantityLabel}"
                               IsChecked="{Binding Settings.LotteryQuantityLabel}" />
                 </fa:FASettingsExpanderItem>
+             </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_OverviewData"
+                                   Header="{x:Static lsp:Resources.S_OverviewData}"
+                                   Description="{x:Static lsp:Resources.S_OverviewData_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi DatabaseFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <Button Content="{x:Static lsp:Resources.C_ClearOverview}">
+                        <Button.Flyout>
+                            <MenuFlyout Opened="OverviewMenuFlyout_OnOpened">
+                                <MenuItem Header="{x:Static lsp:Resources.C_ClearOverview_All}"
+                                          Tag="all"
+                                          Click="ClearOverviewMenuItem_OnClick" />
+                                <Separator />
+                                <MenuItem x:Name="M_ClearOverviewRollCall"
+                                          Header="{x:Static lsp:Resources.C_ClearOverview_RollCall}" />
+                                <MenuItem x:Name="M_ClearOverviewLottery"
+                                          Header="{x:Static lsp:Resources.C_ClearOverview_Lottery}" />
+                                <MenuItem x:Name="M_ClearOverviewRandomNumbers"
+                                          Header="{x:Static lsp:Resources.C_ClearOverview_RandomNumbers}" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
             <Separator Margin="0 12 0 4" IsVisible="{Binding IsDesktop}" />

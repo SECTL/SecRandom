@@ -133,10 +133,10 @@
     <value>Pre-class enable time</value>
   </data>
   <data name="S_SubjectHistory_Filter_D">
-    <value>Use only the current subject's history when calculating weights</value>
+    <value>Record the current subject in draw history without affecting draw weights</value>
   </data>
   <data name="S_SubjectHistory_Filter">
-    <value>Subject history filter</value>
+    <value>Record subject</value>
   </data>
   <data name="S_ClassTime_PreClassEnableTime_D">
     <value>Enable operations this many seconds before class</value>
@@ -157,4 +157,22 @@
   <data name="M_ScheduleError_ClassIslandScheduleUnloaded"><value>ClassIsland has not loaded today's timetable</value></data>
   <data name="M_ScheduleError_ClassIslandUnsupportedState"><value>ClassIsland returned an unsupported current state: {0}</value></data>
   <data name="M_ScheduleError_ClassIslandReadFailed"><value>Unable to read the ClassIsland class state</value></data>
+  <data name="C_AddCourse"><value>Add subject</value></data>
+  <data name="C_RefreshCourseRoster"><value>Refresh courses</value></data>
+  <data name="C_Course"><value>Subject</value></data>
+  <data name="C_RollCallList"><value>Roll-call list</value></data>
+  <data name="C_QuickDrawList"><value>Quick Draw list</value></data>
+  <data name="C_LotteryPool"><value>Lottery prize pool</value></data>
+  <data name="M_CourseSearch"><value>Search subjects</value></data>
+  <data name="M_AddCoursePrompt"><value>Enter a subject name</value></data>
+  <data name="M_CourseNameRequired"><value>Enter a subject name</value></data>
+  <data name="M_CourseAlreadyExists"><value>This subject already exists</value></data>
+  <data name="M_CourseSourceOff"><value>Select a course data source first</value></data>
+  <data name="M_CourseLoading"><value>Loading courses</value></data>
+  <data name="M_CourseUnavailable"><value>No courses were found</value></data>
+  <data name="M_CourseCount"><value>{0} subjects</value></data>
+  <data name="O_CourseRosterDefault"><value>Use default list</value></data>
+  <data name="S_External_CourseRoster" xml:space="preserve"><value>Course roster mapping</value></data>
+  <data name="S_External_CourseRoster_D" xml:space="preserve"><value>Bind courses to roll-call lists, Quick Draw lists, and prize pools</value></data>
+  <data name="C_OpenCourseRoster" xml:space="preserve"><value>Manage course rosters</value></data>
 </root>

@@ -32,6 +32,8 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     private int _attachedViewCount;
     private bool _refreshTimerRunning;
     private bool _autoMiniWindowTriggered;
+    private bool _hasStarted;
+    private bool _isFullScreen;
 
     /// <summary>页面上最后一次操作发生在哪一刻（_clock 的毫秒数）；打开页面本身算一次操作。</summary>
     private long _lastActivityAt;
@@ -117,8 +119,14 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     public string TotalTimeText => R.C_TotalTime;
     public string ShowMillisecondsText => R.C_ShowMilliseconds;
     public string MiniWindowText => R.C_MiniWindow;
+    public string FullScreenText => _isFullScreen ? R.C_ExitFullScreen : R.C_FullScreen;
+    public string FullScreenHintText => R.C_HoldExitFullScreen;
     public string RestoreText => R.C_Restore;
     public string StartPauseIcon => _isRunning ? FluentIcons.PauseFilled : FluentIcons.PlayFilled;
+    public string FullScreenIcon => _isFullScreen
+        ? FluentIcons.FullScreenMinimizeFilled
+        : FluentIcons.FullScreenMaximizeFilled;
+    public bool IsFullScreen => _isFullScreen;
     public ObservableCollection<StopwatchLap> Laps { get; } = [];
     public ObservableCollection<RecentTimerPreset> RecentPresets { get; } = [];
     public bool HasLaps => Laps.Count > 0;
@@ -209,6 +217,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     private void Reset()
     {
         _isRunning = false;
+        _hasStarted = false;
         _finished = false;
         _autoMiniWindowTriggered = false;
         if (IsCountdownMode)
@@ -273,6 +282,17 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
             SetCountdown(_remaining + TimeSpan.FromSeconds(key == Avalonia.Input.Key.Up ? 10 : -10));
     }
 
+    public void SetFullScreenState(bool value)
+    {
+        if (_isFullScreen == value)
+            return;
+
+        _isFullScreen = value;
+        OnPropertyChanged(nameof(IsFullScreen));
+        OnPropertyChanged(nameof(FullScreenText));
+        OnPropertyChanged(nameof(FullScreenIcon));
+    }
+
     private void SetMode(int value)
     {
         var mode = (TimerMode)Math.Clamp(value, (int)TimerMode.Countdown, (int)TimerMode.Clock);
@@ -283,6 +303,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
         _finished = false;
         _autoMiniWindowTriggered = false;
         _mode = mode;
+        _hasStarted = false;
         Refresh();
     }
 
@@ -290,6 +311,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     {
         _isRunning = false;
         _finished = false;
+        _hasStarted = false;
         // 重新设定时长＝新的一次计时：自动缩小的"这次已经缩过"要跟着重置
         _autoMiniWindowTriggered = false;
         _remaining = value < TimeSpan.Zero ? TimeSpan.Zero : value;
@@ -368,6 +390,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
             return;
 
         _finished = false;
+        _hasStarted = true;
         _isRunning = true;
         if (IsCountdownMode)
             _deadline = _clock.ElapsedMilliseconds + (long)_remaining.TotalMilliseconds;
@@ -442,10 +465,11 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     private bool IsAutoMiniWindowWatchActive() =>
         _attachedViewCount > 0
         && !_autoMiniWindowTriggered
-        && IsAutoMiniWindowEnabledForCurrentMode();
+        && IsAutoMiniWindowEnabledForCurrentMode()
+        && (IsClockMode || _hasStarted);
 
     /// <summary>
-    ///     页面上一段时间没有任何操作时请求一次自动缩小。只评估、不切窗口：窗口归 TimerViewService 管。
+    ///     已开始的计时器在页面上一段时间没有任何操作时请求一次自动缩小。只评估、不切窗口：窗口归 TimerViewService 管。
     /// </summary>
     /// <remarks>
     ///     看的是**人有没有在动这个页面**，不是计时走了多久：按开始、选预设、切模式、点按钮、鼠标在窗口里动，
@@ -454,7 +478,7 @@ public sealed partial class TimerViewModel : ObservableObject, IDisposable
     /// </remarks>
     private void TryRequestAutoMiniWindow()
     {
-        if (_disposed || _attachedViewCount == 0)
+        if (_disposed || !IsAutoMiniWindowWatchActive())
             return;
 
         var settings = _configHandler.Data.EffectiveTimerSettings;

@@ -13,6 +13,13 @@ public sealed class WitnessReceipt
     public string PayloadHash { get; init; } = string.Empty;
     public string AuditPayloadHash { get; init; } = string.Empty;
     public string ProofHash { get; init; } = string.Empty;
+    public string? LockReceiptHash { get; init; }
+    public string? CandidatePoolCommitment { get; init; }
+    public string? RosterDigest { get; init; }
+    public string? AlgorithmSpecId { get; init; }
+    public string? AlgorithmSpecHash { get; init; }
+    public string? ClientNonce { get; init; }
+    public string? ServerNonce { get; init; }
     public VerificationProofMode Mode { get; init; }
     public string KeyId { get; init; } = string.Empty;
     public DateTimeOffset AttestedAtUtc { get; init; }
@@ -35,6 +42,12 @@ public sealed class FormalNotarizationRequest
     public string ZeroSeedRequest { get; init; } = string.Empty;
     public string AuditPayload { get; init; } = string.Empty;
     public string ClientNonce { get; init; } = string.Empty;
+    public string AlgorithmSpecId { get; init; } = string.Empty;
+    public string AlgorithmSpecHash { get; init; } = string.Empty;
+    public string AlgorithmEngineVersion { get; init; } = string.Empty;
+    public string AlgorithmId { get; init; } = string.Empty;
+    public string CandidatePoolCommitment { get; init; } = string.Empty;
+    public string RosterDigest { get; init; } = string.Empty;
 
     // Readable context for the formal proof the service builds. It is part of the request because the notarized
     // document is signed on the server: a block added only after the response could not be covered by that
@@ -66,6 +79,13 @@ public sealed class FormalLockReceipt
     public string InputHash { get; init; } = string.Empty;
     public string RequestHash { get; init; } = string.Empty;
     public string AuditPayloadHash { get; init; } = string.Empty;
+    public string CandidatePoolCommitment { get; init; } = string.Empty;
+    public string RosterDigest { get; init; } = string.Empty;
+    public string ContextHash { get; init; } = string.Empty;
+    public string AlgorithmSpecId { get; init; } = string.Empty;
+    public string AlgorithmSpecHash { get; init; } = string.Empty;
+    public string AlgorithmEngineVersion { get; init; } = string.Empty;
+    public string AlgorithmId { get; init; } = string.Empty;
     public string ClientNonce { get; init; } = string.Empty;
     public string ServerNonce { get; init; } = string.Empty;
     public DateTimeOffset LockedAtUtc { get; init; }

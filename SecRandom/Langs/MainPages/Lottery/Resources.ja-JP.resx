@@ -27,6 +27,9 @@
   <data name="M_NumberRangeStart" xml:space="preserve"><value>開始</value></data>
   <data name="M_NumberRangeEnd" xml:space="preserve"><value>終了</value></data>
   <data name="M_DrawFailed" xml:space="preserve"><value>抽選に失敗しました</value></data>
+  <data name="M_DrawAuthorizationDenied" xml:space="preserve"><value>抽選が許可されませんでした。認証を完了してもう一度お試しください</value></data>
+  <data name="M_DrawLocked" xml:space="preserve"><value>抽選は制御コンソールによってロックされています</value></data>
+  <data name="M_LotteryDisabled" xml:space="preserve"><value>抽選機能は現在無効です</value></data>
   <data name="M_NoCandidates" xml:space="preserve"><value>抽選できる賞品がありません</value></data>
   <data name="M_NoEligibleCandidates" xml:space="preserve"><value>重み条件を満たす賞品がありません</value></data>
   <data name="M_RepeatLimitExhausted" xml:space="preserve"><value>残りの賞品が不足しています。記録をリセットするか、賞品プールを調整してください</value></data>
@@ -35,4 +38,5 @@
   <data name="M_RemainingCountFormat" xml:space="preserve"><value>残り {0} / 抽選済み {1}</value></data>
   <data name="O_HistoryGroup" xml:space="preserve"><value>記録グループ</value></data>
   <data name="O_HistoryGroupDefault" xml:space="preserve"><value>既定の記録グループ</value></data>
-  </root>
+    <data name="O_DrawGroups" xml:space="preserve"><value>すべてのグループを抽選</value></data>
+</root>

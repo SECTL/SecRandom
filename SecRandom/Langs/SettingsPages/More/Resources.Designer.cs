@@ -56,6 +56,18 @@ namespace SecRandom.Langs.SettingsPages.More {
                 return ResourceManager.GetString("S_PageManagement", resourceCulture);
             }
         }
+
+        public static string S_OverviewData {
+            get {
+                return ResourceManager.GetString("S_OverviewData", resourceCulture);
+            }
+        }
+
+        public static string S_OverviewData_D {
+            get {
+                return ResourceManager.GetString("S_OverviewData_D", resourceCulture);
+            }
+        }
         
         public static string S_LotteryEnabled {
             get {
@@ -378,6 +390,78 @@ namespace SecRandom.Langs.SettingsPages.More {
         public static string C_LotteryHistoryGroupSelector {
             get {
                 return ResourceManager.GetString("C_LotteryHistoryGroupSelector", resourceCulture);
+            }
+        }
+
+        public static string C_ClearOverview {
+            get {
+                return ResourceManager.GetString("C_ClearOverview", resourceCulture);
+            }
+        }
+
+        public static string C_ClearOverview_All {
+            get {
+                return ResourceManager.GetString("C_ClearOverview_All", resourceCulture);
+            }
+        }
+
+        public static string C_ClearOverview_RollCall {
+            get {
+                return ResourceManager.GetString("C_ClearOverview_RollCall", resourceCulture);
+            }
+        }
+
+        public static string C_ClearOverview_Lottery {
+            get {
+                return ResourceManager.GetString("C_ClearOverview_Lottery", resourceCulture);
+            }
+        }
+
+        public static string C_ClearOverview_RandomNumbers {
+            get {
+                return ResourceManager.GetString("C_ClearOverview_RandomNumbers", resourceCulture);
+            }
+        }
+
+        public static string M_ClearOverview_Title {
+            get {
+                return ResourceManager.GetString("M_ClearOverview_Title", resourceCulture);
+            }
+        }
+
+        public static string M_ClearOverview_Content {
+            get {
+                return ResourceManager.GetString("M_ClearOverview_Content", resourceCulture);
+            }
+        }
+
+        public static string M_ClearOverview_RollCallContent {
+            get {
+                return ResourceManager.GetString("M_ClearOverview_RollCallContent", resourceCulture);
+            }
+        }
+
+        public static string M_ClearOverview_LotteryContent {
+            get {
+                return ResourceManager.GetString("M_ClearOverview_LotteryContent", resourceCulture);
+            }
+        }
+
+        public static string M_ClearOverview_RandomNumbersContent {
+            get {
+                return ResourceManager.GetString("M_ClearOverview_RandomNumbersContent", resourceCulture);
+            }
+        }
+
+        public static string M_ClearOverview_ProfileContent {
+            get {
+                return ResourceManager.GetString("M_ClearOverview_ProfileContent", resourceCulture);
+            }
+        }
+
+        public static string M_ClearOverview_Failed {
+            get {
+                return ResourceManager.GetString("M_ClearOverview_Failed", resourceCulture);
             }
         }
     }

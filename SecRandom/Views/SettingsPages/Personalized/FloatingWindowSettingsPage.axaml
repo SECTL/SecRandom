@@ -246,12 +246,18 @@
                                    Description="{x:Static lsp:Resources.S_Dock_Text_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi TextFontFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <StackPanel Spacing="4" Width="120">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
                         <TextBox x:Name="DockTextInput"
+                                 Width="72"
                                  MaxLength="4"
                                  Text="{Binding Settings.StickToEdgeDisplayText}"
                                  TextChanged="DockText_OnTextChanged" />
-                        <TextBlock x:Name="DockTextLimitLabel" Classes="caption" />
+                        <fa:FAProgressRing Width="20"
+                                           Height="20"
+                                           IsIndeterminate="False"
+                                           Value="{Binding DockTextProgress}"
+                                           Maximum="1"
+                                           Foreground="{DynamicResource AccentFillColorDefaultBrush}" />
                     </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>

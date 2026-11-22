@@ -10,6 +10,9 @@
   <data name="M_NoMembers" xml:space="preserve"><value>没有可抽取的成员</value></data>
   <data name="M_Drawing" xml:space="preserve"><value>正在闪抽</value></data>
   <data name="M_DrawFailed" xml:space="preserve"><value>闪抽失败</value></data>
+  <data name="M_DrawAuthorizationDenied" xml:space="preserve"><value>闪抽未获授权，请完成验证后重试</value></data>
+  <data name="M_DrawLocked" xml:space="preserve"><value>当前闪抽已被控制台锁定</value></data>
+  <data name="M_Cooldown" xml:space="preserve"><value>抽取后暂时禁用，请稍候再试</value></data>
   <data name="M_DrawnCountFormat" xml:space="preserve"><value>已抽取 {0} 名成员</value></data>
   <data name="M_ResetDone" xml:space="preserve"><value>已清空当前名单点名记录</value></data>
   <data name="M_DefaultListRequired" xml:space="preserve"><value>请先在闪抽设置中选择默认成员名单</value></data>

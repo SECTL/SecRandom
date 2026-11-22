@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -25,6 +26,7 @@ using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
 using SecRandom.Core.Services.Draw;
 using SecRandom.Core.Services.FloatingWindow;
+using SecRandom.Core.Services.Linkage;
 using SecRandom.Core.Services.Orchestration;
 using SecRandom.Core.Services.Presentation;
 using SecRandom.Core.Services.Profiles;
@@ -55,8 +57,10 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private readonly ILogger<QuickDrawPageViewModel> _logger;
     private readonly ISecurityService _securityService;
     private readonly LinkageDrawCoordinator _linkageDrawCoordinator;
+    private readonly CourseRosterMappingService? _courseRosterMapping;
     private readonly VerificationDrawCoordinator _verificationDrawCoordinator;
     private readonly IHistoryGroupCatalog _historyGroupCatalog;
+    private readonly IProfileCatalogManager? _profileCatalogManager;
     private readonly IVoiceAnnouncementService? _voiceAnnouncementService;
     private readonly NotificationService? _notificationService;
     private readonly IOrchestrationStore? _orchestrationStore;
@@ -65,6 +69,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     private bool _isCoolingDown;
     private CancellationTokenSource? _previewCts;
     private int? _notificationAutoCloseTime;
+    private int _drawBlockedNoticeRevision;
     private HistoryGroupScope _historyGroupScope;
     private string _recordGroup = string.Empty;
 
@@ -75,6 +80,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     [ObservableProperty] private int _resultAnimationRevision;
     [ObservableProperty] private int _notificationDisplayRevision;
     [ObservableProperty] private bool _isDrawing;
+    [ObservableProperty] private string _drawBlockedNotice = string.Empty;
     [ObservableProperty] private Student? _lastDrawnStudent;
 
     public QuickDrawPageViewModel(
@@ -92,7 +98,9 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         IVoiceAnnouncementService? voiceAnnouncementService = null,
         NotificationService? notificationService = null,
         IOrchestrationStore? orchestrationStore = null,
-        OrchestrationScheduler? orchestrationScheduler = null)
+        OrchestrationScheduler? orchestrationScheduler = null,
+        IProfileCatalogManager? profileCatalogManager = null,
+        CourseRosterMappingService? courseRosterMapping = null)
         : base(configHandler)
     {
         _configHandler = configHandler;
@@ -104,15 +112,19 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         _logger = logger;
         _securityService = securityService;
         _linkageDrawCoordinator = linkageDrawCoordinator;
+        _courseRosterMapping = courseRosterMapping;
         _verificationDrawCoordinator = verificationDrawCoordinator;
         _historyGroupCatalog = historyGroupCatalog;
+        _profileCatalogManager = profileCatalogManager;
         _voiceAnnouncementService = voiceAnnouncementService;
         _notificationService = notificationService;
         _orchestrationStore = orchestrationStore;
         _orchestrationScheduler = orchestrationScheduler;
         ResultItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(ResultFontSize));
         Config.EffectiveQuickDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
-        Config.EffectiveHistoryGroups.PropertyChanged += SettingsOnPropertyChanged;
+        Config.EffectiveDefaultDrawSettings.PropertyChanged += SettingsOnPropertyChanged;
+        if (_courseRosterMapping is not null)
+            _courseRosterMapping.SelectionChanged += CourseRosterSelectionChanged;
         RefreshHistoryGroupScope();
         RefreshStudentLists();
     }
@@ -130,6 +142,7 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     public IReadOnlyList<string> LastResultDisplayTitles =>
         LastResultStudents.Select(FormatStudent).ToArray();
     public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && !_isCoolingDown && GetEligibleCandidates().Any());
+    public bool IsDrawBlockedNoticeVisible => !string.IsNullOrWhiteSpace(DrawBlockedNotice);
     public string DrawButtonText => IsDrawing ? QuickDrawResources.C_Stop : QuickDrawResources.C_Start;
 
     /// <summary>
@@ -212,6 +225,53 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         OnPropertyChanged(nameof(DrawButtonText));
     }
 
+    partial void OnDrawBlockedNoticeChanged(string value) => OnPropertyChanged(nameof(IsDrawBlockedNoticeVisible));
+
+    public void ShowDrawBlockedNotice(string message)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+            return;
+
+        void Show()
+        {
+            var revision = ++_drawBlockedNoticeRevision;
+            DrawBlockedNotice = message;
+            DispatcherTimer.RunOnce(() =>
+            {
+                if (_drawBlockedNoticeRevision == revision)
+                    DrawBlockedNotice = string.Empty;
+            }, TimeSpan.FromSeconds(6));
+        }
+
+        if (Dispatcher.UIThread.CheckAccess())
+        {
+            Show();
+            return;
+        }
+
+        // Authorization can finish on a worker thread. Wait until the bound property is
+        // visible on the UI thread so the floating-window caller can open the notice
+        // immediately instead of racing the dispatcher queue.
+        Dispatcher.UIThread.InvokeAsync(Show).GetAwaiter().GetResult();
+    }
+
+    public void ShowDrawAuthorizationNotice(
+        LinkageDrawGate gate,
+        string? detail,
+        Action<string>? showNotice = null)
+    {
+        var message = gate switch
+        {
+            LinkageDrawGate.BlockedByClassTime => detail ?? QuickDrawResources.M_DrawAuthorizationDenied,
+            LinkageDrawGate.BlockedByRemoteLock => QuickDrawResources.M_DrawLocked,
+            _ => QuickDrawResources.M_DrawAuthorizationDenied
+        };
+        (showNotice ?? (value => DesktopDrawNotice.Show(value)))(message);
+    }
+
+    public void ShowCooldownNotice(Action<string>? showNotice = null)
+        => (showNotice ?? (value => DesktopDrawNotice.Show(value)))(QuickDrawResources.M_Cooldown);
+
     [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task StartDrawAsync()
     {
@@ -222,16 +282,24 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         }
 
         if (_isCoolingDown || _isDrawCommandRunning)
+        {
+            if (_isCoolingDown)
+                ShowCooldownNotice();
             return;
+        }
 
-        if (!await _linkageDrawCoordinator.AuthorizeAsync(SecurityOperation.QuickDrawStart, () => Task.CompletedTask))
+        if (!await _linkageDrawCoordinator.AuthorizeAsync(
+                SecurityOperation.QuickDrawStart,
+                () => Task.CompletedTask,
+                onBlocked: (gate, detail) => ShowDrawAuthorizationNotice(gate, detail)))
             return;
         await StartAuthorizedTriggeredDrawAsync();
     }
 
-    public Task<bool> AuthorizeTriggeredDrawAsync() => _linkageDrawCoordinator.AuthorizeAsync(
+    public Task<bool> AuthorizeTriggeredDrawAsync(Action<LinkageDrawGate, string?>? onBlocked = null) => _linkageDrawCoordinator.AuthorizeAsync(
         SecurityOperation.QuickDrawStart,
-        () => Task.CompletedTask);
+        () => Task.CompletedTask,
+        onBlocked: onBlocked ?? ((gate, detail) => ShowDrawAuthorizationNotice(gate, detail)));
 
     /// <summary>
     ///     触发一次闪抽；<paramref name="count" /> 是浮窗长按快选选好的人数（默认 1 人）。
@@ -255,11 +323,17 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             return;
 
         if (_isCoolingDown)
+        {
+            ShowCooldownNotice();
             return;
+        }
 
         ClearNotificationPresentation();
         if (!TryLoadDefaultStudentList())
+        {
+            ShowDrawBlockedNotice(StatusText);
             return;
+        }
 
         ResetForNewRoundIfExhausted();
 
@@ -267,6 +341,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         if (candidates.Count == 0)
         {
             StatusText = QuickDrawResources.M_NoMembers;
+            ShowDrawBlockedNotice(StatusText);
             return;
         }
 
@@ -322,6 +397,26 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             var orchestrationPlan = Config.EffectiveQuickDrawSettings.DrawMode == DrawMode.Orchestrated
                 ? PrepareOrchestration(candidates)
                 : null;
+            if (orchestrationPlan is not null)
+            {
+                // An empty plan can mean either that this round is exhausted or that every member
+                // is globally excluded. Advance only the former; the latter must stay visible.
+                if (orchestrationPlan.Order.Count == 0)
+                {
+                    if (orchestrationPlan.CanAdvanceWhenEmpty)
+                        AdvanceOrchestration(orchestrationPlan);
+                    if (showBuiltInNotificationAnimation)
+                        _notificationService?.CancelBuiltInNotificationPresentation(NotificationSettingsType.QuickDraw);
+                    _notificationService?.CancelFullscreenPresentation(NotificationSettingsType.QuickDraw);
+                    StatusText = QuickDrawResources.M_NoMembers;
+                    ShowDrawBlockedNotice(StatusText);
+                    return;
+                }
+
+                // Exclusion and deferral may leave fewer scheduled members than the requested count.
+                // Keep proof, commit metadata, and presentation counts aligned with the actual prefix.
+                count = Math.Min(count, orchestrationPlan.Order.Count);
+            }
             var verificationDrawTask = orchestrationPlan is not null
                 ? _verificationDrawCoordinator.DrawOrchestratedStudentsAsync(
                     orchestrationPlan.Order.Take(count).ToArray(),
@@ -361,6 +456,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                     LastDrawnStudent = null;
                     IsResultVisible = false;
                     StatusText = QuickDrawResources.M_NoMembers;
+                    ShowDrawBlockedNotice(StatusText);
                     return;
                 }
 
@@ -386,6 +482,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 LastDrawnStudent = null;
                 IsResultVisible = false;
                 StatusText = QuickDrawResources.M_DrawFailed;
+                ShowDrawBlockedNotice(StatusText);
                 return;
             }
 
@@ -516,19 +613,32 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         var drawn = new HashSet<Guid>();
         foreach (var key in _temporaryRecordService.GetStudentCounts(SelectedStudentListName, string.Empty, string.Empty).Keys)
         {
-            if (Guid.TryParseExact(key, "N", out var recordId))
+            if (Guid.TryParse(key, out var recordId))
                 drawn.Add(recordId);
         }
 
+        var round = profile.GetRound(runtime.Round);
         var order = _orchestrationScheduler.OrderRound(
             profile,
-            profile.GetRound(runtime.Round),
+            round,
             candidates,
             drawn,
             new CryptoRandomSource(),
             _linkageDrawCoordinator.GetCourseName(),
             ResolveQuickDrawHistoryGroup());
-        return new OrchestrationPlan(profile, runtime.Round, profile.EffectiveRoundCount, order);
+        var nonExcludedIds = candidates
+            .Select(student =>
+            {
+                ProfileRecordIdentity.EnsureRecordId(student);
+                return student.RecordId;
+            })
+            .Where(recordId => profile.FindMember(recordId) is not { IsExcluded: true })
+            .Distinct()
+            .ToArray();
+        var canAdvanceWhenEmpty = nonExcludedIds.Length > 0
+            && (nonExcludedIds.All(drawn.Contains)
+                || (profile.Rules.Defer && round.Skipped.Count > 0 && nonExcludedIds.All(round.Skipped.Contains)));
+        return new OrchestrationPlan(profile, runtime.Round, profile.EffectiveRoundCount, order, canAdvanceWhenEmpty);
     }
 
     private void AdvanceOrchestration(OrchestrationPlan plan)
@@ -552,7 +662,8 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         OrchestrationProfile Profile,
         int Round,
         int RoundCount,
-        IReadOnlyList<Student> Order);
+        IReadOnlyList<Student> Order,
+        bool CanAdvanceWhenEmpty);
 
     private int? ResolveNotificationAutoCloseTime()
     {
@@ -634,20 +745,28 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     private void RefreshStudentLists()
     {
         StudentListNames.Clear();
-        foreach (var file in Directory.GetFiles(Utils.GetDirectoryPath("list", "roll_call_list"), "*.json")
-                     .OrderBy(Path.GetFileName))
-            StudentListNames.Add(Path.GetFileNameWithoutExtension(file));
+        var names = _profileCatalogManager?.GetStudentListNames()
+                    ?? (_profileService?.CurrentStudentList is { Name.Length: > 0 } current
+                        ? [current.Name]
+                        : []);
 
-        var defaultClass = Config.QuickDrawSettings.DefaultClass;
-        SelectedStudentListName = StudentListNames.Contains(defaultClass)
-            ? defaultClass
-            : string.Empty;
+        foreach (var name in names)
+            StudentListNames.Add(name);
+
+        var mappedList = _courseRosterMapping?.ResolveStudentList(CourseDrawChannel.QuickDraw);
+        var configuredList = Config.QuickDrawSettings.DefaultClass;
+        var selected = !string.IsNullOrWhiteSpace(mappedList) && StudentListNames.Contains(mappedList)
+            ? mappedList
+            : configuredList;
+        SelectedStudentListName = StudentListNames.Contains(selected) ? selected : string.Empty;
     }
 
     private bool TryLoadDefaultStudentList()
     {
         RefreshStudentLists();
-        var defaultClass = Config.QuickDrawSettings.DefaultClass.Trim();
+        var mappedList = _courseRosterMapping?.ResolveStudentList(CourseDrawChannel.QuickDraw);
+        var useMappedList = !string.IsNullOrWhiteSpace(mappedList) && StudentListNames.Contains(mappedList);
+        var defaultClass = useMappedList ? mappedList! : Config.QuickDrawSettings.DefaultClass.Trim();
         if (!StudentListNames.Contains(defaultClass))
         {
             defaultClass = StudentListNames.FirstOrDefault() ?? string.Empty;
@@ -657,8 +776,11 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                 return false;
             }
 
-            Config.QuickDrawSettings.DefaultClass = defaultClass;
-            _configHandler.Save();
+            if (!useMappedList)
+            {
+                Config.QuickDrawSettings.DefaultClass = defaultClass;
+                _configHandler.Save();
+            }
         }
 
         if (SelectedStudentListName != defaultClass)
@@ -837,6 +959,36 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         TriggerPreviewAnimation();
     }
 
+    /// <summary>Replays a stored proof in the existing quick-draw page without creating a draw record.</summary>
+    public async Task PlayProofPlaybackAsync(
+        IReadOnlyList<string> candidates,
+        IReadOnlyList<string> results,
+        CancellationToken cancellationToken)
+    {
+        IsDrawing = true;
+        try
+        {
+            var pool = candidates.Where(static value => !string.IsNullOrWhiteSpace(value)).ToArray();
+            var playbackCount = Math.Max(1, results.Count);
+            for (var iteration = 0; iteration < 16; iteration++)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var offset = pool.Length == 0 ? 0 : iteration % pool.Length;
+                var frame = pool.Length == 0
+                    ? results.Take(playbackCount).ToArray()
+                    : pool.Skip(offset).Concat(pool.Take(offset)).Take(playbackCount).ToArray();
+                ShowNotificationPreview(frame, preserveQuickDrawResult: false);
+                await Task.Delay(90, cancellationToken).ConfigureAwait(true);
+            }
+
+            ShowNotificationResult(results.Take(playbackCount).ToArray(), 0, animate: true, preserveQuickDrawResult: false);
+        }
+        finally
+        {
+            IsDrawing = false;
+        }
+    }
+
     public bool NotificationAnimationEnabled { get; private set; }
 
     [ObservableProperty] private double? _notificationOpacity;
@@ -907,6 +1059,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     public void ClearNotificationPresentation()
     {
+        DrawBlockedNotice = string.Empty;
         NotificationOpacity = null;
         NotificationTheme = null;
         NotificationInk = null;
@@ -1051,8 +1204,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     ///     解析本次闪抽要锁定的历史记录组；<see langword="null" /> 表示不做组隔离（看全部历史）。
     /// </summary>
     /// <remarks>
-    ///     空串不是「不分组」而是「默认记录组」（未分组记录），所以功能关闭时必须返回
-    ///     <see langword="null" />——那时选择器不显示，没人能看出范围，只能按全部历史。
+    ///     空串不是「不分组」而是「默认记录组」（未分组记录）。
     /// </remarks>
     private string? ResolveQuickDrawHistoryGroup()
     {
@@ -1066,22 +1218,17 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     /// </summary>
     private void RefreshHistoryGroupScope()
     {
-        var enabled = Config.EffectiveHistoryGroups.Enabled;
         IReadOnlyList<string>? groups = null;
-        if (enabled)
+        try
         {
-            try
-            {
-                groups = _historyGroupCatalog.GetGroupNames(HistoryGroupKind.RollCall);
-            }
-            catch (Exception exception)
-            {
-                _logger.LogWarning(exception, "读取历史记录组失败，本次闪抽按全部历史处理。");
-                groups = null;
-            }
+            groups = _historyGroupCatalog.GetGroupNames(HistoryGroupKind.RollCall);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "读取历史记录组失败，本次闪抽按全部历史处理。");
         }
 
-        _historyGroupScope = HistoryGroupScope.Resolve(enabled, Config.EffectiveQuickDrawSettings.HistoryGroup, groups);
+        _historyGroupScope = HistoryGroupScope.Resolve(Config.EffectiveQuickDrawSettings.HistoryGroup, groups);
         // 读取范围与写入归属刻意分开：闪抽不按组筛历史时（选择器不可见）仍要盖自己配置的默认记录组，
         // 否则闪抽、点名、抽奖的记录会一起挤进默认组。
         _recordGroup = _historyGroupScope.Group ?? HistoryGroupScope.ResolveRecordGroup(
@@ -1090,29 +1237,47 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (sender == Config.EffectiveQuickDrawSettings)
-        {
-            if (!string.IsNullOrEmpty(e.PropertyName)
-                && e.PropertyName != nameof(QuickDrawSettingsConfig.HistoryGroup))
-                return;
-        }
-        else if (sender != Config.EffectiveHistoryGroups)
-        {
+        var isQuickDrawSettings = ReferenceEquals(sender, Config.EffectiveQuickDrawSettings);
+        var isDefaultDrawSettings = ReferenceEquals(sender, Config.EffectiveDefaultDrawSettings);
+        if (!isQuickDrawSettings && !isDefaultDrawSettings)
             return;
+
+        if (isQuickDrawSettings && (string.IsNullOrEmpty(e.PropertyName)
+                                    || e.PropertyName == nameof(QuickDrawSettingsConfig.HistoryGroup)))
+        {
+            RefreshHistoryGroupScope();
+            OnPropertyChanged(nameof(IsHistoryGroupHintVisible));
+            OnPropertyChanged(nameof(HistoryGroupHintText));
+            OnPropertyChanged(nameof(IsHistoryGroupMissingHintVisible));
         }
 
-        RefreshHistoryGroupScope();
-        OnPropertyChanged(nameof(IsHistoryGroupHintVisible));
-        OnPropertyChanged(nameof(HistoryGroupHintText));
-        OnPropertyChanged(nameof(IsHistoryGroupMissingHintVisible));
+        // DisplaySettings can come from either the quick-draw override or the default draw settings.
+        // Rebuild the existing items so switching back to the default style removes the card immediately.
+        if (ResultItems.Count > 0)
+        {
+            var isCardStyle = DisplaySettings.DisplayStyle == DisplayStyleMode.Card;
+            for (var index = 0; index < ResultItems.Count; index++)
+                ResultItems[index] = ResultItems[index] with { IsCardStyle = isCardStyle };
+        }
+
+        OnPropertyChanged(nameof(ResultFontSize));
+        OnPropertyChanged(nameof(ResultFontFamily));
     }
 
     public void Dispose()
     {
+        if (_courseRosterMapping is not null)
+            _courseRosterMapping.SelectionChanged -= CourseRosterSelectionChanged;
         Config.EffectiveQuickDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
-        Config.EffectiveHistoryGroups.PropertyChanged -= SettingsOnPropertyChanged;
+        Config.EffectiveDefaultDrawSettings.PropertyChanged -= SettingsOnPropertyChanged;
         StopPreview();
     }
+
+    private void CourseRosterSelectionChanged(object? sender, EventArgs e) => Dispatcher.UIThread.Post(() =>
+    {
+        RefreshStudentLists();
+        OnPropertyChanged(nameof(CanStartDraw));
+    });
 }
 
 public sealed record QuickDrawResultItem(

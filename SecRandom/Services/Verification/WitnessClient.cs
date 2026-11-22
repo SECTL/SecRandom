@@ -60,6 +60,9 @@ public sealed class WitnessClient(
         CancellationToken cancellationToken)
     {
         var lockedRequest = FromBase64Url(request.ZeroSeedRequest);
+        if (lockedRequest.Length < 49 || !lockedRequest.AsSpan(17, 32).SequenceEqual(new byte[32])
+            || VerificationWireCodec.ComputeCandidatePoolCommitmentFromRequest(lockedRequest) != request.CandidatePoolCommitment)
+            throw new InvalidDataException("Formal notarization request is not the committed zero-seed candidate pool.");
         if (lockedRequest.Length >= 17 && lockedRequest.AsSpan(0, 4).SequenceEqual("SRDQ"u8))
         {
             logger.LogDebug(
@@ -91,12 +94,24 @@ public sealed class WitnessClient(
         var proof = envelope.Proof;
         var receipt = VerifyToken<WitnessReceipt>(proof.Witness?.Receipt
             ?? throw new InvalidDataException("Formal notarization did not include a receipt."));
-        if (proof.ProofId != request.ProofId || proof.ParentProofId != request.ParentProofId || proof.Mode != VerificationProofMode.OnlineWitnessed
-            || proof.InputHash != request.InputHash || receipt.Role != "server-notary"
+        if (proof.Format != DrawProof.FormatV3
+            || proof.ProofId != request.ProofId || proof.ParentProofId != request.ParentProofId || proof.Mode != VerificationProofMode.OnlineWitnessed
+            || proof.InputHash != request.InputHash || proof.AlgorithmSpecId != request.AlgorithmSpecId
+            || proof.AlgorithmSpecHash != request.AlgorithmSpecHash
+            || proof.CandidatePoolCommitment != request.CandidatePoolCommitment
+            || proof.AlgorithmId != request.AlgorithmId
+            || proof.AlgorithmEngineVersion != request.AlgorithmEngineVersion
+            || proof.Context is null
+            || proof.Context.CandidatePoolCommitment != request.CandidatePoolCommitment
+            || receipt.Role != "server-notary"
             || receipt.ProofId != proof.ProofId || receipt.InputHash != proof.InputHash
             || receipt.PayloadHash != ToBase64Url(SHA256.HashData(FromBase64Url(proof.Payload)))
             || receipt.AuditPayloadHash != ToBase64Url(SHA256.HashData(FromBase64Url(proof.AuditPayload)))
             || receipt.ProofHash != ComputeAttestedProofHash(proof)
+            || receipt.AlgorithmSpecId != request.AlgorithmSpecId
+            || receipt.AlgorithmSpecHash != request.AlgorithmSpecHash
+            || receipt.CandidatePoolCommitment != request.CandidatePoolCommitment
+            || receipt.RosterDigest != request.RosterDigest
             || receipt.Mode != proof.Mode)
             throw new InvalidDataException("Server notarization is not bound to the locked draw.");
 
@@ -113,8 +128,20 @@ public sealed class WitnessClient(
             || challenge.InputHash != request.InputHash || challenge.ClientNonce != request.ClientNonce
             || challenge.RequestHash != ToBase64Url(SHA256.HashData(FromBase64Url(request.ZeroSeedRequest)))
             || challenge.AuditPayloadHash != ToBase64Url(SHA256.HashData(FromBase64Url(request.AuditPayload)))
+            || challenge.CandidatePoolCommitment != request.CandidatePoolCommitment
+            || challenge.RosterDigest != request.RosterDigest
+            || challenge.AlgorithmSpecId != request.AlgorithmSpecId
+            || challenge.AlgorithmSpecHash != request.AlgorithmSpecHash
+            || challenge.AlgorithmEngineVersion != request.AlgorithmEngineVersion
+            || challenge.AlgorithmId != request.AlgorithmId
+            || challenge.ContextHash != ComputeContextHash(request.Context)
             || FromBase64Url(challenge.ServerNonce).Length != 32)
             throw new InvalidDataException("Formal notarization lock receipt is not bound to this request.");
+
+        if (receipt.LockReceiptHash != ToBase64Url(SHA256.HashData(Encoding.UTF8.GetBytes(proof.Witness.Challenge)))
+            || receipt.ClientNonce != challenge.ClientNonce
+            || receipt.ServerNonce != challenge.ServerNonce)
+            throw new InvalidDataException("Formal notarization signature does not bind its lock receipt nonce.");
 
         return proof;
     }
@@ -142,6 +169,9 @@ public sealed class WitnessClient(
         finalizedRequest.AsSpan(17, 32).Clear();
         return finalizedRequest.AsSpan().SequenceEqual(lockedRequest);
     }
+
+    private static string ComputeContextHash(DrawProofContext? context) =>
+        ToBase64Url(SHA256.HashData(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(context, JsonOptions))));
 
     private void AddClientId(HttpRequestMessage request)
     {
@@ -192,6 +222,15 @@ public sealed class WitnessClient(
         AppendInt64(hash, proof.CreatedAtUtc.UtcDateTime.Ticks);
         AppendString(hash, proof.AlgorithmId);
         AppendString(hash, proof.AlgorithmEngineVersion);
+        if (!string.IsNullOrEmpty(proof.AlgorithmSpecId)
+            || !string.IsNullOrEmpty(proof.AlgorithmSpecHash)
+            || !string.IsNullOrEmpty(proof.CandidatePoolCommitment))
+        {
+            AppendInt32(hash, 0x53504543);
+            AppendString(hash, proof.AlgorithmSpecId);
+            AppendString(hash, proof.AlgorithmSpecHash);
+            AppendString(hash, proof.CandidatePoolCommitment);
+        }
         AppendString(hash, proof.LegacyKernelVersion);
         AppendString(hash, proof.InputHash);
         AppendString(hash, proof.Payload);
@@ -204,7 +243,7 @@ public sealed class WitnessClient(
         // v2 commits the readable draw context, so the receipt covers what the file says the draw was, not only the
         // replay material. The field order below is the wire contract: the service appends exactly these values in
         // exactly this order, and a mismatch only shows up as an "attestation is not bound to this proof" failure.
-        if (string.Equals(proof.Format, DrawProof.FormatV2, StringComparison.Ordinal))
+        if (proof.Format is DrawProof.FormatV2 or DrawProof.FormatV3)
             AppendContext(hash, proof.Context);
         return ToBase64Url(hash.GetHashAndReset());
     }
@@ -248,6 +287,8 @@ public sealed class WitnessClient(
         // same digest: v3 proofs carry no salt and therefore no extra segment at all.
         if (!string.IsNullOrEmpty(context.Roster?.DigestSalt))
             AppendString(hash, context.Roster.DigestSalt);
+        if (!string.IsNullOrEmpty(context.CandidatePoolCommitment))
+            AppendString(hash, context.CandidatePoolCommitment);
         AppendString(hash, context.Environment?.AppVersion);
         AppendString(hash, context.Environment?.PlatformFamily);
         AppendInt32(hash, context.Environment?.TimeZoneOffsetMinutes ?? 0);

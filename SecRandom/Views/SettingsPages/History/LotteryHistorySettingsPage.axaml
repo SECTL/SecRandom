@@ -15,7 +15,7 @@
         <conv:HistoryModeNameConverter x:Key="ModeNameConverter" />
     </UserControl.Resources>
 
-    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8" Classes="page-container">
+    <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="8" Classes="page-container">
         <Grid Grid.Row="0" ColumnDefinitions="* * Auto Auto Auto" ColumnSpacing="4">
             <ComboBox Grid.Column="0"
                       HorizontalAlignment="Stretch"
@@ -103,6 +103,7 @@
             <DataGrid x:Name="HistoryGrid"
                       AutoGenerateColumns="False"
                       CanUserSortColumns="True"
+                      Sorting="OnHistoryGridSorting"
                       CanUserReorderColumns="True"
                       CanUserResizeColumns="True"
                       GridLinesVisibility="Horizontal"
@@ -158,5 +159,14 @@
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
+        <StackPanel Grid.Row="3" HorizontalAlignment="Center" Spacing="4">
+            <TextBlock Text="{Binding Pagination.Status}" HorizontalAlignment="Center" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                <Button Content="{x:Static langs:Resources.C_PreviousPage}" Command="{Binding Pagination.PreviousCommand}" />
+                <TextBox Width="120" Text="{Binding Pagination.PageInput, Mode=TwoWay}"
+                         LostFocus="OnPageInputLostFocus" />
+                <Button Content="{x:Static langs:Resources.C_NextPage}" Command="{Binding Pagination.NextCommand}" />
+            </StackPanel>
+        </StackPanel>
     </Grid>
 </UserControl>

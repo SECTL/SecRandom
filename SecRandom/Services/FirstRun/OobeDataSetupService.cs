@@ -65,17 +65,15 @@ public sealed class OobeDataSetupService(
     public void DeleteStudentList(string name)
     {
         name = ValidateName(name);
-        profileService.SaveProfile();
-        DeleteProfileFile(new StudentList(name));
-        DeleteProfileFile(new StudentHistory(name));
+        if (!catalogManager.DeleteStudentList(name, deleteHistory: true))
+            throw new InvalidOperationException("未找到点名名单。");
     }
 
     public void DeletePrizeList(string name)
     {
         name = ValidateName(name);
-        profileService.SaveProfile();
-        DeleteProfileFile(new PrizeList(name));
-        DeleteProfileFile(new PrizeHistory(name));
+        if (!catalogManager.DeletePrizeList(name, deleteHistory: true))
+            throw new InvalidOperationException("未找到奖品池。");
     }
 
     private static string ValidateName(string name)
@@ -86,11 +84,6 @@ public sealed class OobeDataSetupService(
         return name;
     }
 
-    private static void DeleteProfileFile(ProfileConfigBase config)
-    {
-        if (File.Exists(config.ConfigFilePath))
-            File.Delete(config.ConfigFilePath);
-    }
 }
 
 public enum OobeDataSetupError

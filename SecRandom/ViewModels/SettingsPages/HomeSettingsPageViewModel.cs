@@ -34,18 +34,18 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
     partial void OnHasLotteryPoolsChanged(bool value) => OnPropertyChanged(nameof(HasNoLotteryPools));
     partial void OnHasRandomNumberRecordsChanged(bool value) => OnPropertyChanged(nameof(HasNoRandomNumberRecords));
 
-    private readonly IHistoryQueryService _historyQueryService;
     private readonly IProfileCatalogManager _catalogManager;
+    private readonly IOverviewStatisticsService _overviewStatistics;
     private readonly IRandomNumberStatisticsService _randomNumberStatistics;
 
     public HomeSettingsPageViewModel(
         MainConfigHandler configHandler,
-        IHistoryQueryService historyQueryService,
         IProfileCatalogManager catalogManager,
+        IOverviewStatisticsService overviewStatistics,
         IRandomNumberStatisticsService randomNumberStatistics) : base(configHandler)
     {
-        _historyQueryService = historyQueryService;
         _catalogManager = catalogManager;
+        _overviewStatistics = overviewStatistics;
         _randomNumberStatistics = randomNumberStatistics;
     }
 
@@ -62,17 +62,18 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
 
     private void RefreshRollCallLists()
     {
+        var overview = _overviewStatistics.Load().RollCall;
         var cards = _catalogManager.GetStudentListNames()
             .Select(name =>
             {
                 var list = _catalogManager.LoadStudentList(name);
-                var history = _historyQueryService.LoadStudentHistory(name);
+                overview.TryGetValue(name, out var statistics);
                 return new HomeProfileCard(
                     name,
                     list?.Students.Count(student => student.IsCandidate) ?? 0,
-                    history?.TotalRounds ?? 0,
-                    history?.TotalStats ?? 0,
-                    FormatLastDrawnTime(history?.Students.Values.Select(item => item.LastDrawnTime) ?? []));
+                    statistics?.TotalRounds ?? 0,
+                    statistics?.TotalDrawnCount ?? 0,
+                    FormatLastDrawnTime(statistics?.LastDrawAt is { } lastDraw ? [lastDraw] : []));
             })
             .ToList();
 
@@ -88,17 +89,18 @@ public sealed partial class HomeSettingsPageViewModel : ViewModelBase
 
     private void RefreshLotteryPools()
     {
+        var overview = _overviewStatistics.Load().Lottery;
         var cards = _catalogManager.GetPrizeListNames()
             .Select(name =>
             {
                 var list = _catalogManager.LoadPrizeList(name);
-                var history = _historyQueryService.LoadPrizeHistory(name);
+                overview.TryGetValue(name, out var statistics);
                 return new HomeProfileCard(
                     name,
                     list?.Prizes.Count(prize => prize.IsCandidate) ?? 0,
-                    history?.TotalRounds ?? 0,
-                    history?.TotalStats ?? 0,
-                    FormatLastDrawnTime(history?.Prizes.Values.Select(item => item.LastDrawnTime) ?? []));
+                    statistics?.TotalRounds ?? 0,
+                    statistics?.TotalDrawnCount ?? 0,
+                    FormatLastDrawnTime(statistics?.LastDrawAt is { } lastDraw ? [lastDraw] : []));
             })
             .ToList();
 

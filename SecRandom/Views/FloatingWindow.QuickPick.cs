@@ -99,6 +99,8 @@ public partial class FloatingWindow
     }
 
     private QuickPickState _quickPickState;
+    // Keep layout and persistence callbacks blocked until the expanded window has settled.
+    private bool _quickPickRestoring;
     private IPointer? _quickPickPointer;
     private bool _quickPickCaptureHandlerAttached;
     private bool _quickPickTapSuppressed;
@@ -149,6 +151,18 @@ public partial class FloatingWindow
             return false;
 
         var isSecondaryButton = IsSecondaryButtonPress(e);
+
+        // Windows promotes a touch long-press to a mouse right-button press after the
+        // original touch capture is cancelled. Transfer the pointer to this same gesture;
+        // restarting the timer and origin here makes the panel jump or flash.
+        if (_quickPickState == QuickPickState.Holding
+            && _quickPickIsTouch
+            && isSecondaryButton)
+        {
+            _quickPickPointer = e.Pointer;
+            _quickPickIsSecondaryButton = true;
+            return true;
+        }
 
         // 已经在按住态时又来一次按下：只有"右键重新投递"需要重开计时。触控取消与右键到达的
         // 先后顺序没有保证，先到右键时若不接管，这次长按就会随触控取消一起消失。
@@ -230,6 +244,15 @@ public partial class FloatingWindow
         // 那不是"再点一下确认"：把它的按下和配对的抬起一起吞掉，否则面板刚出现就立刻抽走一个人。
         if (IsSecondaryButtonPress(e))
         {
+            if (_quickPickIsTouch)
+            {
+                // The promoted right button belongs to the original touch gesture. Let its
+                // release finish the already-open picker instead of swallowing that release.
+                _quickPickPointer = e.Pointer;
+                _quickPickIsSecondaryButton = true;
+                return true;
+            }
+
             _quickPickSwallowSecondaryRelease = true;
             return true;
         }
@@ -277,7 +300,8 @@ public partial class FloatingWindow
                 return true;
 
             // 和按钮原来的 Click 完全同一个语义：短按抽 1 人。触控点一下也走这里。
-            App.ShowQuickDrawWindow();
+            App.NotifyFloatingWindowInteraction(this);
+            App.ShowQuickDrawWindow(noticeAnchor: this);
             return true;
         }
 
@@ -402,6 +426,7 @@ public partial class FloatingWindow
     private void CancelQuickDrawRing()
     {
         _quickPickState = QuickPickState.Idle;
+        _quickPickRestoring = false;
         _quickPickPointer = null;
         _quickPickIsSecondaryButton = false;
         _quickPickSwallowSecondaryRelease = false;
@@ -462,11 +487,14 @@ public partial class FloatingWindow
         _quickDrawRing.Progress = 1;
         var revision = ++_quickPickRevision;
 
-        // 窗口级材质保持用户原本的设置不动：亚克力/透明是整窗 HWND 的观感，快选不该改它。
+        // 宿主始终透明，快选只显示自身的球和滑轨，不额外铺设窗口背景。
 
         // 让已经排上的自动收纳失效：否则按住不放的这几秒里窗口可能自己收纳，松手后就变成
         // "展开态和收纳球同时在屏上"的怪样子。
         ++_dockRevision;
+        // A pending edge-snap from the previous interaction must not write the temporary
+        // quick-pick position while this gesture is active.
+        ++_snapAnimationRevision;
 
         // 从这一刻起由本窗接管指针：按钮收不到这次松手，因此不会再触发一次"抽 1 人"。
         // 抢捕获会让按钮抛 PointerCaptureLost，那是交接；OnQuickPickCaptureLost 靠
@@ -485,7 +513,6 @@ public partial class FloatingWindow
         if (revision != _quickPickRevision || _quickPickState != QuickPickState.Picking)
             return;
 
-        _quickPickOriginPosition = Position;
         _quickDrawRing.IsVisible = false;
         WindowBorder.IsVisible = false;
         ExpandedContent.IsVisible = false;
@@ -685,6 +712,7 @@ public partial class FloatingWindow
         if (_quickPickState != QuickPickState.Picking)
             return;
 
+        _quickPickRestoring = true;
         _quickPickState = QuickPickState.Idle;
         ++_quickPickRevision;
 
@@ -734,16 +762,17 @@ public partial class FloatingWindow
                 () =>
                 {
                     if (_quickPickRevision != settleRevision
-                        || _quickPickState != QuickPickState.Idle
                         || _isDocked
                         || _isDockTransitioning
                         || _isPendingWindowDrag
                         || _isMovingWindow)
                     {
+                        _quickPickRestoring = false;
                         return;
                     }
 
                     Position = _quickPickOriginPosition;
+                    _quickPickRestoring = false;
                 },
                 DispatcherPriority.Render);
 
@@ -763,6 +792,6 @@ public partial class FloatingWindow
         }
 
         if (draw)
-            App.ShowQuickDrawWindow(count);
+            App.ShowQuickDrawWindow(count, noticeAnchor: this);
     }
 }

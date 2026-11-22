@@ -35,22 +35,33 @@ public sealed class LinkageDrawCoordinator(
     public async Task<bool> AuthorizeAsync(
         SecurityOperation operation,
         Func<Task> action,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Action<LinkageDrawGate, string?>? onBlocked = null)
     {
-        return await AuthorizeAsync([operation], action, cancellationToken).ConfigureAwait(false);
+        return await AuthorizeAsync([operation], action, cancellationToken, onBlocked).ConfigureAwait(false);
     }
 
     public async Task<bool> AuthorizeAsync(
         IReadOnlyCollection<SecurityOperation> operations,
         Func<Task> action,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        Action<LinkageDrawGate, string?>? onBlocked = null)
     {
         // 集控锁定的抽取在任何本机路径上都不放行；这里直接返回，绝不进入验证框。
         if (controlDrawGate.IsDrawLocked)
+        {
+            onBlocked?.Invoke(LinkageDrawGate.BlockedByRemoteLock, null);
             return false;
+        }
 
         if (!IsLinkageRestricted)
-            return await securityService.AuthorizeAsync(operations, action, cancellationToken).ConfigureAwait(false);
+        {
+            var authorized = await securityService.AuthorizeAsync(operations, action, cancellationToken)
+                .ConfigureAwait(false);
+            if (!authorized)
+                onBlocked?.Invoke(LinkageDrawGate.RequiresLocalVerification, null);
+            return authorized;
+        }
 
         // 「允许验证后继续」只有在真的能验证时才成立。SecurityService 在安全保护未启用
         // （或没有任何已配置的验证方式）时对 BypassClassTimeRestriction 也返回“无需验证”，
@@ -61,14 +72,22 @@ public sealed class LinkageDrawCoordinator(
         {
             // 这里是课程联动唯一的人机拒绝点：页面调用方拿到 false 只会静默收手，
             // 所以提示必须在这里发，否则用户点了按钮毫无反应。
-            ClassTimeDrawRestrictionNotice.Show(linkageService.Snapshot);
+            if (onBlocked is null)
+                ClassTimeDrawRestrictionNotice.Show(linkageService.Snapshot);
+            else
+                ClassTimeDrawRestrictionNotice.Show(
+                    linkageService.Snapshot,
+                    message => onBlocked(LinkageDrawGate.BlockedByClassTime, message));
             return false;
         }
 
-        return await securityService.AuthorizeAsync(
+        var authorizedWithBypass = await securityService.AuthorizeAsync(
             [.. operations, SecurityOperation.BypassClassTimeRestriction],
             action,
             cancellationToken).ConfigureAwait(false);
+        if (!authorizedWithBypass)
+            onBlocked?.Invoke(LinkageDrawGate.RequiresLocalVerification, null);
+        return authorizedWithBypass;
     }
 
     /// <summary>
@@ -114,4 +133,6 @@ public sealed class LinkageDrawCoordinator(
         || linkageService.IsConfirmedOutdoorCourse;
 
     public string GetCourseName() => linkageService.GetSubjectFilter();
+
+    public string GetCurrentCourseName() => linkageService.GetCurrentCourseName();
 }

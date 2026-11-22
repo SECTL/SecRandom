@@ -26,7 +26,8 @@ public sealed class ImportExportService(
     MainConfigHandler configHandler,
     DataArchiveService dataArchiveService,
     IHistoryQueryService historyQuery,
-    ILogger<ImportExportService> logger) : IImportExportService
+    ILogger<ImportExportService> logger,
+    IProfileCatalogManager? profileCatalogManager = null) : IImportExportService
 {
     private readonly string _dataDirectory = Utils.DataRoot;
 
@@ -144,8 +145,8 @@ public sealed class ImportExportService(
 
         ArchiveZipWriter.WriteTextEntry(archive, "diagnostic/summary.json", JsonSerializer.Serialize(new
         {
-            roll_call_lists = CountFiles("list", "roll_call_list"),
-            lottery_pools = CountFiles("list", "lottery_list"),
+            roll_call_lists = profileCatalogManager?.GetStudentListNames().Count ?? CountFiles("list", "roll_call_list"),
+            lottery_pools = profileCatalogManager?.GetPrizeListNames().Count ?? CountFiles("list", "lottery_list"),
             // 历史记录已迁到每个档案自己的 .srhdb 数据库，数文件个数要问历史查询服务而不是数 *.json。
             roll_call_histories = historyQuery.GetStudentHistoryNames().Count,
             lottery_histories = historyQuery.GetPrizeHistoryNames().Count
@@ -166,6 +167,12 @@ public sealed class ImportExportService(
     private int CountFiles(params string[] path)
     {
         var directory = Path.Combine([_dataDirectory, .. path]);
+        if (path.Length == 2 && path[0] == "list")
+        {
+            var central = path[1] == "roll_call_list" ? "roll_call.srl" : "lottery.srl";
+            return File.Exists(Utils.GetFilePath("list", central)) ? 1 : 0;
+        }
+
         return Directory.Exists(directory) ? Directory.EnumerateFiles(directory, "*.json", SearchOption.TopDirectoryOnly).Count() : 0;
     }
 

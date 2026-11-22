@@ -24,6 +24,7 @@ using SecRandom.Core.Models.Notification;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Notification;
+using SecRandom.Core.Services.Presentation;
 using SecRandom.Helpers;
 using SecRandom.Models;
 using SecRandom.Services.Notification;
@@ -85,32 +86,17 @@ public partial class FullscreenNotificationSettingsPage : UserControl, INotifyPr
     public IReadOnlyList<AccentColorModeOption> AccentColorModeOptions { get; private set; }
 
     /// <summary>
-    ///     低配模式会把全屏通知压成"直接展示结果"并跳过背景模糊（见 FullscreenNotificationPresenter.ResolveStyle
-    ///     与 FullscreenNotificationWindow 的模糊分支），这两个控件此时已无意义，统一置灰并显示实际生效值。
+    ///     低配模式将全屏通知固定为直接展示结果，动画样式控件置灰并显示实际生效值。
     /// </summary>
     public bool IsLowSpecModeActive => UiRenderQuality.IsLowSpecMode;
 
     /// <summary>文案分区（含打字机速度）只在打字机样式下有意义，其余样式直接展示结果画面。</summary>
     public bool IsTypewriterStyle => !IsLowSpecModeActive && Settings.AnimationStyle == FullscreenAnimationStyle.Typewriter;
 
-    /// <summary>
-    ///     背景模糊的可写视图：低配模式不渲染模糊，因此对外显示 0 并拒绝写入，
-    ///     用户原来的半径留在配置里，退出低配后自动恢复。
-    /// </summary>
-    public int BackgroundBlurRadius
-    {
-        get => IsLowSpecModeActive ? 0 : Settings.BackgroundBlurRadius;
-        set
-        {
-            if (IsLowSpecModeActive || Settings.BackgroundBlurRadius == value)
-                return;
-
-            Settings.BackgroundBlurRadius = value;
-        }
-    }
-
-    /// <summary>背景图导入、模糊与背景不透明度只在自定义图片模式下出现。</summary>
+    /// <summary>背景图导入与图片不透明度只在自定义图片模式下出现。</summary>
     public bool IsBackgroundImageMode => Settings.BackgroundMode == FullscreenBackgroundMode.Image;
+
+    public bool IsThemeBackgroundMode => Settings.BackgroundMode == FullscreenBackgroundMode.Theme;
 
     /// <summary>纯色卡片只在纯色模式下出现（不属于该模式的内容一律不弹出来）。</summary>
     public bool IsSolidBackgroundMode => Settings.BackgroundMode == FullscreenBackgroundMode.Solid;
@@ -303,8 +289,8 @@ public partial class FullscreenNotificationSettingsPage : UserControl, INotifyPr
         OnPropertyChanged(nameof(IsTypewriterStyle));
         OnPropertyChanged(nameof(IsLowSpecModeActive));
         OnPropertyChanged(nameof(SelectedAnimationStyleOption));
-        OnPropertyChanged(nameof(BackgroundBlurRadius));
         OnPropertyChanged(nameof(IsBackgroundImageMode));
+        OnPropertyChanged(nameof(IsThemeBackgroundMode));
         OnPropertyChanged(nameof(IsSolidBackgroundMode));
         OnPropertyChanged(nameof(IsGradientBackgroundMode));
         OnPropertyChanged(nameof(IsCustomAccentColorVisible));
@@ -375,6 +361,7 @@ public partial class FullscreenNotificationSettingsPage : UserControl, INotifyPr
             case nameof(FullscreenNotificationSettings.BackgroundMode):
                 OnPropertyChanged(nameof(SelectedBackgroundMode));
                 OnPropertyChanged(nameof(IsBackgroundImageMode));
+                OnPropertyChanged(nameof(IsThemeBackgroundMode));
                 OnPropertyChanged(nameof(IsSolidBackgroundMode));
                 OnPropertyChanged(nameof(IsGradientBackgroundMode));
                 break;
@@ -689,13 +676,11 @@ public partial class FullscreenNotificationSettingsPage : UserControl, INotifyPr
 
     private static IReadOnlyList<BackgroundModeOption> BuildBackgroundModeOptions()
     {
-        return
-        [
-            new BackgroundModeOption(FullscreenBackgroundMode.Theme, Text("Follow theme", "O_FullscreenBackground_Theme")),
-            new BackgroundModeOption(FullscreenBackgroundMode.Solid, Text("Solid color", "O_FullscreenBackground_Solid")),
-            new BackgroundModeOption(FullscreenBackgroundMode.Gradient, Text("Gradient", "O_FullscreenBackground_Gradient")),
-            new BackgroundModeOption(FullscreenBackgroundMode.Image, Text("Custom image", "O_FullscreenBackground_Image"))
-        ];
+        return NotificationBackgroundCatalog.FloatingStyles.Select(style =>
+        {
+            var mode = NotificationBackgroundCatalog.ToFullscreenMode(style);
+            return new BackgroundModeOption(mode, Text(mode.ToString(), $"O_FullscreenBackground_{mode}"));
+        }).ToArray();
     }
 
     private static IReadOnlyList<AccentColorModeOption> BuildAccentColorModeOptions()

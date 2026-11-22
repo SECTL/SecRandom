@@ -95,7 +95,7 @@
             </fa:FASettingsExpander>
 
             <!-- 闪抽没有自己的记录组选择器，所以这里选定的组就是它的默认值：锁定后权重只读该组历史，
-                 写出的记录也只进该组。选「默认记录组」表示只算未分组的记录；总开关关闭时整张卡隐藏。 -->
+                 写出的记录也只进该组。选「默认记录组」表示只算未分组的记录。 -->
             <fa:FASettingsExpander x:Name="S_QuickDrawHistoryGroup"
                                    Header="{x:Static lp:Resources.S_QuickDrawHistoryGroup}"
                                    Description="{x:Static lp:Resources.S_QuickDrawHistoryGroup_D}"
@@ -153,6 +153,16 @@
                             <ComboBoxItem Content="{x:Static lp:Resources.O_Both}" />
                             <ComboBoxItem Content="{x:Static lp:Resources.O_Name}" />
                             <ComboBoxItem Content="{x:Static lp:Resources.O_Id}" />
+                        </ComboBox>
+                    </fa:FASettingsExpanderItem.Footer>
+                </fa:FASettingsExpanderItem>
+
+                <fa:FASettingsExpanderItem x:Name="S_DisplayStyle" Content="{x:Static lp:Resources.S_DisplayStyle}"
+                                           Description="{x:Static lp:Resources.S_DisplayStyle_D}">
+                    <fa:FASettingsExpanderItem.Footer>
+                        <ComboBox SelectedIndex="{Binding Settings.DisplayStyle}">
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_Default}" />
+                            <ComboBoxItem Content="{x:Static lp:Resources.O_Card}" />
                         </ComboBox>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>

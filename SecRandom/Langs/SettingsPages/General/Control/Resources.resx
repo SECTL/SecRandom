@@ -30,7 +30,7 @@
         <value>允许被远程控制</value>
     </data>
   <data name="S_RemoteControl_Enabled_D" xml:space="preserve">
-        <value>这是本机自己的开关，关闭后无论服务端下发什么命令都不会执行</value>
+        <value>允许本机接收集控指令</value>
     </data>
   <data name="S_RemoteControl_GroupId" xml:space="preserve">
         <value>所属组 ID</value>
@@ -48,19 +48,19 @@
         <value>显示名称</value>
     </data>
   <data name="S_RemoteControl_DisplayName_D" xml:space="preserve">
-        <value>控制台节点列表里显示的名字；留空则上报本机主机名</value>
+        <value>留空时使用本机主机名</value>
     </data>
   <data name="S_RemoteControl_Status" xml:space="preserve">
         <value>连接状态</value>
     </data>
   <data name="S_RemoteControl_Status_D" xml:space="preserve">
-        <value>断线后按退避自动重连；重试也没有意义的失败会停在这里等待修正</value>
+        <value>显示节点连接状态，可手动重连</value>
     </data>
   <data name="S_RemoteControl_DrawLocked" xml:space="preserve">
         <value>抽取锁定</value>
     </data>
   <data name="S_RemoteControl_DrawLocked_D" xml:space="preserve">
-        <value>由控制台设置；锁定后本机不再允许抽取</value>
+        <value>由控制台设置；锁定时不可抽取</value>
     </data>
   <data name="C_Reconnect" xml:space="preserve">
         <value>立即重连</value>
@@ -120,7 +120,7 @@
         <value>集控平台</value>
     </data>
   <data name="S_OpenControlPlane_D" xml:space="preserve">
-        <value>在浏览器中打开集控平台网页控制台，管理加入本组的设备</value>
+        <value>打开当前配置的集控平台</value>
     </data>
   <data name="C_OpenControlPlane_Official" xml:space="preserve">
         <value>打开SecRandom集控平台</value>
@@ -132,13 +132,13 @@
         <value>在主界面显示远程抽取页</value>
     </data>
   <data name="S_RemoteDrawPage_D" xml:space="preserve">
-        <value>打开后主界面侧栏出现『远程抽取』页，可向本组其他设备下发抽取；使用前需要登录账号，服务端仍按组成员角色判定权限；关闭后立刻隐藏</value>
+        <value>在主界面显示远程抽取页</value>
     </data>
   <data name="S_NodeEnrollment" xml:space="preserve">
-        <value>集控接入</value>
+        <value>地点码接入</value>
     </data>
   <data name="S_NodeEnrollment_D" xml:space="preserve">
-        <value>用管理员提供的地点 ID 与配对码接入集控，不需要登录 SECTL</value>
+        <value>输入地点 ID 和配对码</value>
     </data>
   <data name="S_NodeEnrollment_Code" xml:space="preserve">
         <value>接入码</value>
@@ -148,6 +148,12 @@
     </data>
   <data name="C_Enroll" xml:space="preserve">
         <value>接入</value>
+    </data>
+  <data name="C_SwitchToAccount" xml:space="preserve">
+        <value>切换到账号接入</value>
+    </data>
+  <data name="C_SwitchToPairCode" xml:space="preserve">
+        <value>切换到地点码接入</value>
     </data>
   <data name="C_ClearEnrollment" xml:space="preserve">
         <value>清除接入</value>
@@ -183,13 +189,13 @@
         <value>SC-A1B2C3</value>
     </data>
   <data name="S_Enrollment_SiteId_D" xml:space="preserve">
-        <value>形如 SC-K7Q2M9 的地点 ID，由管理员在控制台提供</value>
+        <value>由管理员提供的地点 ID</value>
     </data>
   <data name="S_Enrollment_PairingCode_Ph" xml:space="preserve">
         <value>ABCD-7KQ2</value>
     </data>
   <data name="S_Enrollment_PairingCode_D" xml:space="preserve">
-        <value>管理员签发的一次性配对码，只在接入时使用</value>
+        <value>管理员签发的一次性配对码</value>
     </data>
   <data name="S_Enrolled" xml:space="preserve">
         <value>已接入</value>
@@ -210,7 +216,7 @@
         <value>班级</value>
     </data>
   <data name="S_Enrollment_Class_D" xml:space="preserve">
-        <value>选择本机所属的年级和班级，两个都选完才能保存；已绑定班级时要先解除才能换班</value>
+        <value>选择年级和班级；换班前先解除绑定</value>
     </data>
   <data name="S_Enrollment_Class_Ph" xml:space="preserve">
         <value>选择班级</value>
@@ -333,7 +339,7 @@
     <value>账号接入</value>
   </data>
   <data name="S_AccountEnrollment_D" xml:space="preserve">
-    <value>登录 SECTL 账号后逐级选择地点、年级、班级，三项都选好才能把本机接入。手机端只能使用这条通道</value>
+    <value>登录后选择地点、年级和班级</value>
   </data>
   <data name="S_AccountCurrent" xml:space="preserve">
     <value>当前账号</value>

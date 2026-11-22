@@ -2,19 +2,28 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Helpers;
+using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Presentation;
 using SecRandom.Helpers;
 using SecRandom.Services.Notification;
+using SecRandom.Shared;
 using LR = SecRandom.Langs.SettingsPages.Notification.Resources;
 
 namespace SecRandom.Views.SettingsPages.Notification;
@@ -29,9 +38,12 @@ public partial class NotificationFloatingWindowSettingsPage : UserControl, INoti
 {
     private const string MonitorLabelFormatKey = "O_Monitor_Label";
     private const string MonitorPrimaryKey = "O_Monitor_Primary";
+    private const string BackgroundImageFolderName = "notification";
 
     private bool _savePending;
     private DispatcherTimer? _saveTimer;
+    private bool _hasBackgroundImage;
+    private Bitmap? _backgroundImagePreview;
     private event PropertyChangedEventHandler? NotifyPropertyChanged;
 
     public NotificationFloatingWindowSettingsPage()
@@ -50,6 +62,9 @@ public partial class NotificationFloatingWindowSettingsPage : UserControl, INoti
             new CountdownColorModeOption((int)NotificationCountdownColorMode.Solid,
                 Text("Single color", "O_CountdownColorMode_Solid"))
         ];
+        BackgroundStyleOptions = NotificationBackgroundCatalog.FloatingStyles.Select(style =>
+            new BackgroundStyleOption(style, Text(style.ToString(),
+                $"O_FullscreenBackground_{NotificationBackgroundCatalog.ToFullscreenMode(style)}"))).ToArray();
         MonitorOptions = [new MonitorOption("", Text("Not specified", "O_Monitor_Unspecified"))];
         if (!string.IsNullOrWhiteSpace(Settings.EnabledMonitor))
             MonitorOptions.Add(new MonitorOption(Settings.EnabledMonitor, Settings.EnabledMonitor));
@@ -76,6 +91,54 @@ public partial class NotificationFloatingWindowSettingsPage : UserControl, INoti
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
 
     public NotificationChannelSettings Settings { get; }
+
+    public string PreviewTitle => Text("Floating notification preview", "S_FloatingWindow_Preview");
+    public string PreviewDescription => Text(
+        "Show a sample result in the built-in floating notification window",
+        "S_FloatingWindow_Preview_D");
+    public string PreviewButtonText => Text("Show preview", "C_FloatingWindowPreview");
+
+    public IReadOnlyList<BackgroundStyleOption> BackgroundStyleOptions { get; }
+
+    public bool IsThemeBackgroundMode => Settings.BackgroundStyle == WindowBackgroundStyle.Theme;
+    public bool IsSolidBackgroundMode => Settings.BackgroundStyle == WindowBackgroundStyle.Solid;
+    public bool IsGradientBackgroundMode => Settings.BackgroundStyle == WindowBackgroundStyle.Gradient;
+    public bool IsBackgroundImageMode => Settings.BackgroundStyle == WindowBackgroundStyle.Image;
+
+    public BackgroundStyleOption? SelectedBackgroundStyle
+    {
+        get => BackgroundStyleOptions.FirstOrDefault(option => option.Value == Settings.BackgroundStyle);
+        set
+        {
+            if (value is null || Settings.BackgroundStyle == value.Value)
+                return;
+
+            Settings.BackgroundStyle = value.Value;
+        }
+    }
+
+    public bool HasBackgroundImage
+    {
+        get => _hasBackgroundImage;
+        private set
+        {
+            if (_hasBackgroundImage == value)
+                return;
+
+            _hasBackgroundImage = value;
+            Notify(nameof(HasBackgroundImage));
+        }
+    }
+
+    public Bitmap? BackgroundImagePreview
+    {
+        get => _backgroundImagePreview;
+        private set
+        {
+            _backgroundImagePreview = value;
+            Notify(nameof(BackgroundImagePreview));
+        }
+    }
 
     public ObservableCollection<MonitorOption> MonitorOptions { get; }
 
@@ -208,6 +271,7 @@ public partial class NotificationFloatingWindowSettingsPage : UserControl, INoti
         Notify(nameof(IsCountdownGradientMode));
         Notify(nameof(IsCountdownSolidMode));
         Notify(nameof(CountdownPreviewBrush));
+        RefreshBackgroundImagePreview();
     }
 
     private void OnPageUnloaded(object? sender, RoutedEventArgs e)
@@ -218,6 +282,9 @@ public partial class NotificationFloatingWindowSettingsPage : UserControl, INoti
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
         _saveTimer?.Stop();
         _saveTimer = null;
+        var preview = BackgroundImagePreview;
+        BackgroundImagePreview = null;
+        preview?.Dispose();
     }
 
     /// <summary>显示器名称随显示器插拔变化，每次加载与打开下拉框时都重建一次候选列表。</summary>
@@ -257,8 +324,21 @@ public partial class NotificationFloatingWindowSettingsPage : UserControl, INoti
 
     private void SettingsOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+
         if (e.PropertyName == nameof(NotificationChannelSettings.EnabledMonitor))
             Notify(nameof(SelectedMonitor));
+
+        if (e.PropertyName == nameof(NotificationChannelSettings.BackgroundImage))
+            RefreshBackgroundImagePreview();
+
+        if (e.PropertyName == nameof(NotificationChannelSettings.BackgroundStyle))
+        {
+            Notify(nameof(SelectedBackgroundStyle));
+            Notify(nameof(IsThemeBackgroundMode));
+            Notify(nameof(IsSolidBackgroundMode));
+            Notify(nameof(IsGradientBackgroundMode));
+            Notify(nameof(IsBackgroundImageMode));
+        }
 
         if (e.PropertyName == nameof(NotificationChannelSettings.CountdownStyle))
         {
@@ -310,6 +390,168 @@ public partial class NotificationFloatingWindowSettingsPage : UserControl, INoti
         ConfigHandler.Save();
     }
 
+    private async void ImportBackgroundImage_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel is null)
+            return;
+
+        try
+        {
+            var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+            {
+                Title = Text("Import image", "C_FloatingWindow_ImportImage"),
+                AllowMultiple = false,
+                FileTypeFilter =
+                [
+                    new FilePickerFileType("Images")
+                    {
+                        Patterns = ["*.png", "*.jpg", "*.jpeg", "*.webp", "*.bmp", "*.gif"]
+                    }
+                ]
+            });
+
+            var file = files.FirstOrDefault();
+            if (file is null)
+                return;
+
+            var targetPath = await CopyImageToBackgroundFolderAsync(file);
+            if (targetPath is null)
+            {
+                this.ShowErrorToast(Text("Failed to import the notification background image", "M_FloatingWindowImageImportFailed"));
+                return;
+            }
+
+            var previousFileName = Settings.BackgroundImage;
+            Settings.BackgroundImage = Path.GetFileName(targetPath);
+            Settings.BackgroundStyle = WindowBackgroundStyle.Image;
+            RefreshBackgroundImagePreview();
+            DeleteBackgroundImageFile(previousFileName);
+            this.ShowSuccessToast(Text("Notification background image updated", "M_FloatingWindowImageImported"));
+        }
+        catch (Exception ex)
+        {
+            this.ShowErrorToast(Text("Failed to import the notification background image", "M_FloatingWindowImageImportFailed"), ex);
+        }
+    }
+
+    private void ClearBackgroundImage_OnClick(object? sender, RoutedEventArgs e)
+    {
+        var previousFileName = Settings.BackgroundImage;
+        Settings.BackgroundImage = string.Empty;
+        RefreshBackgroundImagePreview();
+        DeleteBackgroundImageFile(previousFileName);
+    }
+
+    private void TestNotification_OnClick(object? sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var notificationService = IAppHost.GetService<NotificationService>();
+            if (!notificationService.ShowBuiltInTestNotification(Settings))
+                this.ShowWarningToast(Text("The floating notification is not available", "M_NotificationTestUnavailable"));
+        }
+        catch (Exception ex)
+        {
+            this.ShowErrorToast(Text("The floating notification test is not available", "M_NotificationTestUnavailable"), ex);
+        }
+    }
+
+    private static string BackgroundImageDirectory => Utils.GetDirectoryPath("images", BackgroundImageFolderName);
+
+    private static string? ResolveBackgroundImagePath(string fileName)
+    {
+        var directory = Path.GetFullPath(BackgroundImageDirectory);
+        var path = Path.GetFullPath(Path.Combine(directory, fileName.Trim()));
+        return path.StartsWith(directory + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+            ? path
+            : null;
+    }
+
+    private void RefreshBackgroundImagePreview()
+    {
+        var previous = BackgroundImagePreview;
+        var fileName = Settings.BackgroundImage;
+        Bitmap? bitmap = null;
+        if (!string.IsNullOrWhiteSpace(fileName))
+        {
+            try
+            {
+                var path = ResolveBackgroundImagePath(fileName);
+                if (path is not null && File.Exists(path))
+                {
+                    using var stream = SharedFileReader.OpenRead(path);
+                    bitmap = new Bitmap(stream);
+                }
+            }
+            catch
+            {
+                bitmap = null;
+            }
+        }
+
+        HasBackgroundImage = !string.IsNullOrWhiteSpace(fileName);
+        BackgroundImagePreview = bitmap;
+        previous?.Dispose();
+    }
+
+    private static async Task<string?> CopyImageToBackgroundFolderAsync(IStorageFile file)
+    {
+        var extension = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (extension is not (".png" or ".jpg" or ".jpeg" or ".webp" or ".bmp" or ".gif"))
+            return null;
+
+        var directory = BackgroundImageDirectory;
+        Directory.CreateDirectory(directory);
+        var targetPath = Path.Combine(directory, $"{Guid.NewGuid():N}{extension}");
+        var temporaryPath = targetPath + ".tmp";
+
+        try
+        {
+            await using var source = await file.OpenReadAsync();
+            await using (var target = new FileStream(
+                             temporaryPath,
+                             FileMode.CreateNew,
+                             FileAccess.Write,
+                             FileShare.None,
+                             81920,
+                             FileOptions.WriteThrough))
+            {
+                await source.CopyToAsync(target);
+                await target.FlushAsync();
+                target.Flush(flushToDisk: true);
+            }
+
+            if (new FileInfo(temporaryPath).Length == 0)
+                return null;
+
+            File.Move(temporaryPath, targetPath);
+            return targetPath;
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+                File.Delete(temporaryPath);
+        }
+    }
+
+    private void DeleteBackgroundImageFile(string? fileName)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+            return;
+
+        try
+        {
+            var path = ResolveBackgroundImagePath(fileName);
+            if (path is not null && File.Exists(path))
+                File.Delete(path);
+        }
+        catch
+        {
+            // 删除旧图失败只会留下孤儿文件，不能影响设置切换。
+        }
+    }
+
     private static string Text(string fallback, string key)
     {
         return LR.ResourceManager.GetString(key, LR.Culture) ?? fallback;
@@ -324,3 +566,6 @@ public sealed record CountdownStyleOption(int Value, string Label);
 
 /// <summary>倒计时配色模式下拉框的一项。</summary>
 public sealed record CountdownColorModeOption(int Value, string Label);
+
+/// <summary>通知浮窗背景材质选项。</summary>
+public sealed record BackgroundStyleOption(WindowBackgroundStyle Value, string Label);

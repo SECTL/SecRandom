@@ -74,12 +74,6 @@ namespace SecRandom.Langs.SettingsPages.About {
             }
         }
 
-        public static string C_InternalSettingsActivatedTitle {
-            get {
-                return ResourceManager.GetString("C_InternalSettingsActivatedTitle", resourceCulture);
-            }
-        }
-
         /// <summary>
         ///   Looks up a localized string similar to 刷新.
         /// </summary>
@@ -167,12 +161,6 @@ namespace SecRandom.Langs.SettingsPages.About {
         public static string M_ContributorsLoadFailed {
             get {
                 return ResourceManager.GetString("M_ContributorsLoadFailed", resourceCulture);
-            }
-        }
-
-        public static string M_InternalSettingsActivated {
-            get {
-                return ResourceManager.GetString("M_InternalSettingsActivated", resourceCulture);
             }
         }
 

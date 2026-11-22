@@ -87,7 +87,7 @@ public partial class OrchestrationSettingsPage : UserControl, INotifyPropertyCha
     public string ActivateLabel =>
         _profile?.IsActive == true ? PR.C_Orchestration_Disable : PR.C_Orchestration_Enable;
 
-    /// <summary>「点名 · 一班 · 45 人」：名单绑定和目标通道一眼可见，不必打开名单设置才知道。</summary>
+    /// <summary>「点名 | 一班 | 45 人」：名单绑定和目标通道一眼可见，不必打开名单设置才知道。</summary>
     public string ProfileSummary
     {
         get
@@ -540,6 +540,10 @@ public partial class OrchestrationSettingsPage : UserControl, INotifyPropertyCha
         SaveProfile();
         RefreshProfileItem();
         NotifyChannelState();
+        this.ShowSuccessToast(string.Format(
+            PR.M_Orchestration_ActiveChanged,
+            enable ? PR.C_Orchestration_Enable : PR.C_Orchestration_Disable,
+            _profile.Name));
     }
 
     /// <summary>
@@ -572,6 +576,7 @@ public partial class OrchestrationSettingsPage : UserControl, INotifyPropertyCha
         SaveProfile();
         RefreshProfileItem();
         RefreshSummaries();
+        this.ShowSuccessToast(string.Format(PR.M_Orchestration_Synced, _profile.Name));
     }
 
     /// <summary>
@@ -677,8 +682,8 @@ public sealed class OrchestrationProfileItem(OrchestrationProfile profile)
             var target = Profile.Target == OrchestrationTarget.Lottery
                 ? PR.O_Orchestration_TargetLottery
                 : PR.O_Orchestration_TargetRollCall;
-            var active = Profile.IsActive ? " · " + PR.C_Orchestration_Active : string.Empty;
-            return $"{Profile.Name}（{target} · {Profile.SourceListName}{active}）";
+            var active = Profile.IsActive ? " | " + PR.C_Orchestration_Active : string.Empty;
+            return $"{Profile.Name}（{target} | {Profile.SourceListName}{active}）";
         }
     }
 

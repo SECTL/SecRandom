@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Avalonia.Controls;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.Profiles;
 using SecRandom.Shared;
 
@@ -22,6 +23,7 @@ namespace SecRandom.Views.SettingsPages.Picking;
 public sealed class DefaultRosterSettingSource
 {
     private readonly string _listDirectory;
+    private readonly IProfileCatalogManager _catalogManager;
     private readonly Func<string> _readValue;
     private readonly Action<string> _writeValue;
     private readonly Func<bool> _isPreviewMode;
@@ -29,12 +31,14 @@ public sealed class DefaultRosterSettingSource
 
     public DefaultRosterSettingSource(
         string listDirectory,
+        IProfileCatalogManager catalogManager,
         string noListLabel,
         Func<string> readValue,
         Action<string> writeValue,
         Func<bool> isPreviewMode)
     {
         _listDirectory = listDirectory;
+        _catalogManager = catalogManager;
         _readValue = readValue;
         _writeValue = writeValue;
         _isPreviewMode = isPreviewMode;
@@ -145,15 +149,12 @@ public sealed class DefaultRosterSettingSource
 
     private List<string> GetListNames()
     {
-        var directory = Utils.GetDirectoryPath("list", _listDirectory);
-        if (!Directory.Exists(directory))
-            return [];
+        var names = string.Equals(_listDirectory, "lottery_list", StringComparison.Ordinal)
+            ? _catalogManager.GetPrizeListNames()
+            : _catalogManager.GetStudentListNames();
 
-        return Directory.GetFiles(directory, "*.json")
-            .OrderBy(Path.GetFileName)
-            .Select(Path.GetFileNameWithoutExtension)
+        return names
             .Where(name => !string.IsNullOrWhiteSpace(name))
-            .OfType<string>()
             .ToList();
     }
 }

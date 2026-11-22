@@ -11,7 +11,7 @@
   <data name="C_ClearLaps"><value>ラップを消去</value></data>
   <data name="C_TotalTime"><value>合計時間</value></data>
   <data name="C_ShowMilliseconds"><value>ミリ秒を表示</value></data>
-  <data name="C_MiniWindow"><value>ミニウィンドウを開く</value></data>
+<data name="C_MiniWindow"><value>ミニウィンドウを開く</value></data><data name="C_FullScreen"><value>全画面</value></data><data name="C_ExitFullScreen"><value>全画面を終了</value></data><data name="C_HoldExitFullScreen"><value>2秒長押しして全画面を終了</value></data>
   <data name="C_Restore"><value>元に戻す</value></data>
   <data name="C_Presets"><value>プリセット</value></data>
   <data name="C_CommonPresets"><value>よく使う</value></data>

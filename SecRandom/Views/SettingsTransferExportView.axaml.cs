@@ -8,18 +8,21 @@ using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
 using SecRandom.Helpers;
+using SecRandom.Services.Desktop;
 using SecRandom.Services.RosterTransfer;
 
 namespace SecRandom.Views;
 
 public partial class SettingsTransferExportView : UserControl, INotifyPropertyChanged, IDrawerCloseAware
 {
-private static readonly TimeSpan QrFrameInterval = TimeSpan.FromMilliseconds(150);
+    private static readonly TimeSpan QrFrameInterval = TimeSpan.FromMilliseconds(150);
+    private const string MainWebsiteUrl = "https://secrandom.sectl.cn";
     private const string SyncPortalAddressValue = "secrandom-sync.sectl.cn";
     private readonly SyncTransferPackage _package;
     private readonly RosterCloudTransferMode _mode;
     private readonly Func<string, string> _getResource;
     private readonly RosterSyncTransferService _syncTransferService = IAppHost.GetService<RosterSyncTransferService>();
+    private IExternalLauncher ExternalLauncher { get; } = IAppHost.GetService<IExternalLauncher>();
     private readonly SettingsTransferQrService _offlineQrService = new();
     private readonly DispatcherTimer _frameTimer;
     private RosterCloudTransferInfo? _cloudTransfer;
@@ -89,6 +92,7 @@ private static readonly TimeSpan QrFrameInterval = TimeSpan.FromMilliseconds(150
     public string SessionCode => _cloudTransfer?.SessionCode is { } code ? RosterSyncTransferService.FormatSessionCode(code) : string.Empty;
     public string SyncPortalAddress => SyncPortalAddressValue;
     public string SyncPortalDescription => GetResource("C_TransferPortalHint");
+    public string OpenMainWebsiteLabel => GetResource("C_TransferOpenMainWebsite");
     public string PayloadText => FormatBytes(_offlineExport is not null ? _package.Content.LongLength : _cloudTransfer?.PayloadBytes ?? 0);
     public string StatusText { get => _statusText; private set => SetField(ref _statusText, value); }
     event PropertyChangedEventHandler? INotifyPropertyChanged.PropertyChanged
@@ -165,6 +169,9 @@ private static readonly TimeSpan QrFrameInterval = TimeSpan.FromMilliseconds(150
     {
         await (TopLevel.GetTopLevel(this)?.Clipboard?.SetTextAsync(SyncPortalAddress) ?? Task.CompletedTask);
     }
+
+    private void OpenMainWebsiteButton_OnClick(object? sender, RoutedEventArgs e) =>
+        ExternalLauncher.TryOpenUri(MainWebsiteUrl);
 
     private async void CloseButton_OnClick(object? sender, RoutedEventArgs e)
     {

@@ -29,6 +29,9 @@ public partial class DefaultNotificationSettingsPage : NotificationChannelSettin
     public override string MainWindowDisplayThresholdTitle => Text(nameof(MainWindowDisplayThresholdTitle), "S_Default_MainWindowDisplayThreshold");
     public override string MainWindowDisplayThresholdDescription => Text(nameof(MainWindowDisplayThresholdDescription), "S_Default_MainWindowDisplayThreshold_D");
 
+    private void TestNotification_OnClick(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+        => HandleTestNotificationAsync(sender, e);
+
     private static string Text(string fallback, string key)
     {
         return LR.ResourceManager.GetString(key, LR.Culture) ?? fallback;

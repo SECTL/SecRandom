@@ -108,4 +108,7 @@
   <data name="C_Break" xml:space="preserve">
     <value>休み時間</value>
   </data>
+  <data name="C_PreviousPage" xml:space="preserve"><value>前へ</value></data>
+  <data name="C_NextPage" xml:space="preserve"><value>次へ</value></data>
+  <data name="C_PageStatus" xml:space="preserve"><value>{0} / {1} ページ · 全 {2} 件</value></data>
 </root>

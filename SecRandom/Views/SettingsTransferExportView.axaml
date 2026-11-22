@@ -32,11 +32,13 @@
                         <StackPanel IsVisible="{Binding IsCloudTransferLinkVisible}" Spacing="6">
                             <TextBlock Text="{Binding SyncPortalDescription}" TextWrapping="Wrap"
                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
                                 <TextBox Text="{Binding SyncPortalAddress, Mode=OneWay}"
                                          IsReadOnly="True" VerticalContentAlignment="Center" />
                                 <Button Grid.Column="1" Content="{Binding CopySyncPortalAddressLabel}"
                                         Click="CopySyncPortalAddressButton_OnClick" />
+                                <Button Grid.Column="2" Content="{Binding OpenMainWebsiteLabel}"
+                                        Click="OpenMainWebsiteButton_OnClick" />
                             </Grid>
                         </StackPanel>
 

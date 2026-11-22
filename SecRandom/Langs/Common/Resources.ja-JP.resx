@@ -79,7 +79,6 @@
     <data name="App_Description" xml:space="preserve"><value>動的ウェイトに基づく公平なランダムツールで、抽選と決断から論争を排除します</value></data>
     <data name="App_License" xml:space="preserve"><value>このプロジェクトは GNU General Public License v3.0 の下でライセンスされています</value></data>
     <data name="C_ToBeWritten" xml:space="preserve"><value>（作成中）</value></data>
-    <data name="AttachedSettings_BehindScene" xml:space="preserve"><value>詳細設定</value></data>
     <data name="Settings_Backup" xml:space="preserve"><value>バックアップ設定</value></data>
     <data name="Menu_RestartProgram" xml:space="preserve"><value>再起動</value></data>
     <data name="Settings_General" xml:space="preserve"><value>一般設定</value></data>

@@ -51,12 +51,21 @@ public sealed class VerificationDrawCoordinator(
         string? channel = null)
     {
         var verificationMode = configHandler.Data.General.Verification.Mode;
-        var includeInternalRules = verificationMode != VerificationMode.FormalNotarized;
+        if (verificationMode == VerificationMode.FormalNotarized
+            && drawEngine.IsStudentOrchestratedMode(drawSettingsType, drawModeOverride))
+            throw FormalNotarizationException.UnsupportedForOrchestration();
         var roster = CommitStudentRoster(exportContext.ListName);
         VerificationDrawInput input;
         try
         {
-            input = drawEngine.CreateStudentVerificationInput(count, candidates, drawSettingsType, courseName, includeInternalRules, roster.Digest, historyGroup, drawModeOverride);
+            input = drawEngine.CreateStudentVerificationInput(
+                count,
+                candidates,
+                drawSettingsType,
+                courseName,
+                historyGroup,
+                roster.Digest,
+                drawModeOverride);
         }
         catch (NoEligibleCandidatesException exception)
         {
@@ -78,6 +87,45 @@ public sealed class VerificationDrawCoordinator(
     }
 
     /// <summary>
+    ///     Draws from a frozen group pool. The verification request contains every member once with an anonymous
+    ///     group bucket; the kernel samples buckets uniformly and then one member uniformly inside the winning bucket.
+    /// </summary>
+    public async Task<VerificationDrawOutcome<Student>?> DrawGroupsAsync(
+        int count,
+        IReadOnlyList<GroupDrawCandidates.Group> groups,
+        DrawSettingsType drawSettingsType,
+        DrawProofExportContext exportContext,
+        Guid? parentProofId = null,
+        string courseName = "",
+        string? historyGroup = null,
+        DrawMode drawMode = DrawMode.Repeat,
+        int halfRepeat = 1,
+        CancellationToken cancellationToken = default,
+        string? channel = null)
+    {
+        var verificationMode = configHandler.Data.General.Verification.Mode;
+        var roster = CommitStudentRoster(exportContext.ListName);
+        VerificationDrawInput input;
+        try
+        {
+            input = drawEngine.CreateGroupVerificationInput(count, groups, drawMode, halfRepeat, courseName,
+                historyGroup, roster.Digest);
+        }
+        catch (NoEligibleCandidatesException exception)
+        {
+            logger.LogWarning(exception, "小组抽取没有可抽取的候选组：请求数量={Count}，名单={ListName}。", count, exportContext.ListName);
+            return null;
+        }
+
+        var records = groups.SelectMany(group => group.Members).ToArray();
+        return await DrawAsync(input, records, exportContext, parentProofId, verificationMode,
+                new DrawProofSealContext(channel ?? ResolveStudentChannel(drawSettingsType),
+                    ResolveDrawSettingsTypeToken(drawSettingsType), roster.EntryCount, roster.Digest, roster.Salt),
+                cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
     ///     Returns <see langword="null"/> when the frozen prize pool has no drawable weight at all.
     /// </summary>
     public async Task<VerificationDrawOutcome<Prize>?> DrawPrizesAsync(
@@ -89,12 +137,13 @@ public sealed class VerificationDrawCoordinator(
         CancellationToken cancellationToken = default)
     {
         var verificationMode = configHandler.Data.General.Verification.Mode;
-        var includeInternalRules = verificationMode != VerificationMode.FormalNotarized;
+        if (verificationMode == VerificationMode.FormalNotarized && drawEngine.IsLotteryOrchestratedMode())
+            throw FormalNotarizationException.UnsupportedForOrchestration();
         var roster = CommitPrizeRoster(exportContext.ListName);
         VerificationDrawInput input;
         try
         {
-            input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts, includeInternalRules, roster.Digest, historyGroup);
+            input = drawEngine.CreatePrizeVerificationInput(count, temporaryCounts, historyGroup, roster.Digest);
         }
         catch (NoEligibleCandidatesException exception)
         {
@@ -124,6 +173,8 @@ public sealed class VerificationDrawCoordinator(
         string channel = "roll-call")
     {
         ArgumentNullException.ThrowIfNull(ordered);
+        if (configHandler.Data.General.Verification.Mode == VerificationMode.FormalNotarized)
+            throw FormalNotarizationException.UnsupportedForOrchestration();
         if (ordered.Count == 0)
             return null;
 
@@ -148,15 +199,23 @@ public sealed class VerificationDrawCoordinator(
         int round,
         int roundCount,
         DrawProofExportContext exportContext,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default,
+        bool countMode = false)
     {
         ArgumentNullException.ThrowIfNull(ordered);
+        if (configHandler.Data.General.Verification.Mode == VerificationMode.FormalNotarized)
+            throw FormalNotarizationException.UnsupportedForOrchestration();
         if (ordered.Count == 0)
             return null;
 
         var verificationMode = configHandler.Data.General.Verification.Mode;
         var roster = CommitPrizeRoster(exportContext.ListName);
-        var input = OrchestrationVerification.CreatePrizeInput(ordered, round, roundCount, rosterDigest: roster.Digest);
+        var input = OrchestrationVerification.CreatePrizeInput(
+            ordered,
+            round,
+            roundCount,
+            rosterDigest: roster.Digest,
+            countMode: countMode);
         return await DrawAsync(input, ordered, exportContext, null, verificationMode,
                 new DrawProofSealContext("lottery", "lottery", roster.EntryCount, roster.Digest, roster.Salt), cancellationToken)
             .ConfigureAwait(false);
@@ -303,6 +362,7 @@ public sealed class VerificationDrawCoordinator(
         VerificationSamplingMode.InventoryPermutation => "inventory-permutation",
         VerificationSamplingMode.WeightedWithoutReplacement => "weighted-without-replacement",
         VerificationSamplingMode.SequentialOrder => "sequential-order",
+        VerificationSamplingMode.GroupUniform => "group-uniform",
         _ => "unknown"
     };
 
@@ -400,11 +460,19 @@ public sealed class VerificationDrawCoordinator(
         where TCandidate : class
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var recordLookup = records.ToDictionary(GetRecordId);
+        EnsureFormalNotarizationSupported(input, verificationMode);
         var inputHash = VerificationWireCodec.ComputeInputHash(input);
+        var candidatePoolCommitment = VerificationWireCodec.ComputeCandidatePoolCommitment(input);
         // Built once for both evidence paths: the offline proof embeds it, and the formal request forwards it so the
         // service can embed it into the document it signs. A single instance keeps the session id consistent.
+        if (verificationMode == VerificationMode.FormalNotarized
+            && input.Kind is VerificationDrawKind.Student or VerificationDrawKind.Prize
+            && string.IsNullOrWhiteSpace(seal.RosterDigest))
+            throw FormalNotarizationException.RosterDigestMissing();
+
         var context = CreateProofContext(input, exportContext, seal);
+        if (verificationMode == VerificationMode.FormalNotarized)
+            context = context with { CandidatePoolCommitment = candidatePoolCommitment };
         DrawProof proof;
         VerificationKernelResult result;
         if (verificationMode == VerificationMode.FormalNotarized)
@@ -417,7 +485,15 @@ public sealed class VerificationDrawCoordinator(
                 ZeroSeedRequest = WitnessClient.ToBase64Url(VerificationWireCodec.EncodeDrawRequest(input, new byte[32])),
                 AuditPayload = WitnessClient.ToBase64Url(input.AuditPayload),
                 ClientNonce = WitnessClient.ToBase64Url(VerificationSeedDerivation.CreateCsprngNonce()),
-                Context = context
+                Context = context,
+                AlgorithmId = VerificationWireCodec.GetAlgorithmId(input.AlgorithmProfile),
+                AlgorithmSpecId = GetAlgorithmSpecification(input).Id,
+                AlgorithmSpecHash = GetAlgorithmSpecification(input).Hash,
+                // Formal v3 is tied to the published algorithm manifest. Offline proofs retain their per-mode
+                // compatibility ladder, while every server-locked request uses the manifest generation.
+                AlgorithmEngineVersion = VerificationWireCodec.GetFormalEngineVersion(input.SamplingMode),
+                CandidatePoolCommitment = candidatePoolCommitment,
+                RosterDigest = seal.RosterDigest
             };
             proof = await witnessClient.NotarizeAsync(request, cancellationToken).ConfigureAwait(false);
             result = VerificationWireCodec.DecodeDrawResponse(GetResponse(proof));
@@ -433,8 +509,32 @@ public sealed class VerificationDrawCoordinator(
             proof = CreateProof(input, inputHash, seed, result, VerificationProofMode.OfflineReproducible, parentProofId, null,
                 context);
         }
-        return Complete(records, recordLookup, result, proof, exportContext, FreezeWeights(input));
+        return Complete(records, input.Candidates, input.Count, result, proof, exportContext, FreezeWeights(input));
     }
+
+    private static void EnsureFormalNotarizationSupported(
+        VerificationDrawInput input,
+        VerificationMode verificationMode)
+    {
+        if (verificationMode != VerificationMode.FormalNotarized)
+            return;
+
+        if (input.SamplingMode == VerificationSamplingMode.SequentialOrder
+            || input.AlgorithmProfile is VerificationAlgorithmProfile.StudentOrchestrated
+                or VerificationAlgorithmProfile.LotteryOrchestrated
+            || string.Equals(input.DrawModeToken, "orchestrated", StringComparison.Ordinal))
+            throw FormalNotarizationException.UnsupportedForOrchestration();
+
+        if (!VerificationAlgorithmSpecificationRegistry.TryResolve(input.Kind, input.SamplingMode,
+                input.AlgorithmProfile, out _))
+            throw FormalNotarizationException.AlgorithmUnsupported();
+    }
+
+    private static VerificationAlgorithmSpecification GetAlgorithmSpecification(VerificationDrawInput input) =>
+        VerificationAlgorithmSpecificationRegistry.TryResolve(input.Kind, input.SamplingMode, input.AlgorithmProfile,
+            out var specification)
+            ? specification
+            : throw FormalNotarizationException.AlgorithmUnsupported();
 
     public void Publish<TCandidate>(VerificationDrawOutcome<TCandidate> outcome)
         where TCandidate : class
@@ -455,16 +555,33 @@ public sealed class VerificationDrawCoordinator(
 
     private VerificationDrawOutcome<TCandidate> Complete<TCandidate>(
         IReadOnlyCollection<TCandidate> records,
-        IReadOnlyDictionary<Guid, TCandidate> recordLookup,
+        IReadOnlyList<VerificationCandidate> candidates,
+        int requestedCount,
         VerificationKernelResult result,
         DrawProof proof,
         DrawProofExportContext exportContext,
         IReadOnlyDictionary<Guid, double> frozenWeights)
         where TCandidate : class
     {
-        var winners = result.Winners.Select(winner => recordLookup.TryGetValue(winner.RecordId, out var record)
-            ? record
-            : throw new InvalidDataException("Verification kernel returned a record outside the frozen pool."))
+        if (requestedCount < 1 || requestedCount > candidates.Count || result.Winners.Count != requestedCount)
+            throw new InvalidDataException("Verification kernel returned an unexpected winner count.");
+
+        var recordLookup = records
+            .GroupBy(GetRecordId)
+            .ToDictionary(group => group.Key, group => group.First());
+        var candidateSlots = candidates
+            .Select(candidate => (candidate.RecordId, candidate.OccurrenceIndex))
+            .ToHashSet();
+        var consumedSlots = new HashSet<(Guid RecordId, uint OccurrenceIndex)>();
+        var winners = result.Winners.Select(winner =>
+            {
+                var slot = (winner.RecordId, winner.OccurrenceIndex);
+                if (!candidateSlots.Contains(slot) || !consumedSlots.Add(slot))
+                    throw new InvalidDataException("Verification kernel returned an invalid or repeated inventory slot.");
+                return recordLookup.TryGetValue(winner.RecordId, out var record)
+                    ? record
+                    : throw new InvalidDataException("Verification kernel returned a record outside the frozen pool.");
+            })
             .ToList();
         return new VerificationDrawOutcome<TCandidate>(winners, proof, frozenWeights, exportContext);
     }

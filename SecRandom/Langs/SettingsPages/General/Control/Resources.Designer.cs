@@ -57,6 +57,18 @@ namespace SecRandom.Langs.SettingsPages.General.Control {
             }
         }
 
+        public static string C_SwitchToAccount {
+            get {
+                return ResourceManager.GetString("C_SwitchToAccount", resourceCulture);
+            }
+        }
+
+        public static string C_SwitchToPairCode {
+            get {
+                return ResourceManager.GetString("C_SwitchToPairCode", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 该组下没有这个节点，请先在控制台注册.
         /// </summary>

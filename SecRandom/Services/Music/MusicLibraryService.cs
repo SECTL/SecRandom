@@ -389,10 +389,21 @@ public sealed class MusicLibraryService(
         try
         {
             var directory = Utils.GetDirectoryPath("list", directoryName);
-            return Directory.EnumerateFiles(directory, "*.json")
-                .Select(Path.GetFileNameWithoutExtension)
+            if (!Directory.Exists(directory))
+                return [];
+
+            return Directory.EnumerateFiles(directory, "*", SearchOption.TopDirectoryOnly)
+                .Select(Path.GetFileName)
+                .Where(name => !string.IsNullOrWhiteSpace(name) &&
+                               !name.EndsWith(Utils.RosterLegacyBackupExtension, StringComparison.OrdinalIgnoreCase) &&
+                               (name.EndsWith(Utils.RosterDatabaseExtension, StringComparison.OrdinalIgnoreCase) ||
+                                name.EndsWith(".json", StringComparison.OrdinalIgnoreCase)))
+                .Select(name => name.EndsWith(Utils.RosterDatabaseExtension, StringComparison.OrdinalIgnoreCase)
+                    ? name[..^Utils.RosterDatabaseExtension.Length]
+                    : Path.GetFileNameWithoutExtension(name))
                 .Where(name => !string.IsNullOrWhiteSpace(name))
                 .Cast<string>()
+                .Distinct(StringComparer.Ordinal)
                 .ToArray();
         }
         catch (Exception ex)

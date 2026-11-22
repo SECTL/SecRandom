@@ -60,12 +60,13 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
     public ObservableCollection<HistoryModeOption> SubjectOptions { get; } = [];
     public ObservableCollection<HistoryGroupOption> HistoryGroupOptions { get; } = [];
     public ObservableCollection<HistoryGroupOption> MoveTargetOptions { get; } = [];
-    public ObservableCollection<HistoryDisplayRow> Rows { get; } = [];
-    public bool HasWeightRows => Rows.Any(row => !string.IsNullOrWhiteSpace(row.Weight));
-    public bool HasSubjectRows => Rows.Any(row => !string.IsNullOrWhiteSpace(row.Subject));
-    public bool HasHistoryGroupRows => Rows.Any(row => !string.IsNullOrWhiteSpace(row.HistoryGroup));
-    public bool IsSubjectFilteringAvailable => Config.LinkageSettings.DataSource != LinkageDataSource.Off
-        && Config.LinkageSettings.SubjectHistoryFilterEnabled;
+    private readonly List<HistoryDisplayRow> _allRows = [];
+    public HistoryPagination Pagination { get; } = new();
+    public ObservableCollection<HistoryDisplayRow> Rows => Pagination.Rows;
+    public bool HasWeightRows => _allRows.Any(row => !string.IsNullOrWhiteSpace(row.Weight));
+    public bool HasSubjectRows => _allRows.Any(row => !string.IsNullOrWhiteSpace(row.Subject));
+    public bool HasHistoryGroupRows => _allRows.Any(row => !string.IsNullOrWhiteSpace(row.HistoryGroup));
+    public bool IsSubjectFilteringAvailable => Config.LinkageSettings.DataSource != LinkageDataSource.Off;
     public bool ShouldShowSubjectColumn => HasSubjectRows
         && SelectedMode != HistoryMode.Overview;
 
@@ -128,7 +129,8 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
 
     private void Load(string? preferredMode = null, string? preferredSubject = null)
     {
-        Rows.Clear();
+        _allRows.Clear();
+        Pagination.SetRows(_allRows);
         _history = null;
         _studentList = null;
         _studentByKey = [];
@@ -326,7 +328,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
 
     private void BuildRows()
     {
-        Rows.Clear();
+        _allRows.Clear();
         try
         {
             if (_history is null)
@@ -337,7 +339,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
             {
                 var predictedWeights = BuildPredictedWeightMap();
                 foreach (var student in GetVisibleStudents())
-                    Rows.Add(BuildOverviewRow(student, predictedWeights));
+                    _allRows.Add(BuildOverviewRow(student, predictedWeights));
 
                 AddOrphanOverviewRows();
             }
@@ -347,7 +349,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
                     AddHistoryRows(student);
 
                 AddOrphanHistoryRows();
-                SortByTimeDesc(Rows);
+                SortByTimeDesc(_allRows);
             }
             else if (_studentByKey.TryGetValue(mode, out var student))
             {
@@ -357,19 +359,20 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
 
                 var info = StudentInfo.From(student);
                 foreach (var item in GetFilteredHistoryItems(history))
-                    Rows.Add(BuildEventRow(info, item, _studentIdPadWidth));
-                SortByTimeDesc(Rows);
+                    _allRows.Add(BuildEventRow(info, item, _studentIdPadWidth));
+                SortByTimeDesc(_allRows);
             }
             else if (_history.Students.TryGetValue(mode, out var target))
             {
                 var info = ResolveStudentInfo(mode);
                 foreach (var item in GetFilteredHistoryItems(target))
-                    Rows.Add(BuildEventRow(info, item, _studentIdPadWidth));
-                SortByTimeDesc(Rows);
+                    _allRows.Add(BuildEventRow(info, item, _studentIdPadWidth));
+                SortByTimeDesc(_allRows);
             }
         }
         finally
         {
+            Pagination.SetRows(_allRows);
             OnPropertyChanged(nameof(HasWeightRows));
             OnPropertyChanged(nameof(HasSubjectRows));
             OnPropertyChanged(nameof(HasHistoryGroupRows));
@@ -422,7 +425,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
 
         var info = StudentInfo.From(student);
         foreach (var item in GetFilteredHistoryItems(history))
-            Rows.Add(BuildEventRow(info, item, _studentIdPadWidth));
+            _allRows.Add(BuildEventRow(info, item, _studentIdPadWidth));
     }
 
     private ProfileHistory? ResolveHistory(Student student)
@@ -442,7 +445,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
         foreach (var (key, history) in _history.Students.Where(pair => !knownKeys.Contains(pair.Key)))
         {
             var info = ResolveStudentInfo(key);
-            Rows.Add(new HistoryDisplayRow
+            _allRows.Add(new HistoryDisplayRow
             {
                 RecordId = key,
                 Id = FormatNumericId(info.Id, _studentIdPadWidth),
@@ -465,7 +468,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
         {
             var info = ResolveStudentInfo(key);
             foreach (var item in GetFilteredHistoryItems(history))
-                Rows.Add(BuildEventRow(info, item, _studentIdPadWidth));
+                _allRows.Add(BuildEventRow(info, item, _studentIdPadWidth));
         }
     }
 
@@ -524,7 +527,22 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
 
     private StudentInfo ResolveStudentInfo(string historyKey)
     {
-        return _studentInfoByKey.GetValueOrDefault(historyKey) ?? StudentInfo.Unknown(historyKey);
+        if (_studentInfoByKey.TryGetValue(historyKey, out var studentInfo))
+            return studentInfo;
+
+        // Group draws use a stable hash key because the group is not a roster member. Recover the
+        // human-readable group from the persisted history item so overview/mode selectors never expose
+        // the internal key (and keep working after the source roster is edited or removed).
+        if (_history?.Students.TryGetValue(historyKey, out var groupHistory) == true
+            && historyKey.StartsWith("group:", StringComparison.Ordinal)
+            && groupHistory.Histories.LastOrDefault() is { } item)
+        {
+            var group = string.IsNullOrWhiteSpace(item.RecordGroup) ? item.DrawGroup : item.RecordGroup;
+            if (!string.IsNullOrWhiteSpace(group))
+                return new StudentInfo(group, string.Empty, string.Empty, group);
+        }
+
+        return StudentInfo.Unknown(historyKey);
     }
 
     private static Dictionary<string, StudentInfo> BuildStudentInfoMap(
@@ -626,7 +644,7 @@ public sealed partial class RollCallHistoryViewModel : ViewModelBase
             ? FormatWeight(last.Weight)
             : string.Empty;
 
-    private static void SortByTimeDesc(ObservableCollection<HistoryDisplayRow> rows)
+    private static void SortByTimeDesc(List<HistoryDisplayRow> rows)
     {
         var sorted = rows.OrderByDescending(r => r.SortTime).ToList();
         rows.Clear();

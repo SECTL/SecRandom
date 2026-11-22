@@ -13,8 +13,8 @@
               Unloaded="OnUnloaded">
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro settings">
-            <sr:IconText x:Name="S_Behavior"
-                         Text="{x:Static lsb:Resources.S_Behavior}"
+            <sr:IconText x:Name="S_General"
+                         Text="{x:Static lsb:Resources.S_General}"
                          Glyph="{sr:Fi FlashFilled}"
                          Margin="0 0 0 4" />
 
@@ -41,15 +41,11 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander x:Name="S_Behavior_Autostart"
-                                   Header="{x:Static lsb:Resources.S_Behavior_Autostart}"
-                                   Description="{x:Static lsb:Resources.S_Behavior_Autostart_D}"
-                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}"
-                                   IsVisible="{Binding IsDesktop}">
-                <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding Settings.Autostart}" />
-                </fa:FASettingsExpander.Footer>
-            </fa:FASettingsExpander>
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText x:Name="S_StartupAndWindow"
+                         Text="{x:Static lsb:Resources.S_StartupAndWindow}"
+                         Glyph="{sr:Fi WindowFilled}"
+                         Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Behavior_ShowStartupWindow"
                                    Header="{x:Static lsb:Resources.S_Behavior_ShowStartupWindow}"
@@ -58,6 +54,16 @@
                                    IsVisible="{Binding IsDesktop}">
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.ShowStartupWindow}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
+
+            <fa:FASettingsExpander x:Name="S_Behavior_Autostart"
+                                   Header="{x:Static lsb:Resources.S_Behavior_Autostart}"
+                                   Description="{x:Static lsb:Resources.S_Behavior_Autostart_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}"
+                                   IsVisible="{Binding IsDesktop}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding Settings.Autostart}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
@@ -96,6 +102,12 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText x:Name="S_Integration"
+                         Text="{x:Static lsb:Resources.S_Integration}"
+                         Glyph="{sr:Fi PlugConnectedFilled}"
+                         Margin="0 0 0 4" />
+
             <fa:FASettingsExpander x:Name="S_Behavior_UrlProtocol"
                                     Header="{x:Static lsb:Resources.S_Behavior_UrlProtocol}"
                                     Description="{x:Static lsb:Resources.S_Behavior_UrlProtocol_D}"
@@ -109,12 +121,23 @@
             <fa:FASettingsExpander x:Name="S_Behavior_AutomationIpc"
                                     Header="{x:Static lsb:Resources.S_Behavior_AutomationIpc}"
                                     Description="{x:Static lsb:Resources.S_Behavior_AutomationIpc_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi DeveloperBoardFilled}}"
-                                    IsVisible="{Binding IsDesktop}">
+                                    IconSource="{sr:FluentIconSource {sr:Fi DeveloperBoardFilled}}">
+                <fa:FASettingsExpander.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                        <Binding Path="Settings.UrlProtocol" />
+                        <Binding Path="IsDesktop" />
+                    </MultiBinding>
+                </fa:FASettingsExpander.IsVisible>
                 <fa:FASettingsExpander.Footer>
                     <ToggleSwitch IsChecked="{Binding Settings.AutomationIpcEnabled}" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
+
+            <Separator Margin="0 12 0 4" />
+            <sr:IconText x:Name="S_Recovery"
+                         Text="{x:Static lsb:Resources.S_Recovery}"
+                         Glyph="{sr:Fi ArrowSyncFilled}"
+                         Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Behavior_CrashRecovery"
                                     Header="{x:Static lsb:Resources.S_Behavior_CrashRecovery}"

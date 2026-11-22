@@ -28,17 +28,13 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <fa:FASettingsExpander x:Name="S_ProofFolder"
-                                    Header="{x:Static lv:Resources.S_ProofFolder}"
-                                    Description="{x:Static lv:Resources.S_ProofFolder_D}"
-                                    IconSource="{sr:FluentIconSource {sr:Fi FolderOpenFilled}}">
+            <fa:FASettingsExpander x:Name="S_ProofPlayback"
+                                    Header="{x:Static lv:Resources.S_ProofPlayback}"
+                                    Description="{x:Static lv:Resources.S_ProofPlayback_D}"
+                                    IconSource="{sr:FluentIconSource {sr:Fi VideoClipFilled}}">
                 <fa:FASettingsExpander.Footer>
-                    <StackPanel Orientation="Horizontal" Spacing="4">
-                        <Button Content="{x:Static lv:Resources.C_OpenProofFolder}"
-                                Click="OpenProofFolder_OnClick" />
-                        <Button Content="{x:Static lv:Resources.C_OpenVerificationWebsite}"
-                                Click="OpenVerificationWebsite_OnClick" />
-                    </StackPanel>
+                    <Button Content="{x:Static lv:Resources.C_OpenProofPlayback}"
+                            Click="OpenProofPlayback_OnClick" />
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

@@ -52,10 +52,12 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
     public ObservableCollection<HistoryModeOption> ModeOptions { get; } = [];
     public ObservableCollection<HistoryGroupOption> HistoryGroupOptions { get; } = [];
     public ObservableCollection<HistoryGroupOption> MoveTargetOptions { get; } = [];
-    public ObservableCollection<HistoryDisplayRow> Rows { get; } = [];
+    private readonly List<HistoryDisplayRow> _allRows = [];
+    public HistoryPagination Pagination { get; } = new();
+    public ObservableCollection<HistoryDisplayRow> Rows => Pagination.Rows;
 
     /// <summary>当前行里是否有记录带记录组标记；没有任何组时「记录组」列不必占用宽度。</summary>
-    public bool HasHistoryGroupRows => Rows.Any(row => !string.IsNullOrWhiteSpace(row.HistoryGroup));
+    public bool HasHistoryGroupRows => _allRows.Any(row => !string.IsNullOrWhiteSpace(row.HistoryGroup));
 
     /// <summary>
     ///     「记录组」列只在确实有记录带组时才有意义。总览模式的行是按奖品汇总出来的，
@@ -107,7 +109,8 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
 
     private void Load(string? preferredMode = null)
     {
-        Rows.Clear();
+        _allRows.Clear();
+        Pagination.SetRows(_allRows);
         _history = null;
         _prizeList = null;
         _prizeByKey = [];
@@ -294,8 +297,9 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
 
     private void BuildRows()
     {
-        Rows.Clear();
+        _allRows.Clear();
         BuildRowsCore();
+        Pagination.SetRows(_allRows);
 
         OnPropertyChanged(nameof(HasHistoryGroupRows));
         OnPropertyChanged(nameof(ShouldShowHistoryGroupColumn));
@@ -309,7 +313,7 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
         if (mode == HistoryMode.Overview)
         {
             foreach (var prize in GetVisiblePrizes())
-                Rows.Add(BuildOverviewRow(prize));
+                _allRows.Add(BuildOverviewRow(prize));
 
             AddOrphanOverviewRows();
         }
@@ -319,7 +323,7 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
                 AddHistoryRows(prize);
 
             AddOrphanHistoryRows();
-            SortByTimeDesc(Rows);
+            SortByTimeDesc(_allRows);
         }
         else if (_prizeByKey.TryGetValue(mode, out var prize))
         {
@@ -329,15 +333,15 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
 
             var info = PrizeInfo.From(prize);
             foreach (var item in GetFilteredHistoryItems(history))
-                Rows.Add(BuildEventRow(info, item, _prizeIdPadWidth));
-            SortByTimeDesc(Rows);
+                _allRows.Add(BuildEventRow(info, item, _prizeIdPadWidth));
+            SortByTimeDesc(_allRows);
         }
         else if (_history.Prizes.TryGetValue(mode, out var target))
         {
             var info = ResolvePrizeInfo(mode);
             foreach (var item in GetFilteredHistoryItems(target))
-                Rows.Add(BuildEventRow(info, item, _prizeIdPadWidth));
-            SortByTimeDesc(Rows);
+                _allRows.Add(BuildEventRow(info, item, _prizeIdPadWidth));
+            SortByTimeDesc(_allRows);
         }
     }
 
@@ -367,7 +371,7 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
 
         var info = PrizeInfo.From(prize);
         foreach (var item in GetFilteredHistoryItems(history))
-            Rows.Add(BuildEventRow(info, item, _prizeIdPadWidth));
+            _allRows.Add(BuildEventRow(info, item, _prizeIdPadWidth));
     }
 
     private ProfileHistory? ResolveHistory(Prize prize)
@@ -387,7 +391,7 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
         foreach (var (key, history) in _history.Prizes.Where(pair => !knownKeys.Contains(pair.Key)))
         {
             var info = ResolvePrizeInfo(key);
-            Rows.Add(new HistoryDisplayRow
+            _allRows.Add(new HistoryDisplayRow
             {
                 RecordId = key,
                 Id = FormatNumericId(info.Id, _prizeIdPadWidth),
@@ -408,7 +412,7 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
         {
             var info = ResolvePrizeInfo(key);
             foreach (var item in GetFilteredHistoryItems(history))
-                Rows.Add(BuildEventRow(info, item, _prizeIdPadWidth));
+                _allRows.Add(BuildEventRow(info, item, _prizeIdPadWidth));
         }
     }
 
@@ -510,7 +514,7 @@ public sealed partial class LotteryHistoryViewModel : ViewModelBase
             ? FormatWeight(last.Weight)
             : string.Empty;
 
-    private static void SortByTimeDesc(ObservableCollection<HistoryDisplayRow> rows)
+    private static void SortByTimeDesc(List<HistoryDisplayRow> rows)
     {
         var sorted = rows.OrderByDescending(r => r.SortTime).ToList();
         rows.Clear();

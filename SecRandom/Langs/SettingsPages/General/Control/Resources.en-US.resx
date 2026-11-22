@@ -10,7 +10,7 @@
     <value>Allow remote control</value>
   </data>
   <data name="S_RemoteControl_Enabled_D">
-    <value>This switch belongs to this device alone; while it is off no command from the service is executed</value>
+    <value>Allow this device to accept control commands</value>
   </data>
   <data name="S_RemoteControl_GroupId">
     <value>Group ID</value>
@@ -28,19 +28,19 @@
     <value>Display name</value>
   </data>
   <data name="S_RemoteControl_DisplayName_D">
-    <value>The name shown for this machine in the console node list; leave it empty to report the host name</value>
+    <value>Leave blank to use the host name</value>
   </data>
   <data name="S_RemoteControl_Status">
     <value>Connection status</value>
   </data>
   <data name="S_RemoteControl_Status_D">
-    <value>Reconnects with backoff after a drop; failures that retrying cannot fix wait here until the configuration is corrected</value>
+    <value>Shows connection state and allows manual reconnect</value>
   </data>
   <data name="S_RemoteControl_DrawLocked">
     <value>Draw lock</value>
   </data>
   <data name="S_RemoteControl_DrawLocked_D">
-    <value>Set from the console; while locked this device refuses to draw</value>
+    <value>Set by the console; drawing is disabled while locked</value>
   </data>
   <data name="C_Reconnect">
     <value>Reconnect now</value>
@@ -100,7 +100,7 @@
     <value>Control platform</value>
   </data>
   <data name="S_OpenControlPlane_D">
-    <value>Opens the control platform web console in your browser to manage the devices in this group</value>
+    <value>Open the configured control platform</value>
   </data>
   <data name="C_OpenControlPlane_Official">
     <value>Open SecRandom control platform</value>
@@ -112,13 +112,13 @@
     <value>Show the remote draw page in the main view</value>
   </data>
   <data name="S_RemoteDrawPage_D">
-    <value>Adds a Remote draw entry to the main sidebar for sending draws to other devices in this group; signing in is required, the service still decides permissions by group member role, and turning it off hides the entry immediately</value>
+    <value>Show Remote Draw on the main page</value>
   </data>
   <data name="S_NodeEnrollment">
-    <value>Enroll in a self-hosted control platform</value>
+    <value>Site code enrollment</value>
   </data>
   <data name="S_NodeEnrollment_D">
-    <value>Use a console-issued code to join a self-hosted control platform without signing in to SECTL</value>
+    <value>Enter a site ID and pairing code</value>
   </data>
   <data name="S_NodeEnrollment_Code">
     <value>Enrollment code</value>
@@ -128,6 +128,12 @@
   </data>
   <data name="C_Enroll">
     <value>Enroll</value>
+  </data>
+  <data name="C_SwitchToAccount" xml:space="preserve">
+    <value>Switch to account</value>
+  </data>
+  <data name="C_SwitchToPairCode" xml:space="preserve">
+    <value>Switch to site code</value>
   </data>
   <data name="C_ClearEnrollment">
     <value>Clear enrollment</value>
@@ -163,13 +169,13 @@
     <value>SC-A1B2C3</value>
   </data>
   <data name="S_Enrollment_SiteId_D">
-    <value>The site ID shown by the administrator, for example SC-K7Q2M9</value>
+    <value>Site ID provided by the administrator</value>
   </data>
   <data name="S_Enrollment_PairingCode_Ph">
     <value>ABCD-7KQ2</value>
   </data>
   <data name="S_Enrollment_PairingCode_D">
-    <value>A single-use pairing code issued by the administrator, used only while enrolling</value>
+    <value>Single-use pairing code from the administrator</value>
   </data>
   <data name="S_Enrolled">
     <value>Enrolled</value>
@@ -190,7 +196,7 @@
     <value>Class</value>
   </data>
   <data name="S_Enrollment_Class_D">
-    <value>Choose this device's grade and class; both are required before saving. Unbind the current class first to switch classes</value>
+    <value>Choose a grade and class; unbind before switching</value>
   </data>
   <data name="S_Enrollment_Class_Ph">
     <value>Choose a class</value>
@@ -313,7 +319,7 @@
     <value>Account enrollment</value>
   </data>
   <data name="S_AccountEnrollment_D" xml:space="preserve">
-    <value>Sign in with a SECTL account, then choose the site, grade and class in order — all three are required before this computer can enroll. Phones can only use this channel</value>
+    <value>Sign in, then choose a site, grade and class</value>
   </data>
   <data name="S_AccountCurrent" xml:space="preserve">
     <value>Signed in as</value>

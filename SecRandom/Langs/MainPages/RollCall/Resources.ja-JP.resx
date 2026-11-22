@@ -26,6 +26,8 @@
   <data name="M_RepeatLimitExhausted" xml:space="preserve"><value>残りのメンバーが不足しています。記録をリセットするか、条件を調整してください</value></data>
   <data name="M_InvalidWeight" xml:space="preserve"><value>重みの設定が無効です</value></data>
   <data name="M_DrawFailed" xml:space="preserve"><value>抽選に失敗しました</value></data>
+  <data name="M_DrawAuthorizationDenied" xml:space="preserve"><value>抽選が許可されませんでした。認証を完了してもう一度お試しください</value></data>
+  <data name="M_DrawLocked" xml:space="preserve"><value>抽選は制御コンソールによってロックされています</value></data>
   <data name="M_ResultSeparator" xml:space="preserve"><value>、</value></data>
   <data name="O_HistoryGroup" xml:space="preserve"><value>記録グループ</value></data>
   <data name="O_HistoryGroupDefault" xml:space="preserve"><value>既定の記録グループ</value></data>
@@ -33,4 +35,5 @@
   <data name="M_NumberCountSummary" xml:space="preserve"><value>残り {0}/{1}</value></data>
   <data name="M_NumberRangeStart" xml:space="preserve"><value>開始</value></data>
   <data name="M_NumberRangeEnd" xml:space="preserve"><value>終了</value></data>
+  <data name="O_DrawGroups" xml:space="preserve"><value>すべてのグループを抽選</value></data>
 </root>

@@ -193,7 +193,19 @@ namespace SecRandom.Langs.SettingsPages.Notification {
                 return ResourceManager.GetString("S_FloatingWindow", resourceCulture);
             }
         }
-        
+
+        public static string S_FloatingWindow_Appearance {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_Appearance", resourceCulture);
+            }
+        }
+
+        public static string S_FloatingWindow_Playback {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_Playback", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to 浮窗显示器.
         /// </summary>
@@ -292,7 +304,7 @@ namespace SecRandom.Langs.SettingsPages.Notification {
                 return ResourceManager.GetString("S_Common_NotificationService", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   Looks up a localized string similar to 通知服务类型.
         /// </summary>
@@ -582,7 +594,7 @@ namespace SecRandom.Langs.SettingsPages.Notification {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 快速抽取完成后显示通知结果。.
+        ///   Looks up a localized string similar to 闪抽完成后显示通知结果。.
         /// </summary>
         public static string S_QuickDraw_Enabled_D {
             get {
@@ -780,34 +792,22 @@ namespace SecRandom.Langs.SettingsPages.Notification {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 选择一张图片作为结果页背景，留空时使用内置深色渐变.
+        ///   选择背景图片，图片缺失时使用主题底色
         /// </summary>
         public static string S_Fullscreen_BackgroundImage_D {
             get {
                 return ResourceManager.GetString("S_Fullscreen_BackgroundImage_D", resourceCulture);
             }
         }
+
+
+
+
+
+
         
         /// <summary>
-        ///   Looks up a localized string similar to 背景模糊.
-        /// </summary>
-        public static string S_Fullscreen_BackgroundBlur {
-            get {
-                return ResourceManager.GetString("S_Fullscreen_BackgroundBlur", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 数值越大背景越虚化.
-        /// </summary>
-        public static string S_Fullscreen_BackgroundBlur_D {
-            get {
-                return ResourceManager.GetString("S_Fullscreen_BackgroundBlur_D", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 背景不透明度.
+        ///   Looks up a localized string similar to 图片不透明度.
         /// </summary>
         public static string S_Fullscreen_BackgroundOpacity {
             get {
@@ -1221,33 +1221,6 @@ namespace SecRandom.Langs.SettingsPages.Notification {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 仍然使用全屏.
-        /// </summary>
-        public static string C_FullscreenQuickDrawConfirm {
-            get {
-                return ResourceManager.GetString("C_FullscreenQuickDrawConfirm", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 全屏通知用于闪抽会更慢.
-        /// </summary>
-        public static string M_FullscreenQuickDrawConfirmTitle {
-            get {
-                return ResourceManager.GetString("M_FullscreenQuickDrawConfirmTitle", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   Looks up a localized string similar to 全屏动画最长约 2.5 秒，之后还要等待倒计时；闪抽使用全屏通知时会压缩动画到约 1.2 秒.
-        /// </summary>
-        public static string M_FullscreenQuickDrawConfirmContent {
-            get {
-                return ResourceManager.GetString("M_FullscreenQuickDrawConfirmContent", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to 文案库.
         /// </summary>
         public static string Page_TextLibrary {
@@ -1275,7 +1248,7 @@ namespace SecRandom.Langs.SettingsPages.Notification {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 跟随主题使用应用配色，选自定义图片后再导入背景图.
+        ///   选择跟随主题、纯色、渐变或自定义图片
         /// </summary>
         public static string S_Fullscreen_BackgroundMode_D {
             get {
@@ -1561,5 +1534,217 @@ namespace SecRandom.Langs.SettingsPages.Notification {
             }
         }
         
+
+        public static string C_FloatingWindow_ClearImage {
+            get {
+                return ResourceManager.GetString("C_FloatingWindow_ClearImage", resourceCulture);
+            }
+        }
+
+        public static string C_FloatingWindow_ImportImage {
+            get {
+                return ResourceManager.GetString("C_FloatingWindow_ImportImage", resourceCulture);
+            }
+        }
+
+        public static string C_TestNotification {
+            get {
+                return ResourceManager.GetString("C_TestNotification", resourceCulture);
+            }
+        }
+
+        public static string M_FloatingWindowImageImportFailed {
+            get {
+                return ResourceManager.GetString("M_FloatingWindowImageImportFailed", resourceCulture);
+            }
+        }
+
+        public static string M_FloatingWindowImageImported {
+            get {
+                return ResourceManager.GetString("M_FloatingWindowImageImported", resourceCulture);
+            }
+        }
+
+        public static string M_NotificationTestClass {
+            get {
+                return ResourceManager.GetString("M_NotificationTestClass", resourceCulture);
+            }
+        }
+
+        public static string M_NotificationTestPrize1 {
+            get {
+                return ResourceManager.GetString("M_NotificationTestPrize1", resourceCulture);
+            }
+        }
+
+        public static string M_NotificationTestPrize2 {
+            get {
+                return ResourceManager.GetString("M_NotificationTestPrize2", resourceCulture);
+            }
+        }
+
+        public static string M_NotificationTestStudent1 {
+            get {
+                return ResourceManager.GetString("M_NotificationTestStudent1", resourceCulture);
+            }
+        }
+
+        public static string M_NotificationTestStudent2 {
+            get {
+                return ResourceManager.GetString("M_NotificationTestStudent2", resourceCulture);
+            }
+        }
+
+        public static string M_NotificationTestUnavailable {
+            get {
+                return ResourceManager.GetString("M_NotificationTestUnavailable", resourceCulture);
+            }
+        }
+
+
+
+
+
+
+
+        public static string O_Monitor_Label {
+            get {
+                return ResourceManager.GetString("O_Monitor_Label", resourceCulture);
+            }
+        }
+
+        public static string O_Monitor_Primary {
+            get {
+                return ResourceManager.GetString("O_Monitor_Primary", resourceCulture);
+            }
+        }
+
+        public static string S_Common_NotificationServiceFailureFallback {
+            get {
+                return ResourceManager.GetString("S_Common_NotificationServiceFailureFallback", resourceCulture);
+            }
+        }
+
+        public static string S_Common_NotificationServiceFailureFallback_D {
+            get {
+                return ResourceManager.GetString("S_Common_NotificationServiceFailureFallback_D", resourceCulture);
+            }
+        }
+
+        public static string S_Common_OverridableSettings {
+            get {
+                return ResourceManager.GetString("S_Common_OverridableSettings", resourceCulture);
+            }
+        }
+
+        public static string S_Common_Test {
+            get {
+                return ResourceManager.GetString("S_Common_Test", resourceCulture);
+            }
+        }
+
+        public static string S_Common_Test_D {
+            get {
+                return ResourceManager.GetString("S_Common_Test_D", resourceCulture);
+            }
+        }
+
+
+
+
+
+
+
+
+
+        public static string S_FloatingWindow_BackgroundImage {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_BackgroundImage", resourceCulture);
+            }
+        }
+
+        public static string S_FloatingWindow_BackgroundImage_D {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_BackgroundImage_D", resourceCulture);
+            }
+        }
+
+        public static string S_FloatingWindow_BackgroundStyle {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_BackgroundStyle", resourceCulture);
+            }
+        }
+
+        public static string S_FloatingWindow_BackgroundStyle_D {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_BackgroundStyle_D", resourceCulture);
+            }
+        }
+
+        public static string S_FloatingWindow_Preview {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_Preview", resourceCulture);
+            }
+        }
+
+        public static string S_FloatingWindow_Preview_D {
+            get {
+                return ResourceManager.GetString("S_FloatingWindow_Preview_D", resourceCulture);
+            }
+        }
+
+        public static string C_FloatingWindowPreview {
+            get {
+                return ResourceManager.GetString("C_FloatingWindowPreview", resourceCulture);
+            }
+        }
+
+
+
+
+
+
+
+        /// <summary>
+        ///   Looks up a localized string similar to 主题背景不透明度.
+        /// </summary>
+        public static string S_Fullscreen_ThemeBackgroundOpacity {
+            get {
+                return ResourceManager.GetString("S_Fullscreen_ThemeBackgroundOpacity", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to 调整主题底色的不透明度，0% 时完全露出桌面.
+        /// </summary>
+        public static string S_Fullscreen_ThemeBackgroundOpacity_D {
+            get {
+                return ResourceManager.GetString("S_Fullscreen_ThemeBackgroundOpacity_D", resourceCulture);
+            }
+        }
+
+
+
+
+        public static string S_FloatingWindow_ThemeBackgroundOpacity => ResourceManager.GetString("S_FloatingWindow_ThemeBackgroundOpacity", resourceCulture);
+
+        public static string S_FloatingWindow_ThemeBackgroundOpacity_D => ResourceManager.GetString("S_FloatingWindow_ThemeBackgroundOpacity_D", resourceCulture);
+
+        public static string S_FloatingWindow_BackgroundColor => ResourceManager.GetString("S_FloatingWindow_BackgroundColor", resourceCulture);
+
+        public static string S_FloatingWindow_BackgroundColor_D => ResourceManager.GetString("S_FloatingWindow_BackgroundColor_D", resourceCulture);
+
+        public static string S_FloatingWindow_BackgroundGradient => ResourceManager.GetString("S_FloatingWindow_BackgroundGradient", resourceCulture);
+
+        public static string S_FloatingWindow_BackgroundGradient_D => ResourceManager.GetString("S_FloatingWindow_BackgroundGradient_D", resourceCulture);
+
+        public static string S_FloatingWindow_BackgroundGradientAngle => ResourceManager.GetString("S_FloatingWindow_BackgroundGradientAngle", resourceCulture);
+
+        public static string S_FloatingWindow_BackgroundGradientAngle_D => ResourceManager.GetString("S_FloatingWindow_BackgroundGradientAngle_D", resourceCulture);
+
+        public static string S_FloatingWindow_BackgroundOpacity => ResourceManager.GetString("S_FloatingWindow_BackgroundOpacity", resourceCulture);
+
+        public static string S_FloatingWindow_BackgroundOpacity_D => ResourceManager.GetString("S_FloatingWindow_BackgroundOpacity_D", resourceCulture);
+
     }
 }

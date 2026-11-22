@@ -24,12 +24,6 @@
             PublicKeyToken=b77a5c561934e089
         </value>
     </resheader>
-    <data name="C_Probability" xml:space="preserve">
-        <value>概率</value>
-    </data>
-    <data name="C_ProbabilityDescription" xml:space="preserve">
-        <value>默认值为 0，权重范围为 0-100；0 为不参与，100 为必中</value>
-    </data>
     <data name="C_SpecificVoice" xml:space="preserve">
         <value>专属语音</value>
     </data>

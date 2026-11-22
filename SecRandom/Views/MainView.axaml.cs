@@ -91,6 +91,7 @@ public partial class MainView : ViewBase, IFANavigationPageFactory
 
     public static MainView? Current { get; private set; }
     public MainViewModel ViewModel { get; } = IAppHost.GetService<MainViewModel>();
+    public Control? ActivePage => _navigationFrame?.Content as Control;
     public bool IsMacOs => OperatingSystem.IsMacOS();
     public bool IsDesktop => App.IsDesktop;
     public bool UseDesktopUI =>

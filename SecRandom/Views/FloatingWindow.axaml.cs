@@ -40,6 +40,8 @@ public partial class FloatingWindow : Window
 {
     private bool _isMovingWindow;
     private bool _isPendingWindowDrag;
+    private bool _isNativeWindowDrag;
+    private PixelPoint _nativeWindowDragStartPosition;
     private bool _isDocked;
     private bool _isDockedOnLeft;
     private int _dockRevision;
@@ -120,8 +122,8 @@ public partial class FloatingWindow : Window
         DataContext = this;
         Position = new PixelPoint(ViewModel.Config.FloatPosition.X, ViewModel.Config.FloatPosition.Y);
         InitializeComponent();
-        // 浮窗不用亚克力：窗口合成材质会沿整个矩形铺开、没有圆角，快选缩成"球 + 滑轨"那一小块时
-        // 尤其突兀。这里固定走透明底，圆角与底色全部交给 WindowBorder 自己画。
+        // 背景材质在 ApplyWindowBorderOpacity 中按设置切换；构造期先请求透明，
+        // 这样窗口创建时不会先闪出一块默认的系统底色。
         TransparencyLevelHint = [WindowTransparencyLevel.Transparent];
         this.ApplyPlatformFeatures(WindowFeatures.ToolWindow, enabled: true);
         ApplyFocusFreeMode();
@@ -147,6 +149,7 @@ public partial class FloatingWindow : Window
         Closed += (_, _) =>
         {
             _isClosed = true;
+            _quickPickRestoring = false;
             PropertyChanged -= OnWindowPropertyChanged;
             SizeChanged -= OnWindowSizeChanged;
             _featureAvailability.Changed -= FeatureAvailabilityOnChanged;
@@ -169,7 +172,7 @@ public partial class FloatingWindow : Window
     private void OnActualThemeVariantChanged(object? sender, EventArgs e)
     {
         // 卡片底是 DynamicResource 的实色画刷，主题切换由资源自己刷新；这里只需重算一次不透明度。
-        ApplyWindowBorderBackdrop(EffectiveFloatingWindowSettings);
+        ApplyWindowBorderOpacity(EffectiveFloatingWindowSettings);
     }
 
     /// <summary>
@@ -206,7 +209,7 @@ public partial class FloatingWindow : Window
             || _isDocked
             || _isDockTransitioning
             || _isMovingDockHandle
-            || _quickPickState != QuickPickState.Idle
+            || IsQuickPickActive
             || !EffectiveFloatingWindowSettings.StickToEdge)
             return;
 
@@ -242,7 +245,7 @@ public partial class FloatingWindow : Window
     public bool IsEdgePinned => _edgePinned;
 
     /// <summary>快选面板（按住/滑选）是否正开着：这段时间窗口的尺寸和位置都属于面板，别人不能重摆。</summary>
-    internal bool IsQuickPickActive => _quickPickState != QuickPickState.Idle;
+    internal bool IsQuickPickActive => _quickPickState != QuickPickState.Idle || _quickPickRestoring;
 
     /// <summary>
     ///     窗口此刻所在的横向半区：<c>true</c> 表示所在屏幕的左半区。
@@ -463,7 +466,7 @@ public partial class FloatingWindow : Window
 
     private void ApplyWindowSettings(FloatingWindowSettingsConfig settings)
     {
-        ApplyWindowBorderBackdrop(settings);
+        ApplyWindowBorderOpacity(settings);
 
         // 顺序是刻意的：免激活样式要先落盘，因为平台层刷新扩展样式时会重新排一次 z 序；
         // 置顶必须最后写，否则会被随后的样式刷新抢回普通层。设置实时切换、简洁模式切换、
@@ -496,17 +499,10 @@ public partial class FloatingWindow : Window
             ReassertNativeTopmost();
     }
 
-    /// <summary>
-    ///     卡片底：把"不透明度"设置直接压到 <c>WindowBorder</c> 上。
-    /// </summary>
-    /// <remarks>
-    ///     浮窗不再走窗口级亚克力（那层材质会沿整个矩形铺开、没有圆角），所以这里只有一条路径：
-    ///     由 <c>WindowBorder</c> 自己画半透明实色卡片，用户调多少就压多少。
-    /// </remarks>
-    private void ApplyWindowBorderBackdrop(FloatingWindowSettingsConfig settings)
+    /// <summary>应用浮窗不透明度，底色由主题资源提供。</summary>
+    private void ApplyWindowBorderOpacity(FloatingWindowSettingsConfig settings)
     {
-        var opacity = Math.Clamp(settings.FloatingWindowOpacity, 20, 100);
-        WindowBorder.Opacity = opacity / 100.0;
+        WindowBorder.Opacity = Math.Clamp(settings.FloatingWindowOpacity, 20, 100) / 100.0;
     }
 
     /// <summary>
@@ -676,14 +672,14 @@ public partial class FloatingWindow : Window
         return b;
     }
 
-    private static Button GetQuickDrawButton(FloatingWindowSettingsConfig settings)
+    private Button GetQuickDrawButton(FloatingWindowSettingsConfig settings)
     {
         var b = CreateButton(FluentIcons.FlashFilled, Langs.Common.Resources.Feat_QuickDraw, settings);
         b.Name = QuickDrawButtonName;
 
         b.Click += (sender, args) =>
         {
-            App.ShowQuickDrawWindow();
+            App.ShowQuickDrawWindow(noticeAnchor: this);
         };
 
         return b;
@@ -1105,9 +1101,6 @@ public partial class FloatingWindow : Window
         // 又不丢置顶效果。
         ReassertNativeTopmost();
 
-        // 两侧同时显示时，按哪一侧就把另一侧收成球：两扇窗一起展开会互相抢注意力。
-        App.NotifyFloatingWindowInteraction(this);
-
         // 每一次按下都从"这次按下还没有被快选取消"开始：上一次长按被拖窗取消时留下的抑制标记
         // 只对那一次松手有效，不能带到下一次按键上，否则这次按下别的按钮时松手会被吞掉、按钮点不动。
         _quickPickTapSuppressed = false;
@@ -1130,6 +1123,11 @@ public partial class FloatingWindow : Window
         if ((isPrimaryContact || isSecondaryContact) && TryBeginQuickDrawLongPress(e, e.Source as Visual))
             return;
 
+        // Wait until a press is known not to be a quick-pick gesture. On Windows a touch
+        // long-press is promoted to a second right-button press; collapsing the sibling on
+        // the first touch press made it collapse and then hide again.
+        App.NotifyFloatingWindowInteraction(this);
+
         if (EffectiveFloatingWindowSettings.Draggable
             && isPrimaryContact)
         {
@@ -1143,6 +1141,23 @@ public partial class FloatingWindow : Window
                 _dockDragStartScreenPoint = Position + ToPixelPoint(e.GetPosition(this));
                 _dockDragStartPosition = Position;
                 e.Pointer.Capture(this);
+                return;
+            }
+
+            // Linux/macOS window managers own the top-level move loop. Starting it from the
+            // original press lets Wayland and AppKit move the window without position polling.
+            if (App.UsesNativeWindowDrag
+                && e.Pointer.Type == PointerType.Mouse
+                && !_isDocked
+                && !_edgePinned)
+            {
+                ++_snapAnimationRevision;
+                ++_dockRevision;
+                _isPendingWindowDrag = true;
+                _isMovingWindow = false;
+                _isNativeWindowDrag = true;
+                _nativeWindowDragStartPosition = Position;
+                BeginMoveDrag(e);
                 return;
             }
 
@@ -1177,6 +1192,16 @@ public partial class FloatingWindow : Window
         // 快选面板打开后这次指针已经被它接管，绝不能再当成拖窗。
         if (TryHandleQuickPickPointerMoved(e))
             return;
+
+        if (_isNativeWindowDrag)
+        {
+            if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            {
+                _isMovingWindow = Position != _nativeWindowDragStartPosition;
+                CompleteWindowDrag(e.Pointer);
+            }
+            return;
+        }
 
         // 松手事件被别的路径吞掉时（快选取消、触控被系统收走），拖动状态会一直挂着，
         // 鼠标之后只是悬停也会继续拖着窗口走。这次拖动确实由鼠标开始时，键已抬起就把它收尾。
@@ -1293,6 +1318,23 @@ public partial class FloatingWindow : Window
         if (!_isPendingWindowDrag)
             return;
 
+        if (_isNativeWindowDrag)
+        {
+            var moved = Position != _nativeWindowDragStartPosition;
+            _isNativeWindowDrag = false;
+            if (!moved)
+            {
+                _isPendingWindowDrag = false;
+                _isMovingWindow = false;
+                return;
+            }
+
+            _isMovingWindow = true;
+            e.Handled = true;
+            CompleteWindowDrag(e.Pointer);
+            return;
+        }
+
         // 还没真正拖动就松手 = 这是一次普通点击：不置 Handled，按钮自己的 Click 才会照常触发。
         // 拖动状态不能在这里提前清掉：CompleteWindowDrag 靠 _isMovingWindow 判断这次拖动是否
         // 真的发生过，先清掉会让它直接返回，贴边吸附与自动收纳都不会再排上。
@@ -1317,6 +1359,7 @@ public partial class FloatingWindow : Window
     private void CompleteWindowDrag(IPointer pointer)
     {
         _isPendingWindowDrag = false;
+        _isNativeWindowDrag = false;
         var wasMoving = _isMovingWindow;
         _isMovingWindow = false;
         pointer.Capture(null);
@@ -1436,6 +1479,9 @@ public partial class FloatingWindow : Window
 
     private void ScheduleDock()
     {
+        if (IsQuickPickActive)
+            return;
+
         var seconds = Math.Clamp(EffectiveFloatingWindowSettings.StickToEdgeRecoverSeconds, 0, 60);
         var dockRevision = ++_dockRevision;
         if (seconds == 0)
@@ -1445,7 +1491,7 @@ public partial class FloatingWindow : Window
         {
             if (dockRevision == _dockRevision
                 && !_isDocked
-                && _quickPickState == QuickPickState.Idle
+                && !IsQuickPickActive
                 && EffectiveFloatingWindowSettings.StickToEdge)
                 _ = CollapseToDockAsync();
         }, TimeSpan.FromSeconds(seconds));
@@ -1453,7 +1499,7 @@ public partial class FloatingWindow : Window
 
     private void ScheduleDockIfAtEdge()
     {
-        if (_isDocked || !EffectiveFloatingWindowSettings.StickToEdge)
+        if (IsQuickPickActive || _isDocked || !EffectiveFloatingWindowSettings.StickToEdge)
             return;
 
         var width = Math.Max(1, (int)Math.Ceiling(Bounds.Width * RenderScaling));
@@ -1476,7 +1522,7 @@ public partial class FloatingWindow : Window
     {
         if (_isDocked
             || _isDockTransitioning
-            || _quickPickState != QuickPickState.Idle
+            || IsQuickPickActive
             || !EffectiveFloatingWindowSettings.StickToEdge)
             return;
 
@@ -1853,6 +1899,11 @@ public partial class FloatingWindow : Window
 
     private void SavePosition()
     {
+        // Quick-pick moves this window to a temporary panel location. Persist only real
+        // window drags and dock transitions, never the gesture's temporary geometry.
+        if (IsQuickPickActive)
+            return;
+
         var settings = EffectiveFloatingWindowSettings;
 
         // 两侧高度统一时纵向锚点是共用的：任何一侧拖动结束后都写回同一个值，

@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.ComponentModel;
@@ -8,14 +9,18 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Behaviors;
 using SecRandom.Core.Abstraction.Services.Presentation;
+using SecRandom.Core.Enums.Configs;
+using SecRandom.Core.Helpers;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Presentation;
 using SecRandom.Helpers;
+using SecRandom.Shared;
 using SecRandom.ViewModels.MainPages;
 using CommonResources = SecRandom.Langs.Common.Resources;
 
@@ -27,12 +32,12 @@ public partial class QuickDrawPage : UserControl
     private int _autoCloseRevision;
     private CancellationTokenSource? _autoCloseCts;
     private readonly ItemsControl? _resultPresenter;
-    private IPointer? _dragPointer;
-    private PixelPoint _dragStartScreenPoint;
-    private PixelPoint _dragStartWindowPosition;
     private CancellationTokenSource? _clickSequenceCts;
     private int _clickCount;
     private int _remainingAutoCloseSeconds;
+    private Bitmap? _notificationBackgroundBitmap;
+    private string? _loadedBackgroundImage;
+    private Window? _notificationWindow;
 
     /// <summary>本次自动关闭是否走四周描边；描边创建失败时回退到原有的文字倒计时。</summary>
     private bool _usesEdgeCountdown;
@@ -42,11 +47,14 @@ public partial class QuickDrawPage : UserControl
         ViewModel = IAppHost.GetService<QuickDrawPageViewModel>();
         DataContext = ViewModel;
         InitializeComponent();
+        DrawBlockedNoticePopup.PlacementTarget = RootBorder;
         _resultPresenter = this.FindControl<ItemsControl>("ResultPresenter");
         ViewModel.PropertyChanged += ViewModel_OnPropertyChanged;
         ViewModel.Config.EffectiveFloatingWindowSettings.PropertyChanged += FloatingWindowSettings_OnPropertyChanged;
+        ViewModel.Config.NotificationSettings.Default.PropertyChanged += NotificationSettings_OnPropertyChanged;
         UpdateFloatingWindowOpacity();
         ApplyNotificationTheme(ViewModel.NotificationTheme);
+        Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
 
@@ -57,6 +65,16 @@ public partial class QuickDrawPage : UserControl
     /// 事件本身不含尺寸：窗口尺寸由宿主读取，避免页面耦合窗口实现。
     /// </summary>
     public event EventHandler? ResultLayoutChanged;
+
+    private void OnLoaded(object? sender, RoutedEventArgs e)
+    {
+        if (TopLevel.GetTopLevel(this) is not Window window
+            || ReferenceEquals(_notificationWindow, window))
+            return;
+
+        _notificationWindow = window;
+        ApplyNotificationTheme(ViewModel.NotificationTheme);
+    }
 
     public void StartDraw()
     {
@@ -71,6 +89,14 @@ public partial class QuickDrawPage : UserControl
         CancelClickSequence();
         ViewModel.PropertyChanged -= ViewModel_OnPropertyChanged;
         ViewModel.Config.EffectiveFloatingWindowSettings.PropertyChanged -= FloatingWindowSettings_OnPropertyChanged;
+        ViewModel.Config.NotificationSettings.Default.PropertyChanged -= NotificationSettings_OnPropertyChanged;
+        if (_notificationWindow is not null)
+        {
+            _notificationWindow = null;
+        }
+        NotificationBackgroundBorder.Background = null;
+        _notificationBackgroundBitmap?.Dispose();
+        _notificationBackgroundBitmap = null;
     }
 
     private void FloatingWindowSettings_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -81,10 +107,18 @@ public partial class QuickDrawPage : UserControl
 
     private void UpdateFloatingWindowOpacity()
     {
-        RootBorder.Opacity = System.Math.Clamp(
+        var opacity = System.Math.Clamp(
             ViewModel.NotificationOpacity ?? ViewModel.Config.EffectiveFloatingWindowSettings.FloatingWindowOpacity,
             20,
             100) / 100.0;
+        RootBorder.Opacity = opacity;
+        NotificationBackgroundBorder.Opacity = opacity * Math.Clamp(
+            ViewModel.Config.NotificationSettings.Default.BackgroundOpacity, 0, 100) / 100.0;
+    }
+
+    private void NotificationSettings_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        ApplyNotificationTheme(ViewModel.NotificationTheme);
     }
 
     /// <summary>
@@ -100,51 +134,116 @@ public partial class QuickDrawPage : UserControl
         if (RootBorder is null)
             return;
 
-        if (theme is not { } adaptive)
+        var settings = ViewModel.Config.NotificationSettings.Default;
+        var hasImage = TryLoadNotificationBackgroundImage(settings.BackgroundStyle == WindowBackgroundStyle.Image);
+        var appPalette = AdaptiveBackdropResolver.FromAppTheme(
+            Application.Current?.ActualThemeVariant == ThemeVariant.Dark);
+        var palette = settings.BackgroundStyle == WindowBackgroundStyle.Theme ? appPalette : theme ?? appPalette;
+        var brush = NotificationBackgroundBrushes.Create(settings, NotificationBackgroundBrushes.ResolveThemeSurfaceColor(ActualThemeVariant));
+        if (settings.BackgroundStyle is WindowBackgroundStyle.Solid or WindowBackgroundStyle.Gradient)
         {
-            RootBorder.Resources = new ResourceDictionary();
-            RootBorder.ClearValue(Border.BackgroundProperty);
-            RootBorder.ClearValue(Border.BorderBrushProperty);
-            RootBorder.Margin = new Thickness(6);
-            CountdownRing.Margin = new Thickness(6);
-            ClearNotificationTextBrushes();
-            ApplyCardInk(null);
-            return;
+            static double Luminance(Color color) => (0.2126 * color.R + 0.7152 * color.G + 0.0722 * color.B) / 255;
+            var luminance = settings.BackgroundStyle == WindowBackgroundStyle.Solid
+                ? Luminance(settings.BackgroundColor)
+                : (Luminance(settings.BackgroundGradientStart) + Luminance(settings.BackgroundGradientEnd)) / 2;
+            palette = AdaptiveBackdropResolver.FromAppTheme(luminance < 0.55);
         }
 
-        // 卡片始终是按采样色着色的实色底，窗口本身不做亚克力：窗口合成材质（DWM acrylic）的
-        // tint 由系统明暗主题决定、并不跟着桌面走，会把卡片重新染成白/黑；而前景色是按采样
-        // 亮度选的，于是出现"白底白字、黑底黑字"。直接绘制底色才能按同一合成模型计算对比度；
-        // 整体透明度仍会同时淡化文字与底色。圆角与 6px 外边距因此始终保留，画在透明窗口上。
         RootBorder.Margin = new Thickness(6);
         CountdownRing.Margin = new Thickness(6);
-
-        // 卡片底与边框直接写本地值，不再只靠资源键：本地值不经过任何资源查找，也不受样式表、
-        // 主题变体或模板里同名键的影响，所以"卡片是什么颜色"和"字是什么颜色"永远是同一份方案。
-        RootBorder.Background = new SolidColorBrush(adaptive.Surface);
-        RootBorder.BorderBrush = new SolidColorBrush(adaptive.Stroke);
-
-        RootBorder.Resources = new ResourceDictionary
+        RootBorder.Background = hasImage ? CreateImageOverlayBrush()
+            : settings.BackgroundStyle == WindowBackgroundStyle.Image ? new SolidColorBrush(palette.Surface) : brush;
+        RootBorder.BorderBrush = new SolidColorBrush(palette.Stroke);
+        RootBorder.Resources = hasImage ? CreateNotificationImageResources() : new ResourceDictionary
         {
-            ["SolidBackgroundFillColorBaseBrush"] = new SolidColorBrush(adaptive.Surface),
-            ["ControlElevationBorderBrush"] = new SolidColorBrush(adaptive.Stroke),
-            ["TextFillColorPrimaryBrush"] = new SolidColorBrush(adaptive.Foreground),
-            ["TextFillColorSecondaryBrush"] = new SolidColorBrush(adaptive.SecondaryForeground),
-            ["TextFillColorTertiaryBrush"] = new SolidColorBrush(adaptive.SecondaryForeground),
-            ["CardBackgroundFillColorDefaultBrush"] = new SolidColorBrush(adaptive.CardSurface),
-            ["ControlFillColorSecondaryBrush"] = new SolidColorBrush(adaptive.AvatarSurface)
+            ["SolidBackgroundFillColorBaseBrush"] = brush,
+            ["ControlElevationBorderBrush"] = new SolidColorBrush(palette.Stroke),
+            ["TextFillColorPrimaryBrush"] = new SolidColorBrush(palette.Foreground),
+            ["TextFillColorSecondaryBrush"] = new SolidColorBrush(palette.SecondaryForeground),
+            ["TextFillColorTertiaryBrush"] = new SolidColorBrush(palette.SecondaryForeground),
+            ["CardBackgroundFillColorDefaultBrush"] = new SolidColorBrush(palette.CardSurface),
+            ["ControlFillColorSecondaryBrush"] = new SolidColorBrush(palette.AvatarSurface)
         };
 
-        // 状态文字与提示文字没有自己的 Foreground 绑定，只靠资源键替换在 Fluent 的样式里不一定生效；
-        // 这里再给本地值兜一次底，保证"换背景就一定换字色"。
-        var foreground = new SolidColorBrush(adaptive.Foreground);
-        var secondary = new SolidColorBrush(adaptive.SecondaryForeground);
-        StatusTextBlock.Foreground = foreground;
-        AutoCloseHintTextBlock.Foreground = secondary;
-        HistoryGroupHintTextBlock.Foreground = secondary;
-        HistoryGroupMissingHintTextBlock.Foreground = secondary;
+        SetNotificationTextBrushes(hasImage ? Colors.White : palette.Foreground,
+            hasImage ? Color.FromArgb(0xCC, 255, 255, 255) : palette.SecondaryForeground);
+        ApplyCardInk(palette, hasImage);
+        UpdateFloatingWindowOpacity();
+    }
 
-        ApplyCardInk(adaptive);
+    private static SolidColorBrush CreateImageOverlayBrush()
+        => new(Color.FromArgb(0x99, 0, 0, 0));
+
+    private static ResourceDictionary CreateNotificationImageResources()
+    {
+        var white = new SolidColorBrush(Colors.White);
+        var secondary = new SolidColorBrush(Color.FromArgb(0xCC, 255, 255, 255));
+        var darkCard = new SolidColorBrush(Color.FromArgb(0xAA, 0, 0, 0));
+        var darkAvatar = new SolidColorBrush(Color.FromArgb(0xBB, 0, 0, 0));
+        return new ResourceDictionary
+        {
+            ["SolidBackgroundFillColorBaseBrush"] = darkCard,
+            ["ControlElevationBorderBrush"] = secondary,
+            ["TextFillColorPrimaryBrush"] = white,
+            ["TextFillColorSecondaryBrush"] = secondary,
+            ["TextFillColorTertiaryBrush"] = secondary,
+            ["CardBackgroundFillColorDefaultBrush"] = darkCard,
+            ["ControlFillColorSecondaryBrush"] = darkAvatar
+        };
+    }
+
+    private void SetNotificationTextBrushes(Color foreground, Color secondary)
+    {
+        StatusTextBlock.Foreground = new SolidColorBrush(foreground);
+        AutoCloseHintTextBlock.Foreground = new SolidColorBrush(secondary);
+        HistoryGroupHintTextBlock.Foreground = new SolidColorBrush(secondary);
+        HistoryGroupMissingHintTextBlock.Foreground = new SolidColorBrush(secondary);
+    }
+
+    private bool TryLoadNotificationBackgroundImage(bool allowBackgroundImage)
+    {
+        var fileName = allowBackgroundImage
+            ? ViewModel.Config.NotificationSettings.Default.BackgroundImage
+            : string.Empty;
+        if (_loadedBackgroundImage == fileName
+            && (_notificationBackgroundBitmap is not null || string.IsNullOrWhiteSpace(fileName)))
+            return _notificationBackgroundBitmap is not null;
+        _loadedBackgroundImage = fileName;
+        Bitmap? bitmap = null;
+        if (!string.IsNullOrWhiteSpace(fileName))
+        {
+            try
+            {
+                var path = ResolveNotificationBackgroundPath(fileName);
+                if (path is not null && File.Exists(path))
+                {
+                    using var stream = SharedFileReader.OpenRead(path);
+                    bitmap = new Bitmap(stream);
+                }
+            }
+            catch
+            {
+                bitmap = null;
+            }
+        }
+
+        var previous = _notificationBackgroundBitmap;
+        _notificationBackgroundBitmap = bitmap;
+        NotificationBackgroundBorder.Background = bitmap is null ? null
+            : new ImageBrush(bitmap) { Stretch = Stretch.UniformToFill };
+        NotificationBackgroundBorder.IsVisible = bitmap is not null;
+        UpdateFloatingWindowOpacity();
+        previous?.Dispose();
+        return bitmap is not null;
+    }
+
+    private static string? ResolveNotificationBackgroundPath(string fileName)
+    {
+        var directory = Path.GetFullPath(Path.Combine(Utils.DataRoot, "images", "notification"));
+        var path = Path.GetFullPath(Path.Combine(directory, fileName.Trim()));
+        return path.StartsWith(directory + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+            ? path
+            : null;
     }
 
     /// <summary>
@@ -155,48 +254,23 @@ public partial class QuickDrawPage : UserControl
     ///     为 null（自适应关闭、低配回退、采样失败）时卡片回到应用主题底色，此时按应用主题的
     ///     明暗取黑/白——绝不能再让结果项沿用强调色当文字色，那正是浅色桌面上"看不清"的来源。
     /// </remarks>
-    private void ApplyCardInk(AdaptiveTheme? adaptive)
+    private void ApplyCardInk(AdaptiveTheme? adaptive, bool customImage)
     {
         var isDarkTheme = Application.Current?.ActualThemeVariant == ThemeVariant.Dark;
-        var ink = adaptive?.Foreground
+        var ink = customImage
+                  ? Colors.White
+                  : adaptive?.Foreground
                   ?? AdaptiveBackdropResolver.FromAppTheme(isDarkTheme).Foreground;
         ViewModel.ApplyNotificationInk(new SolidColorBrush(ink));
     }
 
-    private void ClearNotificationTextBrushes()
-    {
-        StatusTextBlock.ClearValue(TextBlock.ForegroundProperty);
-        AutoCloseHintTextBlock.ClearValue(TextBlock.ForegroundProperty);
-        HistoryGroupHintTextBlock.ClearValue(TextBlock.ForegroundProperty);
-        HistoryGroupMissingHintTextBlock.ClearValue(TextBlock.ForegroundProperty);
-    }
-
     private void RootBorder_OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (!App.SupportsProgrammaticWindowPositioning)
-            return;
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed
             || TopLevel.GetTopLevel(this) is not Window window)
             return;
 
-        _dragPointer = e.Pointer;
-        _dragStartScreenPoint = window.Position + ToPixelPoint(e.GetPosition(window), window.RenderScaling);
-        _dragStartWindowPosition = window.Position;
-        e.Pointer.Capture(RootBorder);
-    }
-
-    private void RootBorder_OnPointerMoved(object? sender, PointerEventArgs e)
-    {
-        if (!App.SupportsProgrammaticWindowPositioning)
-            return;
-        if (!ReferenceEquals(e.Pointer, _dragPointer)
-            || TopLevel.GetTopLevel(this) is not Window window)
-            return;
-
-        var screenPoint = window.Position + ToPixelPoint(e.GetPosition(window), window.RenderScaling);
-        window.Position = new PixelPoint(
-            _dragStartWindowPosition.X + screenPoint.X - _dragStartScreenPoint.X,
-            _dragStartWindowPosition.Y + screenPoint.Y - _dragStartScreenPoint.Y);
+        window.BeginMoveDrag(e);
     }
 
     private void RootBorder_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
@@ -204,20 +278,7 @@ public partial class QuickDrawPage : UserControl
         if (e.InitialPressMouseButton != MouseButton.Left)
             return;
 
-        if (ReferenceEquals(e.Pointer, _dragPointer))
-        {
-            _dragPointer = null;
-            e.Pointer.Capture(null);
-        }
-
         RegisterClick();
-    }
-
-    private static PixelPoint ToPixelPoint(Point point, double renderScaling)
-    {
-        return new PixelPoint(
-            (int)Math.Round(point.X * renderScaling),
-            (int)Math.Round(point.Y * renderScaling));
     }
 
     private void ViewModel_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -230,6 +291,12 @@ public partial class QuickDrawPage : UserControl
 
         if (e.PropertyName == nameof(QuickDrawPageViewModel.NotificationTheme))
             ApplyNotificationTheme(ViewModel.NotificationTheme);
+
+        if (e.PropertyName == nameof(QuickDrawPageViewModel.IsDrawBlockedNoticeVisible)
+            && !ViewModel.IsDrawBlockedNoticeVisible
+            && !ViewModel.IsResultVisible
+            && _notificationWindow is { IsVisible: true })
+            SecRandom.App.HideQuickDrawNotificationWindow();
 
         Dispatcher.UIThread.Post(async () => await RunResultAnimationAsync(e.PropertyName), DispatcherPriority.Render);
     }

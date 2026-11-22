@@ -7,16 +7,13 @@ using System.Runtime.InteropServices;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-using FluentAvalonia.UI.Controls;
 using SecRandom.Core;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums;
-using SecRandom.Core.Extensions.Registry;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Services.Config;
-using SecRandom.Controls.AttachedSettings;
 using SecRandom.Services.Linkage;
 using SecRandom.Services.CrashRecovery;
 using SecRandom.Services.Updates;
@@ -37,14 +34,10 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
     private string _linkageAndNotificationDiagnostics = string.Empty;
     private string _platformDiagnostics = string.Empty;
     private string _dataAndPathDiagnostics = string.Empty;
-    private bool _isInternalSettingsEnabled;
-    private bool _isUpdatingInternalSettingsToggle;
-
     public DebugSettingsPage()
     {
         DataContext = this;
         InitializeComponent();
-        InternalSettingsToggle.IsCheckedChanged += InternalSettingsToggle_OnIsCheckedChanged;
         RefreshDiagnostics();
     }
 
@@ -70,12 +63,6 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
     {
         get => _dataAndPathDiagnostics;
         private set => SetDiagnostic(ref _dataAndPathDiagnostics, value, nameof(DataAndPathDiagnostics));
-    }
-
-    public bool IsInternalSettingsEnabled
-    {
-        get => _isInternalSettingsEnabled;
-        private set => SetDiagnostic(ref _isInternalSettingsEnabled, value, nameof(IsInternalSettingsEnabled));
     }
 
     public DebugResources Strings { get; } = new();
@@ -130,44 +117,6 @@ public partial class DebugSettingsPage : UserControl, INotifyPropertyChanged
     {
         SettingsView.Current?.HideDebugNavigationItem();
         SettingsView.Current?.NavigateToPage("settings.about");
-    }
-
-    private async void InternalSettingsToggle_OnIsCheckedChanged(object? sender, RoutedEventArgs e)
-    {
-        if (_isUpdatingInternalSettingsToggle || sender is not ToggleSwitch toggle)
-            return;
-
-        if (toggle.IsChecked != true)
-        {
-            AttachedSettingsRegistryExtensions.UnregisterAttachedSettingsControl<BehindSceneAttachedSettingsControl>();
-            IsInternalSettingsEnabled = false;
-            return;
-        }
-
-        var result = await new FAContentDialog
-        {
-            Title = DebugResources.Get("M_InternalSettings_ConfirmTitle"),
-            Content = new TextBlock
-            {
-                Text = $"{DebugResources.Get("M_InternalSettings")}{Environment.NewLine}{Environment.NewLine}{DebugResources.Get("M_InternalSettings_FormalNotarization")}",
-                TextWrapping = Avalonia.Media.TextWrapping.Wrap
-            },
-            PrimaryButtonText = DebugResources.Get("C_Enable"),
-            CloseButtonText = DebugResources.Get("C_Cancel"),
-            DefaultButton = FAContentDialogButton.Close
-        }.ShowAsync(TopLevel.GetTopLevel(this));
-
-        if (result != FAContentDialogResult.Primary)
-        {
-            _isUpdatingInternalSettingsToggle = true;
-            toggle.IsChecked = false;
-            _isUpdatingInternalSettingsToggle = false;
-            return;
-        }
-
-        AttachedSettingsRegistryExtensions.RegisterAttachedSettingsControl<BehindSceneAttachedSettingsControl>(
-            SecRandom.Langs.Common.Resources.AttachedSettings_BehindScene);
-        IsInternalSettingsEnabled = true;
     }
 
     private async void RefreshDiagnostics_OnClick(object? sender, RoutedEventArgs e)

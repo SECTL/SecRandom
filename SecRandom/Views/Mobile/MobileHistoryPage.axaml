@@ -17,8 +17,8 @@
         <Carousel Grid.Row="1"
                   Classes="animated"
                   SelectedIndex="{Binding #HistoryTabs.SelectedIndex}">
-            <history:RollCallHistorySettingsPage />
-            <history:LotteryHistorySettingsPage />
+            <history:RollCallHistorySettingsPage ShowHistoryGroupMigration="False" />
+            <history:LotteryHistorySettingsPage ShowHistoryGroupMigration="False" />
         </Carousel>
     </Grid>
 </UserControl>

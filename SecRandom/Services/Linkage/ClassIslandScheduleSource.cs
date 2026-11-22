@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ClassIsland.Shared.Enums;
 using ClassIsland.Shared.IPC.Abstractions.Services;
+using ClassIsland.Shared.Models.Profile;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Models.Linkage;
 
@@ -113,6 +116,55 @@ public sealed class ClassIslandScheduleSource : ICourseScheduleSource
             _logger.LogDebug(exception, "读取 ClassIsland 日程状态失败。");
             return CourseScheduleSnapshot.Unavailable(SourceName, ScheduleErrorCodes.ClassIslandReadFailed);
         }
+    }
+
+    public async Task<IReadOnlyList<string>> GetCourseNamesAsync(CancellationToken cancellationToken = default)
+    {
+        var profileService = await _ipcConnection.GetProfileServiceAsync(cancellationToken).ConfigureAwait(false);
+        if (profileService is null)
+        {
+            _logger.LogDebug("读取 ClassIsland 科目列表失败：档案服务不可用。");
+            return [];
+        }
+
+        try
+        {
+            var profile = await Task.Run(() => profileService.Profile, cancellationToken)
+                .WaitAsync(TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false);
+            if (profile is null)
+            {
+                _logger.LogDebug("读取 ClassIsland 科目列表失败：当前档案为空。");
+                return [];
+            }
+
+            // 课程映射页需要完整的科目目录。CurrentClassPlan 只表示“今天当前加载的课表”，
+            // 课前/放学、无日期课表或临时课表为空时不能用它过滤档案科目。
+            var subjects = profile.Subjects;
+            var names = GetSubjectNames(profile);
+            _logger.LogDebug("已从 ClassIsland 档案读取 {SubjectCount} 个科目（去重后 {NameCount} 个）。",
+                subjects.Count, names.Count);
+            return names;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogDebug(exception, "读取 ClassIsland 科目列表失败。");
+            return [];
+        }
+    }
+
+    internal static IReadOnlyList<string> GetSubjectNames(Profile? profile)
+    {
+        var subjects = profile?.Subjects;
+        if (subjects is null)
+            return [];
+
+        return subjects
+            .Select(pair => pair.Value.Name?.Trim())
+            .OfType<string>()
+            .Where(name => name.Length > 0 && name != "???")
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(name => name, StringComparer.CurrentCulture)
+            .ToArray();
     }
 
     private static string NormalizeSubjectName(string? name)

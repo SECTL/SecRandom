@@ -157,9 +157,6 @@ Move the entire portable package to a writable location, or adjust the directory
     <data name="C_ToBeWritten" xml:space="preserve">
         <value>(To be written)</value>
     </data>
-    <data name="AttachedSettings_BehindScene" xml:space="preserve">
-        <value>Behind Scene Settings</value>
-    </data>
     <data name="Settings_Backup" xml:space="preserve">
         <value>Backup Settings</value>
     </data>

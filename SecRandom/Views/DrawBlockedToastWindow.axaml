@@ -1,0 +1,11 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:fa="using:FluentAvalonia.UI.Controls"
+        x:Class="SecRandom.Views.DrawBlockedToastWindow"
+        Width="360" SizeToContent="Height"
+        WindowStartupLocation="Manual" WindowDecorations="None"
+        ShowActivated="False" ShowInTaskbar="False" Topmost="True"
+        CanResize="False" CanMinimize="False" CanMaximize="False"
+        Background="Transparent">
+    <fa:FAInfoBar x:Name="Notice" Severity="Warning" IsOpen="True" IsClosable="False" />
+</Window>
