@@ -92,7 +92,7 @@ public partial class FloatingWindow : Window
     private const int MouseDragStartDistance = 4;
 
     /// <summary>触控/手写笔按下后移动多少像素才算开始拖窗：手指的抖动需要更大的死区，否则点按会被吞。</summary>
-    private const int TouchDragStartDistance = 12;
+    private const int TouchDragStartDistance = 16;
 
     /// <summary>首次呈现时的定位只判断一次：之后窗口再显示不应该重新被当成"上次是收纳态"。</summary>
     private bool _startupPositionRestored;
@@ -1265,7 +1265,12 @@ public partial class FloatingWindow : Window
 
         var pointerPosition = Position + ToPixelPoint(e.GetPosition(this));
         var deltaY = pointerPosition.Y - _dockDragStartScreenPoint.Y;
-        _dockHandleWasDragged |= Math.Abs(deltaY) > 2;
+        // 触控手指按下时的自然抖动比鼠标大：阈值太小会把"点一下收纳球"当成拖动，
+        // 按钮的 Click 被吞掉、用户要多点几次。鼠标/触控笔保持原 2px 的灵敏度。
+        var dragThreshold = e.Pointer.Type is PointerType.Touch or PointerType.Pen
+            ? TouchDragStartDistance
+            : MouseDragStartDistance;
+        _dockHandleWasDragged |= Math.Abs(deltaY) > dragThreshold;
         var height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * RenderScaling));
         var y = Math.Clamp(
             _dockDragStartPosition.Y + deltaY,
