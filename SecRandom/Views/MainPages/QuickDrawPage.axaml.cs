@@ -264,13 +264,38 @@ public partial class QuickDrawPage : UserControl
         ViewModel.ApplyNotificationInk(new SolidColorBrush(ink));
     }
 
+    private PointerPressedEventArgs? _quickDrawPressEvent;
+    private Point _quickDrawDragStartPoint;
+    private bool _quickDrawIsDragging;
+
     private void RootBorder_OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed
             || TopLevel.GetTopLevel(this) is not Window window)
             return;
 
-        window.BeginMoveDrag(e);
+        _quickDrawIsDragging = false;
+        _quickDrawDragStartPoint = e.GetPosition(this);
+        _quickDrawPressEvent = e;
+    }
+
+    private void RootBorder_OnPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (_quickDrawIsDragging)
+            return;
+        if (_quickDrawPressEvent is null)
+            return;
+        if (TopLevel.GetTopLevel(this) is not Window window)
+            return;
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            return;
+
+        var delta = e.GetPosition(this) - _quickDrawDragStartPoint;
+        if (Math.Abs(delta.X) < 4 && Math.Abs(delta.Y) < 4)
+            return;
+
+        _quickDrawIsDragging = true;
+        window.BeginMoveDrag(_quickDrawPressEvent);
     }
 
     private void RootBorder_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
@@ -278,7 +303,11 @@ public partial class QuickDrawPage : UserControl
         if (e.InitialPressMouseButton != MouseButton.Left)
             return;
 
-        RegisterClick();
+        if (!_quickDrawIsDragging)
+            RegisterClick();
+
+        _quickDrawIsDragging = false;
+        _quickDrawPressEvent = null;
     }
 
     private void ViewModel_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
