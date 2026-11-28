@@ -164,12 +164,12 @@ public sealed class TabletControlHostTests
     public void 平板入口_与手机入口是同一个页面同一个视图模型()
     {
         // 手机底部第 5 档与平板侧栏项都从 MobilePageIds.RemoteDraw 取页面；
-        // 页面只有一个构造函数，参数就是那个共享的 ViewModel——为平板另写一套 UI/VM 时这里会先红。
+        // 页面必须接收共享 ViewModel，另外可以注入导航等视图依赖。
         var constructors = typeof(MobileRemoteDrawPage).GetConstructors();
         var constructor = Assert.Single(constructors);
-        var parameter = Assert.Single(constructor.GetParameters());
 
-        Assert.Equal(typeof(MobileRemoteDrawViewModel), parameter.ParameterType);
+        Assert.Contains(constructor.GetParameters(), parameter =>
+            parameter.ParameterType == typeof(MobileRemoteDrawViewModel));
     }
 
     // ---------------------------------------------------------------- BuildHost 的接线（防止被误合并）
@@ -242,8 +242,8 @@ public sealed class TabletControlHostTests
         var phone = Assert.Single(typeof(MobileRemoteDrawPage).GetConstructors()).GetParameters();
         var desktop = Assert.Single(typeof(RemoteDrawPage).GetConstructors()).GetParameters();
 
-        Assert.Equal(typeof(MobileRemoteDrawViewModel), Assert.Single(phone).ParameterType);
-        Assert.Equal(typeof(MobileRemoteDrawViewModel), Assert.Single(desktop).ParameterType);
+        Assert.Contains(phone, parameter => parameter.ParameterType == typeof(MobileRemoteDrawViewModel));
+        Assert.Contains(desktop, parameter => parameter.ParameterType == typeof(MobileRemoteDrawViewModel));
 
         // 页面类型本身必须是两个，且分居桌面主页面目录与手机视图目录：一眼能看出没有第三份。
         Assert.NotEqual(typeof(MobileRemoteDrawPage), typeof(RemoteDrawPage));
