@@ -32,8 +32,23 @@ jobs:
   build_ios:
     name: Build_iOS
     runs-on: macos-26
+    env:
+      SECRANDOM_SYNC_API_KEY: ${{ secrets.SECRANDOM_SYNC_API_KEY }}
+      SECRANDOM_VERIFY_API_KEY: ${{ secrets.SECRANDOM_VERIFY_API_KEY }}
+      SECRANDOM_OFFLINE_QR_API_KEY: ${{ secrets.SECRANDOM_OFFLINE_QR_API_KEY }}
 
     steps:
+      - name: Validate embedded API key secrets
+        shell: bash
+        run: |
+          for name in SECRANDOM_SYNC_API_KEY SECRANDOM_VERIFY_API_KEY SECRANDOM_OFFLINE_QR_API_KEY; do
+            value="${!name}"
+            if [[ ! "$value" =~ ^[A-Za-z0-9_-]{43,128}$ ]]; then
+              echo "::error::$name must be configured as a 43-128 character base64url secret."
+              exit 1
+            fi
+          done
+
       - name: Checkout
         uses: actions/checkout@v6
         with:

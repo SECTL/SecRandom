@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using QRCoder;
+using SecRandom.Services.Configuration;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -19,8 +20,8 @@ namespace SecRandom.Services.RosterTransfer;
 /// </summary>
 public sealed class RosterTransferService
 {
-    private const string ManifestPrefix = "SRQR1M";
-    private const string DataPrefix = "SRQR1D";
+    private const string ManifestPrefix = "SRQR2M";
+    private const string DataPrefix = "SRQR2D";
     // Keep offline QR modules large enough for a 256 px presentation surface.
     // Data frames are padded below, and the manifest uses their selected version so every frame matches.
     private const int FramePayloadLength = 128;
@@ -28,12 +29,16 @@ public sealed class RosterTransferService
     private const int FrameOffsetDigits = 7;
     private const int MaximumFrameCount = 4096;
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
+    private readonly string? _apiKey;
+
+    public RosterTransferService(string? apiKey = null) => _apiKey = apiKey;
 
     public Task<RosterQrExportSession> CreateExportSessionAsync(
         RosterTransferDocument document,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(document);
+        var authenticationKey = GetAuthenticationKey();
 
         return Task.Run(() =>
         {
@@ -46,10 +51,13 @@ public sealed class RosterTransferService
 
             var sessionId = Guid.NewGuid().ToString("N");
             var checksum = Convert.ToHexString(SHA256.HashData(compressedPayload));
+            var fileName = Base64UrlEncode(Encoding.UTF8.GetBytes(document.FileName));
+            var authenticationTag = CreateManifestAuthenticationTag(authenticationKey, sessionId, fileName,
+                compressedPayload.Length, chunks.Count, checksum);
             var frames = new List<byte[]>(chunks.Count + 1);
             using var generator = new QRCodeGenerator();
             var manifest = string.Join('|', ManifestPrefix, sessionId,
-                Base64UrlEncode(Encoding.UTF8.GetBytes(document.FileName)), compressedPayload.Length, chunks.Count, checksum);
+                fileName, compressedPayload.Length, chunks.Count, checksum, authenticationTag);
             var dataContents = new List<string>(chunks.Count);
             for (var index = 0; index < chunks.Count; index++)
             {
@@ -120,7 +128,25 @@ public sealed class RosterTransferService
         }, cancellationToken).ConfigureAwait(false);
     }
 
-    public RosterQrImportAccumulator CreateImportAccumulator() => new();
+    public RosterQrImportAccumulator CreateImportAccumulator() => new(GetAuthenticationKey());
+
+    private byte[] GetAuthenticationKey()
+    {
+        var apiKey = _apiKey ?? ApiEndpointKeys.OfflineQr;
+        if (apiKey is not { Length: >= 43 and <= 128 } || apiKey.Any(character =>
+                character is not (>= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= '0' and <= '9' or '-' or '_')))
+            throw new InvalidOperationException("SECRANDOM_OFFLINE_QR_API_KEY must be configured as a 43-128 character base64url key.");
+
+        return Encoding.ASCII.GetBytes(apiKey);
+    }
+
+    private static string CreateManifestAuthenticationTag(byte[] key, string sessionId, string fileName,
+        int payloadLength, int totalFrames, string checksum)
+    {
+        var data = string.Join('\n', "secrandom-roster-offline-qr/v2", sessionId, fileName,
+            payloadLength.ToString(CultureInfo.InvariantCulture), totalFrames.ToString(CultureInfo.InvariantCulture), checksum);
+        return Base64UrlEncode(HMACSHA256.HashData(key, Encoding.UTF8.GetBytes(data)));
+    }
 
     private static byte[] Compress(byte[] payload)
     {
@@ -175,6 +201,7 @@ public sealed class RosterTransferService
 
     public sealed class RosterQrImportAccumulator
     {
+        private readonly byte[] _authenticationKey;
         private readonly Dictionary<int, byte[]> _chunks = [];
         private string? _checksum;
         private string? _fileName;
@@ -182,6 +209,8 @@ public sealed class RosterTransferService
         private int _payloadLength;
         private int _totalFrames;
         private DateTimeOffset _startedAt;
+
+        internal RosterQrImportAccumulator(byte[] authenticationKey) => _authenticationKey = authenticationKey;
 
         public int AcceptedFrames => _chunks.Count;
         public int DuplicateFrames { get; private set; }
@@ -217,6 +246,12 @@ public sealed class RosterTransferService
 
             if (frame.Kind == RosterQrFrameKind.Manifest)
             {
+                if (frame.AuthenticationTag is null || !VerifyManifestAuthenticationTag(frame))
+                {
+                    RejectedFrames++;
+                    return RosterQrFrameImportResult.Rejected;
+                }
+
                 if (_sessionId is not null && string.Equals(_sessionId, frame.SessionId, StringComparison.Ordinal))
                 {
                     DuplicateFrames++;
@@ -279,15 +314,15 @@ public sealed class RosterTransferService
         private static bool TryParse(string? value, out RosterQrFrame frame)
         {
             frame = default;
-            var parts = value?.Split('|', 7, StringSplitOptions.None);
-            if (parts is not { Length: 6 or 7 } || parts[1].Length != 32)
+            var parts = value?.Split('|', StringSplitOptions.None);
+            if (parts is not { Length: 7 } || parts[1].Length != 32)
                 return false;
 
-            if (parts[0] == ManifestPrefix && parts.Length == 6 &&
+            if (parts[0] == ManifestPrefix && parts.Length == 7 &&
                 int.TryParse(parts[3], NumberStyles.None, CultureInfo.InvariantCulture, out var manifestPayloadLength) &&
                 int.TryParse(parts[4], NumberStyles.None, CultureInfo.InvariantCulture, out var manifestTotal) &&
                 manifestPayloadLength is > 0 and <= SyncTransferLimits.MaxOfflineQrPayloadBytes &&
-                manifestTotal is > 0 and <= MaximumFrameCount)
+                manifestTotal is > 0 and <= MaximumFrameCount && IsBase64Url(parts[6], 43))
             {
                 try
                 {
@@ -295,7 +330,7 @@ public sealed class RosterTransferService
                     if (string.IsNullOrWhiteSpace(fileName))
                         return false;
                     frame = new RosterQrFrame(RosterQrFrameKind.Manifest, parts[1], fileName, 0, manifestTotal,
-                        manifestPayloadLength, parts[5], null);
+                        manifestPayloadLength, parts[5], null, parts[2], parts[6]);
                     return true;
                 }
                 catch (System.FormatException)
@@ -304,7 +339,7 @@ public sealed class RosterTransferService
                 }
             }
 
-            if (parts[0] != DataPrefix || parts.Length != 7 ||
+            if (parts[0] != DataPrefix ||
                 !int.TryParse(parts[2], NumberStyles.None, CultureInfo.InvariantCulture, out var index) ||
                 !int.TryParse(parts[3], NumberStyles.None, CultureInfo.InvariantCulture, out var offset) ||
                 !int.TryParse(parts[4], NumberStyles.None, CultureInfo.InvariantCulture, out var payloadLength) ||
@@ -322,11 +357,41 @@ public sealed class RosterTransferService
                 if ((inferredLength is not (128 or 320) && !isSingleLegacyFrame) || chunk.Length <= 0 ||
                     chunk.Length > inferredLength || offset != index * inferredLength)
                     return false;
-                frame = new RosterQrFrame(RosterQrFrameKind.Data, parts[1], null, index, 0, payloadLength, parts[5], chunk);
+                frame = new RosterQrFrame(RosterQrFrameKind.Data, parts[1], null, index, 0, payloadLength, parts[5], chunk,
+                    null, null);
                 return true;
             }
             catch (System.FormatException)
             {
+                return false;
+            }
+        }
+
+        private bool VerifyManifestAuthenticationTag(RosterQrFrame frame)
+        {
+            if (!TryFromBase64Url(frame.AuthenticationTag!, out var suppliedTag))
+                return false;
+
+            var expectedTag = HMACSHA256.HashData(_authenticationKey,
+                Encoding.UTF8.GetBytes(string.Join('\n', "secrandom-roster-offline-qr/v2", frame.SessionId,
+                    frame.FileNameToken, frame.PayloadLength.ToString(CultureInfo.InvariantCulture),
+                    frame.TotalFrames.ToString(CultureInfo.InvariantCulture), frame.Checksum)));
+            return CryptographicOperations.FixedTimeEquals(expectedTag, suppliedTag);
+        }
+
+        private static bool IsBase64Url(string value, int expectedLength) => value.Length == expectedLength && value.All(character =>
+            character is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= '0' and <= '9' or '-' or '_');
+
+        private static bool TryFromBase64Url(string value, out byte[] bytes)
+        {
+            try
+            {
+                bytes = Base64UrlDecode(value);
+                return true;
+            }
+            catch (System.FormatException)
+            {
+                bytes = [];
                 return false;
             }
         }
@@ -340,7 +405,9 @@ public sealed class RosterTransferService
         int TotalFrames,
         int PayloadLength,
         string Checksum,
-        byte[]? Chunk);
+        byte[]? Chunk,
+        string? FileNameToken,
+        string? AuthenticationTag);
 
     private enum RosterQrFrameKind
     {
