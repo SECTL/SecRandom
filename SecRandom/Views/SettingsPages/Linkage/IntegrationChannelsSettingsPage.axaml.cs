@@ -17,7 +17,7 @@ using LR = SecRandom.Langs.SettingsPages.Linkage.Resources;
 
 namespace SecRandom.Views.SettingsPages.Linkage;
 
-[PageInfo("settings.linkage.integrationChannels", FluentIcons.PlugConnectedFilled, "settings.linkage", isHide: true)]
+[PageInfo("settings.linkage.integrationChannels", FluentIcons.PlugConnectedFilled, "settings.linkage")]
 public partial class IntegrationChannelsSettingsPage : UserControl
 {
     private bool _isSubscribed;
@@ -45,9 +45,9 @@ public partial class IntegrationChannelsSettingsPage : UserControl
         get => GetValue(NoIntegrationChannelsProperty);
         private set => SetValue(NoIntegrationChannelsProperty, value);
     }
-    public string IntegrationChannelsTitle => GetLinkageText("S_IntegrationChannels", "SDK notification channels");
-    public string IntegrationChannelsDescription => GetLinkageText("S_IntegrationChannels_D", "Manage approved SDK channels");
-    public string IntegrationChannelsEmptyText => GetLinkageText("M_IntegrationNoChannels", "No saved SDK notification channels");
+    public string IntegrationChannelsTitle => GetLinkageText("S_IntegrationChannels", "Third-party linkage");
+    public string IntegrationChannelsDescription => GetLinkageText("S_IntegrationChannels_D", "Manage third-party SDK channels");
+    public string IntegrationChannelsEmptyText => GetLinkageText("M_IntegrationNoChannels", "No saved third-party channels");
     public string IntegrationChannelsScanLabel => GetLinkageText("C_IntegrationScan", "Scan now");
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
@@ -193,7 +193,7 @@ public sealed class IntegrationChannelRow : ObservableObject
     public string LinkageEnabledLabel { get; }
     public string LinkageDisabledLabel { get; }
     public string Name => Channel.EffectiveName;
-    public string Details => $"{Channel.SdkVersion} | {StatusLabel}";
+    public string Details => Channel.SdkVersion;
     public bool IsEnabled
     {
         get => Channel.Enabled;

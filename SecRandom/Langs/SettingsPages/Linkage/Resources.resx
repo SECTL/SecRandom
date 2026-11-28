@@ -190,8 +190,8 @@
   <data name="S_External_CourseRoster" xml:space="preserve"><value>课程名单映射</value></data>
   <data name="S_External_CourseRoster_D" xml:space="preserve"><value>为课程绑定点名名单、闪抽名单和奖品池</value></data>
   <data name="C_OpenCourseRoster" xml:space="preserve"><value>管理课程名单</value></data>
-  <data name="S_IntegrationChannels" xml:space="preserve"><value>SDK 通知渠道</value></data>
-  <data name="S_IntegrationChannels_D" xml:space="preserve"><value>管理已批准的 SDK 渠道、结果发送和浮窗联动</value></data>
+  <data name="S_IntegrationChannels" xml:space="preserve"><value>第三方联动</value></data>
+  <data name="S_IntegrationChannels_D" xml:space="preserve"><value>管理第三方 SDK 应用的结果发送和浮窗联动</value></data>
   <data name="C_IntegrationOpen" xml:space="preserve"><value>管理</value></data>
   <data name="C_IntegrationScan" xml:space="preserve"><value>立即扫描</value></data>
   <data name="C_IntegrationRemove" xml:space="preserve"><value>删除</value></data>

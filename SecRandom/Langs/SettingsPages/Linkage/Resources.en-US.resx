@@ -175,8 +175,8 @@
   <data name="S_External_CourseRoster" xml:space="preserve"><value>Course roster mapping</value></data>
   <data name="S_External_CourseRoster_D" xml:space="preserve"><value>Bind courses to roll-call lists, Quick Draw lists, and prize pools</value></data>
   <data name="C_OpenCourseRoster" xml:space="preserve"><value>Manage course rosters</value></data>
-  <data name="S_IntegrationChannels"><value>SDK notification channels</value></data>
-  <data name="S_IntegrationChannels_D"><value>Manage approved SDK channels, result delivery, and floating-window linkage</value></data>
+  <data name="S_IntegrationChannels"><value>Third-party linkage</value></data>
+  <data name="S_IntegrationChannels_D"><value>Manage result delivery and floating-window linkage for third-party SDK apps</value></data>
   <data name="C_IntegrationOpen" xml:space="preserve"><value>Manage</value></data>
   <data name="C_IntegrationScan"><value>Scan now</value></data>
   <data name="C_IntegrationRemove"><value>Remove</value></data>

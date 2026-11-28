@@ -175,8 +175,8 @@
   <data name="S_External_CourseRoster" xml:space="preserve"><value>コース名簿の割り当て</value></data>
   <data name="S_External_CourseRoster_D" xml:space="preserve"><value>コースを点呼名簿、クイック抽選名簿、景品プールに割り当てます</value></data>
   <data name="C_OpenCourseRoster" xml:space="preserve"><value>コース名簿を管理</value></data>
-  <data name="S_IntegrationChannels"><value>SDK 通知チャネル</value></data>
-  <data name="S_IntegrationChannels_D"><value>承認済み SDK チャネル、結果送信、フローティングウィンドウ連携を管理します</value></data>
+  <data name="S_IntegrationChannels"><value>サードパーティ連携</value></data>
+  <data name="S_IntegrationChannels_D"><value>サードパーティ SDK アプリの結果送信とフローティングウィンドウ連携を管理します</value></data>
   <data name="C_IntegrationOpen" xml:space="preserve"><value>管理</value></data>
   <data name="C_IntegrationScan"><value>今すぐスキャン</value></data>
   <data name="C_IntegrationRemove"><value>削除</value></data>
