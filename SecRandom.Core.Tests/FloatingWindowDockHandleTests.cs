@@ -2,11 +2,26 @@ using System.Globalization;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Models;
 using SecRandom.Core.Services.FloatingWindow;
+using SecRandom.Views;
 
 namespace SecRandom.Core.Tests;
 
 public class FloatingWindowDockHandleTests
 {
+    [Theory]
+    [InlineData(1.0, 16, false)]
+    [InlineData(1.0, 17, true)]
+    [InlineData(1.5, 24, false)]
+    [InlineData(1.5, 25, true)]
+    [InlineData(2.0, 20, false)]
+    [InlineData(2.0, 32, false)]
+    [InlineData(2.0, 33, true)]
+    [InlineData(2.0, -33, true)]
+    public void TouchDragThresholdUsesDeviceIndependentPixels(double scaling, int deltaY, bool expected)
+    {
+        Assert.Equal(expected, FloatingWindow.HasExceededDockDragThreshold(deltaY, scaling, isTouchOrPen: true));
+    }
+
     [Fact]
     public void ChineseUi_AllowsExactlyOneCharacter()
     {

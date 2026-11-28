@@ -23,6 +23,7 @@ using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.Core.Services.FloatingWindow;
 using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Helpers;
@@ -48,6 +49,7 @@ public partial class FloatingWindow : Window
     private int _snapAnimationRevision;
     private bool _isMovingDockHandle;
     private bool _dockHandleWasDragged;
+    private IPointer? _dockDragPointer;
     private PixelPoint _dockDragStartScreenPoint;
     private PixelPoint _dockDragStartPosition;
     private PixelPoint _windowDragStartScreenPoint;
@@ -88,11 +90,11 @@ public partial class FloatingWindow : Window
     /// </summary>
     private const int EdgeSnapDistance = 36;
 
-    /// <summary>鼠标按下后移动多少像素才算真正开始拖窗（沿用原来的精确阈值）。</summary>
+    /// <summary>鼠标按下后移动多少 DIP 才算真正开始拖窗。</summary>
     private const int MouseDragStartDistance = 4;
 
-    /// <summary>触控/手写笔按下后移动多少像素才算开始拖窗：手指的抖动需要更大的死区，否则点按会被吞。</summary>
-    private const int TouchDragStartDistance = 12;
+    /// <summary>触控/手写笔按下后移动多少 DIP 才算开始拖窗：手指的抖动需要更大的死区，否则点按会被吞。</summary>
+    private const int TouchDragStartDistance = 16;
 
     /// <summary>首次呈现时的定位只判断一次：之后窗口再显示不应该重新被当成"上次是收纳态"。</summary>
     private bool _startupPositionRestored;
@@ -134,6 +136,7 @@ public partial class FloatingWindow : Window
         AddHandler(PointerPressedEvent, OnPointerPressed, RoutingStrategies.Tunnel, handledEventsToo: true);
         AddHandler(PointerMovedEvent, OnPointerMoved, RoutingStrategies.Tunnel, handledEventsToo: true);
         AddHandler(PointerReleasedEvent, OnPointerReleased, RoutingStrategies.Tunnel, handledEventsToo: true);
+        AddHandler(PointerCaptureLostEvent, OnDockPointerCaptureLost, RoutingStrategies.Tunnel, handledEventsToo: true);
         ViewModel.Config.FloatingWindowSettings.PropertyChanged += FloatingWindowSettings_OnPropertyChanged;
         ViewModel.Config.LinkageSettings.PropertyChanged += LinkageSettings_OnPropertyChanged;
         _linkageService.StateChanged += LinkageServiceOnStateChanged;
@@ -403,8 +406,9 @@ public partial class FloatingWindow : Window
         {
             AddCustomButtons(settings);
 
-            foreach (var button in GetVisiblePluginButtons(settings))
-                ButtonsPanel.Children.Add(CreatePluginButton(button, settings));
+            if (IAppHost.TryGetService<FeatureRuntimeSnapshot>()?.IsEnabled(StartupFeatureCatalog.Plugins) != false)
+                foreach (var button in GetVisiblePluginButtons(settings))
+                    ButtonsPanel.Children.Add(CreatePluginButton(button, settings));
         }
 
         UpdateButtonsPanelWidth(settings);
@@ -415,6 +419,9 @@ public partial class FloatingWindow : Window
         var iconService = IAppHost.TryGetService<FloatingWindowIconService>();
         foreach (var config in FloatingWindowButtonCatalog.GetRenderableButtons(settings.CustomButtons))
         {
+            if (!FloatingWindowButtonActionRunner.IsFeatureAvailable(config))
+                continue;
+
             var label = FloatingWindowButtonCatalog.TryGetDisplayLabel(config.Label, out var displayLabel)
                 ? displayLabel
                 : config.Label;
@@ -580,14 +587,20 @@ public partial class FloatingWindow : Window
         if (IsSimpleMode)
         {
             yield return "roll_call";
-            yield return "quick_draw";
+            if (IAppHost.TryGetService<SecRandom.Core.Services.FeatureConfiguration.FeatureRuntimeSnapshot>()
+                    ?.IsEnabled(SecRandom.Core.Services.FeatureConfiguration.StartupFeatureCatalog.QuickDraw) != false)
+                yield return "quick_draw";
             yield break;
         }
 
         if (settings.ShowRollCallButton) yield return "roll_call";
-        if (settings.ShowQuickDrawButton) yield return "quick_draw";
+        if (settings.ShowQuickDrawButton && IAppHost.TryGetService<SecRandom.Core.Services.FeatureConfiguration.FeatureRuntimeSnapshot>()
+                ?.IsEnabled(SecRandom.Core.Services.FeatureConfiguration.StartupFeatureCatalog.QuickDraw) != false)
+            yield return "quick_draw";
         if (settings.ShowLotteryButton && isLotteryEnabled) yield return "lottery";
-        if (settings.ShowTimerButton) yield return "timer";
+        if (settings.ShowTimerButton && IAppHost.TryGetService<SecRandom.Core.Services.FeatureConfiguration.FeatureRuntimeSnapshot>()
+                ?.IsEnabled(SecRandom.Core.Services.FeatureConfiguration.StartupFeatureCatalog.Timer) != false)
+            yield return "timer";
     }
 
     private void FeatureAvailabilityOnChanged(object? sender, EventArgs e)
@@ -1113,6 +1126,9 @@ public partial class FloatingWindow : Window
             return;
         }
 
+        if (_isMovingDockHandle)
+            return;
+
         var isPrimaryContact = IsPrimaryContact(e);
 
         // 鼠标右键同样算一次长按：Windows 把触控"长按"转成的就是这次右键按下
@@ -1139,9 +1155,15 @@ public partial class FloatingWindow : Window
                 ++_dockRevision;
                 _isMovingDockHandle = true;
                 _dockHandleWasDragged = false;
+                _dockDragPointer = e.Pointer;
                 _dockDragStartScreenPoint = Position + ToPixelPoint(e.GetPosition(this));
                 _dockDragStartPosition = Position;
                 e.Pointer.Capture(this);
+                if (!ReferenceEquals(e.Pointer.Captured, this))
+                {
+                    _isMovingDockHandle = false;
+                    _dockDragPointer = null;
+                }
                 return;
             }
 
@@ -1216,7 +1238,8 @@ public partial class FloatingWindow : Window
 
         if (_isMovingDockHandle)
         {
-            MoveDockHandle(e);
+            if (ReferenceEquals(e.Pointer, _dockDragPointer))
+                MoveDockHandle(e);
             return;
         }
 
@@ -1228,7 +1251,8 @@ public partial class FloatingWindow : Window
         var deltaY = pointerPosition.Y - _windowDragStartScreenPoint.Y;
         // 手指按下时的自然抖动比鼠标大：阈值太小会把"点一下"当成拖窗，按钮的 Click 就被吞掉了。
         var dragStartDistance = _windowDragStartedByMouse ? MouseDragStartDistance : TouchDragStartDistance;
-        if (!_isMovingWindow && Math.Abs(deltaX) < dragStartDistance && Math.Abs(deltaY) < dragStartDistance)
+        if (!_isMovingWindow && Math.Abs(deltaX) < dragStartDistance * RenderScaling
+                             && Math.Abs(deltaY) < dragStartDistance * RenderScaling)
             return;
 
         if (!_isMovingWindow)
@@ -1265,7 +1289,10 @@ public partial class FloatingWindow : Window
 
         var pointerPosition = Position + ToPixelPoint(e.GetPosition(this));
         var deltaY = pointerPosition.Y - _dockDragStartScreenPoint.Y;
-        _dockHandleWasDragged |= Math.Abs(deltaY) > 2;
+        _dockHandleWasDragged |= HasExceededDockDragThreshold(
+            deltaY, RenderScaling, e.Pointer.Type is PointerType.Touch or PointerType.Pen);
+        if (!_dockHandleWasDragged)
+            return;
         var height = Math.Max(1, (int)Math.Ceiling(Bounds.Height * RenderScaling));
         var y = Math.Clamp(
             _dockDragStartPosition.Y + deltaY,
@@ -1276,6 +1303,12 @@ public partial class FloatingWindow : Window
 
         // 拖动停靠小球时把纵向锚点同步给另一侧，保持"两侧高度统一"。
         NotifySiblingAnchor(_dockAnchorCenterY);
+    }
+
+    internal static bool HasExceededDockDragThreshold(int deltaY, double scaling, bool isTouchOrPen)
+    {
+        var threshold = isTouchOrPen ? TouchDragStartDistance : MouseDragStartDistance;
+        return Math.Abs((double)deltaY) > threshold * scaling;
     }
 
     /// <summary>钉边窗口拖动时只允许改变纵向位置，横向始终贴回角色对应的边缘。</summary>
@@ -1305,7 +1338,10 @@ public partial class FloatingWindow : Window
 
         if (_isMovingDockHandle)
         {
+            if (!ReferenceEquals(e.Pointer, _dockDragPointer))
+                return;
             _isMovingDockHandle = false;
+            _dockDragPointer = null;
             e.Pointer.Capture(null);
             if (_dockHandleWasDragged)
                 SavePosition();
@@ -1346,6 +1382,18 @@ public partial class FloatingWindow : Window
 
         e.Handled = true;
         CompleteWindowDrag(e.Pointer);
+    }
+
+    private void OnDockPointerCaptureLost(object? sender, PointerCaptureLostEventArgs e)
+    {
+        if (!_isMovingDockHandle || !ReferenceEquals(e.Pointer, _dockDragPointer)
+                                 || ReferenceEquals(e.Pointer.Captured, this))
+            return;
+
+        _isMovingDockHandle = false;
+        _dockDragPointer = null;
+        if (_dockHandleWasDragged)
+            SavePosition();
     }
 
     /// <summary>
