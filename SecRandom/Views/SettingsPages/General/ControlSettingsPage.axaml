@@ -89,94 +89,49 @@
                     </StackPanel>
                 </fa:FASettingsExpander.Footer>
 
-                <!-- 账号方式：地点、年级、班级逐级筛选，三项选完后才能接入。 -->
+                <!-- 账号方式只负责登录、选择地点和接入；接入后的班级绑定复用下方通用卡。 -->
                 <fa:FASettingsExpanderItem x:Name="AccountEnrollmentSiteRow"
                                            Content="{x:Static lc:Resources.S_AccountSite}"
                                            IsVisible="{Binding IsAccountEnrollmentMode}">
                     <fa:FASettingsExpanderItem.Footer>
-                        <ComboBox ItemsSource="{Binding AccountSites}"
-                                  SelectedItem="{Binding SelectedAccountSite}"
-                                  MinWidth="220"
-                                  IsEnabled="{Binding HasAccountSites}"
-                                  PlaceholderText="{x:Static lc:Resources.S_AccountSite}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="cc:ControlCenterSite">
-                                    <StackPanel>
-                                        <TextBlock Text="{Binding Name}" />
-                                        <TextBlock Text="{Binding PublicId}"
-                                                   FontSize="11"
-                                                   Opacity="0.6" />
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
-                <fa:FASettingsExpanderItem x:Name="AccountEnrollmentGradeRow"
-                                           Content="{x:Static lc:Resources.S_AccountGrade}"
-                                           IsVisible="{Binding IsAccountEnrollmentMode}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ComboBox ItemsSource="{Binding AccountGrades}"
-                                  SelectedItem="{Binding SelectedAccountGrade}"
-                                  MinWidth="220"
-                                  IsEnabled="{Binding HasAccountGrades}"
-                                  PlaceholderText="{x:Static lc:Resources.S_AccountGrade}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="cc:ControlCenterGrade">
-                                    <TextBlock Text="{Binding Name}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
-                <fa:FASettingsExpanderItem x:Name="AccountEnrollmentClassRow"
-                                           Content="{x:Static lc:Resources.S_AccountClass}"
-                                           IsVisible="{Binding IsAccountEnrollmentMode}">
-                    <fa:FASettingsExpanderItem.Footer>
-                        <ComboBox ItemsSource="{Binding AccountClasses}"
-                                  SelectedItem="{Binding SelectedAccountClass}"
-                                  MinWidth="220"
-                                  IsEnabled="{Binding HasAccountClasses}"
-                                  PlaceholderText="{x:Static lc:Resources.S_AccountClass}">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate x:DataType="cc:ControlCenterClass">
-                                    <TextBlock Text="{Binding Name}" />
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </fa:FASettingsExpanderItem.Footer>
-                </fa:FASettingsExpanderItem>
-
-                <fa:FASettingsExpanderItem x:Name="AccountEnrollmentActions"
-                                           Content="{x:Static lc:Resources.S_AccountCurrent}"
-                                           IsVisible="{Binding IsAccountEnrollmentMode}">
-                    <fa:FASettingsExpanderItem.Footer>
-                    <StackPanel Spacing="8">
-                        <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding !IsAccountSignedIn}">
-                            <Button Content="{x:Static lc:Resources.C_SignInAccount}"
-                                    Command="{Binding SignInAccountCommand}"
-                                    IsEnabled="{Binding CanSignInAccount}" />
-                            <TextBlock Text="{x:Static lc:Resources.S_AccountNotSignedIn}"
-                                       Opacity="0.7"
-                                       VerticalAlignment="Center" />
+                        <StackPanel Spacing="8">
+                            <ComboBox ItemsSource="{Binding AccountSites}"
+                                      SelectedItem="{Binding SelectedAccountSite}"
+                                      MinWidth="220"
+                                      IsEnabled="{Binding HasAccountSites}"
+                                      PlaceholderText="{x:Static lc:Resources.S_AccountSite}">
+                                <ComboBox.ItemTemplate>
+                                    <DataTemplate x:DataType="cc:ControlCenterSite">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Name}" />
+                                            <TextBlock Text="{Binding PublicId}"
+                                                       FontSize="11"
+                                                       Opacity="0.6" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ComboBox.ItemTemplate>
+                            </ComboBox>
+                            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding !IsAccountSignedIn}">
+                                <Button Content="{x:Static lc:Resources.C_SignInAccount}"
+                                        Command="{Binding SignInAccountCommand}"
+                                        IsEnabled="{Binding CanSignInAccount}" />
+                                <TextBlock Text="{x:Static lc:Resources.S_AccountNotSignedIn}"
+                                           Opacity="0.7"
+                                           VerticalAlignment="Center" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsAccountSignedIn}">
+                                <SelectableTextBlock Text="{Binding AccountName}" VerticalAlignment="Center" />
+                                <Button Content="{x:Static lc:Resources.C_RefreshAccount}"
+                                        Command="{Binding RefreshAccountCommand}"
+                                        IsEnabled="{Binding !IsAccountBusy}" />
+                                <Button Content="{x:Static lc:Resources.C_EnrollAccount}"
+                                        Command="{Binding EnrollWithAccountCommand}"
+                                        IsEnabled="{Binding CanEnrollWithAccount}" />
+                            </StackPanel>
+                            <ProgressBar IsIndeterminate="True"
+                                         Height="4"
+                                         IsVisible="{Binding IsAccountBusy}" />
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsAccountSignedIn}">
-                            <SelectableTextBlock Text="{Binding AccountName}" VerticalAlignment="Center" />
-                            <Button Content="{x:Static lc:Resources.C_RefreshAccount}"
-                                    Command="{Binding RefreshAccountCommand}"
-                                    IsEnabled="{Binding !IsAccountBusy}" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsAccountSignedIn}">
-                            <Button Content="{x:Static lc:Resources.C_EnrollAccount}"
-                                    Command="{Binding EnrollWithAccountCommand}"
-                                    IsEnabled="{Binding CanEnrollWithAccount}" />
-                        </StackPanel>
-                        <ProgressBar IsIndeterminate="True"
-                                     Height="4"
-                                     IsVisible="{Binding IsAccountBusy}" />
-                    </StackPanel>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
 

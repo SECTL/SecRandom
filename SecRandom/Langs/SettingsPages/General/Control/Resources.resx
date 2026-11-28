@@ -339,7 +339,7 @@
     <value>账号接入</value>
   </data>
   <data name="S_AccountEnrollment_D" xml:space="preserve">
-    <value>登录后选择地点、年级和班级</value>
+    <value>登录后选择地点，接入后再绑定班级</value>
   </data>
   <data name="S_AccountCurrent" xml:space="preserve">
     <value>当前账号</value>
@@ -357,7 +357,7 @@
     <value>班级</value>
   </data>
   <data name="S_AccountClass_Optional" xml:space="preserve">
-    <value>地点、年级、班级全部选完之后才能接入</value>
+    <value>接入后可在班级卡中绑定班级</value>
   </data>
   <data name="S_Enrollment_Source" xml:space="preserve">
     <value>接入方式</value>

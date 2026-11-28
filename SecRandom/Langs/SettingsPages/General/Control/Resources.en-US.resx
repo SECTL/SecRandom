@@ -319,7 +319,7 @@
     <value>Account enrollment</value>
   </data>
   <data name="S_AccountEnrollment_D" xml:space="preserve">
-    <value>Sign in, then choose a site, grade and class</value>
+    <value>Sign in and choose a site; bind a class after enrollment</value>
   </data>
   <data name="S_AccountCurrent" xml:space="preserve">
     <value>Signed in as</value>
@@ -337,7 +337,7 @@
     <value>Class</value>
   </data>
   <data name="S_AccountClass_Optional" xml:space="preserve">
-    <value>Pick the site, grade and class — all three — before enrolling</value>
+    <value>Bind a class from the shared class card after enrollment</value>
   </data>
   <data name="S_Enrollment_Source" xml:space="preserve">
     <value>Enrolled via</value>

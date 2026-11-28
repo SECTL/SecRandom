@@ -562,10 +562,14 @@ public sealed class TabletControlHostTests
         Assert.DoesNotContain("IsAccountEnrollmentMode = false", viewModelSource, StringComparison.Ordinal);
         Assert.DoesNotContain("IsAccountEnrollmentMode = false", pageSource, StringComparison.Ordinal);
         Assert.Contains("status.EnrollmentMethod, NodeEnrollmentMethods.Account", viewModelSource, StringComparison.Ordinal);
-        Assert.Contains("var enrolledClassId = enrollment is { HasCredential: true }", viewModelSource,
-            StringComparison.Ordinal);
-        Assert.Contains("classes.Any(item => string.Equals(item.Id, enrolledClassId", viewModelSource,
-            StringComparison.Ordinal);
+
+        // 账号接入与配对码接入一样，先建立地点设备凭据，再通过共用班级卡分班。
+        Assert.Contains("&& SelectedAccountSite is not null;", viewModelSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("SelectedAccountGrade", viewModelSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("SelectedAccountClass", viewModelSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("AccountEnrollmentGradeRow", card, StringComparison.Ordinal);
+        Assert.DoesNotContain("AccountEnrollmentClassRow", card, StringComparison.Ordinal);
+        Assert.Contains("classId: null", viewModelSource, StringComparison.Ordinal);
     }
 
     [Fact]

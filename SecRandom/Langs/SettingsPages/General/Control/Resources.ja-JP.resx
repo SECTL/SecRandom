@@ -319,7 +319,7 @@
     <value>アカウント接続</value>
   </data>
   <data name="S_AccountEnrollment_D" xml:space="preserve">
-    <value>ログイン後に拠点・学年・クラスを選択</value>
+    <value>ログイン後に拠点を選び、接続後にクラスを割り当て</value>
   </data>
   <data name="S_AccountCurrent" xml:space="preserve">
     <value>サインイン中</value>
@@ -337,7 +337,7 @@
     <value>クラス</value>
   </data>
   <data name="S_AccountClass_Optional" xml:space="preserve">
-    <value>拠点・学年・クラスをすべて選ぶと接続できます</value>
+    <value>接続後に共通のクラスカードからクラスを割り当て</value>
   </data>
   <data name="S_Enrollment_Source" xml:space="preserve">
     <value>接続方法</value>

@@ -185,26 +185,14 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     /// <summary>账号接入区的提示；只在账号卡里显示。</summary>
     [ObservableProperty] private string _accountMessage = string.Empty;
 
-    /// <summary>账号区是否正在请求（登录跳转 / 拉地点年级班级 / 接入）。</summary>
+    /// <summary>账号区是否正在请求（登录跳转 / 拉地点 / 接入）。</summary>
     [ObservableProperty] private bool _isAccountBusy;
 
     [ObservableProperty] private CC.ControlCenterSite? _selectedAccountSite;
 
-    [ObservableProperty] private CC.ControlCenterGrade? _selectedAccountGrade;
-
-    [ObservableProperty] private CC.ControlCenterClass? _selectedAccountClass;
-
     public ObservableCollection<CC.ControlCenterSite> AccountSites { get; } = [];
 
-    public ObservableCollection<CC.ControlCenterGrade> AccountGrades { get; } = [];
-
-    public ObservableCollection<CC.ControlCenterClass> AccountClasses { get; } = [];
-
     public bool HasAccountSites => AccountSites.Count > 0;
-
-    public bool HasAccountGrades => AccountGrades.Count > 0;
-
-    public bool HasAccountClasses => AccountClasses.Count > 0;
 
     public bool ShowAccountMessage => !string.IsNullOrEmpty(AccountMessage);
 
@@ -214,9 +202,7 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     public bool CanSignInAccount => _auth is not null && !IsAccountSignedIn && !IsAccountBusy;
 
     /// <summary>
-    ///     账号接入：必须已登录，且地点、年级、班级三样都选好。
-    ///     班级不是可选项——没有班级的接入记录既不能占班，也不会被控制台当成"上课中"，
-    ///     所以"先接进来、以后再指定班级"这条路径已经关掉。
+    ///     账号接入：必须已登录并选好地点。接入后的班级绑定走通用班级卡，和配对码接入一致。
     /// </summary>
     public bool CanEnrollWithAccount => _enrollmentStore is not null
                                         && _controlCenterClient is not null
@@ -224,9 +210,7 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
                                         && !IsEnrolling
                                         && !IsAccountBusy
                                         && IsAccountSignedIn
-                                        && SelectedAccountSite is not null
-                                        && SelectedAccountGrade is not null
-                                        && SelectedAccountClass is not null;
+                                        && SelectedAccountSite is not null;
 
     /// <summary>年级列表。来自 <c>/control/api/device/tree</c>，与班级级联共用同一份树。</summary>
     public ObservableCollection<ControlGradeNode> GradeOptions { get; } = [];
@@ -836,8 +820,8 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
                 ControlNodeDisplayName.Resolve(_stateStore.Current.DisplayName, _options.HostName),
                 Environment.MachineName,
                 _stateStore.Current.NodeId,
-                SelectedAccountClass?.Id,
-                CancellationToken.None).ConfigureAwait(true);
+                classId: null,
+                cancellationToken: CancellationToken.None).ConfigureAwait(true);
 
             var record = new NodeEnrollmentRecord
             {
@@ -899,11 +883,7 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
     private void ClearAccountSelection()
     {
         SelectedAccountSite = null;
-        SelectedAccountGrade = null;
-        SelectedAccountClass = null;
         AccountSites.Clear();
-        AccountGrades.Clear();
-        AccountClasses.Clear();
         NotifyAccountCollections();
         AccountMessage = string.Empty;
     }
@@ -921,8 +901,6 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
             foreach (var site in me.Sites)
                 AccountSites.Add(site);
 
-            AccountGrades.Clear();
-            AccountClasses.Clear();
             NotifyAccountCollections();
 
             // 已接入的地点优先选中；只有一个地点时直接选它，省掉一次点击。
@@ -950,125 +928,9 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
         }
     }
 
-    private async Task LoadAccountGradesAsync(CC.ControlCenterSite site)
-    {
-        if (_controlCenterClient is null)
-            return;
-
-        BeginAccountWork();
-        try
-        {
-            var grades = await _controlCenterClient.GetGradesAsync(site.PublicId, CancellationToken.None)
-                .ConfigureAwait(true);
-
-            // 用户在请求回来前又换了地点：这批结果已经过期。
-            if (!string.Equals(SelectedAccountSite?.PublicId, site.PublicId, StringComparison.OrdinalIgnoreCase))
-                return;
-
-            AccountGrades.Clear();
-            foreach (var grade in grades)
-                AccountGrades.Add(grade);
-            AccountClasses.Clear();
-            NotifyAccountCollections();
-
-            var gradeToSelect = AccountGrades.Count == 1 ? AccountGrades[0] : null;
-            var enrollment = _enrollmentStore?.Status;
-            var enrolledClassId = enrollment is { HasCredential: true }
-                                  && string.Equals(enrollment.EnrollmentMethod, NodeEnrollmentMethods.Account,
-                                      StringComparison.Ordinal)
-                ? enrollment.ClassId
-                : null;
-
-            // 账号接入只保存班级 ID。多年级学校里按当前班级反查年级，清除后可以直接复用原选择。
-            if (gradeToSelect is null && !string.IsNullOrWhiteSpace(enrolledClassId))
-            {
-                foreach (var grade in AccountGrades)
-                {
-                    if (!string.Equals(SelectedAccountSite?.PublicId, site.PublicId,
-                            StringComparison.OrdinalIgnoreCase)
-                        || SelectedAccountGrade is not null)
-                        return;
-
-                    var classes = await _controlCenterClient.GetClassesAsync(site.PublicId, grade.Id,
-                        CancellationToken.None).ConfigureAwait(true);
-                    if (classes.Any(item => string.Equals(item.Id, enrolledClassId, StringComparison.Ordinal)))
-                    {
-                        gradeToSelect = grade;
-                        break;
-                    }
-                }
-            }
-
-            if (!string.Equals(SelectedAccountSite?.PublicId, site.PublicId,
-                    StringComparison.OrdinalIgnoreCase)
-                || SelectedAccountGrade is not null)
-                return;
-
-            SelectedAccountGrade = gradeToSelect;
-        }
-        catch (ControlPlaneException exception)
-        {
-            AccountMessage = DescribeAccountFailure(exception);
-            _logger.LogWarning("读取集控年级失败：{Code}", exception.Code);
-        }
-        catch (Exception exception)
-        {
-            _logger.LogWarning(exception, "读取集控年级失败。");
-            AccountMessage = LR.M_Account_Err_Network;
-        }
-        finally
-        {
-            EndAccountWork();
-        }
-    }
-
-    private async Task LoadAccountClassesAsync(CC.ControlCenterSite site, CC.ControlCenterGrade grade)
-    {
-        if (_controlCenterClient is null)
-            return;
-
-        BeginAccountWork();
-        try
-        {
-            var classes = await _controlCenterClient.GetClassesAsync(site.PublicId, grade.Id, CancellationToken.None)
-                .ConfigureAwait(true);
-
-            if (!string.Equals(SelectedAccountSite?.PublicId, site.PublicId, StringComparison.OrdinalIgnoreCase)
-                || !string.Equals(SelectedAccountGrade?.Id, grade.Id, StringComparison.Ordinal))
-                return;
-
-            AccountClasses.Clear();
-            foreach (var item in classes)
-                AccountClasses.Add(item);
-            NotifyAccountCollections();
-
-            // 已绑定的班级落在这一年级里就预选它；否则只有一个班时直接选。
-            var currentClassId = _enrollmentStore?.Status.ClassId;
-            SelectedAccountClass = AccountClasses.FirstOrDefault(c =>
-                                       string.Equals(c.Id, currentClassId, StringComparison.Ordinal))
-                                   ?? (AccountClasses.Count == 1 ? AccountClasses[0] : null);
-        }
-        catch (ControlPlaneException exception)
-        {
-            AccountMessage = DescribeAccountFailure(exception);
-            _logger.LogWarning("读取集控班级失败：{Code}", exception.Code);
-        }
-        catch (Exception exception)
-        {
-            _logger.LogWarning(exception, "读取集控班级失败。");
-            AccountMessage = LR.M_Account_Err_Network;
-        }
-        finally
-        {
-            EndAccountWork();
-        }
-    }
-
     private void NotifyAccountCollections()
     {
         OnPropertyChanged(nameof(HasAccountSites));
-        OnPropertyChanged(nameof(HasAccountGrades));
-        OnPropertyChanged(nameof(HasAccountClasses));
         OnPropertyChanged(nameof(CanEnrollWithAccount));
     }
 
@@ -1123,29 +985,8 @@ public sealed partial class ControlSettingsPageViewModel : ViewModelBase, IDispo
 
     partial void OnSelectedAccountSiteChanged(CC.ControlCenterSite? value)
     {
-        // 换地点必须把年级/班级一起作废：否则旧地点的年级会留在下拉里，接入时带着别人的班级提交。
-        // 先清选中项再清集合，两个 partial 处理器各自负责下一级的清理。
-        SelectedAccountGrade = null;
-        SelectedAccountClass = null;
-        AccountGrades.Clear();
-        AccountClasses.Clear();
-        NotifyAccountCollections();
-        if (value is not null)
-            _ = LoadAccountGradesAsync(value);
-    }
-
-    partial void OnSelectedAccountGradeChanged(CC.ControlCenterGrade? value)
-    {
-        SelectedAccountClass = null;
-        AccountClasses.Clear();
-        NotifyAccountCollections();
-        if (value is not null && SelectedAccountSite is not null)
-            _ = LoadAccountClassesAsync(SelectedAccountSite, value);
-    }
-
-    /// <summary>班级决定接入按钮是否可点，选中/清空都要重新广播一次。</summary>
-    partial void OnSelectedAccountClassChanged(CC.ControlCenterClass? value) =>
         OnPropertyChanged(nameof(CanEnrollWithAccount));
+    }
 
     private void ApplyEnrollmentIdentity(NodeEnrollmentRecord record)
     {
