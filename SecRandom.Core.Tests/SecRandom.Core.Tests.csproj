@@ -38,6 +38,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\SecRandom.Launcher\SecRandom.Launcher.csproj" />
         <ProjectReference Include="..\SecRandom.Core\SecRandom.Core.csproj"/>
         <ProjectReference Include="..\SecRandom\SecRandom.csproj"/>
         <ProjectReference Include="..\SecRandom.Platforms\SecRandom.Platforms.csproj" />

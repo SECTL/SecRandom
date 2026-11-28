@@ -67,6 +67,20 @@ public static class DesktopDataRootResolver
         if (anchorResult is { Status: DataRootAnchorStatus.Valid, Anchor: { } anchor })
         {
             var root = Path.GetFullPath(anchor.DataRoot);
+            if (isPortable && DataRootModeExtensions.Parse(anchor.Mode) == DataRootMode.Package
+                && !DataRootPaths.HasData(packageDataRoot)
+                && payloadDataRoots.Any(payload => DataRootPaths.PathEquals(payload, root)))
+                return Build(packageDataRoot, DataRootMode.Package, DataRootSource.RepairedPayload,
+                    needsNotice: false, payloadDataRootToRepair: root);
+            if (isPortable && DataRootModeExtensions.Parse(anchor.Mode) == DataRootMode.Package
+                && !DataRootPaths.PathEquals(root, packageDataRoot)
+                && (DataRootPaths.HasData(packageDataRoot) || !DataRootPaths.HasData(root)))
+            {
+                if (!DataRootPaths.HasData(packageDataRoot) && payloadDataRoots.Length > 0)
+                    return Build(packageDataRoot, DataRootMode.Package, DataRootSource.RepairedPayload,
+                        needsNotice: false, payloadDataRootToRepair: payloadDataRoots[0]);
+                root = packageDataRoot;
+            }
             RememberOther(packageDataRoot, root);
             RememberOther(standardDataRoot, root);
             foreach (var payloadRoot in payloadDataRoots)

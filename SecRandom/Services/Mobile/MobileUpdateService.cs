@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -30,6 +31,7 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
     private readonly IDeserializer _yaml = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
     private readonly UpdateSourceResolver _sourceResolver = new(httpClient);
     private UpdateArtifact? _artifact;
+    private string? _tag;
     private string _availableVersion = string.Empty;
     private string _status = string.Empty;
     private bool _isBusy;
@@ -63,15 +65,20 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
         try
         {
             IsBusy = true;
+            _artifact = null;
+            _tag = null;
+            AvailableVersion = string.Empty;
+            OnPropertyChanged(nameof(IsUpdateAvailable));
             Status = LR.M_CheckingUpdates;
             var (tag, manifest) = await GetManifestAsync(cancellationToken);
             var artifact = manifest.Artifacts.SingleOrDefault(artifact =>
                 string.Equals(artifact.Os, "android", StringComparison.OrdinalIgnoreCase)
-                && string.Equals(artifact.Arch, "arm64", StringComparison.OrdinalIgnoreCase)
+                && string.Equals(artifact.Arch, RuntimeInformation.ProcessArchitecture.ToString(), StringComparison.OrdinalIgnoreCase)
                 && string.Equals(artifact.Kind, "android-apk", StringComparison.OrdinalIgnoreCase));
             if (artifact is null || !UpdateVersionComparer.IsNewer(manifest.Version, GlobalConstants.Version))
             {
                 _artifact = null;
+                _tag = null;
                 AvailableVersion = string.Empty;
                 Status = LR.M_UpToDate;
                 OnPropertyChanged(nameof(IsUpdateAvailable));
@@ -79,6 +86,7 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
             }
 
             _artifact = artifact;
+            _tag = tag;
             AvailableVersion = manifest.Version;
             Status = string.Format(CultureInfo.CurrentCulture, LR.M_UpdateAvailable, manifest.Version);
             OnPropertyChanged(nameof(IsUpdateAvailable));
@@ -95,15 +103,14 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
 
     public async Task DownloadAndInstallAsync(CancellationToken cancellationToken = default)
     {
-        if (_artifact is null || IsBusy)
+        if (_artifact is null || _tag is null || IsBusy)
             return;
 
         try
         {
             IsBusy = true;
             Status = LR.M_DownloadingUpdate;
-            var bytes = await DownloadWithFallbackAsync(_artifact.AssetName, MaxArtifactBytes, cancellationToken);
-            VerifyArtifact(bytes, _artifact);
+            var bytes = await DownloadWithFallbackAsync(_tag, _artifact, cancellationToken);
             var path = await installer.StagePackageAsync(bytes, _artifact.AssetName, cancellationToken);
             Status = LR.M_OpeningInstaller;
             installer.OpenInstaller(path);
@@ -136,26 +143,34 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
                                 ?? throw new InvalidDataException(LR.M_ManifestInvalid);
                 return (tag, manifest);
             }
-            catch (Exception) when (source != UpdateSource.GitHub)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                // The direct GitHub source is the fallback when the mirror is unavailable.
+                throw;
+            }
+            catch (Exception)
+            {
+                // Try the next source in the resolver's order.
             }
         }
 
         throw new InvalidOperationException(LR.M_ManifestUnavailable);
     }
 
-    private async Task<byte[]> DownloadWithFallbackAsync(string assetName, int maxBytes, CancellationToken cancellationToken)
+    private async Task<byte[]> DownloadWithFallbackAsync(string tag, UpdateArtifact artifact, CancellationToken cancellationToken)
     {
         foreach (var source in await GetSourcesAsync(cancellationToken))
         {
             try
             {
-                var tag = await GetReleaseTagAsync(source, cancellationToken);
-                if (!string.IsNullOrWhiteSpace(tag))
-                    return await DownloadAsync(source, tag, assetName, maxBytes, cancellationToken);
+                var bytes = await DownloadAsync(source, tag, artifact.AssetName, MaxArtifactBytes, cancellationToken);
+                VerifyArtifact(bytes, artifact);
+                return bytes;
             }
-            catch (Exception) when (source != UpdateSource.GitHub)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception)
             {
             }
         }
@@ -189,11 +204,13 @@ public sealed class MobileUpdateService(HttpClient httpClient, IMobileUpdateInst
     private Task<byte[]> DownloadAsync(UpdateSource source, string tag, string assetName, int maxBytes, CancellationToken cancellationToken)
     {
         if (source == UpdateSource.Sectl)
-            return BoundedContentReader.GetAsync(httpClient, SectlSoftwareApi.UpdateFile(tag, assetName), maxBytes, cancellationToken);
+            return BoundedContentReader.GetAsync(httpClient, SectlSoftwareApi.UpdateFile(tag, assetName), maxBytes, cancellationToken,
+                maxBytes == MaxArtifactBytes ? TimeSpan.FromMinutes(30) : null);
 
         var direct = $"https://github.com/{Repository}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(assetName)}";
         var uri = source == UpdateSource.GitHub ? new Uri(direct) : new Uri($"{UpdateSourceResolver.GitHubMirrorPrefix}{direct}");
-        return BoundedContentReader.GetAsync(httpClient, uri, maxBytes, cancellationToken);
+        return BoundedContentReader.GetAsync(httpClient, uri, maxBytes, cancellationToken,
+            maxBytes == MaxArtifactBytes ? TimeSpan.FromMinutes(30) : null);
     }
 
     private static void VerifyArtifact(byte[] bytes, UpdateArtifact artifact)

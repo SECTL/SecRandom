@@ -115,7 +115,7 @@
   <data name="M_StatusChecking" xml:space="preserve"><value>正在检查更新</value></data>
   <data name="M_StatusUpToDate" xml:space="preserve"><value>当前已是最新版本</value></data>
   <data name="M_StatusUpdateAvailable" xml:space="preserve"><value>发现新版本 {0}</value></data>
-  <data name="M_StatusUpdateAvailableSelect" xml:space="preserve"><value>发现新版本 {0}，请选择完整安装包</value></data>
+  <data name="M_StatusUpdateAvailableSelect" xml:space="preserve"><value>发现新版本 {0}，无法识别当前安装方式，请前往官网下载完整安装包</value></data>
   <data name="M_StatusCancelled" xml:space="preserve"><value>已取消更新操作</value></data>
   <data name="M_StatusDownloading" xml:space="preserve"><value>正在下载完整安装包 {0}</value></data>
   <data name="M_StatusVerifying" xml:space="preserve"><value>正在验证安装包完整性</value></data>

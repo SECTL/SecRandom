@@ -14,6 +14,35 @@ public sealed class PortableLauncherTests : IDisposable
         Path.Combine(Path.GetTempPath(), "SecRandom", "portable-launcher-tests", Guid.NewGuid().ToString("N"));
 
     [Fact]
+    public void Selector_UsesNewestCompleteVersionEvenWhenOldVersionIsMarkedCurrent()
+    {
+        var old = CreatePayload("app-v3.2.0-0");
+        File.WriteAllText(Path.Combine(old, ".current"), "");
+        var expected = CreatePayload("app-v3.3.0-0");
+        var incomplete = CreatePayload("app-v3.4.0-0");
+        File.WriteAllText(Path.Combine(incomplete, ".partial"), "");
+        Assert.Equal(expected, PortableInstallationSelector.Select(_packageRoot, "SecRandom.Desktop.exe"));
+    }
+
+    [Fact]
+    public void Selector_OrdersPrereleasesAndSameVersionRetries()
+    {
+        CreatePayload("app-v3.3.0-beta.2-0");
+        CreatePayload("app-v3.3.0-beta.10-0");
+        CreatePayload("app-v3.3.0-0");
+        var expected = CreatePayload("app-v3.3.0-1");
+        Assert.Equal(expected, PortableInstallationSelector.Select(_packageRoot, "SecRandom.Desktop.exe"));
+    }
+
+    private string CreatePayload(string name)
+    {
+        var directory = Directory.CreateDirectory(Path.Combine(_packageRoot, name)).FullName;
+        File.WriteAllText(Path.Combine(directory, "SecRandom.package.json"), PortableMarker);
+        File.WriteAllText(Path.Combine(directory, "SecRandom.Desktop.exe"), "");
+        return directory;
+    }
+
+    [Fact]
     public void TryGetPortableLauncherPath_ResolvesLauncherOutsideActivatedPayload()
     {
         var appDirectory = CreatePortablePackage(_packageRoot);

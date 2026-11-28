@@ -53,6 +53,7 @@ public sealed class UpdateCenterService(
     private UpdateArtifact? _selectedArtifact;
     private UpdateSource _activeSource;
     private string? _downloadedPackagePath;
+    private UpdateArtifact? _downloadedArtifact;
     private readonly UpdateSourceResolver _sourceResolver = new(httpClient);
     private IReadOnlyList<UpdateSource> _sources = UpdateSourceResolver.DefaultOrder;
 
@@ -90,7 +91,11 @@ public sealed class UpdateCenterService(
         set
         {
             if (SetField(ref _selectedArtifact, value))
+            {
+                _downloadedPackagePath = null;
+                _downloadedArtifact = null;
                 OnStateChanged();
+            }
         }
     }
 
@@ -107,6 +112,12 @@ public sealed class UpdateCenterService(
             return;
 
         CancelCurrentOperation();
+        _manifest = null;
+        SelectedArtifact = null;
+        AvailableArtifacts.Clear();
+        OnPropertyChanged(nameof(AvailableVersion));
+        OnPropertyChanged(nameof(NotesUrl));
+        OnStateChanged();
         _operationCancellation = new CancellationTokenSource();
         var cancellationToken = _operationCancellation.Token;
         try
@@ -170,32 +181,35 @@ public sealed class UpdateCenterService(
         if (_manifest is null || SelectedArtifact is null || IsBusy)
             return;
 
+        var artifact = SelectedArtifact;
+        var manifest = _manifest;
         CancelCurrentOperation();
         _operationCancellation = new CancellationTokenSource();
         var cancellationToken = _operationCancellation.Token;
         try
         {
             Phase = UpdateOperationPhase.Downloading;
-            StatusMessage = string.Format(CultureInfo.CurrentUICulture, Text("M_StatusDownloading"), SelectedArtifact.AssetName);
-            var package = await DownloadAssetWithFallbackAsync(_manifest.Tag, SelectedArtifact.AssetName, MaxArtifactBytes, cancellationToken);
+            StatusMessage = string.Format(CultureInfo.CurrentUICulture, Text("M_StatusDownloading"), artifact.AssetName);
+            var package = await DownloadAssetWithFallbackAsync(manifest.Tag, artifact, cancellationToken);
             Phase = UpdateOperationPhase.Verifying;
             StatusMessage = Text("M_StatusVerifying");
-            VerifyArtifact(package, SelectedArtifact);
 
             var updateDirectory = Utils.GetDirectoryPath("updates", "downloads");
-            var extension = Path.GetExtension(SelectedArtifact.AssetName);
-            var packagePath = Path.Combine(updateDirectory, SelectedArtifact.Sha512.ToLowerInvariant() + extension);
+            var extension = Path.GetExtension(artifact.AssetName);
+            var packagePath = Path.Combine(updateDirectory, artifact.Sha512.ToLowerInvariant() + extension);
             await File.WriteAllBytesAsync(packagePath + ".partial", package, cancellationToken);
             File.Move(packagePath + ".partial", packagePath, true);
-            _downloadedPackagePath = packagePath;
-
-            if (!installAfterDownload)
+            if (SelectedArtifact != artifact || _manifest != manifest)
             {
-                Phase = UpdateOperationPhase.ReadyToInstall;
-                StatusMessage = Text("M_StatusReadyToInstall");
+                Phase = UpdateOperationPhase.UpdateAvailable;
+                StatusMessage = string.Format(CultureInfo.CurrentUICulture, Text("M_StatusUpdateAvailable"), manifest.Version);
                 return;
             }
+            _downloadedPackagePath = packagePath;
+            _downloadedArtifact = artifact;
 
+            Phase = UpdateOperationPhase.ReadyToInstall;
+            StatusMessage = Text("M_StatusReadyToInstall");
         }
         catch (OperationCanceledException)
         {
@@ -218,17 +232,27 @@ public sealed class UpdateCenterService(
         {
             OnStateChanged();
         }
+
+        if (installAfterDownload && Phase == UpdateOperationPhase.ReadyToInstall)
+            await ApplyDownloadedUpdateAsync();
     }
 
     public async Task ApplyDownloadedUpdateAsync()
     {
-        if (_downloadedPackagePath is null || SelectedArtifact is null || IsBusy)
+        if (Phase != UpdateOperationPhase.ReadyToInstall || _downloadedPackagePath is null
+            || SelectedArtifact is null || _downloadedArtifact != SelectedArtifact || IsBusy)
             return;
 
         try
         {
             Phase = UpdateOperationPhase.Installing;
             StatusMessage = Text("M_StatusPreparing");
+            using (var stream = File.OpenRead(_downloadedPackagePath))
+            {
+                if (stream.Length != SelectedArtifact.ByteLength
+                    || !string.Equals(Convert.ToHexString(SHA512.HashData(stream)), SelectedArtifact.Sha512, StringComparison.OrdinalIgnoreCase))
+                    throw new CryptographicException(Text("M_ArtifactHashMismatch"));
+            }
             if (ParsePackageKind(SelectedArtifact.Kind) == UpdatePackageKind.PortableZip)
                 await DeployPortableAsync(_downloadedPackagePath, SelectedArtifact, CancellationToken.None);
             else
@@ -292,7 +316,8 @@ public sealed class UpdateCenterService(
             UpdateSource.Sectl => SectlSoftwareApi.UpdateFile(tag, assetName),
             _ => throw new ArgumentOutOfRangeException(nameof(source))
         };
-        return await BoundedContentReader.GetAsync(_httpClient, uri, maxBytes, cancellationToken);
+        return await BoundedContentReader.GetAsync(_httpClient, uri, maxBytes, cancellationToken,
+            maxBytes == MaxArtifactBytes ? TimeSpan.FromMinutes(30) : null);
     }
 
     private UpdateManifest VerifyAndDeserializeManifest(byte[] manifestBytes, byte[] signatureBytes, string expectedTag, UpdateChannel expectedChannel)
@@ -363,7 +388,7 @@ public sealed class UpdateCenterService(
             var marker = JsonSerializer.Deserialize<UpdatePackageMarker>(File.ReadAllText(path), JsonOptions);
             return marker is { SchemaVersion: 1, Product: Product } ? marker : null;
         }
-        catch (JsonException)
+        catch (Exception exception) when (exception is JsonException or IOException or UnauthorizedAccessException)
         {
             return null;
         }
@@ -371,7 +396,7 @@ public sealed class UpdateCenterService(
 
     private async Task DeployPortableAsync(string packagePath, UpdateArtifact artifact, CancellationToken cancellationToken)
     {
-        if (Utils.PackageRoot == Path.GetFullPath(AppContext.BaseDirectory))
+        if (!Utils.TryGetPortableLauncherPath(out _))
             throw new InvalidOperationException(Text("M_PortableLauncherMissing"));
 
         // A data root that lives inside the running version directory would be replaced or orphaned by the
@@ -379,40 +404,60 @@ public sealed class UpdateCenterService(
         if (DataRootPaths.IsSameOrNested(AppContext.BaseDirectory, Utils.DataRoot))
             throw new InvalidOperationException(Text("M_DataRootInsidePayload"));
 
-        var transaction = Guid.NewGuid().ToString("N");
-        var stagingRoot = Utils.GetDirectoryPath("updates", "staging", transaction);
-        ExtractPortableZip(packagePath, stagingRoot);
-        var appDirectory = Directory.EnumerateDirectories(stagingRoot, "app-*").SingleOrDefault();
-        if (appDirectory is null)
-            throw new InvalidDataException(Text("M_ZipAppDirectoryMissing"));
+        if (_manifest is null)
+            throw new InvalidDataException(Text("M_ManifestInvalid"));
+        await DeployPortablePackageAsync(packagePath, Utils.PackageRoot, _manifest.Tag, GetCurrentRid(), artifact, cancellationToken);
+    }
 
-        var marker = JsonSerializer.Deserialize<UpdatePackageMarker>(File.ReadAllText(Path.Combine(appDirectory, "SecRandom.package.json")), JsonOptions)
-                     ?? throw new InvalidDataException(Text("M_ZipMarkerMissing"));
-        if (marker.SchemaVersion != 1 || !string.Equals(marker.Product, Product, StringComparison.Ordinal)
-            || !string.Equals(marker.Rid, GetCurrentRid(), StringComparison.OrdinalIgnoreCase)
-            || !string.Equals(marker.PackageKind, "portable-zip", StringComparison.Ordinal)
-            || !string.Equals(marker.RuntimeKind, artifact.RuntimeKind, StringComparison.OrdinalIgnoreCase))
-            throw new InvalidDataException(Text("M_ZipMismatch"));
+    internal static async Task DeployPortablePackageAsync(string packagePath, string packageRoot, string tag, string? rid,
+        UpdateArtifact artifact, CancellationToken cancellationToken)
+    {
+        var stagingRoot = Path.Combine(packageRoot, ".update-staging-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(stagingRoot);
+        try
+        {
+            ExtractPortableZip(packagePath, stagingRoot);
+            var appDirectory = Directory.EnumerateDirectories(stagingRoot, "app-*").SingleOrDefault();
+            if (appDirectory is null)
+                throw new InvalidDataException(Text("M_ZipAppDirectoryMissing"));
 
-        await File.WriteAllTextAsync(Path.Combine(appDirectory, ".partial"), string.Empty, cancellationToken);
-        var targetDirectory = Path.Combine(Utils.PackageRoot, Path.GetFileName(appDirectory));
-        if (Directory.Exists(targetDirectory))
-            throw new InvalidOperationException(Text("M_TargetVersionExists"));
-        Directory.Move(appDirectory, targetDirectory);
-        File.Delete(Path.Combine(targetDirectory, ".partial"));
+            var marker = JsonSerializer.Deserialize<UpdatePackageMarker>(File.ReadAllText(Path.Combine(appDirectory, "SecRandom.package.json")), JsonOptions)
+                         ?? throw new InvalidDataException(Text("M_ZipMarkerMissing"));
+            if (marker.SchemaVersion != 1 || !string.Equals(marker.Product, Product, StringComparison.Ordinal)
+                || !string.Equals(marker.Rid, rid, StringComparison.OrdinalIgnoreCase)
+                || !string.Equals(marker.PackageKind, "portable-zip", StringComparison.Ordinal)
+                || !string.Equals(marker.RuntimeKind, artifact.RuntimeKind, StringComparison.OrdinalIgnoreCase))
+                throw new InvalidDataException(Text("M_ZipMismatch"));
 
-        var launcherName = Utils.LauncherFileName;
-        var stagedLauncher = Path.Combine(stagingRoot, launcherName);
-        if (!File.Exists(stagedLauncher))
-            throw new InvalidDataException(Text("M_ZipLauncherMissing"));
-        var targetLauncher = Path.Combine(Utils.PackageRoot, launcherName);
-        File.Move(stagedLauncher, targetLauncher + ".new", true);
-        File.Move(targetLauncher + ".new", targetLauncher, true);
+            var launcherName = Utils.LauncherFileName;
+            var stagedLauncher = Path.Combine(stagingRoot, launcherName);
+            if (!File.Exists(stagedLauncher))
+                throw new InvalidDataException(Text("M_ZipLauncherMissing"));
+            var desktopName = OperatingSystem.IsWindows() ? "SecRandom.Desktop.exe" : "SecRandom.Desktop";
+            if (!File.Exists(Path.Combine(appDirectory, desktopName))
+                || !string.Equals(Path.GetFileName(appDirectory), $"app-{tag}-0", StringComparison.Ordinal))
+                throw new InvalidDataException(Text("M_ZipMismatch"));
 
-        foreach (var previous in Directory.EnumerateDirectories(Utils.PackageRoot, "app-*"))
-            if (!string.Equals(previous, targetDirectory, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
-                File.Delete(Path.Combine(previous, ".current"));
-        await File.WriteAllTextAsync(Path.Combine(targetDirectory, ".current"), string.Empty, cancellationToken);
+            await File.WriteAllTextAsync(Path.Combine(appDirectory, ".partial"), string.Empty, cancellationToken);
+            var baseName = $"app-{tag}-";
+            var build = 0;
+            string targetDirectory;
+            do
+            {
+                targetDirectory = Path.Combine(packageRoot, baseName + build++);
+            } while (Directory.Exists(targetDirectory));
+            Directory.Move(appDirectory, targetDirectory);
+
+            var targetLauncher = Path.Combine(packageRoot, launcherName);
+            File.Move(stagedLauncher, targetLauncher, true);
+            File.Delete(Path.Combine(targetDirectory, ".partial"));
+        }
+        finally
+        {
+            try { Directory.Delete(stagingRoot, recursive: true); }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
     }
 
     private static void VerifyArtifact(byte[] bytes, UpdateArtifact artifact)
@@ -450,6 +495,12 @@ public sealed class UpdateCenterService(
                 throw new InvalidDataException(Text("M_ZipOutsidePath"));
             Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
             entry.ExtractToFile(targetPath, overwrite: false);
+            if (!OperatingSystem.IsWindows())
+            {
+                var mode = (UnixFileMode)((entry.ExternalAttributes >> 16) & 0x1FF);
+                if (mode != 0)
+                    File.SetUnixFileMode(targetPath, mode);
+            }
         }
     }
 
@@ -509,7 +560,7 @@ public sealed class UpdateCenterService(
                 var signatureBytes = await DownloadAssetAsync(source, tag, SignatureFileName, MaxSignatureBytes, cancellationToken);
                 return (source, VerifyAndDeserializeManifest(manifestBytes, signatureBytes, tag, channel));
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
             }
@@ -523,22 +574,24 @@ public sealed class UpdateCenterService(
         if (lastException is HttpRequestException { StatusCode: System.Net.HttpStatusCode.NotFound })
             throw new InvalidOperationException(Text("M_ReleaseManifestMissing"), lastException);
 
-        if (lastException is HttpRequestException)
+        if (lastException is HttpRequestException or OperationCanceledException)
             throw new InvalidOperationException(Text("M_UpdateSourceUnavailable"), lastException);
 
         throw lastException ?? new InvalidOperationException(Text("M_NoUpdateSourceAvailable"));
     }
 
-    private async Task<byte[]> DownloadAssetWithFallbackAsync(string tag, string assetName, int maxBytes, CancellationToken cancellationToken)
+    internal async Task<byte[]> DownloadAssetWithFallbackAsync(string tag, UpdateArtifact artifact, CancellationToken cancellationToken)
     {
         Exception? lastException = null;
         foreach (var source in _sources.OrderBy(source => source == _activeSource ? 0 : 1))
         {
             try
             {
-                return await DownloadAssetAsync(source, tag, assetName, maxBytes, cancellationToken);
+                var bytes = await DownloadAssetAsync(source, tag, artifact.AssetName, MaxArtifactBytes, cancellationToken);
+                VerifyArtifact(bytes, artifact);
+                return bytes;
             }
-            catch (OperationCanceledException)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
                 throw;
             }
@@ -549,6 +602,8 @@ public sealed class UpdateCenterService(
             }
         }
 
+        if (lastException is OperationCanceledException)
+            throw new InvalidOperationException(Text("M_UpdateSourceUnavailable"), lastException);
         throw lastException ?? new InvalidOperationException(Text("M_NoUpdateSourceAvailable"));
     }
 
@@ -563,7 +618,7 @@ public sealed class UpdateCenterService(
     };
 
     private static string? GetCurrentOs() => OperatingSystem.IsWindows() ? "windows" : OperatingSystem.IsLinux() ? "linux" : OperatingSystem.IsMacOS() ? "macos" : null;
-    private static string GetCurrentArchitecture() => RuntimeInformation.OSArchitecture.ToString().ToLowerInvariant() switch { "x64" => "x64", "x86" => "x86", "arm64" => "arm64", var value => value };
+    private static string GetCurrentArchitecture() => RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
     private static string? GetCurrentRid() => OperatingSystem.IsWindows() ? $"win-{GetCurrentArchitecture()}" : OperatingSystem.IsLinux() ? $"linux-{GetCurrentArchitecture()}" : OperatingSystem.IsMacOS() ? $"osx-{GetCurrentArchitecture()}" : null;
 
     private static bool HasRequiredDesktopRuntime()
@@ -580,17 +635,26 @@ public sealed class UpdateCenterService(
             if (process is null)
                 return false;
 
-            var output = process.StandardOutput.ReadToEnd();
-            if (!process.WaitForExit(3000) || process.ExitCode != 0)
+            var outputTask = process.StandardOutput.ReadToEndAsync();
+            var errorTask = process.StandardError.ReadToEndAsync();
+            if (!process.WaitForExit(3000))
+            {
+                process.Kill(entireProcessTree: true);
                 return false;
-            var runtime = OperatingSystem.IsWindows() ? "Microsoft.WindowsDesktop.App 10." : "Microsoft.NETCore.App 10.";
-            return output.Split('\n').Any(line => line.StartsWith(runtime, StringComparison.Ordinal));
+            }
+            if (process.ExitCode != 0)
+                return false;
+            _ = errorTask.GetAwaiter().GetResult();
+            return ContainsRequiredRuntime(outputTask.GetAwaiter().GetResult());
         }
         catch (Exception)
         {
             return false;
         }
     }
+
+    internal static bool ContainsRequiredRuntime(string output) => output.Split('\n')
+        .Any(line => line.StartsWith("Microsoft.NETCore.App 10.", StringComparison.Ordinal));
 
     private static string Text(string key) => UpdateResources.ResourceManager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
 

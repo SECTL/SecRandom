@@ -8,11 +8,13 @@ namespace SecRandom.Services.Updates;
 
 internal static class BoundedContentReader
 {
-    public static async Task<byte[]> GetAsync(HttpClient client, Uri uri, int maximumBytes, CancellationToken cancellationToken)
+    public static async Task<byte[]> GetAsync(HttpClient client, Uri uri, int maximumBytes, CancellationToken cancellationToken,
+        TimeSpan? contentTimeout = null)
     {
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        if (client.Timeout != Timeout.InfiniteTimeSpan)
-            timeout.CancelAfter(client.Timeout);
+        var limit = contentTimeout ?? client.Timeout;
+        if (limit != Timeout.InfiniteTimeSpan)
+            timeout.CancelAfter(limit);
         using var request = new HttpRequestMessage(HttpMethod.Get, uri);
         using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token)
             .ConfigureAwait(false);

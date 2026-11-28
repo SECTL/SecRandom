@@ -9,4 +9,7 @@
     <Nullable>enable</Nullable>
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\SecRandom\Services\Updates\ReleaseVersion.cs" Link="ReleaseVersion.cs" />
+  </ItemGroup>
 </Project>

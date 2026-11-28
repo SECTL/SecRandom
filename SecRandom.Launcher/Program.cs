@@ -1,16 +1,10 @@
 using System.Diagnostics;
-using System.Text.Json;
 
 const string packageRootEnvironmentVariable = "SECRANDOM_PACKAGE_ROOT";
 var root = Path.GetFullPath(AppContext.BaseDirectory);
 var executableName = OperatingSystem.IsWindows() ? "SecRandom.Desktop.exe" : "SecRandom.Desktop";
 
-var installation = Directory.EnumerateDirectories(root, "app-*")
-    .Where(path => IsValidInstallation(path, executableName))
-    .OrderByDescending(path => File.Exists(Path.Combine(path, ".current")))
-    .ThenByDescending(ParseVersion)
-    .ThenByDescending(ParseBuildNumber)
-    .FirstOrDefault();
+var installation = PortableInstallationSelector.Select(root, executableName);
 
 if (installation is null)
 {
@@ -39,6 +33,14 @@ catch (Exception exception)
     return 1;
 }
 
+public static class PortableInstallationSelector
+{
+public static string? Select(string root, string executableName) => Directory.EnumerateDirectories(root, "app-*")
+    .Where(path => IsValidInstallation(path, executableName) && ParseVersion(path) is not null)
+    .OrderByDescending(path => ParseVersion(path)!, Comparer<string>.Create(SecRandom.Services.Updates.ReleaseVersion.Compare))
+    .ThenByDescending(ParseBuildNumber)
+    .FirstOrDefault();
+
 static bool IsValidInstallation(string path, string executableName)
 {
     if (File.Exists(Path.Combine(path, ".partial")) || !File.Exists(Path.Combine(path, executableName)))
@@ -50,7 +52,7 @@ static bool IsValidInstallation(string path, string executableName)
 
     try
     {
-        using var marker = JsonDocument.Parse(File.ReadAllText(markerPath));
+        using var marker = System.Text.Json.JsonDocument.Parse(File.ReadAllText(markerPath));
         var root = marker.RootElement;
         return root.TryGetProperty("product", out var product)
                && string.Equals(product.GetString(), "SecRandom", StringComparison.Ordinal)
@@ -59,27 +61,24 @@ static bool IsValidInstallation(string path, string executableName)
                && root.TryGetProperty("packageKind", out var packageKind)
                && string.Equals(packageKind.GetString(), "portable-zip", StringComparison.Ordinal);
     }
-    catch (JsonException)
+    catch (Exception exception) when (exception is System.Text.Json.JsonException or IOException or UnauthorizedAccessException or InvalidOperationException or FormatException)
     {
         return false;
     }
 }
 
-static Version ParseVersion(string path)
+static string? ParseVersion(string path)
 {
     var directoryName = Path.GetFileName(path);
     if (!directoryName.StartsWith("app-v", StringComparison.Ordinal))
-        return new Version();
+        return null;
 
     var versionText = directoryName[5..];
     var separatorIndex = versionText.LastIndexOf('-');
     if (separatorIndex >= 0 && int.TryParse(versionText[(separatorIndex + 1)..], out _))
         versionText = versionText[..separatorIndex];
 
-    var prereleaseIndex = versionText.IndexOf('-');
-    if (prereleaseIndex >= 0)
-        versionText = versionText[..prereleaseIndex];
-    return Version.TryParse(versionText, out var version) ? version : new Version();
+    return SecRandom.Services.Updates.ReleaseVersion.TrySplit(versionText, out _, out _) ? versionText : null;
 }
 
 static int ParseBuildNumber(string path)
@@ -89,4 +88,5 @@ static int ParseBuildNumber(string path)
     return separatorIndex >= 0 && int.TryParse(directoryName[(separatorIndex + 1)..], out var build)
         ? build
         : 0;
+}
 }

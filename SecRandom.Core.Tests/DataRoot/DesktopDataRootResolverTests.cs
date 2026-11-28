@@ -72,6 +72,46 @@ public sealed class DesktopDataRootResolverTests
     }
 
     [Fact]
+    public void Portable_MovedPackageUsesDataBesideItInsteadOfOldAnchorPath()
+    {
+        using var env = new DataRootTestEnvironment();
+        var packageRoot = env.CreateDirectory("portable");
+        var appDirectory = env.CreateDirectory("portable", "app-v3.3.0-0");
+        env.WritePayloadMarker(appDirectory);
+        env.WriteFile("portable/data/config/settings.json", "{}");
+        var options = Options(env, appDirectory, packageRoot);
+        DataRootAnchorStore.Write(options.AnchorPath!, new DataRootAnchor
+        {
+            Mode = "package", DataRoot = env.PathOf("old-portable", "data")
+        });
+
+        var resolution = DesktopDataRootResolver.Resolve(options);
+
+        Assert.Equal(env.PathOf("portable", "data"), resolution.DataRoot);
+    }
+
+    [Fact]
+    public void Portable_AnchorPointingInsidePayloadRepairsData()
+    {
+        using var env = new DataRootTestEnvironment();
+        var packageRoot = env.CreateDirectory("portable");
+        var appDirectory = env.CreateDirectory("portable", "app-v3.2.0-0");
+        env.WritePayloadMarker(appDirectory);
+        env.WriteFile("portable/app-v3.2.0-0/data/config/settings.json", "{}");
+        var options = Options(env, appDirectory, packageRoot);
+        DataRootAnchorStore.Write(options.AnchorPath!, new DataRootAnchor
+        {
+            Mode = "package", DataRoot = env.PathOf("portable", "app-v3.2.0-0", "data")
+        });
+
+        var resolution = DesktopDataRootResolver.Resolve(options);
+
+        Assert.Equal(DataRootSource.RepairedPayload, resolution.Source);
+        Assert.Equal(env.PathOf("portable", "data"), resolution.DataRoot);
+        Assert.Equal(env.PathOf("portable", "app-v3.2.0-0", "data"), resolution.PayloadDataRootToRepair);
+    }
+
+    [Fact]
     public void Portable_WithPayloadLocalData_RepairsItOutOfTheVersionDirectory()
     {
         using var env = new DataRootTestEnvironment();
