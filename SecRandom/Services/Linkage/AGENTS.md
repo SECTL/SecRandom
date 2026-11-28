@@ -40,7 +40,7 @@ SecRandom/Services/Linkage/
 | 为什么点不动 | `LinkageDrawCoordinator.AuthorizeAsync` | 受限时若 `VerificationRequired == false`，或宿主根本没有可用验证（`ISecurityService.RequiresVerification(BypassClassTimeRestriction) == false`），一律硬拒绝，拒绝前调 `ClassTimeDrawRestrictionNotice.Show(snapshot)` 发提示。后者是防 fail-open 的关键：`SecurityService.AuthorizeAsync` 在无验证手段时会直接执行 action。 |
 | 远程命令的判定 | `LinkageDrawCoordinator.EvaluateGate` | 无交互判定，**刻意不弹提示**：教室机可能无人，弹窗会让远程命令挂死。`BlockedByClassTime` 由 `ControlDrawTriggerHandler` 转成 `denied(blocked_by_class_time)`。 |
 | 上下课事件 | `ClassIslandIpcConnection` | 订阅 `OnClassNotifyId` / `OnBreakingTimeNotifyId` / `OnAfterSchoolNotifyId`，`StateChanged` → 两个源 → `CourseLinkageService.RefreshAsync`。 |
-| 课前重置 | `CourseLinkageHostedService.TryPerformPreClassReset` | `IsPreClassResetDue` 给出的 key 去重，清临时记录并让三个页面 `ResetForCourseLinkage()`。 |
+| 课前重置 | `CourseLinkageHostedService.TryPerformPreClassReset` | `IsPreClassResetDue` 给出的 key 去重，清临时记录并让已启用的页面 `ResetForCourseLinkage()`；启动快照关闭课程联动时不注册调度器、课表源或名单映射，`CourseLinkageService` 使用无课程源的构造路径，集控抽取闸门仍独立生效。 |
 | 提示节流 | `ClassTimeDrawRestrictionNotice.ThrottleWindow` | 5 秒一次，连点按钮不刷屏；`MainView.Current` 为空时静默跳过。 |
 
 ## CONVENTIONS
