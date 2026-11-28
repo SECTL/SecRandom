@@ -4,7 +4,7 @@
 
 # SecRandom
 
-**A random-selection tool for classrooms and teams, with configurable workflows, managed history, and verifiable draw records.**
+**An open-source classroom draw and interaction tool for roll calls, lotteries, and connected teaching workflows.**
 
 [![GitHub Issues](https://img.shields.io/github/issues-search/SECTL/SecRandom?query=is%3Aopen&style=for-the-badge&color=00b4ab&logo=github&label=Issues)](https://github.com/SECTL/SecRandom/issues)
 [![Latest Release](https://img.shields.io/github/v/release/SECTL/SecRandom?style=for-the-badge&color=00b4ab&label=Latest%20Release)](https://github.com/SECTL/SecRandom/releases/latest)
@@ -25,49 +25,47 @@
 
 ## SecRandom
 
-SecRandom is a fair random-selection application for classrooms, teams, events, decision-making, and other scenarios.
+SecRandom is an open-source draw and interaction tool designed for teaching. It brings together roll calls, quick draws, lotteries, and random-number draws with configurable random, fair, and orchestrated selection, roster management, history, result verification, and course integration. It supports everyday lessons, demonstration classes, and classroom activities.
+
+## Download and Get Started
+
+- Download a release from [GitHub Releases](https://github.com/SECTL/SecRandom/releases) or the [official download page](https://stk.sectl.cn/SecRandom). Check the release notes for installation instructions and supported architectures.
+- Desktop packages are built for Windows, macOS, and Linux; mobile builds are available for Android and iOS. Interfaces and features vary by platform; refer to the package and its release notes for availability.
+- Open the app, add or import a student roster in settings, select it on the roll-call page, and start a draw. You can also create a prize pool for a lottery or draw a number from a specified range.
+- See the [official documentation](https://secrandom.sectl.cn/doc/overview.html) for more details.
 
 ## Features
 
-### Draw workflows
+### Classroom Draws
 
-- **Roll call**: Supports standard random, history-balanced, and repeat-control draws.
-- **Quick draw**: Quickly draws students through a standalone floating window.
-- **Lottery**: Supports prize-wheel and inventory draws, with students and prizes managed independently.
-- **Rich presentation**: Provides unified settings for animation, results, speech, music, and notifications, with fallback when a notification fails.
+- **Roll call and quick draw**: Select students during a lesson, with a floating window for quick access on desktop.
+- **Lottery and random numbers**: Manage prize pools and inventory, or draw a number from a chosen range.
+- **Selection methods**: Choose random, fair, or orchestrated draws and configure repeat rules. Fair draws adjust weights using factors such as history and draw intervals. Orchestrated draws follow rules and an order set in advance, for demonstration classes and similar situations.
 
-### Fairness and list management
+### Rosters, History, and Presentation
 
-- Dynamically adjusts weights using history count, draw interval, group, gender, and other factors to reduce repeats and distribution imbalance.
-- Uses stable internal identifiers to preserve history; student numbers, IDs, and names are display information only.
-- Supports multiple student lists, prize pools, and `.xlsx`, `.xls`, `.csv` import, mapping, and preview.
-- Saves history for every draw round for convenient review.
+- Manage multiple student rosters and prize pools. On desktop, import `.xlsx`, `.xls`, and `.csv` files with column mapping and preview.
+- Review, group, and export roll-call and lottery history, with stable internal identifiers linking members to records. Random-number draws are counted separately and do not write roster history.
+- Configure desktop animations, speech, music, floating notifications, and full-screen results for the classroom.
 
-### Reviewable draw results
+### Classroom Integration and Extensions
 
-- Every draw automatically saves a proof record file.
-- You can choose to involve the server in and witness the draw process.
-- Draw results can be checked again through official channels.
+- On desktop, use a timetable or ClassIsland to switch rosters and prize pools by course, and access common actions from the floating window.
+- Connect desktop devices to the control center and use the mobile account console to select online devices and start remote draws.
+- Desktop plugins, the integration SDK, and automation interfaces allow extensions and connections to other applications.
 
-### Data, privacy, and security
+### Data and Security
 
-- Settings, lists, and history can all be imported, exported, backed up, and restored.
-- Backups may include lists, history, draw proofs, images, and audio, but never passwords or other security information.
-- Password, TOTP, or USB-drive protection can secure important operations, and you can choose which operations require verification.
+- Back up and restore settings, rosters, history, and related data. Backups exclude passwords and other security credentials.
+- Protect selected operations with a password, TOTP, or USB drive.
 
-### Verification boundaries
+## Fairness and Verification
 
-| Mode | What it can do | What it cannot prove |
-|---|---|---|
-| Offline proof | Review a completed draw process; later edits, deletions, and a wiped-and-rebuilt chain are all detectable | It cannot prove that the local program, random seed, or roster was unchanged **before** the draw, nor rule out repeated trials and selection before it |
-| Online witnessing | Protect the draw flow after the server locks it | It cannot prove that the roster is authentic, complete, or unfiltered before submission |
+Fair draws use history and candidate filters to help reduce repeats and improve long-term distribution; they do not guarantee an even result each time. Orchestrated draws are influenced by preset rules and should not be presented as random selection.
 
-Notes:
+On desktop, draw proofs can be saved, verified, and replayed locally. Offline proofs can be submitted for server attestation and a third-party timestamp in the background; network failures may delay or prevent attestation. An optional online witnessing flow also involves the server in locking the draw process. See the in-app descriptions for availability and verification options.
 
-- Every draw saves a locally replayable proof immediately and submits that same proof for server replay signing; its digest also goes to a third-party time-stamp authority (the digest only — never the roster or the draw content)
-- Local proofs form an append-only hash chain, so deleting or rewriting one leaves a gap; the service remembers the chain head it has seen for each device, so wiping local proofs and rebuilding the chain is reported as a backwards chain position
-- A proof commits a digest of the "record id to name/number/group" mapping of the roster it used, so editing the list **after** the draw to point a winning record at someone else is detectable
-- Filtering the roster **before** the draw (deleting or disabling a student first) cannot be proven: the digest only covers the roster as it stood at draw time. Covering that would need a "confirm the roster with a third party before drawing" flow, which is not implemented
+A proof helps review the recorded process. It cannot establish that a roster was authentic, complete, or unfiltered before a draw, or rule out repeated offline trials beforehand. The software does not replace management of rosters, rules, and classroom procedures.
 
 ## Technical evolution
 
@@ -75,13 +73,7 @@ Notes:
 | --- | --- | --- |
 | v1 | Python + PyQt5 + qfluentwidgets | First desktop implementation |
 | v2 | Python + PySide6 + qfluentwidgets | Qt stack evolution |
-| **v3** | **C# + Avalonia + FluentAvalonia** | .NET desktop rewrite for continued draw, verification, and desktop-integration development |
-
-## Download and updates
-
-- [GitHub Releases](https://github.com/SECTL/SecRandom/releases) provides release packages and change notes.
-- The [official download page](https://stk.sectl.cn/SecRandom) provides the latest download entry point.
-- Automatic updates validate a signed release manifest and artifact length/hash before deployment. Refer to the package and notes supplied with each release for installation details.
+| **v3** | **C# + Avalonia + FluentAvalonia** | Desktop and mobile development, with continued work on draws, verification, and classroom integration |
 
 ## License and third-party notices
 
