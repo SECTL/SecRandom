@@ -127,6 +127,12 @@ namespace SecRandom.Langs.SettingsPages.Plugins.Overview
         public static string M_DependencyMissing => ResourceManager.GetString("M_DependencyMissing", resourceCulture);
         public static string M_DependencyCycle => ResourceManager.GetString("M_DependencyCycle", resourceCulture);
         public static string M_InstallConfirm => ResourceManager.GetString("M_InstallConfirm", resourceCulture);
+        public static string M_InstallPluginDetails => ResourceManager.GetString("M_InstallPluginDetails", resourceCulture);
+        public static string M_InstallDependencyList => ResourceManager.GetString("M_InstallDependencyList", resourceCulture);
+        public static string M_InstallLocalSource => ResourceManager.GetString("M_InstallLocalSource", resourceCulture);
+        public static string M_InstallMarketSource => ResourceManager.GetString("M_InstallMarketSource", resourceCulture);
+        public static string M_InstallSecurityWarning => ResourceManager.GetString("M_InstallSecurityWarning", resourceCulture);
+        public static string C_ConfirmInstall => ResourceManager.GetString("C_ConfirmInstall", resourceCulture);
         public static string M_InstallDependencies => ResourceManager.GetString("M_InstallDependencies", resourceCulture);
         public static string C_Update => ResourceManager.GetString("C_Update", resourceCulture);
         public static string C_Installed => ResourceManager.GetString("C_Installed", resourceCulture);

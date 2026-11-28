@@ -308,4 +308,10 @@
   <data name="M_InstallConfirmTitle" xml:space="preserve">
     <value>安装插件</value>
   </data>
+<data name="M_InstallPluginDetails" xml:space="preserve"><value>插件：{0}（{1}） | 版本：{2} | 作者：{3}</value></data>
+<data name="M_InstallDependencyList" xml:space="preserve"><value>将同时安装或更新以下依赖：</value></data>
+<data name="M_InstallLocalSource" xml:space="preserve"><value>来源：本地文件，信息由插件包提供，未经插件市场验证，请确认文件来源</value></data>
+<data name="M_InstallMarketSource" xml:space="preserve"><value>来源：插件市场，市场索引签名已验证，安装时将验证插件包完整性，这不代表插件一定安全</value></data>
+<data name="M_InstallSecurityWarning" xml:space="preserve"><value>插件可以在 SecRandom 中执行代码，并可能访问您的文件和网络&#10;请仅安装来自您信任的开发者和来源的插件&#10;安装后将在下次启动时加载</value></data>
+<data name="C_ConfirmInstall" xml:space="preserve"><value>确认安装</value></data>
 </root>

@@ -168,6 +168,57 @@ public sealed class PluginManager : IPluginManager
         }
     }
 
+    internal static LocalPluginPackage ReadLocalPackage(string packagePath)
+    {
+        if (!Path.GetExtension(packagePath).Equals(PluginPackageExtension, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidDataException("The selected file is not a SecRandom plugin package.");
+
+        using var input = new FileStream(packagePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+        using var snapshot = new MemoryStream();
+        var buffer = new byte[81920];
+        int read;
+        while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+        {
+            if (snapshot.Length + read > MaxPackageBytes)
+                throw new InvalidDataException("Plugin package exceeds the compressed size budget.");
+            snapshot.Write(buffer, 0, read);
+        }
+
+        var bytes = snapshot.ToArray();
+        using var stream = new MemoryStream(bytes, writable: false);
+        using var package = new ZipArchive(stream, ZipArchiveMode.Read);
+        ValidatePackageBudget(package, bytes.Length, MaxPackageBytes, MaxPackageEntryCount, MaxManifestBytes, MaxEntryBytes, MaxTotalUncompressedBytes);
+        var manifest = ReadManifest(package);
+        ValidateManifest(manifest);
+        if (package.GetEntry(manifest.EntranceAssembly.Replace('\\', '/')) is null)
+            throw new InvalidDataException("The plugin package does not contain its entrance assembly.");
+        return new LocalPluginPackage(bytes, manifest);
+    }
+
+    internal sealed class LocalPluginPackage(byte[] bytes, PluginManifest manifest)
+    {
+        private readonly string _pluginId = manifest.Id;
+        public PluginManifest Manifest { get; } = manifest;
+
+        public void Stage() => Stage(PluginPackagesDirectory);
+
+        internal void Stage(string directory)
+        {
+            var destinationPath = Path.Combine(directory, _pluginId + PluginPackageExtension);
+            var temporaryPath = destinationPath + ".tmp-" + Guid.NewGuid().ToString("N");
+            try
+            {
+                File.WriteAllBytes(temporaryPath, bytes);
+                File.Move(temporaryPath, destinationPath, overwrite: true);
+            }
+            finally
+            {
+                if (File.Exists(temporaryPath))
+                    File.Delete(temporaryPath);
+            }
+        }
+    }
+
     public bool SetEnabled(string pluginId, bool enabled)
     {
         var plugin = _plugins.FirstOrDefault(candidate => string.Equals(

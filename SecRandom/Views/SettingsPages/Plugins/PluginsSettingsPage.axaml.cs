@@ -250,7 +250,13 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
 
         try
         {
-            _pluginManager.StagePackage(packagePath);
+            var package = PluginManager.ReadLocalPackage(packagePath);
+            var manifest = package.Manifest;
+            var details = FormatPluginDetails(manifest.Name, manifest.Id, manifest.Version, manifest.Author);
+            if (!await ConfirmInstallAsync(details, LR.M_InstallLocalSource))
+                return;
+
+            package.Stage();
             this.ShowSuccessToast(LR.M_PluginImported);
             SettingsView.Current?.RequestRestartApp();
         }
@@ -302,10 +308,14 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
         try
         {
             var plan = _marketService.ResolveInstallPlan(entry);
-            var dependencyNote = plan.HasDependencies
-                ? string.Format(LR.M_InstallDependencies, plan.Entries.Count - 1)
-                : string.Empty;
-            var confirmed = await ConfirmMarketInstallAsync(entry, dependencyNote);
+            var details = FormatPluginDetails(entry.Name, entry.Id, entry.Version, entry.Author);
+            if (plan.HasDependencies)
+            {
+                details += Environment.NewLine + Environment.NewLine + LR.M_InstallDependencyList + Environment.NewLine
+                    + string.Join(Environment.NewLine, plan.Entries.Take(plan.Entries.Count - 1)
+                        .Select(dependency => FormatPluginDetails(dependency.Name, dependency.Id, dependency.Version, dependency.Author)));
+            }
+            var confirmed = await ConfirmInstallAsync(details, LR.M_InstallMarketSource);
             if (!confirmed)
                 return;
 
@@ -323,14 +333,29 @@ public partial class PluginsSettingsPage : UserControl, INotifyPropertyChanged
         }
     }
 
-    private async Task<bool> ConfirmMarketInstallAsync(PluginCatalogEntry entry, string dependencyNote)
+    private static string FormatPluginDetails(string name, string id, string version, string author)
     {
-        var separator = string.IsNullOrEmpty(dependencyNote) ? string.Empty : $"{Environment.NewLine}{dependencyNote}";
+        static string ValueOrUnknown(string value) => string.IsNullOrWhiteSpace(value) ? LR.C_Unknown : value;
+        return string.Format(LR.M_InstallPluginDetails,
+            ValueOrUnknown(string.IsNullOrWhiteSpace(name) ? id : name), ValueOrUnknown(id),
+            ValueOrUnknown(version), ValueOrUnknown(author));
+    }
+
+    private async Task<bool> ConfirmInstallAsync(string details, string source)
+    {
         var result = await new FAContentDialog
         {
             Title = LR.M_InstallConfirmTitle,
-            Content = string.Format(LR.M_InstallConfirm, entry.DisplayName, separator),
-            PrimaryButtonText = LR.C_Install,
+            Content = new ScrollViewer
+            {
+                MaxHeight = 360,
+                Content = new TextBlock
+                {
+                    Text = string.Join(Environment.NewLine + Environment.NewLine, details, source, LR.M_InstallSecurityWarning),
+                    TextWrapping = TextWrapping.Wrap
+                }
+            },
+            PrimaryButtonText = LR.C_ConfirmInstall,
             CloseButtonText = SecRandom.Langs.SettingsView.Resources.C_Cancel,
             DefaultButton = FAContentDialogButton.Close
         }.ShowAsync(TopLevel.GetTopLevel(this));
