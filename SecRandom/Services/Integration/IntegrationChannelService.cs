@@ -45,7 +45,7 @@ public sealed class IntegrationChannelService(
     private string? _hostManifestPath;
     private int _discoveryRunning;
 
-    public string HostPipeName { get; } = "SecRandom_Integration_Host_" + Guid.NewGuid().ToString("N");
+    public string HostPipeName { get; } = "SecRandom_Integration_Host_" + Guid.NewGuid().ToString("N")[..16];
     public event Action? Changed;
     public event Action<IntegrationChannel>? ChannelDiscovered;
     public IReadOnlyList<IntegrationChannel> Channels
