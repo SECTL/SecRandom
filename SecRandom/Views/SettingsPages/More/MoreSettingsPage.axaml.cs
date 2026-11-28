@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -13,6 +14,8 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.Stats;
 using MoreResources = SecRandom.Langs.SettingsPages.More.Resources;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.ControlNode;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.Mobile;
 using SecRandom.Platforms.Abstractions;
 using SecRandom.ViewModels;
@@ -59,6 +62,25 @@ public partial class MoreSettingsPage : UserControl, INotifyPropertyChanged
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public MoreSettingsConfig Settings { get; private set; }
+    public bool IsLotteryFeatureAvailable => IAppHost.TryGetService<FeatureRuntimeSnapshot>()
+        ?.IsEnabled(StartupFeatureCatalog.Lottery) != false;
+    public bool IsLotteryAvailable => IsLotteryFeatureAvailable && Settings.LotteryEnabled;
+    public bool IsQuickDrawAvailable => IAppHost.TryGetService<FeatureRuntimeSnapshot>()
+        ?.IsEnabled(StartupFeatureCatalog.QuickDraw) != false;
+    public bool IsRemoteDrawControlAvailable => IsDesktop && IAppHost.TryGetService<FeatureRuntimeSnapshot>()
+        ?.IsEnabled(StartupFeatureCatalog.ControlNode) == false;
+    public bool RemoteDrawPageEnabled
+    {
+        get => IsRemoteDrawControlAvailable && IAppHost.TryGetService<IControlNodeStateStore>()?.Current.RemoteDrawPageEnabled == true;
+        set
+        {
+            if (!IsRemoteDrawControlAvailable || IAppHost.TryGetService<IControlNodeStateStore>() is not { } store
+                || store.Current.RemoteDrawPageEnabled == value)
+                return;
+            store.Update(state => state with { RemoteDrawPageEnabled = value });
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RemoteDrawPageEnabled)));
+        }
+    }
     public bool IsOpenRollCallPageShortcutConflicted => IsShortcutConflicted(nameof(MoreSettingsConfig.OpenRollCallPageShortcut));
     public bool IsQuickDrawShortcutConflicted => IsShortcutConflicted(nameof(MoreSettingsConfig.QuickDrawShortcut));
     public bool IsOpenLotteryPageShortcutConflicted => IsShortcutConflicted(nameof(MoreSettingsConfig.OpenLotteryPageShortcut));
@@ -94,6 +116,7 @@ public partial class MoreSettingsPage : UserControl, INotifyPropertyChanged
             Settings = ConfigHandler.Data.MoreSettings;
             Settings.PropertyChanged += SettingsOnPropertyChanged;
             NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Settings)));
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLotteryAvailable)));
             foreach (var propertyName in ShortcutConflictPropertyNames)
                 NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         });
@@ -105,6 +128,8 @@ public partial class MoreSettingsPage : UserControl, INotifyPropertyChanged
             return;
 
         ConfigHandler.Save();
+        if (e.PropertyName == nameof(MoreSettingsConfig.LotteryEnabled))
+            NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLotteryAvailable)));
         foreach (var propertyName in ShortcutConflictPropertyNames)
             NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
@@ -299,18 +324,22 @@ public partial class MoreSettingsPage : UserControl, INotifyPropertyChanged
         return false;
     }
 
-    private (string Name, string Shortcut)[] GetShortcuts() =>
-    [
-        (nameof(MoreSettingsConfig.OpenRollCallPageShortcut), Settings.OpenRollCallPageShortcut),
-        (nameof(MoreSettingsConfig.QuickDrawShortcut), Settings.QuickDrawShortcut),
-        (nameof(MoreSettingsConfig.OpenLotteryPageShortcut), Settings.OpenLotteryPageShortcut),
-        (nameof(MoreSettingsConfig.IncreaseRollCallCountShortcut), Settings.IncreaseRollCallCountShortcut),
-        (nameof(MoreSettingsConfig.DecreaseRollCallCountShortcut), Settings.DecreaseRollCallCountShortcut),
-        (nameof(MoreSettingsConfig.IncreaseLotteryCountShortcut), Settings.IncreaseLotteryCountShortcut),
-        (nameof(MoreSettingsConfig.DecreaseLotteryCountShortcut), Settings.DecreaseLotteryCountShortcut),
-        (nameof(MoreSettingsConfig.StartRollCallShortcut), Settings.StartRollCallShortcut),
-        (nameof(MoreSettingsConfig.StartLotteryShortcut), Settings.StartLotteryShortcut)
-    ];
+    private IEnumerable<(string Name, string Shortcut)> GetShortcuts()
+    {
+        yield return (nameof(MoreSettingsConfig.OpenRollCallPageShortcut), Settings.OpenRollCallPageShortcut);
+        yield return (nameof(MoreSettingsConfig.IncreaseRollCallCountShortcut), Settings.IncreaseRollCallCountShortcut);
+        yield return (nameof(MoreSettingsConfig.DecreaseRollCallCountShortcut), Settings.DecreaseRollCallCountShortcut);
+        yield return (nameof(MoreSettingsConfig.StartRollCallShortcut), Settings.StartRollCallShortcut);
+        if (IsQuickDrawAvailable)
+            yield return (nameof(MoreSettingsConfig.QuickDrawShortcut), Settings.QuickDrawShortcut);
+        if (IsLotteryAvailable)
+        {
+            yield return (nameof(MoreSettingsConfig.OpenLotteryPageShortcut), Settings.OpenLotteryPageShortcut);
+            yield return (nameof(MoreSettingsConfig.IncreaseLotteryCountShortcut), Settings.IncreaseLotteryCountShortcut);
+            yield return (nameof(MoreSettingsConfig.DecreaseLotteryCountShortcut), Settings.DecreaseLotteryCountShortcut);
+            yield return (nameof(MoreSettingsConfig.StartLotteryShortcut), Settings.StartLotteryShortcut);
+        }
+    }
 
     private static bool TryFormatShortcut(KeyEventArgs e, out string shortcut)
     {

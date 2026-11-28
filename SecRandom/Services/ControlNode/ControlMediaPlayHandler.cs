@@ -26,10 +26,10 @@ namespace SecRandom.Services.ControlNode;
 ///     </para>
 /// </remarks>
 public sealed class ControlMediaPlayHandler(
-    IVoiceAnnouncementService voice,
     MainConfigHandler config,
-    NotificationService notifications,
-    ILogger<ControlMediaPlayHandler> logger)
+    ILogger<ControlMediaPlayHandler> logger,
+    IVoiceAnnouncementService? voice = null,
+    NotificationService? notifications = null)
 {
     public async Task<ControlCommandOutcome> ExecuteAsync(
         JsonElement? payload,
@@ -59,7 +59,7 @@ public sealed class ControlMediaPlayHandler(
         // ⚠️ 必须**带回是哪一项关着**：只回 media_disabled 的话，管理员在控制台上
         // 只看到一个词，既不知道是设备没装语音、还是被谁关了，也不知道该怎么办。
         // 这个 detail 正好够控制台给出"打开语音"的下一步。
-        if (!config.Data.VoiceSettings.VoiceEnable)
+        if (voice is null || !config.Data.VoiceSettings.VoiceEnable)
         {
             return ControlCommandOutcome.Failure(
                 "media_disabled",
@@ -70,6 +70,9 @@ public sealed class ControlMediaPlayHandler(
                     fix = new { capability = "settings.write", patch = new Dictionary<string, object?> { ["voice.enable"] = true } }
                 });
         }
+
+        if (request.ShowQuickDrawWindow == true && notifications is null)
+            return ControlCommandOutcome.Failure("media_disabled", new { notifications_enabled = false });
 
         // "载荷合法但本机做不到"的选项必须在**任何副作用之前**拒绝：先开窗口再回 unsupported，
         // 教室里就会先看到一次没人预期、也没人解释的弹窗。
@@ -96,7 +99,7 @@ public sealed class ControlMediaPlayHandler(
             // 收到别的线程发来的通知（集控命令正是在线程池上执行的），照 ControlPageDrawExecutor 的写法。
             if (request.ShowQuickDrawWindow == true)
             {
-                await Dispatcher.UIThread.InvokeAsync(() => notifications.ShowQuickDrawText(request.Text))
+                await Dispatcher.UIThread.InvokeAsync(() => notifications!.ShowQuickDrawText(request.Text))
                     .GetTask()
                     .ConfigureAwait(false);
 

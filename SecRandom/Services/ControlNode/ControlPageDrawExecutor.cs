@@ -1,6 +1,8 @@
 using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.ControlNode;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.ViewModels.MainPages;
 using SecRandom.Views;
 
@@ -110,6 +112,9 @@ public sealed class ControlPageDrawExecutor : IControlDrawExecutor
     public Task<ControlDrawExecution> DrawQuickAsync(CancellationToken cancellationToken) =>
         Dispatcher.UIThread.InvokeAsync(async () =>
         {
+            if (IAppHost.TryGetService<FeatureRuntimeSnapshot>()?.IsEnabled(StartupFeatureCatalog.QuickDraw) == false)
+                return ControlDrawExecutionFactory.From(RemoteDrawOutcome.Invalid("feature_disabled"),
+                    ControlDrawTriggerRequest.TargetQuick, null);
             var quickDraw = IAppHost.GetService<QuickDrawPageViewModel>();
             App.ShowQuickDrawWindow();
 
@@ -142,6 +147,9 @@ public sealed class ControlPageDrawExecutor : IControlDrawExecutor
         CancellationToken cancellationToken) =>
         Dispatcher.UIThread.InvokeAsync(async () =>
         {
+            if (IAppHost.TryGetService<IFeatureAvailabilityService>()?.IsLotteryEnabled == false)
+                return ControlDrawExecutionFactory.From(RemoteDrawOutcome.Denied("lottery_disabled"),
+                    ControlDrawTriggerRequest.TargetLottery, request.ListName);
             var lottery = IAppHost.GetService<LotteryPageViewModel>();
 
             // 与点名同一条展示逻辑，只是切到抽奖页：远程抽奖的结果同样必须落在教室看得见的那一页上。

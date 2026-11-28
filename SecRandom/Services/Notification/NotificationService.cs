@@ -7,6 +7,7 @@ using SecRandom.Core.Models.Notification;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.Draw;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.Mobile;
 using SecRandom.Platforms;
 using SecRandom.Services.Linkage;
@@ -26,16 +27,19 @@ public sealed class NotificationService : IDisposable
     private readonly MainConfigHandler _configHandler;
     private readonly ILogger<NotificationService> _logger;
     private readonly ClassIslandIpcConnection _ipcConnection;
+    private readonly FeatureRuntimeSnapshot? _features;
     private readonly CryptoRandomSource _previewRandom = new();
     private readonly SemaphoreSlim _sendGate = new(1, 1);
     private bool _quickDrawBuiltInPreviewActive;
     private bool _isDisposed;
 
-    public NotificationService(MainConfigHandler configHandler, ILogger<NotificationService> logger, ClassIslandIpcConnection ipcConnection)
+    public NotificationService(MainConfigHandler configHandler, ILogger<NotificationService> logger, ClassIslandIpcConnection ipcConnection,
+        FeatureRuntimeSnapshot? features = null)
     {
         _configHandler = configHandler;
         _logger = logger;
         _ipcConnection = ipcConnection;
+        _features = features;
     }
 
     public void QueueStudents(
@@ -210,7 +214,7 @@ public sealed class NotificationService : IDisposable
         var (items, displayItems) = CreateTestNotification(type);
 
         // 全屏是独立后端。预览使用固定的 3 秒倒计时，不改写渠道真实时长。
-        if (serviceSettings.UsesFullscreenNotificationService && IsFullscreenPresentationAvailable)
+        if (serviceSettings.UsesFullscreenNotificationService && CanUseFullscreen)
         {
             var presenter = TryGetFullscreenPresenter();
             if (presenter is not null)
@@ -241,7 +245,7 @@ public sealed class NotificationService : IDisposable
         var delivered = false;
         // 移动端没有全屏窗口时，沿用正式通知链路的浮窗降级行为。
         if (serviceSettings.UsesBuiltInNotificationService
-            || serviceSettings.UsesFullscreenNotificationService && !IsFullscreenPresentationAvailable)
+            || serviceSettings.UsesFullscreenNotificationService && !CanUseFullscreen)
         {
             ShowBuiltIn(
                 type,
@@ -299,7 +303,7 @@ public sealed class NotificationService : IDisposable
         // 选中"全屏"但当前宿主没有全屏能力（移动端）时退化为既有内置浮窗渠道：
         // 不能因为选了一个桌面专属渠道就静默丢通知。
         return serviceSettings.UsesBuiltInNotificationService
-               || serviceSettings.UsesFullscreenNotificationService && !IsFullscreenPresentationAvailable;
+               || serviceSettings.UsesFullscreenNotificationService && !CanUseFullscreen;
     }
 
     /// <summary>
@@ -308,12 +312,15 @@ public sealed class NotificationService : IDisposable
     public static bool IsFullscreenPresentationAvailable
         => PlatformStartupContext.Current is not MobilePlatformServiceRoot;
 
+    private bool CanUseFullscreen => IsFullscreenPresentationAvailable &&
+                                     _features?.IsEnabled(StartupFeatureCatalog.FullscreenNotifications) != false;
+
     /// <summary>
     ///     点名/抽奖/闪抽的渠道是否指向全屏结果渠道（且当前可用）。
     /// </summary>
     public bool UsesFullscreenNotificationService(NotificationSettingsType type)
     {
-        if (_isDisposed || !IsFullscreenPresentationAvailable)
+        if (_isDisposed || !CanUseFullscreen)
             return false;
 
         var config = _configHandler.Data;
@@ -437,7 +444,7 @@ public sealed class NotificationService : IDisposable
 
         // 全屏渠道在不可用宿主（移动端）上按内置浮窗渠道交付，避免选中桌面专属渠道后静默无通知。
         var fullscreenFallbackToBuiltIn = serviceSettings.UsesFullscreenNotificationService
-                                          && !IsFullscreenPresentationAvailable;
+                                          && !CanUseFullscreen;
         if (serviceSettings.UsesBuiltInNotificationService || fullscreenFallbackToBuiltIn)
         {
             var showPreview = type != NotificationSettingsType.QuickDraw || !_quickDrawBuiltInPreviewActive;

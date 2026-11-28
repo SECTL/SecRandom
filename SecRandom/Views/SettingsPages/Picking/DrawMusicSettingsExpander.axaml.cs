@@ -2,6 +2,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using FluentAvalonia.UI.Controls;
+using SecRandom.Core.Abstraction;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.Core.Models.SubConfigs.Picking;
 using SecRandom.Services.Music;
 
@@ -17,6 +19,11 @@ public partial class DrawMusicSettingsExpander : FASettingsExpander
 
     public DrawMusicSettingsExpander()
     {
+        if (IAppHost.TryGetService<FeatureRuntimeSnapshot>()?.IsEnabled(StartupFeatureCatalog.Music) == false)
+        {
+            IsVisible = false;
+            return;
+        }
         InitializeComponent();
     }
 

@@ -18,6 +18,7 @@ using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.Core.Services.FloatingWindow;
 using SecRandom.Models;
 using SecRandom.Platforms.Abstractions;
@@ -55,6 +56,8 @@ public partial class FloatingWindowSettingsPage : UserControl, INotifyPropertyCh
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public FloatingWindowSettingsConfig Settings { get; }
+    public bool IsQuickDrawAvailable => IAppHost.TryGetService<FeatureRuntimeSnapshot>()
+        ?.IsEnabled(StartupFeatureCatalog.QuickDraw) != false;
     public AvaloniaList<MultiSelectSettingOption> ButtonOptions { get; }
     public AvaloniaList<MultiSelectSettingOption> SelectedButtonOptions { get; }
     public bool IsUiAccessSupported => OperatingSystem.IsWindows();
@@ -167,14 +170,18 @@ public partial class FloatingWindowSettingsPage : UserControl, INotifyPropertyCh
         var options = new AvaloniaList<MultiSelectSettingOption>
         {
             new(LR.S_Buttons_RollCall, () => Settings.ShowRollCallButton,
-                value => Settings.ShowRollCallButton = value),
-            new(LR.S_Buttons_QuickDraw, () => Settings.ShowQuickDrawButton,
-                value => Settings.ShowQuickDrawButton = value),
-            new(LR.S_Buttons_Lottery, () => Settings.ShowLotteryButton,
-                value => Settings.ShowLotteryButton = value),
-            new(LR.S_Buttons_Timer, () => Settings.ShowTimerButton,
-                value => Settings.ShowTimerButton = value)
+                value => Settings.ShowRollCallButton = value)
         };
+        var features = IAppHost.TryGetService<FeatureRuntimeSnapshot>();
+        if (IsQuickDrawAvailable)
+            options.Add(new(LR.S_Buttons_QuickDraw, () => Settings.ShowQuickDrawButton,
+                value => Settings.ShowQuickDrawButton = value));
+        if (features?.IsEnabled(StartupFeatureCatalog.Lottery) != false)
+            options.Add(new(LR.S_Buttons_Lottery, () => Settings.ShowLotteryButton,
+                value => Settings.ShowLotteryButton = value));
+        if (features?.IsEnabled(StartupFeatureCatalog.Timer) != false)
+            options.Add(new(LR.S_Buttons_Timer, () => Settings.ShowTimerButton,
+                value => Settings.ShowTimerButton = value));
         foreach (var button in _floatingWindowButtonRegistry.Buttons)
         {
             options.Add(new MultiSelectSettingOption(

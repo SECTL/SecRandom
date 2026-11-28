@@ -1,6 +1,8 @@
 using Avalonia.Threading;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.ControlNode;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.ViewModels.MainPages;
 
 namespace SecRandom.Services.ControlNode;
@@ -73,6 +75,10 @@ public sealed class ControlPageDrawResetPresenter : IControlDrawResetPresenter
         {
             foreach (var surface in ControlDrawResetTargets.SurfacesFor(request.Target))
             {
+                if (surface == DrawResetSurface.Quick && !IsQuickDrawEnabled())
+                    continue;
+                if (surface == DrawResetSurface.Lottery && !IsLotteryEnabled())
+                    return RemoteDrawOutcome.Denied("lottery_disabled");
                 var rejection = surface switch
                 {
                     DrawResetSurface.RollCall => IAppHost.GetService<RollCallPageViewModel>().EvaluateRemoteReset(),
@@ -96,6 +102,10 @@ public sealed class ControlPageDrawResetPresenter : IControlDrawResetPresenter
         {
             foreach (var surface in ControlDrawResetTargets.SurfacesFor(request.Target))
             {
+                if (surface == DrawResetSurface.Quick && !IsQuickDrawEnabled())
+                    continue;
+                if (surface == DrawResetSurface.Lottery && !IsLotteryEnabled())
+                    continue;
                 switch (surface)
                 {
                     case DrawResetSurface.RollCall:
@@ -113,6 +123,12 @@ public sealed class ControlPageDrawResetPresenter : IControlDrawResetPresenter
             return null;
         });
     }
+
+    private static bool IsQuickDrawEnabled() => IAppHost.TryGetService<FeatureRuntimeSnapshot>()
+        ?.IsEnabled(StartupFeatureCatalog.QuickDraw) != false;
+
+    private static bool IsLotteryEnabled() => IAppHost.TryGetService<IFeatureAvailabilityService>()
+        ?.IsLotteryEnabled != false;
 
     private static T OnUiThread<T>(Func<T> action) =>
         Dispatcher.UIThread.CheckAccess() ? action() : Dispatcher.UIThread.Invoke(action);

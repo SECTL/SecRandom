@@ -14,15 +14,16 @@
     <ScrollViewer>
         <StackPanel Classes="page-container animated-intro settings" Margin="0 12 0 0">
             <fa:FASettingsExpander x:Name="S_AutoBackup"
-                                   Header="{x:Static lsb:Resources.S_AutoBackup}"
-                                   Description="{x:Static lsb:Resources.S_AutoBackup_D}"
+                                   Header="{Binding BackupCardHeader}"
+                                   Description="{Binding BackupCardDescription}"
                                    IconSource="{sr:FluentIconSource {sr:Fi SaveFilled}}"
                                    IsExpanded="True">
                 <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding Settings.AutoBackupEnabled}" />
+                    <ToggleSwitch IsVisible="{Binding IsAutomaticBackupAvailable}" IsChecked="{Binding Settings.AutoBackupEnabled}" />
                 </fa:FASettingsExpander.Footer>
 
                 <fa:FASettingsExpanderItem x:Name="S_AutoBackup_IntervalDays"
+                                           IsVisible="{Binding IsAutomaticBackupAvailable}"
                                            Content="{x:Static lsb:Resources.S_AutoBackup_IntervalDays}"
                                            Description="{x:Static lsb:Resources.S_AutoBackup_IntervalDays_D}">
                     <fa:FASettingsExpanderItem.Footer>
@@ -32,6 +33,7 @@
                 </fa:FASettingsExpanderItem>
 
                 <fa:FASettingsExpanderItem x:Name="S_AutoBackup_MaxCount"
+                                           IsVisible="{Binding IsAutomaticBackupAvailable}"
                                            Content="{x:Static lsb:Resources.S_AutoBackup_MaxCount}"
                                            Description="{x:Static lsb:Resources.S_AutoBackup_MaxCount_D}">
                     <fa:FASettingsExpanderItem.Footer>

@@ -10,15 +10,16 @@ using SecRandom.Core.Models.Linkage;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.SimpleMode;
+using SecRandom.Core.Services.FeatureConfiguration;
 
 namespace SecRandom.Services.Linkage;
 
 public sealed class CourseLinkageService
 {
     private readonly MainConfigHandler _configHandler;
-    private readonly ICsesScheduleStore _csesScheduleStore;
-    private readonly CsesScheduleSource _csesSource;
-    private readonly ClassIslandScheduleSource _classIslandSource;
+    private readonly ICsesScheduleStore? _csesScheduleStore;
+    private readonly CsesScheduleSource? _csesSource;
+    private readonly ClassIslandScheduleSource? _classIslandSource;
     private readonly ILogger<CourseLinkageService> _logger;
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
     private CourseScheduleSnapshot _snapshot = CourseScheduleSnapshot.Unavailable("Off");
@@ -28,16 +29,28 @@ public sealed class CourseLinkageService
         ICsesScheduleStore csesScheduleStore,
         CsesScheduleSource csesSource,
         ClassIslandScheduleSource classIslandSource,
-        ILogger<CourseLinkageService> logger)
+        ILogger<CourseLinkageService> logger,
+        FeatureRuntimeSnapshot? featureSnapshot = null)
     {
         _configHandler = configHandler;
         _csesScheduleStore = csesScheduleStore;
         _csesSource = csesSource;
         _classIslandSource = classIslandSource;
         _logger = logger;
+        _featureSnapshot = featureSnapshot;
         Settings.PropertyChanged += SettingsOnPropertyChanged;
         _csesSource.StateChanged += (_, _) => _ = RefreshAsync();
         _classIslandSource.StateChanged += (_, _) => _ = RefreshAsync();
+    }
+
+    public CourseLinkageService(MainConfigHandler configHandler, ILogger<CourseLinkageService> logger,
+        FeatureRuntimeSnapshot featureSnapshot)
+    {
+        if (featureSnapshot.IsEnabled(StartupFeatureCatalog.CourseLinkage))
+            throw new ArgumentException("The disabled linkage constructor requires the feature to be disabled", nameof(featureSnapshot));
+        _configHandler = configHandler;
+        _logger = logger;
+        _featureSnapshot = featureSnapshot;
     }
 
     public event EventHandler? StateChanged;
@@ -47,7 +60,10 @@ public sealed class CourseLinkageService
     ///     简洁模式隐藏了课程联动设置页，因此这里改读默认联动设置（数据源关闭、不阻止抽取），
     ///     用户原来的联动配置不会被改写。
     /// </summary>
-    public LinkageSettingsConfig Settings => _configHandler.Data.SimpleModeEnabled
+    private readonly FeatureRuntimeSnapshot? _featureSnapshot;
+
+    public LinkageSettingsConfig Settings => _configHandler.Data.SimpleModeEnabled ||
+        _featureSnapshot?.IsEnabled(StartupFeatureCatalog.CourseLinkage) == false
         ? SimpleModeDefaults.LinkageSettings
         : _configHandler.Data.LinkageSettings;
 
@@ -57,9 +73,9 @@ public sealed class CourseLinkageService
         await _refreshGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            var source = Settings.DataSource switch
+            ICourseScheduleSource? source = Settings.DataSource switch
             {
-                LinkageDataSource.Cses => (ICourseScheduleSource)_csesSource,
+                LinkageDataSource.Cses => _csesSource,
                 LinkageDataSource.ClassIsland => _classIslandSource,
                 _ => null
             };
@@ -174,7 +190,7 @@ public sealed class CourseLinkageService
         if (!string.IsNullOrWhiteSpace(assignedCourse) || _snapshot.Source != "ClassIsland")
             return assignedCourse;
 
-        var fallback = _csesScheduleStore.Load();
+        var fallback = _csesScheduleStore?.Load();
         if (fallback is null)
             return string.Empty;
         var fallbackSnapshot = CourseScheduleMath.Evaluate(fallback, DateTimeOffset.Now);

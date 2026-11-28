@@ -141,17 +141,17 @@ public sealed class AutomationCommandRegistry(
                 },
                 lottery = new
                 {
-                    drawing = Lottery.IsDrawing,
-                    pool = Lottery.SelectedPrizeListName,
-                    count = Lottery.DrawCount,
-                    remaining = Lottery.RemainingCount,
-                    maximum = Lottery.MaximumDrawCount,
+                    drawing = features.IsLotteryEnabled && Lottery.IsDrawing,
+                    pool = features.IsLotteryEnabled ? Lottery.SelectedPrizeListName : null,
+                    count = features.IsLotteryEnabled ? Lottery.DrawCount : 0,
+                    remaining = features.IsLotteryEnabled ? Lottery.RemainingCount : 0,
+                    maximum = features.IsLotteryEnabled ? Lottery.MaximumDrawCount : 0,
                     enabled = features.IsLotteryEnabled
                 },
                 quickDraw = new
                 {
-                    drawing = QuickDraw.IsDrawing,
-                    last = ProjectRecord(QuickDraw.LastDrawnStudent?.Id, QuickDraw.LastDrawnStudent?.Name)
+                    drawing = IsQuickDrawEnabled && QuickDraw.IsDrawing,
+                    last = IsQuickDrawEnabled ? ProjectRecord(QuickDraw.LastDrawnStudent?.Id, QuickDraw.LastDrawnStudent?.Name) : null
                 }
             })),
 
@@ -160,7 +160,8 @@ public sealed class AutomationCommandRegistry(
                 uptimeSeconds = (long)(DateTime.Now - Process.GetCurrentProcess().StartTime).TotalSeconds,
                 simpleMode = features.IsSimpleModeEnabled,
                 lotteryEnabled = features.IsLotteryEnabled,
-                drawing = RollCall.IsDrawing || Lottery.IsDrawing || QuickDraw.IsDrawing
+                drawing = RollCall.IsDrawing || (features.IsLotteryEnabled && Lottery.IsDrawing)
+                          || (IsQuickDrawEnabled && QuickDraw.IsDrawing)
             }),
 
             "window.show" => WindowAsync(parameters, "show", cancellationToken),
@@ -424,6 +425,7 @@ public sealed class AutomationCommandRegistry(
         JsonElement? parameters,
         CancellationToken cancellationToken)
     {
+        EnsureDrawFeatureEnabled(target);
         var request = ParseDrawRequest(target, parameters);
         var drawTask = target switch
         {
@@ -514,6 +516,7 @@ public sealed class AutomationCommandRegistry(
         CancellationToken cancellationToken) =>
         OnUiAsync(async () =>
         {
+            EnsureDrawFeatureEnabled(target);
             if (target == "lottery")
             {
                 var started = await Lottery.StartProtocolDrawAsync(protectLinkage: true).ConfigureAwait(false);
@@ -534,6 +537,7 @@ public sealed class AutomationCommandRegistry(
     private Task<object?> DrawStopAsync(string target, CancellationToken cancellationToken) =>
         OnUiAsync(() =>
         {
+            EnsureDrawFeatureEnabled(target);
             if (target == "lottery")
                 Lottery.StopProtocolDraw();
             else
@@ -546,6 +550,7 @@ public sealed class AutomationCommandRegistry(
     private Task<object?> DrawResetAsync(string target, CancellationToken cancellationToken) =>
         OnUiAsync(async () =>
         {
+            EnsureDrawFeatureEnabled(target);
             if (target == "lottery")
                 await Lottery.ResetProtocolDrawAsync().ConfigureAwait(false);
             else
@@ -558,20 +563,25 @@ public sealed class AutomationCommandRegistry(
     private Task<object?> DrawResultAsync(JsonElement? parameters) =>
         OnUiAsync(() => Task.FromResult<object?>(BuildDrawResult(ReadString(parameters, "target") ?? "roll_call")));
 
-    private object BuildDrawResult(string target) => target switch
+    private object BuildDrawResult(string target)
     {
-        "quick" => new
+        EnsureDrawFeatureEnabled(target);
+        return target switch
         {
-            target,
-            student = ProjectRecord(QuickDraw.LastDrawnStudent?.Id, QuickDraw.LastDrawnStudent?.Name)
-        },
-        "lottery" => new { target, prizes = Lottery.LastResultPrizes.Select(ProjectPrize).ToArray() },
-        _ => new { target, students = RollCall.LastResultStudents.Select(ProjectStudent).ToArray() }
-    };
+            "quick" => new
+            {
+                target,
+                student = ProjectRecord(QuickDraw.LastDrawnStudent?.Id, QuickDraw.LastDrawnStudent?.Name)
+            },
+            "lottery" => new { target, prizes = Lottery.LastResultPrizes.Select(ProjectPrize).ToArray() },
+            _ => new { target, students = RollCall.LastResultStudents.Select(ProjectStudent).ToArray() }
+        };
+    }
 
     private Task<object?> DrawAwaitAsync(JsonElement? parameters, CancellationToken cancellationToken)
     {
         var target = ReadString(parameters, "target") ?? "roll_call";
+        EnsureDrawFeatureEnabled(target);
         var timeoutMs = ReadInt(parameters, "timeout_ms");
         var timeout = timeoutMs is { } value and > 0
             ? TimeSpan.FromMilliseconds(Math.Min(value, 120_000))
@@ -813,6 +823,15 @@ public sealed class AutomationCommandRegistry(
     }
 
     private RollCallPageViewModel RollCall => IAppHost.GetService<RollCallPageViewModel>();
+
+    private static bool IsQuickDrawEnabled => IAppHost.TryGetService<SecRandom.Core.Services.FeatureConfiguration.FeatureRuntimeSnapshot>()
+        ?.IsEnabled(SecRandom.Core.Services.FeatureConfiguration.StartupFeatureCatalog.QuickDraw) != false;
+
+    private void EnsureDrawFeatureEnabled(string target)
+    {
+        if ((target == "lottery" && !features.IsLotteryEnabled) || (target == "quick" && !IsQuickDrawEnabled))
+            throw new AutomationRpcException(AutomationErrorCodes.FeatureDisabled, "抽取功能已关闭。");
+    }
 
     private LotteryPageViewModel Lottery => IAppHost.GetService<LotteryPageViewModel>();
 

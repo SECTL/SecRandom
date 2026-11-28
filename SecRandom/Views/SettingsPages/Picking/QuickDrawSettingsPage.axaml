@@ -304,6 +304,7 @@
 
 
             <fa:FASettingsExpander x:Name="S_VoiceAnnouncementGroup" Header="{x:Static lp:Resources.Section_VoiceAnnouncement}"
+                                   IsVisible="{Binding IsVoiceEnabled}"
                                    IsExpanded="{Binding Settings.OverrideVoiceAnnouncementSettings, Mode=OneWay}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PersonVoiceFilled}}">
                 <fa:FASettingsExpander.Footer>

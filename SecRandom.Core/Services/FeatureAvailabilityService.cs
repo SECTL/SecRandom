@@ -3,6 +3,7 @@ using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.FeatureConfiguration;
 
 namespace SecRandom.Core.Services;
 
@@ -13,10 +14,12 @@ public static partial class CoreRuntimeServiceCollectionExtensions
     private readonly MainConfigHandler _configHandler;
     private MoreSettingsConfig _settings;
     private SimpleModeSettingsConfig _simpleMode;
+    private readonly FeatureRuntimeSnapshot? _snapshot;
 
-    public FeatureAvailabilityService(MainConfigHandler configHandler)
+    public FeatureAvailabilityService(MainConfigHandler configHandler, FeatureRuntimeSnapshot? snapshot = null)
     {
         _configHandler = configHandler;
+        _snapshot = snapshot;
         _settings = configHandler.Data.MoreSettings;
         _settings.PropertyChanged += SettingsOnPropertyChanged;
         _simpleMode = configHandler.Data.General.SimpleMode;
@@ -25,7 +28,8 @@ public static partial class CoreRuntimeServiceCollectionExtensions
 
     public bool IsSimpleModeEnabled => _simpleMode.Enabled;
 
-    public bool IsLotteryEnabled => !IsSimpleModeEnabled && _settings.LotteryEnabled;
+    public bool IsLotteryEnabled => !IsSimpleModeEnabled && _settings.LotteryEnabled &&
+                                    _snapshot?.IsEnabled(StartupFeatureCatalog.Lottery) != false;
 
     public event EventHandler? Changed;
 

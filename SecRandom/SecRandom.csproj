@@ -7,6 +7,9 @@
         <GenerateResourceDesigner>true</GenerateResourceDesigner>
         <HotAvaloniaIncludeExtensions>True</HotAvaloniaIncludeExtensions>
         <IntegrationPublicKey Condition="'$(IntegrationPublicKey)' == ''">$(SECRANDOM_INTEGRATION_PUBLIC_KEY_SPKI_BASE64)</IntegrationPublicKey>
+        <SyncApiKey Condition="'$(SyncApiKey)' == ''">$(SECRANDOM_SYNC_API_KEY)</SyncApiKey>
+        <VerifyApiKey Condition="'$(VerifyApiKey)' == ''">$(SECRANDOM_VERIFY_API_KEY)</VerifyApiKey>
+        <OfflineQrApiKey Condition="'$(OfflineQrApiKey)' == ''">$(SECRANDOM_OFFLINE_QR_API_KEY)</OfflineQrApiKey>
         <!-- These views are created with DI/state constructors and load AXAML into an existing instance. -->
         <NoWarn>$(NoWarn);AVLN3001</NoWarn>
     </PropertyGroup>
@@ -118,6 +121,11 @@
         </EmbeddedResource>
 
         <EmbeddedResource Update="Langs\SettingsPages\General\Basic\Resources.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+
+        <EmbeddedResource Update="Langs\SettingsPages\General\Features\Resources.resx">
             <Generator>PublicResXFileCodeGenerator</Generator>
             <LastGenOutput>Resources.Designer.cs</LastGenOutput>
         </EmbeddedResource>
@@ -333,6 +341,12 @@
         </Compile>
 
         <Compile Update="Langs\SettingsPages\General\Basic\Resources.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>Resources.resx</DependentUpon>
+        </Compile>
+
+        <Compile Update="Langs\SettingsPages\General\Features\Resources.Designer.cs">
             <DesignTime>True</DesignTime>
             <AutoGen>True</AutoGen>
             <DependentUpon>Resources.resx</DependentUpon>
@@ -615,6 +629,42 @@
                           Overwrite="true" Condition="'$(IntegrationPublicKey)' != ''" />
         <ItemGroup Condition="'$(IntegrationPublicKey)' != ''">
             <Compile Include="$(_IntegrationTrustMetadataPath)" />
+        </ItemGroup>
+    </Target>
+
+    <Target Name="GenerateSecRandomApiKeyMetadata" BeforeTargets="CoreCompile">
+        <ReadLinesFromFile File="$(MSBuildProjectDirectory)/../.env"
+                           Condition="'$(SkipSecRandomApiKeyEnvFile)' != 'true' and Exists('$(MSBuildProjectDirectory)/../.env') and ('$(SyncApiKey)' == '' or '$(VerifyApiKey)' == '' or '$(OfflineQrApiKey)' == '')">
+            <Output TaskParameter="Lines" ItemName="_SecRandomApiEnvLine" />
+        </ReadLinesFromFile>
+        <ItemGroup>
+            <_SecRandomSyncApiKeyLine Include="@(_SecRandomApiEnvLine)"
+                Condition="'$(SyncApiKey)' == '' and $([System.String]::Copy('%(Identity)').StartsWith('SECRANDOM_SYNC_API_KEY='))" />
+            <_SecRandomVerifyApiKeyLine Include="@(_SecRandomApiEnvLine)"
+                Condition="'$(VerifyApiKey)' == '' and $([System.String]::Copy('%(Identity)').StartsWith('SECRANDOM_VERIFY_API_KEY='))" />
+            <_SecRandomOfflineQrApiKeyLine Include="@(_SecRandomApiEnvLine)"
+                Condition="'$(OfflineQrApiKey)' == '' and $([System.String]::Copy('%(Identity)').StartsWith('SECRANDOM_OFFLINE_QR_API_KEY='))" />
+        </ItemGroup>
+        <PropertyGroup Condition="'$(SyncApiKey)' == '' and '@(_SecRandomSyncApiKeyLine)' != ''">
+            <_SecRandomSyncApiKeyAssignment>@(_SecRandomSyncApiKeyLine)</_SecRandomSyncApiKeyAssignment>
+            <SyncApiKey>$([System.String]::Copy('$(_SecRandomSyncApiKeyAssignment)').Replace('SECRANDOM_SYNC_API_KEY=', ''))</SyncApiKey>
+        </PropertyGroup>
+        <PropertyGroup Condition="'$(VerifyApiKey)' == '' and '@(_SecRandomVerifyApiKeyLine)' != ''">
+            <_SecRandomVerifyApiKeyAssignment>@(_SecRandomVerifyApiKeyLine)</_SecRandomVerifyApiKeyAssignment>
+            <VerifyApiKey>$([System.String]::Copy('$(_SecRandomVerifyApiKeyAssignment)').Replace('SECRANDOM_VERIFY_API_KEY=', ''))</VerifyApiKey>
+        </PropertyGroup>
+        <PropertyGroup Condition="'$(OfflineQrApiKey)' == '' and '@(_SecRandomOfflineQrApiKeyLine)' != ''">
+            <_SecRandomOfflineQrApiKeyAssignment>@(_SecRandomOfflineQrApiKeyLine)</_SecRandomOfflineQrApiKeyAssignment>
+            <OfflineQrApiKey>$([System.String]::Copy('$(_SecRandomOfflineQrApiKeyAssignment)').Replace('SECRANDOM_OFFLINE_QR_API_KEY=', ''))</OfflineQrApiKey>
+        </PropertyGroup>
+        <PropertyGroup>
+            <_SecRandomApiKeyMetadataPath>$(IntermediateOutputPath)SecRandomApiKeyMetadata.g.cs</_SecRandomApiKeyMetadataPath>
+        </PropertyGroup>
+        <WriteLinesToFile File="$(_SecRandomApiKeyMetadataPath)"
+                          Lines="[assembly: System.Reflection.AssemblyMetadataAttribute(&quot;SecRandomSyncApiKey&quot;, &quot;$(SyncApiKey)&quot;)]&#xA;[assembly: System.Reflection.AssemblyMetadataAttribute(&quot;SecRandomVerifyApiKey&quot;, &quot;$(VerifyApiKey)&quot;)]&#xA;[assembly: System.Reflection.AssemblyMetadataAttribute(&quot;SecRandomOfflineQrApiKey&quot;, &quot;$(OfflineQrApiKey)&quot;)]"
+                          Overwrite="true" />
+        <ItemGroup>
+            <Compile Include="$(_SecRandomApiKeyMetadataPath)" />
         </ItemGroup>
     </Target>
 </Project>

@@ -83,8 +83,11 @@ public sealed class CourseLinkageHostedService(
         Dispatcher.UIThread.Post(() =>
         {
             IAppHost.TryGetService<RollCallPageViewModel>()?.ResetForCourseLinkage();
-            IAppHost.TryGetService<QuickDrawPageViewModel>()?.ResetForCourseLinkage();
-            IAppHost.TryGetService<LotteryPageViewModel>()?.ResetForCourseLinkage();
+            var features = IAppHost.TryGetService<SecRandom.Core.Services.FeatureConfiguration.FeatureRuntimeSnapshot>();
+            if (features?.IsEnabled(SecRandom.Core.Services.FeatureConfiguration.StartupFeatureCatalog.QuickDraw) != false)
+                IAppHost.TryGetService<QuickDrawPageViewModel>()?.ResetForCourseLinkage();
+            if (features?.IsEnabled(SecRandom.Core.Services.FeatureConfiguration.StartupFeatureCatalog.Lottery) != false)
+                IAppHost.TryGetService<LotteryPageViewModel>()?.ResetForCourseLinkage();
         });
         logger.LogInformation("已执行课前联动重置：课程={CourseName}。", linkageService.Snapshot.NextCourse?.Name);
     }

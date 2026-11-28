@@ -23,7 +23,7 @@ public partial class DefaultDrawSettingsPage : UserControl
     public DefaultDrawSettingsPage()
     {
         Settings = ViewModel.Config.DefaultDrawSettings;
-        MusicLibrary.Refresh();
+        if (IsMusicEnabled) MusicLibrary.Refresh();
         // 三个选项的下拉框直接绑 DrawMode：越界值必须在 InitializeComponent 之前修掉，
         // 否则下拉框会把非法索引强制成 -1 再经 TwoWay 写回配置。
         RepairOrchestratedDrawMode();
@@ -34,14 +34,17 @@ public partial class DefaultDrawSettingsPage : UserControl
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public DefaultDrawSettingsConfig Settings { get; }
-    public ObservableCollection<MusicSelection> MusicSelections => MusicLibrary.Selections;
+    private readonly ObservableCollection<MusicSelection> _emptyMusicSelections = [];
+    public bool IsMusicEnabled => DrawFeatureVisibility.Music;
+    public bool IsVoiceEnabled => DrawFeatureVisibility.Voice;
+    public ObservableCollection<MusicSelection> MusicSelections => IsMusicEnabled ? MusicLibrary.Selections : _emptyMusicSelections;
 
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
-    private MusicLibraryService MusicLibrary { get; } = IAppHost.GetService<MusicLibraryService>();
+    private MusicLibraryService MusicLibrary => IAppHost.GetService<MusicLibraryService>();
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        MusicLibrary.Refresh();
+        if (IsMusicEnabled) MusicLibrary.Refresh();
         SubscribeSettings();
 
         MusicSettingsExpander.IsExpanded = true;

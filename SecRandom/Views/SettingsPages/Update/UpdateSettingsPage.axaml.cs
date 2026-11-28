@@ -8,6 +8,7 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.Services.Updates;
 using SecRandom.Shared.Updates;
 using SecRandom.ViewModels;
@@ -27,6 +28,8 @@ public partial class UpdateSettingsPage : UserControl
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public UpdateSettingsConfig Settings { get; }
+    public bool IsAutomaticUpdateAvailable => IAppHost.TryGetService<FeatureRuntimeSnapshot>()
+        ?.IsEnabled(StartupFeatureCatalog.AutomaticUpdates) != false;
     public UpdateCenterService UpdateCenter { get; } = IAppHost.GetService<UpdateCenterService>();
 
     public int SelectedChannelIndex

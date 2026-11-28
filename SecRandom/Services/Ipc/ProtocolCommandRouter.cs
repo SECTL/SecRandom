@@ -7,6 +7,7 @@ using Avalonia.Threading;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.Core.Services.Ipc;
 using SecRandom.Core.Services.SimpleMode;
 using SecRandom.Shared.Models.Ipc;
@@ -22,13 +23,16 @@ namespace SecRandom.Services.Ipc;
 public sealed class ProtocolCommandRouter(
     MainConfigHandler configHandler,
     RollCallPageViewModel rollCall,
-    LotteryPageViewModel lottery,
-    QuickDrawPageViewModel quickDraw,
+    Func<LotteryPageViewModel> getLottery,
+    Func<QuickDrawPageViewModel> getQuickDraw,
     IProfileQueryService profileQuery,
     ISecurityService security,
     IFeatureAvailabilityService featureAvailability,
-    PageRouteResolver pageRoutes)
+    PageRouteResolver pageRoutes,
+    FeatureRuntimeSnapshot? features = null)
 {
+    private LotteryPageViewModel lottery => getLottery();
+    private QuickDrawPageViewModel quickDraw => getQuickDraw();
     private static readonly Dictionary<string, string> MainPages = new(StringComparer.OrdinalIgnoreCase)
     {
         ["roll_call_page"] = "main.rollCall", ["roll"] = "main.rollCall",
@@ -472,6 +476,8 @@ public sealed class ProtocolCommandRouter(
 
     private async Task<IpcResponseEnvelope> HandleQuickDrawAsync(CancellationToken token)
     {
+        if (features?.IsEnabled(StartupFeatureCatalog.QuickDraw) == false || !quickDraw.IsQuickDrawAvailable)
+            return Failure("url", "feature_disabled", "闪抽功能已关闭。", true);
         var allowed = await quickDraw.StartProtocolDrawAsync(protectLinkage: true).ConfigureAwait(true);
         if (!allowed)
             return Failure("url", "authorization_denied", LR.M_AuthorizationDenied, true);

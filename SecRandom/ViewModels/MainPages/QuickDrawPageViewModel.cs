@@ -104,10 +104,12 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
         OrchestrationScheduler? orchestrationScheduler = null,
         IProfileCatalogManager? profileCatalogManager = null,
         CourseRosterMappingService? courseRosterMapping = null,
-        IPluginEventBus? eventBus = null)
+        IPluginEventBus? eventBus = null,
+        SecRandom.Core.Services.FeatureConfiguration.FeatureRuntimeSnapshot? features = null)
         : base(configHandler)
     {
         _configHandler = configHandler;
+        _features = features;
         _drawEngine = drawEngine;
         _profileService = profileService;
         _temporaryRecordService = temporaryRecordService;
@@ -146,7 +148,9 @@ public sealed partial class QuickDrawPageViewModel : ViewModelBase, IDisposable
     /// </summary>
     public IReadOnlyList<string> LastResultDisplayTitles =>
         LastResultStudents.Select(FormatStudent).ToArray();
-    public bool CanStartDraw => IsDrawing || (!_isDrawCommandRunning && !_isCoolingDown && GetEligibleCandidates().Any());
+    private readonly SecRandom.Core.Services.FeatureConfiguration.FeatureRuntimeSnapshot? _features;
+    public bool IsQuickDrawAvailable => _features?.IsEnabled(SecRandom.Core.Services.FeatureConfiguration.StartupFeatureCatalog.QuickDraw) != false;
+    public bool CanStartDraw => IsQuickDrawAvailable && (IsDrawing || (!_isDrawCommandRunning && !_isCoolingDown && GetEligibleCandidates().Any()));
     public bool IsDrawBlockedNoticeVisible => !string.IsNullOrWhiteSpace(DrawBlockedNotice);
     public string DrawButtonText => IsDrawing ? QuickDrawResources.C_Stop : QuickDrawResources.C_Start;
 
@@ -280,6 +284,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     [RelayCommand(AllowConcurrentExecutions = true)]
     private async Task StartDrawAsync()
     {
+        if (!IsQuickDrawAvailable) return;
         if (IsDrawing)
         {
             StopPreview();
@@ -311,6 +316,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
     /// </summary>
     public Task StartAuthorizedTriggeredDrawAsync(int count = 1)
     {
+        if (!IsQuickDrawAvailable) return Task.CompletedTask;
         var showBuiltInNotificationAnimation = _notificationService?.UsesBuiltInNotificationService(
             NotificationSettingsType.QuickDraw) == true;
         return StartDrawCoreAsync(
@@ -692,7 +698,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
             60);
     }
 
-    public Task<bool> StartProtocolDrawAsync(bool protectLinkage = false) => _linkageDrawCoordinator.AuthorizeAsync(
+    public Task<bool> StartProtocolDrawAsync(bool protectLinkage = false) => !IsQuickDrawAvailable ? Task.FromResult(false) : _linkageDrawCoordinator.AuthorizeAsync(
         protectLinkage ? [SecurityOperation.QuickDrawStart, SecurityOperation.LinkageAction] : [SecurityOperation.QuickDrawStart],
         async () =>
         {
@@ -726,6 +732,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         CancellationToken cancellationToken = default,
         bool allowInteractiveVerification = false)
     {
+        if (!IsQuickDrawAvailable) return RemoteDrawOutcome.Invalid("feature_disabled");
         SecurityOperation[] operations = [SecurityOperation.QuickDrawStart, SecurityOperation.LinkageAction];
         var gate = _linkageDrawCoordinator.EvaluateGate(operations);
         if (gate == LinkageDrawGate.RequiresLocalVerification && allowInteractiveVerification)

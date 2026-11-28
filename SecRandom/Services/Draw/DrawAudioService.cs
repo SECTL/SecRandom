@@ -15,7 +15,7 @@ using SoundFlow.Structs;
 
 namespace SecRandom.Services.Draw;
 
-public sealed class DrawAudioService(MusicLibraryService musicLibrary, ILogger<DrawAudioService> logger) : IDisposable
+public sealed class DrawAudioService(MusicLibraryService? musicLibrary, ILogger<DrawAudioService> logger) : IDisposable
 {
     private readonly object _gate = new();
     private readonly IPlaybackBackend _backend = new SoundFlowPlaybackBackend();
@@ -156,6 +156,8 @@ public sealed class DrawAudioService(MusicLibraryService musicLibrary, ILogger<D
 
     private bool StartSession(PlaybackKind kind, string selection, int volume, int fadeIn, int fadeOut, bool loop)
     {
+        if (musicLibrary is null || IsSimpleModeEnabled())
+            return false;
         var path = selection == MusicLibraryService.RandomTrackId
             ? musicLibrary.ResolveRandomPath()
             : musicLibrary.ResolvePath(selection);

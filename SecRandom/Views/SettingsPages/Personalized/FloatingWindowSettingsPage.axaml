@@ -175,6 +175,7 @@
             </fa:FASettingsExpander>
 
             <fa:FASettingsExpander x:Name="S_Interaction_QuickDrawLongPress"
+                                   IsVisible="{Binding IsQuickDrawAvailable}"
                                    Header="{x:Static lsp:Resources.S_Interaction_QuickDrawLongPress}"
                                    Description="{x:Static lsp:Resources.S_Interaction_QuickDrawLongPress_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}">

@@ -18,6 +18,7 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.General;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.Models;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.ImportExport;
@@ -72,6 +73,10 @@ public partial class BackupSettingsPage : UserControl, INotifyPropertyChanged
 
     public ViewModelBase ViewModel { get; } = IAppHost.GetService<ViewModelBase>();
     public BackupConfig Settings { get; }
+    public bool IsAutomaticBackupAvailable => IAppHost.TryGetService<FeatureRuntimeSnapshot>()
+        ?.IsEnabled(StartupFeatureCatalog.AutomaticBackup) != false;
+    public string BackupCardHeader => IsAutomaticBackupAvailable ? LR.S_AutoBackup : SecRandom.Langs.Common.Resources.Settings_Backup;
+    public string BackupCardDescription => IsAutomaticBackupAvailable ? LR.S_AutoBackup_D : string.Empty;
 
     public ObservableCollection<BackupMetadata> Backups { get; } = [];
     public AvaloniaList<MultiSelectSettingOption> IncludeOptions { get; }

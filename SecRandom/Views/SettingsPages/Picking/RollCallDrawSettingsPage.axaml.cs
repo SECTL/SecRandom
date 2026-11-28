@@ -45,7 +45,7 @@ public partial class RollCallDrawSettingsPage : UserControl
             () => Settings.HistoryGroup,
             value => Settings.HistoryGroup = value);
         HistoryGroup.Refresh();
-        MusicLibrary.Refresh();
+        if (IsMusicEnabled) MusicLibrary.Refresh();
         DataContext = this;
         InitializeComponent();
         ApplyFairDrawModeVisibility();
@@ -115,7 +115,10 @@ public partial class RollCallDrawSettingsPage : UserControl
         }
     }
 
-    public ObservableCollection<MusicSelection> MusicSelections => MusicLibrary.Selections;
+    private readonly ObservableCollection<MusicSelection> _emptyMusicSelections = [];
+    public bool IsMusicEnabled => DrawFeatureVisibility.Music;
+    public bool IsVoiceEnabled => DrawFeatureVisibility.Voice;
+    public ObservableCollection<MusicSelection> MusicSelections => IsMusicEnabled ? MusicLibrary.Selections : _emptyMusicSelections;
 
     /// <summary>
     ///     公平抽取策略：0 = 均匀优先（平均次数硬门槛），1 = 随机优先（零概率软门槛）。
@@ -141,7 +144,7 @@ public partial class RollCallDrawSettingsPage : UserControl
     private MainConfigHandler ConfigHandler { get; } = IAppHost.GetService<MainConfigHandler>();
     private IProfileCatalogManager ProfileCatalogManager { get; } = IAppHost.GetService<IProfileCatalogManager>();
     private IHistoryGroupCatalog HistoryGroupCatalog { get; } = IAppHost.GetService<IHistoryGroupCatalog>();
-    private MusicLibraryService MusicLibrary { get; } = IAppHost.GetService<MusicLibraryService>();
+    private MusicLibraryService MusicLibrary => IAppHost.GetService<MusicLibraryService>();
     /// <summary>
     ///     用户在这一行里换了组：写回配置。重建候选值期间下拉框会先清空选中项，那不是用户选择。
     /// </summary>
@@ -193,7 +196,7 @@ public partial class RollCallDrawSettingsPage : UserControl
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
-        MusicLibrary.Refresh();
+        if (IsMusicEnabled) MusicLibrary.Refresh();
         RefreshHistoryGroupSelection();
         ApplyFairDrawModeVisibility();
         ApplyDefaultClassCardVisibility();

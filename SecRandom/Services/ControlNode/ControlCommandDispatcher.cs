@@ -124,9 +124,12 @@ public sealed class ControlCommandDispatcher(
         try
         {
             return await Dispatcher.UIThread.InvokeAsync(
-                () => IAppHost.GetService<QuickDrawPageViewModel>().IsDrawing
+                () => (IAppHost.TryGetService<SecRandom.Core.Services.FeatureConfiguration.FeatureRuntimeSnapshot>()
+                           ?.IsEnabled(SecRandom.Core.Services.FeatureConfiguration.StartupFeatureCatalog.QuickDraw) != false
+                       && IAppHost.GetService<QuickDrawPageViewModel>().IsDrawing)
                       || IAppHost.GetService<RollCallPageViewModel>().IsDrawing
-                      || IAppHost.GetService<LotteryPageViewModel>().IsDrawing);
+                      || (IAppHost.TryGetService<SecRandom.Core.Abstraction.Services.IFeatureAvailabilityService>()
+                              ?.IsLotteryEnabled != false && IAppHost.GetService<LotteryPageViewModel>().IsDrawing));
         }
         catch (Exception)
         {

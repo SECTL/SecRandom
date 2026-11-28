@@ -8,6 +8,7 @@ using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.ControlNode;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.Services.Linkage;
 using SecRandom.Services.Security;
 
@@ -24,6 +25,37 @@ namespace SecRandom.Core.Tests;
 /// </summary>
 public sealed class LinkageDrawCoordinatorTests
 {
+    [Fact]
+    public async Task DisabledLinkageCanRunWithoutConstructingScheduleSources()
+    {
+        var config = new MainConfigModel();
+        config.LinkageSettings.DataSource = LinkageDataSource.Cses;
+        config.LinkageSettings.InstantDrawDisable = true;
+        config.LinkageSettings.RestrictWhenUnavailable = true;
+        var handler = new MainConfigHandler(NullLogger<MainConfigHandler>.Instance, new TestConfigService(config));
+        var linkage = new CourseLinkageService(handler, NullLogger<CourseLinkageService>.Instance,
+            new FeatureRuntimeSnapshot([]));
+        await linkage.RefreshAsync();
+        Assert.False(linkage.IsClassTimeRestrictionActive);
+        Assert.Equal(LinkageDataSource.Cses, config.LinkageSettings.DataSource);
+    }
+
+    [Fact]
+    public async Task DisabledCourseLinkageDoesNotApplyPersistedRestrictions()
+    {
+        var harness = new Harness(restrictWhenUnavailable: true, verificationAvailable: false,
+            featureSnapshot: new FeatureRuntimeSnapshot([]));
+        var executed = false;
+        var authorized = await harness.Coordinator.AuthorizeAsync(
+            SecurityOperation.RollCallStart, () => { executed = true; return Task.CompletedTask; });
+
+        Assert.True(authorized);
+        Assert.True(executed);
+        Assert.Equal(LinkageDrawGate.Allowed, harness.Coordinator.EvaluateGate(SecurityOperation.RollCallStart));
+        Assert.True(harness.Config.LinkageSettings.RestrictWhenUnavailable);
+        Assert.Equal(LinkageDataSource.Cses, harness.Config.LinkageSettings.DataSource);
+    }
+
     [Fact]
     public async Task StrictRestriction_WithoutConfiguredVerification_BlocksDraw()
     {
@@ -92,9 +124,11 @@ public sealed class LinkageDrawCoordinatorTests
         public Harness(
             bool restrictWhenUnavailable,
             bool verificationAvailable,
-            bool verificationRequired = true)
+            bool verificationRequired = true,
+            FeatureRuntimeSnapshot? featureSnapshot = null)
         {
             var config = new MainConfigModel();
+            Config = config;
             config.LinkageSettings.DataSource = LinkageDataSource.Cses;
             config.LinkageSettings.InstantDrawDisable = true;
             config.LinkageSettings.RestrictWhenUnavailable = restrictWhenUnavailable;
@@ -111,7 +145,8 @@ public sealed class LinkageDrawCoordinatorTests
                 store,
                 new CsesScheduleSource(store),
                 source,
-                NullLogger<CourseLinkageService>.Instance);
+                NullLogger<CourseLinkageService>.Instance,
+                featureSnapshot);
             Coordinator = new LinkageDrawCoordinator(
                 Linkage,
                 new StubSecurityService(verificationAvailable),
@@ -121,6 +156,7 @@ public sealed class LinkageDrawCoordinatorTests
         }
 
         public CourseLinkageService Linkage { get; }
+        public MainConfigModel Config { get; }
         public LinkageDrawCoordinator Coordinator { get; }
     }
 

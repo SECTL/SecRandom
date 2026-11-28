@@ -181,12 +181,14 @@ public sealed class TabletControlHostTests
 
         var nodeBranch = SectionOf(source, "if (hostShape.RunsControlNode)", "else if (hostShape.UsesUnlockedDrawGate)");
 
-        // 真有节点的宿主：真闸门 + 节点服务 + 集控设置页。
+        // 桌面开启节点时使用集控闸门；关闭节点时本地抽取使用解锁闸门。
         Assert.Contains("services.AddSingleton<IControlDrawGate, ControlDrawGateService>();", nodeBranch, StringComparison.Ordinal);
+        Assert.Contains("if (featureSnapshot.IsEnabled(StartupFeatureCatalog.ControlNode))", nodeBranch, StringComparison.Ordinal);
+        Assert.Contains("services.AddSingleton<IControlDrawGate, UnlockedControlDrawGate>();", nodeBranch, StringComparison.Ordinal);
         Assert.Contains("services.AddSingleton<IControlNodeStateStore, FileControlNodeStateStore>();", nodeBranch, StringComparison.Ordinal);
         Assert.Contains("services.AddSingleton<IControlCommandDispatcher, ControlCommandDispatcher>();", nodeBranch, StringComparison.Ordinal);
         Assert.Contains("services.AddHostedService<ControlNodeHostedService>();", nodeBranch, StringComparison.Ordinal);
-        Assert.DoesNotContain("UnlockedControlDrawGate", nodeBranch, StringComparison.Ordinal);
+        Assert.Contains("if (featureSnapshot.IsEnabled(StartupFeatureCatalog.ControlNode))\n                        services.AddHostedService<ControlNodeHostedService>();", nodeBranch.Replace("\r\n", "\n"), StringComparison.Ordinal);
 
         var gateFallbackBranch = SectionOf(source, "else if (hostShape.UsesUnlockedDrawGate)", "services.AddSingleton<SecurityCredentialStore>();");
 
@@ -577,12 +579,10 @@ public sealed class TabletControlHostTests
     {
         var source = ReadAppSource();
 
-        // 两处且只有两处按"跑不跑节点"分支：节点服务一份、集控设置页一份。
-        // 页面与它依赖的节点服务必须在同一个判据下出现——页面在、节点不在（或反过来）都是坏的组合。
-        var guards = Regex.Matches(source, @"if \(hostShape\.RunsControlNode\)");
-        Assert.Equal(2, guards.Count);
-
-        var settingsGuardIndex = guards[1].Index;
+        // 设置页同时要求宿主支持节点且功能方案启用节点。
+        const string settingsGuard = "if (hostShape.RunsControlNode && featureSnapshot.IsEnabled(StartupFeatureCatalog.ControlNode))";
+        var settingsGuardIndex = source.IndexOf(settingsGuard, StringComparison.Ordinal);
+        Assert.True(settingsGuardIndex >= 0);
         var settingsBranch = source[settingsGuardIndex..Math.Min(source.Length, settingsGuardIndex + 600)];
 
         Assert.Contains("services.AddSettingsPage<ControlSettingsPage>(", settingsBranch, StringComparison.Ordinal);

@@ -3,6 +3,7 @@ using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums.Configs;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.ViewEngine;
 
@@ -22,11 +23,30 @@ public enum FloatingWindowButtonExecutionError
 /// </summary>
 public static class FloatingWindowButtonActionRunner
 {
+    public static bool IsFeatureAvailable(FloatingWindowButtonConfig button)
+    {
+        var features = IAppHost.TryGetService<FeatureRuntimeSnapshot>();
+        return button.ActionKind switch
+        {
+            FloatingWindowButtonActionKind.QuickDraw => features?.IsEnabled(StartupFeatureCatalog.QuickDraw) != false,
+            FloatingWindowButtonActionKind.Timer => features?.IsEnabled(StartupFeatureCatalog.Timer) != false,
+            FloatingWindowButtonActionKind.MainPage when button.ActionTarget == "main.lottery" =>
+                features?.IsEnabled(StartupFeatureCatalog.Lottery) != false,
+            _ => true
+        };
+    }
+
     public static bool TryExecute(
         FloatingWindowButtonConfig button,
         out FloatingWindowButtonExecutionError error)
     {
         error = FloatingWindowButtonExecutionError.None;
+
+        if (!IsFeatureAvailable(button))
+        {
+            error = FloatingWindowButtonExecutionError.OpenFailed;
+            return false;
+        }
 
         switch (button.ActionKind)
         {

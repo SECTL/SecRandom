@@ -5,6 +5,7 @@
              xmlns:fa="clr-namespace:FluentAvalonia.UI.Controls;assembly=FluentAvalonia"
              xmlns:local="clr-namespace:SecRandom.Views.SettingsPages.More"
              xmlns:lsp="clr-namespace:SecRandom.Langs.SettingsPages.More"
+             xmlns:lc="clr-namespace:SecRandom.Langs.SettingsPages.General.Control"
              xmlns:sr="http://secrandom.sectl.cn/schemas/xaml/core"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SecRandom.Views.SettingsPages.More.MoreSettingsPage"
@@ -17,6 +18,15 @@
                          Text="{x:Static lsp:Resources.S_PageManagement}"
                          Glyph="{sr:Fi PanelRightFilled}"
                          Margin="0 0 0 4" />
+
+            <fa:FASettingsExpander IsVisible="{Binding IsRemoteDrawControlAvailable}"
+                                   Header="{x:Static lc:Resources.S_RemoteDrawPage}"
+                                   Description="{x:Static lc:Resources.S_RemoteDrawPage_D}"
+                                   IconSource="{sr:FluentIconSource {sr:Fi SendFilled}}">
+                <fa:FASettingsExpander.Footer>
+                    <ToggleSwitch IsChecked="{Binding RemoteDrawPageEnabled}" />
+                </fa:FASettingsExpander.Footer>
+            </fa:FASettingsExpander>
 
             <fa:FASettingsExpander x:Name="S_RollCallPanelPosition"
                                    Header="{x:Static lsp:Resources.S_RollCallPanelPosition}"
@@ -82,6 +92,7 @@
             </fa:FASettingsExpander>
 
             <fa:FASettingsExpander x:Name="S_LotteryEnabled"
+                                   IsVisible="{Binding IsLotteryFeatureAvailable}"
                                    Header="{x:Static lsp:Resources.S_LotteryEnabled}"
                                    Description="{x:Static lsp:Resources.S_LotteryEnabled_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi GiftFilled}}">
@@ -94,7 +105,7 @@
                                    Header="{x:Static lsp:Resources.S_LotteryPanelPosition}"
                                    Description="{x:Static lsp:Resources.S_LotteryPanelPosition_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi GiftFilled}}"
-                                   IsVisible="{Binding Settings.LotteryEnabled}">
+                                   IsVisible="{Binding IsLotteryAvailable}">
                 <fa:FASettingsExpander.Footer>
                     <ComboBox SelectedIndex="{Binding Settings.LotteryControlPanelPosition}">
                         <ComboBoxItem Content="{x:Static lsp:Resources.O_Right}" />
@@ -109,7 +120,7 @@
                                    IconSource="{sr:FluentIconSource {sr:Fi AppsListFilled}}">
                 <fa:FASettingsExpander.IsVisible>
                     <MultiBinding Converter="{x:Static BoolConverters.And}">
-                        <Binding Path="Settings.LotteryEnabled" />
+                        <Binding Path="IsLotteryAvailable" />
                         <Binding Path="UseDesktopUI" />
                     </MultiBinding>
                 </fa:FASettingsExpander.IsVisible>
@@ -224,7 +235,8 @@
                         </Grid>
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
-                <fa:FASettingsExpanderItem x:Name="S_Shortcut_QuickDraw" Content="{x:Static lsp:Resources.S_Shortcut_QuickDraw}">
+                <fa:FASettingsExpanderItem x:Name="S_Shortcut_QuickDraw" Content="{x:Static lsp:Resources.S_Shortcut_QuickDraw}"
+                                           IsVisible="{Binding IsQuickDrawAvailable}">
                     <fa:FASettingsExpanderItem.Footer>
                         <Grid ColumnDefinitions="50,8,180,32">
                             <TextBlock Grid.Column="0"
@@ -245,7 +257,7 @@
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
                 <fa:FASettingsExpanderItem x:Name="S_Shortcut_OpenLotteryPage" Content="{x:Static lsp:Resources.S_Shortcut_OpenLotteryPage}"
-                                           IsVisible="{Binding Settings.LotteryEnabled}">
+                                           IsVisible="{Binding IsLotteryAvailable}">
                     <fa:FASettingsExpanderItem.Footer>
                         <Grid ColumnDefinitions="50,8,180,32">
                             <TextBlock Grid.Column="0"
@@ -309,7 +321,7 @@
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
                 <fa:FASettingsExpanderItem x:Name="S_Shortcut_IncreaseLotteryCount" Content="{x:Static lsp:Resources.S_Shortcut_IncreaseLotteryCount}"
-                                           IsVisible="{Binding Settings.LotteryEnabled}">
+                                           IsVisible="{Binding IsLotteryAvailable}">
                     <fa:FASettingsExpanderItem.Footer>
                         <Grid ColumnDefinitions="50,8,180,32">
                             <TextBlock Grid.Column="0"
@@ -331,7 +343,7 @@
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
                 <fa:FASettingsExpanderItem x:Name="S_Shortcut_DecreaseLotteryCount" Content="{x:Static lsp:Resources.S_Shortcut_DecreaseLotteryCount}"
-                                           IsVisible="{Binding Settings.LotteryEnabled}">
+                                           IsVisible="{Binding IsLotteryAvailable}">
                     <fa:FASettingsExpanderItem.Footer>
                         <Grid ColumnDefinitions="50,8,180,32">
                             <TextBlock Grid.Column="0"
@@ -374,7 +386,7 @@
                     </fa:FASettingsExpanderItem.Footer>
                 </fa:FASettingsExpanderItem>
                 <fa:FASettingsExpanderItem x:Name="S_Shortcut_StartLottery" Content="{x:Static lsp:Resources.S_Shortcut_StartLottery}"
-                                           IsVisible="{Binding Settings.LotteryEnabled}">
+                                           IsVisible="{Binding IsLotteryAvailable}">
                     <fa:FASettingsExpanderItem.Footer>
                         <Grid ColumnDefinitions="50,8,180,32">
                             <TextBlock Grid.Column="0"

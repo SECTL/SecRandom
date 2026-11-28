@@ -19,12 +19,16 @@
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_SimpleMode_Enabled"
-                                   Header="{x:Static lsb:Resources.S_SimpleMode_Enabled}"
-                                   Description="{x:Static lsb:Resources.S_SimpleMode_Enabled_D}"
+                                   Header="{Binding FeatureTitle}"
+                                   Description="{Binding FeatureDescription}"
                                    IconSource="{sr:FluentIconSource {sr:Fi FlashFilled}}"
                                    IsVisible="{Binding IsDesktop}">
                 <fa:FASettingsExpander.Footer>
-                    <ToggleSwitch IsChecked="{Binding SimpleMode.Enabled, Mode=TwoWay}" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ComboBox x:Name="FeatureProfileSelector" MinWidth="150"
+                                  SelectionChanged="FeatureProfileSelector_OnSelectionChanged" />
+                        <Button Content="{Binding FeatureConfigureLabel}" Click="ConfigureFeatures_OnClick" />
+                    </StackPanel>
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 

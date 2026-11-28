@@ -1,0 +1,23 @@
+<faWindowing:FAAppWindow xmlns="https://github.com/avaloniaui"
+                         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                         xmlns:faWindowing="clr-namespace:FluentAvalonia.UI.Windowing;assembly=FluentAvalonia"
+                         x:Class="SecRandom.Views.FeatureConfigurationWindow"
+                         Icon="/Assets/AppLogo.ico"
+                         Width="980" Height="760"
+                         MinWidth="760" MinHeight="560"
+                         WindowStartupLocation="CenterScreen"
+                         Closing="Window_OnClosing">
+    <Grid RowDefinitions="Auto,*">
+        <StackPanel Height="48"
+                    Orientation="Horizontal"
+                    WindowDecorationProperties.ElementRole="TitleBar">
+            <Image Width="16" Height="16" Margin="8 0 0 0"
+                   Source="/Assets/AppLogo.png" />
+            <TextBlock x:Name="TitleText"
+                       Margin="12 0 0 0"
+                       FontSize="12"
+                       VerticalAlignment="Center" />
+        </StackPanel>
+        <ContentControl x:Name="ContentHost" Grid.Row="1" />
+    </Grid>
+</faWindowing:FAAppWindow>

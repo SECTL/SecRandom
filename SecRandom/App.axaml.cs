@@ -50,6 +50,7 @@ using SecRandom.Core.Services.Verification;
 using SecRandom.Core.Services.Logging;
 using SecRandom.Core.Services.SingleInstance;
 using SecRandom.Core.Services.SimpleMode;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.Core.Abstraction.Services.Capabilities;
 using SecRandom.Core.Abstraction.Services.Data;
 using SecRandom.Core.Abstraction.Services.Diagnostics;
@@ -99,6 +100,7 @@ using SecRandom.Services.Settings;
 using SecRandom.Services.Security;
 using SecRandom.Services.Telemetry;
 using SecRandom.Services.Verification;
+using SecRandom.Services.Configuration;
 using SecRandom.Services.Voice;
 using SecRandom.Services.Updates;
 using SecRandom.Services.ViewEngine;
@@ -194,6 +196,7 @@ public partial class App : Application
     private static readonly TimeSpan NotificationFadeInStepDelay = TimeSpan.FromMilliseconds(15);
     private static MainWindow? _mainWindow;
     private static MainWindow? _settingsWindow;
+    private static FeatureConfigurationWindow? _featureConfigurationWindow;
     private static bool _timerSurfaceSuppressesMainWindow;
     private static readonly List<Window> _timerSurfaceSuppressedWindows = [];
     private static Task? _runtimeServicesStartupTask;
@@ -1324,12 +1327,17 @@ public partial class App : Application
         // 手机只是控制端。所有分支都读这一份结果，免得下次加平台时漏掉某个 if。
         var hostShape = AppHostShape.Resolve(isMobile, mobilePlatform?.UsesDesktopMainView == true);
         var useMobileUI = hostShape.UsesMobileShell;
+        var startupSettings = LoadStartupSettings(new MainConfigModel());
+        var startupFeatures = StartupFeatureCatalog.Resolve(startupSettings.General.SimpleMode);
+        var featureSnapshot = new FeatureRuntimeSnapshot(
+            isMobile ? StartupFeatureCatalog.ResolveLegacyMode(false) : startupFeatures);
 
         IAppHost.Host = Host
             .CreateDefaultBuilder()
             .UseContentRoot(AppContext.BaseDirectory)
             .ConfigureServices((context, services) =>
             {
+                services.AddSingleton(featureSnapshot);
                 if (isMobile)
                 {
                     services.AddPlatformServices(platform);
@@ -1363,11 +1371,12 @@ public partial class App : Application
                     services.AddSingleton<DesktopViewHostProvider>();
                     services.AddSingleton<IViewHostProvider>(serviceProvider =>
                         serviceProvider.GetRequiredService<DesktopViewHostProvider>());
-                    services.AddViewEngine()
+                    var desktopViews = services.AddViewEngine()
                         .AddView<MainView>(DesktopViewIds.Main)
                         .AddView<SettingsView>(DesktopViewIds.Settings)
-                        .AddView<RemainingListView>(RemainingListViewService.ViewId, ViewPresentation.Modal)
-                        .AddView<TimerView>(TimerViewService.ViewId, ViewPresentation.Modal);
+                        .AddView<RemainingListView>(RemainingListViewService.ViewId, ViewPresentation.Modal);
+                    if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Timer))
+                        desktopViews.AddView<TimerView>(TimerViewService.ViewId, ViewPresentation.Modal);
                 }
 
                 // 日志
@@ -1443,6 +1452,8 @@ public partial class App : Application
                 {
                     client.BaseAddress = new Uri("https://secrandom-sync.sectl.cn/");
                     client.Timeout = TimeSpan.FromSeconds(30);
+                    if (ApiEndpointKeys.Sync is { } apiKey)
+                        client.DefaultRequestHeaders.TryAddWithoutValidation("X-SecRandom-Api-Key", apiKey);
                 });
                 if (isMobile)
                 {
@@ -1462,7 +1473,7 @@ public partial class App : Application
                 services.AddSingleton<IProfileQueryService, ProfileQueryService>();
                 services.AddSingleton<RemainingListViewState>();
                 services.AddSingleton<RemainingListViewService>();
-                if (!isMobile)
+                if (!isMobile && featureSnapshot.IsEnabled(StartupFeatureCatalog.Timer))
                 {
                     services.AddSingleton<TimerViewModel>();
                     services.AddSingleton<TimerViewService>();
@@ -1471,7 +1482,11 @@ public partial class App : Application
                 services.AddSingleton<ProofPlaybackService>();
                 services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
                 services.AddHttpClient<IWitnessClient, WitnessClient>(client =>
-                    client.Timeout = TimeSpan.FromSeconds(3));
+                {
+                    client.Timeout = TimeSpan.FromSeconds(3);
+                    if (ApiEndpointKeys.Verify is { } apiKey)
+                        client.DefaultRequestHeaders.TryAddWithoutValidation("X-SecRandom-Api-Key", apiKey);
+                });
                 services.AddHttpClient<ITimestampAuthorityClient, TimestampAuthorityClient>(client =>
                     client.Timeout = TimeSpan.FromSeconds(10));
                 services.AddSingleton<DrawProofAttestationService>();
@@ -1490,7 +1505,8 @@ public partial class App : Application
                 services.AddSingleton<IImportExportService, ImportExportService>();
                 services.AddSingleton<ISentryFeedbackClient, SentryFeedbackClient>();
                 services.AddSingleton<IUserFeedbackService, UserFeedbackService>();
-                services.AddHostedService<AutomaticBackupService>();
+                if (featureSnapshot.IsEnabled(StartupFeatureCatalog.AutomaticBackup))
+                    services.AddHostedService<AutomaticBackupService>();
                 services.AddHostedService<TaskBarIconService>();
                 services.AddSingleton<GlobalShortcutService>();
                 services.AddHostedService(serviceProvider =>
@@ -1503,8 +1519,11 @@ public partial class App : Application
                     serviceProvider.GetRequiredService<ILogger<UpdateCenterService>>(),
                     serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("updates")));
                 services.AddSingleton<IUpdateNotificationService, UpdateNotificationService>();
-                services.AddHostedService<UpdateScheduler>();
+                if (featureSnapshot.IsEnabled(StartupFeatureCatalog.AutomaticUpdates))
+                    services.AddHostedService<UpdateScheduler>();
                 services.AddSingleton<ProtocolCommandRouter>();
+                if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Voice))
+                {
                 services.AddSingleton<ISpeechProvider, SystemSpeechProvider>();
                 services.AddSingleton<ISpeechProvider, EdgeTtsSpeechProvider>();
                 services.AddHttpClient("omnitts", client => client.Timeout = TimeSpan.FromSeconds(30))
@@ -1523,27 +1542,49 @@ public partial class App : Application
                 services.AddSingleton<VoiceAnnouncementService>();
                 services.AddSingleton<IVoiceAnnouncementService>(serviceProvider =>
                     serviceProvider.GetRequiredService<VoiceAnnouncementService>());
-                services.AddSingleton<NotificationService>();
+                }
+                if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Notifications))
+                    services.AddSingleton<NotificationService>();
                 // 全屏结果渠道的展示服务。窗口本身是桌面专属能力，注册在共享块里但只有桌面会真正开窗
                 // （NotificationService 在移动端把渠道值 3 降级成内置浮窗）。
-                services.AddSingleton<TextLibraryService>();
-                services.AddSingleton<FullscreenNotificationPresenter>();
+                if (featureSnapshot.IsEnabled(StartupFeatureCatalog.FullscreenNotifications))
+                {
+                    services.AddSingleton<TextLibraryService>();
+                    services.AddSingleton<FullscreenNotificationPresenter>();
+                }
                 services.AddSingleton(serviceProvider => new MusicLibraryService(
                     serviceProvider.GetRequiredService<MainConfigHandler>(),
                     serviceProvider.GetRequiredService<ILogger<MusicLibraryService>>(),
                     attachedSettingsProfileService: serviceProvider.GetRequiredService<IProfileService>(),
                     profileCatalogManager: serviceProvider.GetRequiredService<IProfileCatalogManager>()));
-                services.AddSingleton<DrawAudioService>();
-                services.AddSingleton<CsesScheduleParser>();
-                services.AddSingleton<ICsesScheduleStore, CsesScheduleStore>();
-                services.AddSingleton<CsesScheduleSource>();
+                services.AddSingleton(provider => new DrawAudioService(
+                    featureSnapshot.IsEnabled(StartupFeatureCatalog.Music) ? provider.GetRequiredService<MusicLibraryService>() : null,
+                    provider.GetRequiredService<ILogger<DrawAudioService>>()));
                 services.AddSingleton<ClassIslandIpcConnection>();
-                services.AddSingleton<ClassIslandScheduleSource>();
-                services.AddSingleton<CourseRosterCourseCatalog>();
-                services.AddSingleton<CourseRosterMappingService>();
-                services.AddSingleton<CourseLinkageService>();
+                if (featureSnapshot.IsEnabled(StartupFeatureCatalog.CourseLinkage))
+                {
+                    services.AddSingleton<CsesScheduleParser>();
+                    services.AddSingleton<ICsesScheduleStore, CsesScheduleStore>();
+                    services.AddSingleton<CsesScheduleSource>();
+                    services.AddSingleton<ClassIslandScheduleSource>();
+                    services.AddSingleton<CourseRosterCourseCatalog>();
+                    services.AddSingleton<CourseRosterMappingService>();
+                    services.AddSingleton<CourseLinkageService>(provider => new CourseLinkageService(
+                        provider.GetRequiredService<MainConfigHandler>(),
+                        provider.GetRequiredService<ICsesScheduleStore>(),
+                        provider.GetRequiredService<CsesScheduleSource>(),
+                        provider.GetRequiredService<ClassIslandScheduleSource>(),
+                        provider.GetRequiredService<ILogger<CourseLinkageService>>(),
+                        featureSnapshot));
+                }
+                else
+                    services.AddSingleton<CourseLinkageService>(provider => new CourseLinkageService(
+                        provider.GetRequiredService<MainConfigHandler>(),
+                        provider.GetRequiredService<ILogger<CourseLinkageService>>(), featureSnapshot));
                 services.AddSingleton<LinkageDrawCoordinator>();
-                services.AddHostedService<CourseLinkageHostedService>();
+                // Desktop simple mode always uses the disabled linkage defaults until restart.
+                if (isMobile || startupFeatures.Contains(StartupFeatureCatalog.CourseLinkage))
+                    services.AddHostedService<CourseLinkageHostedService>();
 
                 // 集控节点（control-v1，见 docs/client-protocol.md）：出站长连接 + 本机开关 + 远程抽取。
                 // **桌面与平板**都是被控端（平板用的是桌面主界面，教室里同样需要被控制）；
@@ -1571,7 +1612,10 @@ public partial class App : Application
                             () => provider.GetRequiredService<MainConfigHandler>().Data,
                             provider.GetRequiredService<IControlNodeStateStore>(),
                             provider.GetRequiredService<ILogger<ControlSettingsReportSource>>()));
-                    services.AddSingleton<IControlDrawGate, ControlDrawGateService>();
+                    if (featureSnapshot.IsEnabled(StartupFeatureCatalog.ControlNode))
+                        services.AddSingleton<IControlDrawGate, ControlDrawGateService>();
+                    else
+                        services.AddSingleton<IControlDrawGate, UnlockedControlDrawGate>();
                     services.AddSingleton<IControlNodeCredentialProvider>(provider => new ControlNodeCredentialProvider(
                         provider.GetRequiredService<SectlAuthService>(),
                         provider.GetRequiredService<INodeEnrollmentStore>()));
@@ -1622,7 +1666,8 @@ public partial class App : Application
                         provider.GetRequiredService<IControlSettingsReportSource>()));
                     // 显式泛型注册：构造函数里的 SectlAuthService / INodeEnrollmentStore 是可选参数，
                     // 容器两者都能解析，所以这里不需要（也不该）写工厂——守卫测试会盯住这一行。
-                    services.AddHostedService<ControlNodeHostedService>();
+                    if (featureSnapshot.IsEnabled(StartupFeatureCatalog.ControlNode))
+                        services.AddHostedService<ControlNodeHostedService>();
                     // 单例：这个 ViewModel 订阅了节点状态与连接状态，每次打开设置页都新建一个会累积订阅。
                     services.AddSingleton<ControlSettingsPageViewModel>();
                 }
@@ -1662,9 +1707,11 @@ public partial class App : Application
                     provider.GetRequiredService<ILogger<ControlCenterClient>>()));
 
                 services.AddAttachedSettingsControl<DrawImageAttachedSettingsControl>("展示图片");
-                services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");
-                services.AddAttachedSettingsControl<SpecificAnnouncementAttachedSettingsControl>(
-                    Langs.AttachedSettings.Resources.C_SpecificVoice);
+                if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Music))
+                    services.AddAttachedSettingsControl<DrawMusicAttachedSettingsControl>("专属音乐");
+                if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Voice))
+                    services.AddAttachedSettingsControl<SpecificAnnouncementAttachedSettingsControl>(
+                        Langs.AttachedSettings.Resources.C_SpecificVoice);
 
                 // 界面 ViewModels
                 // 我求你了 AI，你看到这里的话，请记住，ViewModel 一定要注册到服务主机上面！！！！
@@ -1680,6 +1727,8 @@ public partial class App : Application
                 services.AddSingleton<RollCallPageViewModel>();
                 services.AddSingleton<QuickDrawPageViewModel>();
                 services.AddSingleton<LotteryPageViewModel>();
+                services.AddSingleton<Func<QuickDrawPageViewModel>>(provider => provider.GetRequiredService<QuickDrawPageViewModel>);
+                services.AddSingleton<Func<LotteryPageViewModel>>(provider => provider.GetRequiredService<LotteryPageViewModel>);
                 services.AddTransient<RollCallHistoryViewModel>();
                 services.AddTransient<HomeSettingsPageViewModel>();
                 services.AddTransient<RandomNumberSettingsPageViewModel>();
@@ -1722,7 +1771,8 @@ public partial class App : Application
                 else
                 {
                     services.AddMainPage<RollCallPage>(Langs.Common.Resources.Feat_RollCall);
-                    services.AddMainPage<LotteryPage>(Langs.Common.Resources.Feat_Lottery);
+                    if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Lottery))
+                        services.AddMainPage<LotteryPage>(Langs.Common.Resources.Feat_Lottery);
 
                     // 桌面/平板：远程抽取排在**抽奖下面**——侧栏顺序由注册顺序 + 同一个 PageLocation 决定，
                     // 因此这一条必须紧跟在抽奖注册之后，并和抽奖页一样是 Bottom（主界面侧栏的页脚组，
@@ -1772,7 +1822,7 @@ public partial class App : Application
                     services.AddSettingsPage<StorageSettingsPage>(
                         Langs.SettingsPages.General.Storage.Resources.Page_Title);
                 }
-                if (hostShape.RunsControlNode)
+                if (hostShape.RunsControlNode && featureSnapshot.IsEnabled(StartupFeatureCatalog.ControlNode))
                 {
                     // 集控节点与集控设置页成对出现：跑节点的宿主（桌面/平板）才该看到这个页面。
                     services.AddSettingsPage<ControlSettingsPage>(
@@ -1792,17 +1842,24 @@ public partial class App : Application
                     services.AddSettingsPage<FloatingWindowButtonsSettingsPage>(
                         Langs.SettingsPages.Personalized.FloatingWindowButtons.Resources.Page_Title);
                     // 计时器页紧随浮窗页：计时器的入口就在浮窗上，且两者都只有桌面端有
-                    services.AddSettingsPage<TimerSettingsPage>(Langs.SettingsPages.Personalized.Timer
-                        .Resources.Page_Title);
+                    if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Timer))
+                        services.AddSettingsPage<TimerSettingsPage>(Langs.SettingsPages.Personalized.Timer
+                            .Resources.Page_Title);
                 }
-                services.AddSettingsPage<MusicSettingsPage>(Langs.SettingsPages.Personalized.Music.Resources
-                    .Page_Title);
-                services.AddSettingsPage<LinkageSettingsPage>(Langs.Common.Resources.Settings_Linkage);
-                services.AddSettingsPage<CourseRosterSettingsPage>(Langs.SettingsPages.Linkage.Resources.S_External_CourseRoster);
-                if (!isMobile)
+                if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Music))
+                    services.AddSettingsPage<MusicSettingsPage>(Langs.SettingsPages.Personalized.Music.Resources
+                        .Page_Title);
+                services.AddGroup(new PageGroupInfo(
+                    Langs.Common.Resources.Settings_Linkage, "settings.linkage", FluentIcons.LinkFilled));
+                if (featureSnapshot.IsEnabled(StartupFeatureCatalog.CourseLinkage))
+                {
+                    services.AddSettingsPage<LinkageSettingsPage>(Langs.SettingsPages.Linkage.Resources.S_External);
+                    services.AddSettingsPage<CourseRosterSettingsPage>(Langs.SettingsPages.Linkage.Resources.S_External_CourseRoster);
+                }
+                if (!isMobile && featureSnapshot.IsEnabled(StartupFeatureCatalog.Integrations))
                     services.AddSettingsPage<IntegrationChannelsSettingsPage>(
                         Langs.SettingsPages.Linkage.Resources.ResourceManager.GetString("S_IntegrationChannels", Langs.SettingsPages.Linkage.Resources.Culture)
-                        ?? "SDK notification channels");
+                        ?? "Third-party linkage");
                 services.AddSettingsPage<MoreSettingsPage>(Langs.SettingsPages.More.Resources.Page_Title);
 
                 services.AddSettingsPageSeparator();
@@ -1812,8 +1869,9 @@ public partial class App : Application
                     FluentIcons.PeopleListFilled));
                 services.AddSettingsPage<RollCallListSettingsPage>(Langs.SettingsPages.ListManagement.RollCallList
                     .Resources.Page_Title);
-                services.AddSettingsPage<LotteryListSettingsPage>(Langs.SettingsPages.ListManagement.LotteryList
-                    .Resources.Page_Title);
+                if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Lottery))
+                    services.AddSettingsPage<LotteryListSettingsPage>(Langs.SettingsPages.ListManagement.LotteryList
+                        .Resources.Page_Title);
 
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_Draw, "settings.picking", FluentIcons.SettingsFilled));
@@ -1821,10 +1879,12 @@ public partial class App : Application
                     Langs.SettingsPages.Picking.Resources.Page_Default);
                 services.AddSettingsPage<RollCallDrawSettingsPage>(Langs.SettingsPages.Picking.Resources
                     .Page_RollCall);
-                services.AddSettingsPage<QuickDrawSettingsPage>(
-                    Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
-                services.AddSettingsPage<LotteryDrawSettingsPage>(
-                    Langs.SettingsPages.Picking.Resources.Page_Lottery);
+                if (featureSnapshot.IsEnabled(StartupFeatureCatalog.QuickDraw))
+                    services.AddSettingsPage<QuickDrawSettingsPage>(
+                        Langs.SettingsPages.Picking.Resources.Page_QuickDraw);
+                if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Lottery))
+                    services.AddSettingsPage<LotteryDrawSettingsPage>(
+                        Langs.SettingsPages.Picking.Resources.Page_Lottery);
                 services.AddSettingsPage<RandomNumberSettingsPage>(
                     Langs.SettingsPages.Picking.Resources.Page_RandomNumber);
                 services.AddSettingsPage<OrchestrationSettingsPage>(
@@ -1844,32 +1904,37 @@ public partial class App : Application
                 services.AddGroup(new PageGroupInfo(
                     Langs.Common.Resources.Settings_Notification, "settings.notification",
                     FluentIcons.CommentNoteFilled));
-                if (!OperatingSystem.IsIOS())
+                if (!OperatingSystem.IsIOS() && featureSnapshot.IsEnabled(StartupFeatureCatalog.Voice))
                 {
                     // iOS 不支持 miniaudio
                     services.AddSettingsPage<VoiceSettingsPage>(Langs.Common.Resources.Settings_Voice);
                 }
-                if (!isMobile)
+                if (!isMobile && featureSnapshot.IsEnabled(StartupFeatureCatalog.Notifications))
                 {
                     // 手机没有浮窗
                     services.AddSettingsPage<DefaultNotificationSettingsPage>(Langs.SettingsPages.Notification.Resources
                         .Page_Title);
                     services.AddSettingsPage<RollCallNotificationSettingsPage>(Langs.Common.Resources
                         .Settings_RollCallNotification);
-                    services.AddSettingsPage<QuickDrawNotificationSettingsPage>(Langs.Common.Resources
-                        .Settings_QuickDrawNotification);
-                    services.AddSettingsPage<LotteryNotificationSettingsPage>(Langs.Common.Resources
-                        .Settings_LotteryNotification);
+                    if (featureSnapshot.IsEnabled(StartupFeatureCatalog.QuickDraw))
+                        services.AddSettingsPage<QuickDrawNotificationSettingsPage>(Langs.Common.Resources
+                            .Settings_QuickDrawNotification);
+                    if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Lottery))
+                        services.AddSettingsPage<LotteryNotificationSettingsPage>(Langs.Common.Resources
+                            .Settings_LotteryNotification);
                     // 内置通知浮窗的窗口设置（位置 / 显示器 / 偏移 / 不透明度）独立成页，紧贴全屏渠道页之上：
                     // 两者都是"结果用什么窗口显示"的设置，而渠道页现在只保留启用、动画与通知服务。
                     services.AddSettingsPage<NotificationFloatingWindowSettingsPage>(
                         Langs.SettingsPages.Notification.Resources.Page_FloatingWindow);
                     // 全屏渠道的两页：外观/动画设置 + 文案库管理。分开放是因为文案库是一张会一直在长的
                     // 清单（导入、编辑、统计），而设置页只该放"外观与行为"。
-                    services.AddSettingsPage<FullscreenNotificationSettingsPage>(
-                        Langs.SettingsPages.Notification.Resources.Page_Fullscreen);
-                    services.AddSettingsPage<TextLibrarySettingsPage>(
-                        Langs.SettingsPages.Notification.Texts.Resources.Page_Title);
+                    if (featureSnapshot.IsEnabled(StartupFeatureCatalog.FullscreenNotifications))
+                    {
+                        services.AddSettingsPage<FullscreenNotificationSettingsPage>(
+                            Langs.SettingsPages.Notification.Resources.Page_Fullscreen);
+                        services.AddSettingsPage<TextLibrarySettingsPage>(
+                            Langs.SettingsPages.Notification.Texts.Resources.Page_Title);
+                    }
                 }
 
                 services.AddGroup(new PageGroupInfo(
@@ -1877,13 +1942,15 @@ public partial class App : Application
                 services.AddSettingsPage<HistoryManagementSettingsPage>(Langs.Common.Resources
                     .Settings_HistoryManagement);
                 services.AddSettingsPage<RollCallHistorySettingsPage>(Langs.Common.Resources.Feat_RollCallHistory);
-                services.AddSettingsPage<LotteryHistorySettingsPage>(Langs.Common.Resources.Feat_LotteryHistory);
+                if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Lottery))
+                    services.AddSettingsPage<LotteryHistorySettingsPage>(Langs.Common.Resources.Feat_LotteryHistory);
 
                 if (!isMobile)
                 {
                     services.AddSettingsPageSeparator();
-                    services.AddSettingsPage<PluginsSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources
-                        .Page_Title);
+                    if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Plugins))
+                        services.AddSettingsPage<PluginsSettingsPage>(Langs.SettingsPages.Plugins.Overview.Resources
+                            .Page_Title);
                 }
 
                 // 底部
@@ -1914,7 +1981,7 @@ public partial class App : Application
                     // 插件扩展点（第二批）：事件总线 / UI 线程 / 私有存储 / 名单查询 / 忙碌指示 /
                     // 抽签流水线 / 主题色板 / 通知与对话框 / 窗口 / 弹层 / 本地化 / 能力与权限 / 诊断
                     services.AddSingleton<IPluginEventBus, PluginEventBus>();
-                    if (!isMobile)
+                    if (!isMobile && featureSnapshot.IsEnabled(StartupFeatureCatalog.Integrations))
                     {
                         services.AddSingleton<IntegrationChannelService>();
                         services.AddHostedService(provider => provider.GetRequiredService<IntegrationChannelService>());
@@ -1933,14 +2000,15 @@ public partial class App : Application
                     services.AddSingleton<ICapabilityService, PluginCapabilityService>();
                     services.AddSingleton<IPluginDiagnosticsService, PluginDiagnosticsService>();
 
-                    services.AddHostedService<PluginLifecycleBridge>();
+                    if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Plugins))
+                        services.AddHostedService<PluginLifecycleBridge>();
                     services.AddHttpClient("plugin-market", client => client.Timeout = TimeSpan.FromSeconds(30));
                     services.AddSingleton<PluginMarketService>(provider => new PluginMarketService(
                         provider.GetRequiredService<ILogger<PluginMarketService>>(),
                         provider.GetRequiredService<IHttpClientFactory>().CreateClient("plugin-market"),
                         provider.GetRequiredService<IPluginManager>()));
                     // 简洁模式：插件体系整体关闭（不扫描、不加载、不注册插件页与贡献项）
-                    if (!IsSimpleModeEnabledAtStartup())
+                    if (startupFeatures.Contains(StartupFeatureCatalog.Plugins))
                         pluginManager.Initialize(context, services);
                 }
             })
@@ -1959,7 +2027,7 @@ public partial class App : Application
         // 插件被卸载/禁用后，"动画样式"里指向它的那个选择就成了死值：既没有插件接管，
         // 宿主也不会播自己的动画。这里按"贡献项是否还在"把死值退回内置动画。
         // 简洁模式不加载插件，也就没有插件贡献项可清理，跳过以免改写 settings.json。
-        if (!IAppHost.TryGetService<MainConfigHandler>()?.Data.SimpleModeEnabled == true)
+        if (featureSnapshot.IsEnabled(StartupFeatureCatalog.Plugins))
             ResetMissingPluginAnimationSelections();
 
         IAppHost.GetService<IProfileService>();
@@ -1969,13 +2037,6 @@ public partial class App : Application
         if (GlobalConstants.IsDevelopment && isVisible)
             IAppHost.GetService<SettingsSearchService>().LogTestInformation();
     }
-
-    /// <summary>
-    ///     构建 Host 之前的简洁模式判断：此时 DI 还没起来，直接读 settings.json
-    ///     （插件加载必须在这之前决定，因此不能等 <see cref="MainConfigHandler" />）。
-    /// </summary>
-    private static bool IsSimpleModeEnabledAtStartup()
-        => LoadStartupSettings(new MainConfigModel()).SimpleModeEnabled;
 
     /// <summary>运行期的简洁模式判断：隐藏功能一律按默认设置运行。</summary>
     private static bool IsSimpleModeEnabled()
@@ -2974,6 +3035,35 @@ public partial class App : Application
 
     public static void ShowSettingsWindow() => ShowSettingsWindow(null);
 
+    public static void ShowFeatureConfigurationWindow(Window? owner = null)
+    {
+        if (!IsDesktop)
+            return;
+
+        if (_featureConfigurationWindow is { IsVisible: true } existing)
+        {
+            existing.Activate();
+            return;
+        }
+
+        var window = _featureConfigurationWindow = new FeatureConfigurationWindow
+        {
+            WindowStartupLocation = owner is { IsVisible: true }
+                ? WindowStartupLocation.CenterOwner
+                : WindowStartupLocation.CenterScreen
+        };
+        window.Closed += (_, _) =>
+        {
+            if (ReferenceEquals(_featureConfigurationWindow, window))
+                _featureConfigurationWindow = null;
+        };
+
+        if (owner is { IsVisible: true })
+            window.Show(owner);
+        else
+            window.Show();
+    }
+
     public static void ShowSettingsWindow(string? pageId)
     {
         // 简洁模式设置窗口只保留白名单页，其余请求归一到默认设置页
@@ -3085,6 +3175,8 @@ public partial class App : Application
     /// <summary>打开闪抽；<paramref name="count" /> 是浮窗长按快选选好的人数，默认 1 人。</summary>
     public static void ShowQuickDrawWindow(int count = 1, FloatingWindow? noticeAnchor = null)
     {
+        if (IAppHost.TryGetService<FeatureRuntimeSnapshot>()?.IsEnabled(StartupFeatureCatalog.QuickDraw) == false)
+            return;
         ObserveTask(ShowQuickDrawWindowAsync(count, noticeAnchor), "Quick draw window action failed.");
     }
 
@@ -3345,8 +3437,8 @@ public partial class App : Application
                 return;
             }
 
-            var showBuiltInNotificationAnimation = IAppHost.GetService<NotificationService>()
-                .UsesBuiltInNotificationService(NotificationSettingsType.QuickDraw);
+            var showBuiltInNotificationAnimation = IAppHost.TryGetService<NotificationService>()?
+                .UsesBuiltInNotificationService(NotificationSettingsType.QuickDraw) == true;
             if (!showBuiltInNotificationAnimation)
             {
                 HideQuickDrawNotificationWindow();

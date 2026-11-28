@@ -3,7 +3,9 @@ using System.Linq;
 using System.Reflection;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Attributes;
+using SecRandom.Core.Abstraction;
 using SecRandom.Core.Services;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.Models;
 
 namespace SecRandom.Services.Settings;
@@ -242,6 +244,31 @@ public class SettingsSearchService
     {
         if (ExcludedSettingIds.TryGetValue(resourcePageId, out var excluded) && excluded.Contains(settingId))
             return false;
+
+        var features = IAppHost.TryGetService<FeatureRuntimeSnapshot>();
+        if (features is not null)
+        {
+            if (resourcePageId == "Picking" && settingId.Contains("Music", StringComparison.Ordinal)
+                && !features.IsEnabled(StartupFeatureCatalog.Music))
+                return false;
+            if (resourcePageId == "Picking" && settingId == "S_VoiceAnnouncementEnabled"
+                && !features.IsEnabled(StartupFeatureCatalog.Voice))
+                return false;
+            if (resourcePageId == "More" && (settingId.StartsWith("S_Lottery", StringComparison.Ordinal)
+                                              || settingId.StartsWith("S_Shortcut_", StringComparison.Ordinal)
+                                              && settingId.Contains("Lottery", StringComparison.Ordinal))
+                && !features.IsEnabled(StartupFeatureCatalog.Lottery))
+                return false;
+            if (resourcePageId == "More" && settingId == "S_Shortcut_QuickDraw"
+                && !features.IsEnabled(StartupFeatureCatalog.QuickDraw))
+                return false;
+            if (resourcePageId == "General.Backup" && (settingId is "S_AutoBackup_IntervalDays" or "S_AutoBackup_MaxCount")
+                && !features.IsEnabled(StartupFeatureCatalog.AutomaticBackup))
+                return false;
+            if (resourcePageId == "Update" && settingId == "S_Strategy_AutoUpdateMode"
+                && !features.IsEnabled(StartupFeatureCatalog.AutomaticUpdates))
+                return false;
+        }
 
         if (resourcePageId == @"Notification" && pageId == @"settings.notification.default"
             && settingId is "S_Default_Enabled" or "S_Default_Animation")

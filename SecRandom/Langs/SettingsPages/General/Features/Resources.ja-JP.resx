@@ -1,0 +1,222 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="Title">
+    <value>機能構成</value>
+  </data>
+  <data name="Configure">
+    <value>機能を設定</value>
+  </data>
+  <data name="EntryDescription">
+    <value>機能構成の選択と管理を行います、切り替えには再起動が必要です</value>
+  </data>
+  <data name="ApplyConfirmation">
+    <value>構成の切り替えには再起動が必要です、続行しますか</value>
+  </data>
+  <data name="Full">
+    <value>すべての機能</value>
+  </data>
+  <data name="Simple">
+    <value>シンプル</value>
+  </data>
+  <data name="Overview">
+    <value>概要</value>
+  </data>
+  <data name="Draw">
+    <value>抽選</value>
+  </data>
+  <data name="Window">
+    <value>ウィンドウ</value>
+  </data>
+  <data name="Sound">
+    <value>通知と音声</value>
+  </data>
+  <data name="Extension">
+    <value>拡張と連携</value>
+  </data>
+  <data name="System">
+    <value>バックグラウンド処理</value>
+  </data>
+  <data name="Intro">
+    <value>任意の機能を選択して構成として保存し、適用後に再起動します</value>
+  </data>
+  <data name="Count">
+    <value>{1} 件中 {0} 件の機能が有効</value>
+  </data>
+  <data name="Current">
+    <value>編集中：{0}</value>
+  </data>
+  <data name="Unsaved">
+    <value>未保存の変更があります</value>
+  </data>
+  <data name="Saved">
+    <value>未保存の変更はありません</value>
+  </data>
+  <data name="Discard">
+    <value>変更を破棄</value>
+  </data>
+  <data name="Save">
+    <value>保存</value>
+  </data>
+  <data name="SaveAs">
+    <value>名前を付けて保存</value>
+  </data>
+  <data name="Rename">
+    <value>名前を変更</value>
+  </data>
+  <data name="Delete">
+    <value>削除</value>
+  </data>
+  <data name="DeleteMessage">
+    <value>この構成を削除しますか？使用中の場合、再起動後はすべての機能に切り替わります</value>
+  </data>
+  <data name="SaveName">
+    <value>構成名</value>
+  </data>
+  <data name="Cancel">
+    <value>キャンセル</value>
+  </data>
+  <data name="Confirm">
+    <value>確認</value>
+  </data>
+  <data name="NameInvalid">
+    <value>重複しない構成名を入力してください</value>
+  </data>
+  <data name="CloseTitle">
+    <value>未保存の変更</value>
+  </data>
+  <data name="CloseMessage">
+    <value>閉じる前に変更を保存しますか</value>
+  </data>
+  <data name="DontSave">
+    <value>保存しない</value>
+  </data>
+  <data name="Dependencies">
+    <value>必要な機能</value>
+  </data>
+  <data name="Dependents">
+    <value>この機能を使用</value>
+  </data>
+  <data name="None">
+    <value>なし</value>
+  </data>
+  <data name="Information">
+    <value>機能の関係</value>
+  </data>
+  <data name="EnableDependencies">
+    <value>次の機能も有効になります：{0}</value>
+  </data>
+  <data name="DisableDependents">
+    <value>次の機能も無効になります：{0}</value>
+  </data>
+  <data name="Plugins">
+    <value>プラグイン</value>
+  </data>
+  <data name="PluginsDescription">
+    <value>インストール済みのプラグインを読み込みます</value>
+  </data>
+  <data name="CourseLinkage">
+    <value>授業連携</value>
+  </data>
+  <data name="CourseLinkageDescription">
+    <value>時間割や授業状態に応じて抽選を調整します</value>
+  </data>
+  <data name="ControlNode">
+    <value>集約制御ノード</value>
+  </data>
+  <data name="ControlNodeDescription">
+    <value>遠隔指示を受信します。無効にすると遠隔の抽選ロックも解除されます</value>
+  </data>
+  <data name="Integrations">
+    <value>外部アプリ連携</value>
+  </data>
+  <data name="IntegrationsDescription">
+    <value>外部アプリを検出して接続し、抽選結果を送信します</value>
+  </data>
+  <data name="AutomaticBackup">
+    <value>自動バックアップ</value>
+  </data>
+  <data name="AutomaticBackupDescription">
+    <value>定期的にバックアップを作成します。手動バックアップは利用できます</value>
+  </data>
+  <data name="AutomaticUpdates">
+    <value>更新の自動確認</value>
+  </data>
+  <data name="AutomaticUpdatesDescription">
+    <value>定期的に更新を確認します。手動確認は利用できます</value>
+  </data>
+  <data name="Lottery">
+    <value>抽選</value>
+  </data>
+  <data name="LotteryDescription">
+    <value>賞品リストから抽選し、履歴を表示します</value>
+  </data>
+  <data name="Voice">
+    <value>音声読み上げ</value>
+  </data>
+  <data name="VoiceDescription">
+    <value>結果や遠隔メッセージを読み上げます</value>
+  </data>
+  <data name="Notifications">
+    <value>抽選通知</value>
+  </data>
+  <data name="NotificationsDescription">
+    <value>通知画面や外部サービスに結果を表示します</value>
+  </data>
+  <data name="Fullscreen">
+    <value>全画面での結果表示</value>
+  </data>
+  <data name="FullscreenDescription">
+    <value>抽選結果を全画面で表示します</value>
+  </data>
+  <data name="Timer">
+    <value>タイマー</value>
+  </data>
+  <data name="TimerDescription">
+    <value>タイマー、ストップウォッチ、時計を使用します</value>
+  </data>
+  <data name="Music">
+    <value>抽選音楽</value>
+  </data>
+  <data name="MusicDescription">
+    <value>抽選中や結果表示時に音楽を再生します</value>
+  </data>
+  <data name="QuickDraw">
+    <value>クイック抽選</value>
+  </data>
+  <data name="QuickDrawDescription">
+    <value>フローティングウィンドウから素早く抽選します</value>
+  </data>
+  <data name="Core"><value>基本抽選</value></data>
+  <data name="Data"><value>名簿と記録</value></data>
+  <data name="Included"><value>この構成に含まれる機能: {0}</value></data>
+  <data name="Activate"><value>この構成を適用</value></data>
+  <data name="Required"><value>必須</value></data>
+  <data name="RollCall"><value>点呼抽選</value></data>
+  <data name="RollCallDescription"><value>名簿からランダム抽選と公平抽選を行います</value></data>
+  <data name="RandomNumber"><value>乱数抽選</value></data>
+  <data name="RandomNumberDescription"><value>設定した範囲から乱数を抽選します</value></data>
+  <data name="Orchestration"><value>編成抽選</value></data>
+  <data name="OrchestrationDescription"><value>編成名簿とラウンド順に従って抽選します</value></data>
+  <data name="History"><value>履歴</value></data>
+  <data name="HistoryDescription"><value>点呼と抽選の結果を記録して確認します</value></data>
+  <data name="RosterManagement"><value>名簿と賞品プール</value></data>
+  <data name="RosterManagementDescription"><value>名簿、賞品プール、インポートデータを管理します</value></data>
+  <data name="Verification"><value>抽選検証</value></data>
+  <data name="VerificationDescription"><value>抽選証明を作成し、結果を検証します</value></data>
+  <data name="FloatingWindow"><value>フローティングウィンドウ</value></data>
+  <data name="FloatingWindowDescription"><value>デスクトップにクイック操作と抽選コントロールを表示します</value></data>
+  <data name="DataArchive"><value>データのバックアップと移行</value></data>
+  <data name="DataArchiveDescription"><value>データの手動バックアップ、復元、インポート、エクスポート</value></data>
+</root>

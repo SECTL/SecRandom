@@ -7,6 +7,7 @@ using SecRandom.Core.Enums;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Models.SubConfigs;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.Services.Notification;
 using SecRandom.ViewModels;
 using LR = SecRandom.Langs.SettingsPages.Notification.Resources;
@@ -99,7 +100,7 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
     private static IReadOnlyList<NotificationServiceOption> BuildNotificationServiceOptions()
     {
         // Display order is built-in / fullscreen / ClassIsland / both while the persisted values stay 0/3/1/2.
-        return
+        NotificationServiceOption[] options =
         [
             new NotificationServiceOption(0, Text("SecRandom (floating)", "O_NotificationService_SecRandom")),
             new NotificationServiceOption(
@@ -108,6 +109,9 @@ public abstract class NotificationChannelSettingsPageBase : UserControl, INotify
             new NotificationServiceOption(1, Text("ClassIsland", "O_NotificationService_ClassIsland")),
             new NotificationServiceOption(2, Text("Use both", "O_NotificationService_Both"))
         ];
+        return IAppHost.TryGetService<FeatureRuntimeSnapshot>()?.IsEnabled(StartupFeatureCatalog.FullscreenNotifications) == false
+            ? options.Where(option => option.Value != FullscreenNotificationServiceType).ToArray()
+            : options;
     }
 
     private void ApplyNotificationServiceType(int value)

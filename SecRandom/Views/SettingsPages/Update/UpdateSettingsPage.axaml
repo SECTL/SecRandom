@@ -43,23 +43,13 @@
                         Click="InstallUpdate"
                         IsVisible="{Binding UpdateCenter.CanApplyUpdate}" />
             </StackPanel>
-            <ComboBox ItemsSource="{Binding UpdateCenter.AvailableArtifacts}"
-                      SelectedItem="{Binding UpdateCenter.SelectedArtifact, Mode=TwoWay}"
-                      IsVisible="{Binding UpdateCenter.HasAvailableArtifacts}"
-                      Margin="0 0 0 16">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate>
-                        <TextBlock Text="{Binding AssetName}" />
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
-
             <sr:IconText x:Name="S_Strategy"
                          Text="{x:Static lsp:Resources.S_Strategy}"
                          Glyph="{sr:Fi ArrowSyncFilled}"
                          Margin="0 0 0 4" />
 
             <fa:FASettingsExpander x:Name="S_Strategy_AutoUpdateMode"
+                                   IsVisible="{Binding IsAutomaticUpdateAvailable}"
                                    Header="{x:Static lsp:Resources.S_Strategy_AutoUpdateMode}"
                                    Description="{x:Static lsp:Resources.S_Strategy_AutoUpdateMode_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi ArrowSyncFilled}}">

@@ -30,7 +30,7 @@ public sealed class GlobalShortcutService : IHostedService
     private readonly MainConfigHandler _configHandler;
     private MoreSettingsConfig _settings;
     private readonly RollCallPageViewModel _rollCall;
-    private readonly LotteryPageViewModel _lottery;
+    private readonly Func<LotteryPageViewModel> _getLottery;
     private readonly IFeatureAvailabilityService _featureAvailability;
     private readonly ILogger<GlobalShortcutService> _logger;
     private readonly ManualResetEventSlim _threadReady = new();
@@ -44,14 +44,14 @@ public sealed class GlobalShortcutService : IHostedService
     public GlobalShortcutService(
         MainConfigHandler configHandler,
         RollCallPageViewModel rollCall,
-        LotteryPageViewModel lottery,
+        Func<LotteryPageViewModel> getLottery,
         IFeatureAvailabilityService featureAvailability,
         ILogger<GlobalShortcutService> logger)
     {
         _configHandler = configHandler;
         _settings = configHandler.Data.MoreSettings;
         _rollCall = rollCall;
-        _lottery = lottery;
+        _getLottery = getLottery;
         _featureAvailability = featureAvailability;
         _logger = logger;
     }
@@ -235,16 +235,16 @@ public sealed class GlobalShortcutService : IHostedService
                 _rollCall.DecreaseCountFromShortcut();
                 break;
             case ShortcutAction.IncreaseLotteryCount:
-                _lottery.IncreaseCountFromShortcut();
+                _getLottery().IncreaseCountFromShortcut();
                 break;
             case ShortcutAction.DecreaseLotteryCount:
-                _lottery.DecreaseCountFromShortcut();
+                _getLottery().DecreaseCountFromShortcut();
                 break;
             case ShortcutAction.StartRollCall:
                 ObserveActionAsync(_rollCall.ToggleDrawFromShortcutAsync(), "点名快捷键执行失败。");
                 break;
             case ShortcutAction.StartLottery:
-                ObserveActionAsync(_lottery.ToggleDrawFromShortcutAsync(), "抽奖快捷键执行失败。");
+                ObserveActionAsync(_getLottery().ToggleDrawFromShortcutAsync(), "抽奖快捷键执行失败。");
                 break;
         }
     }
@@ -269,11 +269,13 @@ public sealed class GlobalShortcutService : IHostedService
         var bindings = new List<ShortcutBinding>
         {
             new(ShortcutAction.OpenRollCallPage, _settings.OpenRollCallPageShortcut),
-            new(ShortcutAction.QuickDraw, _settings.QuickDrawShortcut),
             new(ShortcutAction.IncreaseRollCallCount, _settings.IncreaseRollCallCountShortcut),
             new(ShortcutAction.DecreaseRollCallCount, _settings.DecreaseRollCallCountShortcut),
             new(ShortcutAction.StartRollCall, _settings.StartRollCallShortcut)
         };
+        if (SecRandom.Core.Abstraction.IAppHost.TryGetService<SecRandom.Core.Services.FeatureConfiguration.FeatureRuntimeSnapshot>()
+                ?.IsEnabled(SecRandom.Core.Services.FeatureConfiguration.StartupFeatureCatalog.QuickDraw) != false)
+            bindings.Add(new(ShortcutAction.QuickDraw, _settings.QuickDrawShortcut));
         if (_featureAvailability.IsLotteryEnabled)
         {
             bindings.Add(new(ShortcutAction.OpenLotteryPage, _settings.OpenLotteryPageShortcut));

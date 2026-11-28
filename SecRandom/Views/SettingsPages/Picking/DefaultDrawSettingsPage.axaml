@@ -238,18 +238,19 @@
                 </fa:FASettingsExpander.Footer>
             </fa:FASettingsExpander>
 
-            <Separator Margin="0 12 0 4" />
-            <sr:IconText Text="{x:Static lp:Resources.Section_Music}" Glyph="{sr:Fi Speaker2Filled}" Margin="0 0 0 4" />
+            <Separator Margin="0 12 0 4" IsVisible="{Binding IsMusicEnabled}" />
+            <sr:IconText Text="{x:Static lp:Resources.Section_Music}" Glyph="{sr:Fi Speaker2Filled}" Margin="0 0 0 4" IsVisible="{Binding IsMusicEnabled}" />
             <local:DrawMusicSettingsExpander x:Name="MusicSettingsExpander"
                                              Header="{x:Static lp:Resources.Section_Music}"
                                              IconSource="{sr:FluentIconSource {sr:Fi Speaker2Filled}}"
                                              Settings="{Binding Settings}"
                                              MusicSelections="{Binding MusicSelections}" />
 
-            <Separator Margin="0 12 0 4" />
+            <Separator Margin="0 12 0 4" IsVisible="{Binding IsVoiceEnabled}" />
             <sr:IconText Text="{x:Static lp:Resources.Section_VoiceAnnouncement}" Glyph="{sr:Fi PersonVoiceFilled}"
-                         Margin="0 0 0 4" />
+                         Margin="0 0 0 4" IsVisible="{Binding IsVoiceEnabled}" />
             <fa:FASettingsExpander x:Name="S_VoiceAnnouncementEnabled"
+                                   IsVisible="{Binding IsVoiceEnabled}"
                                    Header="{x:Static lp:Resources.S_VoiceAnnouncementEnabled}"
                                    Description="{x:Static lp:Resources.S_VoiceAnnouncementEnabled_D}"
                                    IconSource="{sr:FluentIconSource {sr:Fi PersonVoiceFilled}}">

@@ -1,0 +1,222 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="Title">
+    <value>Feature configuration</value>
+  </data>
+  <data name="Configure">
+    <value>Configure</value>
+  </data>
+  <data name="Full">
+    <value>All features</value>
+  </data>
+  <data name="Simple">
+    <value>Simple</value>
+  </data>
+  <data name="Overview">
+    <value>Overview</value>
+  </data>
+  <data name="Extension">
+    <value>Extensions and integrations</value>
+  </data>
+  <data name="System">
+    <value>Background tasks</value>
+  </data>
+  <data name="Intro">
+    <value>Choose optional features, save a custom profile, and restart after applying it</value>
+  </data>
+  <data name="Count">
+    <value>{0} of {1} features enabled</value>
+  </data>
+  <data name="Current">
+    <value>Editing: {0}</value>
+  </data>
+  <data name="Unsaved">
+    <value>Unsaved changes</value>
+  </data>
+  <data name="Saved">
+    <value>No unsaved changes</value>
+  </data>
+  <data name="Discard">
+    <value>Discard changes</value>
+  </data>
+  <data name="Save">
+    <value>Save</value>
+  </data>
+  <data name="SaveAs">
+    <value>Save as profile</value>
+  </data>
+  <data name="SaveName">
+    <value>Profile name</value>
+  </data>
+  <data name="Cancel">
+    <value>Cancel</value>
+  </data>
+  <data name="Confirm">
+    <value>Confirm</value>
+  </data>
+  <data name="NameInvalid">
+    <value>Enter a unique profile name</value>
+  </data>
+  <data name="CloseTitle">
+    <value>Unsaved changes</value>
+  </data>
+  <data name="CloseMessage">
+    <value>Save changes before closing</value>
+  </data>
+  <data name="DontSave">
+    <value>Don't save</value>
+  </data>
+  <data name="Dependencies">
+    <value>Requires</value>
+  </data>
+  <data name="Dependents">
+    <value>Required by</value>
+  </data>
+  <data name="None">
+    <value>None</value>
+  </data>
+  <data name="Information">
+    <value>Feature relationships</value>
+  </data>
+  <data name="EnableDependencies">
+    <value>Also enables: {0}</value>
+  </data>
+  <data name="DisableDependents">
+    <value>Also disables: {0}</value>
+  </data>
+  <data name="Plugins">
+    <value>Plugins</value>
+  </data>
+  <data name="PluginsDescription">
+    <value>Load and run installed plugins</value>
+  </data>
+  <data name="CourseLinkage">
+    <value>Course integration</value>
+  </data>
+  <data name="CourseLinkageDescription">
+    <value>Adapt drawing to schedules and course status</value>
+  </data>
+  <data name="ControlNode">
+    <value>Control node</value>
+  </data>
+  <data name="ControlNodeDescription">
+    <value>Receive remote commands; disabling also removes remote draw locks</value>
+  </data>
+  <data name="Integrations">
+    <value>Third-party integration</value>
+  </data>
+  <data name="IntegrationsDescription">
+    <value>Discover connected apps and deliver draw results</value>
+  </data>
+  <data name="AutomaticBackup">
+    <value>Automatic backup</value>
+  </data>
+  <data name="AutomaticBackupDescription">
+    <value>Create local backups periodically; manual backups remain available</value>
+  </data>
+  <data name="AutomaticUpdates">
+    <value>Automatic update checks</value>
+  </data>
+  <data name="AutomaticUpdatesDescription">
+    <value>Check for updates periodically; manual checks remain available</value>
+  </data>
+  <data name="EntryDescription">
+    <value>Choose a feature profile and manage features; switching profiles requires a restart</value>
+  </data>
+  <data name="ApplyConfirmation">
+    <value>Switching profiles requires a restart. Continue</value>
+  </data>
+  <data name="Draw">
+    <value>Drawing</value>
+  </data>
+  <data name="Sound">
+    <value>Notifications and sound</value>
+  </data>
+  <data name="Rename">
+    <value>Rename</value>
+  </data>
+  <data name="Delete">
+    <value>Delete</value>
+  </data>
+  <data name="DeleteMessage">
+    <value>Delete this profile? If it is active, all features will be selected after restart</value>
+  </data>
+  <data name="Lottery">
+    <value>Lottery</value>
+  </data>
+  <data name="LotteryDescription">
+    <value>Draw from prize pools and view lottery history</value>
+  </data>
+  <data name="Voice">
+    <value>Voice announcements</value>
+  </data>
+  <data name="VoiceDescription">
+    <value>Announce results and remote messages</value>
+  </data>
+  <data name="Notifications">
+    <value>Draw notifications</value>
+  </data>
+  <data name="NotificationsDescription">
+    <value>Show results in a notification window, full screen or an external service</value>
+  </data>
+  <data name="Fullscreen">
+    <value>Full-screen results</value>
+  </data>
+  <data name="FullscreenDescription">
+    <value>Show draw results in full screen</value>
+  </data>
+  <data name="Window">
+    <value>Windows</value>
+  </data>
+  <data name="Timer">
+    <value>Timer</value>
+  </data>
+  <data name="TimerDescription">
+    <value>Use the countdown, stopwatch and clock windows</value>
+  </data>
+  <data name="Music">
+    <value>Draw music</value>
+  </data>
+  <data name="MusicDescription">
+    <value>Play music during draws and results</value>
+  </data>
+  <data name="QuickDraw">
+    <value>Quick draw</value>
+  </data>
+  <data name="QuickDrawDescription">
+    <value>Quickly draw members from the floating window</value>
+  </data>
+  <data name="Core"><value>Core drawing</value></data>
+  <data name="Data"><value>Lists and records</value></data>
+  <data name="Included"><value>This profile includes: {0}</value></data>
+  <data name="Activate"><value>Apply profile</value></data>
+  <data name="Required"><value>Required</value></data>
+  <data name="RollCall"><value>Roll call drawing</value></data>
+  <data name="RollCallDescription"><value>Draw from a roster with random and fair modes</value></data>
+  <data name="RandomNumber"><value>Random number drawing</value></data>
+  <data name="RandomNumberDescription"><value>Draw random numbers from configured ranges</value></data>
+  <data name="Orchestration"><value>Orchestrated drawing</value></data>
+  <data name="OrchestrationDescription"><value>Draw according to an orchestration roster and round order</value></data>
+  <data name="History"><value>History</value></data>
+  <data name="HistoryDescription"><value>Record and review roll call and lottery results</value></data>
+  <data name="RosterManagement"><value>Rosters and prize pools</value></data>
+  <data name="RosterManagementDescription"><value>Manage roll call rosters, prize pools, and imports</value></data>
+  <data name="Verification"><value>Draw verification</value></data>
+  <data name="VerificationDescription"><value>Create draw proofs and verify results</value></data>
+  <data name="FloatingWindow"><value>Floating window</value></data>
+  <data name="FloatingWindowDescription"><value>Show desktop quick actions and draw controls in a floating window</value></data>
+  <data name="DataArchive"><value>Data backup and transfer</value></data>
+  <data name="DataArchiveDescription"><value>Manually back up, restore, import, and export data</value></data>
+</root>

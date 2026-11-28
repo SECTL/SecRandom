@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
+using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Enums.Configs;
@@ -10,6 +13,7 @@ using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.FeatureConfiguration;
 using SecRandom.Services.Desktop;
 using SecRandom.ViewModels;
 using LR = SecRandom.Langs.SettingsPages.General.Basic.Resources;
@@ -21,6 +25,7 @@ public partial class BasicSettingsPage : UserControl
 {
     private bool _isApplyingProgrammaticChange;
     private bool _isSubscribed;
+    private bool _updatingFeatureProfiles;
 
     public BasicSettingsPage()
     {
@@ -34,6 +39,9 @@ public partial class BasicSettingsPage : UserControl
     public CrashRecoverySettingsConfig CrashRecoverySettings => ViewModel.Config.General.CrashRecovery;
     public PerformanceSettingsConfig PerformanceSettings => ViewModel.Config.General.PerformanceSettings;
     public SimpleModeSettingsConfig SimpleMode => ViewModel.Config.General.SimpleMode;
+    public string FeatureConfigureLabel => FeatureConfigurationText.Get("Configure");
+    public string FeatureTitle => FeatureConfigurationText.Get("Title");
+    public string FeatureDescription => FeatureConfigurationText.Get("EntryDescription");
     public bool IsUiAccessSupported => OperatingSystem.IsWindows();
     public string MainWindowTopmostModeDescription => IsUiAccessSupported
         ? LR.S_Behavior_MainWindowTopmostMode_D
@@ -50,7 +58,7 @@ public partial class BasicSettingsPage : UserControl
         Settings.PropertyChanged += SettingsOnPropertyChanged;
         CrashRecoverySettings.PropertyChanged += CrashRecoverySettingsOnPropertyChanged;
         PerformanceSettings.PropertyChanged += PerformanceSettingsOnPropertyChanged;
-        SimpleMode.PropertyChanged += SimpleModeOnPropertyChanged;
+        RefreshFeatureProfiles();
         _isSubscribed = true;
     }
 
@@ -62,7 +70,6 @@ public partial class BasicSettingsPage : UserControl
         Settings.PropertyChanged -= SettingsOnPropertyChanged;
         CrashRecoverySettings.PropertyChanged -= CrashRecoverySettingsOnPropertyChanged;
         PerformanceSettings.PropertyChanged -= PerformanceSettingsOnPropertyChanged;
-        SimpleMode.PropertyChanged -= SimpleModeOnPropertyChanged;
         _isSubscribed = false;
     }
 
@@ -143,14 +150,60 @@ public partial class BasicSettingsPage : UserControl
         ConfigHandler.Save();
     }
 
-    private void SimpleModeOnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void RefreshFeatureProfiles()
     {
-        if (_isApplyingProgrammaticChange)
-            return;
+        _updatingFeatureProfiles = true;
+        try
+        {
+            var selectedId = StartupFeatureCatalog.ResolveSelectedProfileId(SimpleMode);
+            var items = new List<ComboBoxItem>
+            {
+                new() { Content = FeatureConfigurationText.Get("Full"), Tag = StartupFeatureCatalog.FullProfile },
+                new() { Content = FeatureConfigurationText.Get("Simple"), Tag = StartupFeatureCatalog.SimpleProfile }
+            };
+            foreach (var profile in SimpleMode.Profiles ?? [])
+                items.Add(new ComboBoxItem { Content = profile.Name, Tag = profile.Id });
 
-        // 简洁模式会改变主窗口/设置窗口的导航形态，无法在原地热切换，保存后要求重启生效
+            FeatureProfileSelector.SelectedItem = null;
+            FeatureProfileSelector.ItemsSource = items;
+            FeatureProfileSelector.SelectedItem = items.FirstOrDefault(item => Equals(item.Tag, selectedId));
+        }
+        finally
+        {
+            _updatingFeatureProfiles = false;
+        }
+    }
+
+    private async void FeatureProfileSelector_OnSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_updatingFeatureProfiles || FeatureProfileSelector.SelectedItem is not ComboBoxItem { Tag: string id })
+            return;
+        var currentId = StartupFeatureCatalog.ResolveSelectedProfileId(SimpleMode);
+        if (id == currentId) return;
+        _updatingFeatureProfiles = true;
+        var result = await new FAContentDialog
+        {
+            Title = FeatureConfigurationText.Get("Title"),
+            Content = FeatureConfigurationText.Get("ApplyConfirmation"),
+            PrimaryButtonText = FeatureConfigurationText.Get("Confirm"),
+            CloseButtonText = FeatureConfigurationText.Get("Cancel")
+        }.ShowAsync(TopLevel.GetTopLevel(this));
+        _updatingFeatureProfiles = false;
+        if (result != FAContentDialogResult.Primary)
+        {
+            RefreshFeatureProfiles();
+            return;
+        }
+        _isApplyingProgrammaticChange = true;
+        SimpleMode.SelectedProfileId = id;
+        _isApplyingProgrammaticChange = false;
         ConfigHandler.Save();
         SettingsView.Current?.RequestRestartApp();
+    }
+
+    private void ConfigureFeatures_OnClick(object? sender, RoutedEventArgs e)
+    {
+        App.ShowFeatureConfigurationWindow(TopLevel.GetTopLevel(this) as Window);
     }
 
 }
