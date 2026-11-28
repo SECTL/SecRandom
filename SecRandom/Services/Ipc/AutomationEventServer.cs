@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.SingleInstance;
 using SecRandom.Shared.Models.Ipc;
 
@@ -20,6 +21,7 @@ namespace SecRandom.Services.Ipc;
 /// </summary>
 public sealed class AutomationEventServer(
     AutomationEventBus eventBus,
+    MainConfigHandler config,
     ILogger<AutomationEventServer> logger) : IHostedService
 {
     public const int MaxSubscribers = 16;
@@ -125,6 +127,11 @@ public sealed class AutomationEventServer(
             using var handshakeCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             handshakeCts.CancelAfter(TimeSpan.FromSeconds(5));
             var handshake = await ReadLineAsync(reader, MaxSubscriptionFrame, handshakeCts.Token).ConfigureAwait(false);
+            if (!config.Data.General.Basic.AutomationIpcEnabled)
+            {
+                await WriteDisabledAsync(writer).ConfigureAwait(false);
+                return;
+            }
             if (string.IsNullOrWhiteSpace(handshake) || !TryReadSubscription(handshake, out var requestedTypes))
             {
                 await WriteLineAsync(writer, JsonSerializer.Serialize(new
@@ -138,7 +145,11 @@ public sealed class AutomationEventServer(
             }
 
             var subscription = new Subscription(requestedTypes);
-            void OnPublished(AutomationEvent automationEvent) => subscription.Enqueue(automationEvent);
+            void OnPublished(AutomationEvent automationEvent)
+            {
+                if (config.Data.General.Basic.AutomationIpcEnabled)
+                    subscription.Enqueue(automationEvent);
+            }
             eventBus.Published += OnPublished;
             try
             {
@@ -161,6 +172,12 @@ public sealed class AutomationEventServer(
                     }
                     catch (OperationCanceledException)
                     {
+                        break;
+                    }
+
+                    if (!config.Data.General.Basic.AutomationIpcEnabled)
+                    {
+                        await WriteDisabledAsync(writer).ConfigureAwait(false);
                         break;
                     }
 
@@ -224,6 +241,14 @@ public sealed class AutomationEventServer(
         await writer.WriteLineAsync(line).ConfigureAwait(false);
         await writer.FlushAsync().ConfigureAwait(false);
     }
+
+    private static Task WriteDisabledAsync(StreamWriter writer) => WriteLineAsync(writer, JsonSerializer.Serialize(new
+    {
+        version = 2,
+        type = "error",
+        ok = false,
+        error = new { code = "ipc_disabled", message = "自动化 IPC 已在设置中关闭。" }
+    }, JsonOptions));
 
     private static bool TryReadSubscription(string frame, out string[] requestedTypes)
     {

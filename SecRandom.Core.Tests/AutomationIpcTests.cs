@@ -1,5 +1,6 @@
 using System.Text.Json;
 using SecRandom.Core.Services.Ipc;
+using SecRandom.Services.Ipc;
 using SecRandom.Shared.Models.Ipc;
 
 namespace SecRandom.Core.Tests;
@@ -60,6 +61,51 @@ public class AutomationIpcTests
         Assert.All(methods, m => Assert.False(string.IsNullOrWhiteSpace(m.Name)));
         Assert.NotNull(AutomationCommandCatalog.Find("draw.quick.trigger"));
         Assert.Null(AutomationCommandCatalog.Find("nope"));
+    }
+
+    [Theory]
+    [InlineData("roster.read", "{roster_kind?,list_name?,include_disabled?}", "{roster_kind,lists}")]
+    [InlineData("draw.await", "{target?,timeout_ms?}", "{target,students|prizes|student}")]
+    [InlineData("history.summary", "{kind?,name}", "{kind,name,rounds,count}")]
+    public void CommandCatalog_DescribesWireFields(string method, string parameters, string result)
+    {
+        var descriptor = AutomationCommandCatalog.Find(method);
+        Assert.NotNull(descriptor);
+        Assert.Equal(parameters, descriptor.Params);
+        Assert.Equal(result, descriptor.Result);
+    }
+
+    [Fact]
+    public void DrawRequest_AcceptsSparseOverridesWithoutInventingNullFields()
+    {
+        var parameters = JsonSerializer.SerializeToElement(new { list = "A", count = 2 });
+        var request = AutomationCommandRegistry.ParseDrawRequest("roll_call", parameters);
+        Assert.Equal("A", request.ListName);
+        Assert.Equal(2, request.Count);
+        Assert.Null(request.Gender);
+        Assert.Null(request.Conditions);
+    }
+
+    [Fact]
+    public void DrawRequest_RejectsInvalidAndInapplicableOverrides()
+    {
+        var invalid = JsonSerializer.Deserialize<JsonElement>("""{"count":null}""");
+        var lotteryGender = JsonSerializer.SerializeToElement(new { gender = "F" });
+        Assert.Equal(AutomationErrorCodes.InvalidParameter,
+            Assert.Throws<AutomationRpcException>(() => AutomationCommandRegistry.ParseDrawRequest("roll_call", invalid)).Code);
+        Assert.Equal(AutomationErrorCodes.InvalidParameter,
+            Assert.Throws<AutomationRpcException>(() => AutomationCommandRegistry.ParseDrawRequest("lottery", lotteryGender)).Code);
+    }
+
+    [Fact]
+    public void DrawRequest_PreservesLotteryConditions()
+    {
+        var parameters = JsonSerializer.Deserialize<JsonElement>("""{"conditions":{"prize_tags":["gold"],"student_list":"A","group":"1"}}""");
+        var request = AutomationCommandRegistry.ParseDrawRequest("lottery", parameters);
+        Assert.NotNull(request.Conditions);
+        Assert.Equal("A", request.Conditions.StudentList);
+        Assert.Equal("1", request.Conditions.Group);
+        Assert.Equal(["gold"], request.Conditions.PrizeTags);
     }
 
     [Fact]

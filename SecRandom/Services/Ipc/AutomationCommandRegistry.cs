@@ -694,7 +694,7 @@ public sealed class AutomationCommandRegistry(
         return authorized ? result : throw Denied();
     }
 
-    private static ControlDrawTriggerRequest ParseDrawRequest(string target, JsonElement? parameters)
+    internal static ControlDrawTriggerRequest ParseDrawRequest(string target, JsonElement? parameters)
     {
         if (parameters is null || parameters.Value.ValueKind == JsonValueKind.Null)
             return target == "quick"
@@ -702,15 +702,18 @@ public sealed class AutomationCommandRegistry(
                 : new ControlDrawTriggerRequest(target, null, null, null, null);
 
         var element = parameters.Value;
-        var normalized = JsonSerializer.SerializeToElement(new
+        if (element.ValueKind != JsonValueKind.Object)
+            throw new AutomationRpcException(AutomationErrorCodes.InvalidParameter, "抽取参数必须是对象。");
+
+        var fields = new Dictionary<string, JsonElement> { ["target"] = JsonSerializer.SerializeToElement(target) };
+        if (element.TryGetProperty("list", out var list) || element.TryGetProperty("list_name", out list))
+            fields["list_name"] = list;
+        foreach (var name in new[] { "count", "gender", "group", "conditions" })
         {
-            target,
-            list_name = ReadString(parameters, "list") ?? ReadString(parameters, "list_name"),
-            count = ReadInt(parameters, "count"),
-            gender = ReadString(parameters, "gender"),
-            group = ReadString(parameters, "group"),
-            conditions = element.TryGetProperty("conditions", out var conditions) ? conditions : (JsonElement?)null
-        });
+            if (element.TryGetProperty(name, out var value))
+                fields[name] = value;
+        }
+        var normalized = JsonSerializer.SerializeToElement(fields);
 
         if (!ControlDrawTriggerRequest.TryParse(normalized, out var request, out var reason))
         {
