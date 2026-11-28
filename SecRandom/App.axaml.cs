@@ -1443,6 +1443,8 @@ public partial class App : Application
                 {
                     client.BaseAddress = new Uri("https://secrandom-sync.sectl.cn/");
                     client.Timeout = TimeSpan.FromSeconds(30);
+                    if (ApiEndpointKeys.Sync is { } apiKey)
+                        client.DefaultRequestHeaders.TryAddWithoutValidation("X-SecRandom-Api-Key", apiKey);
                 });
                 if (isMobile)
                 {
@@ -1471,7 +1473,11 @@ public partial class App : Application
                 services.AddSingleton<ProofPlaybackService>();
                 services.AddSingleton<IVerificationKernel, ManagedVerificationKernel>();
                 services.AddHttpClient<IWitnessClient, WitnessClient>(client =>
-                    client.Timeout = TimeSpan.FromSeconds(3));
+                {
+                    client.Timeout = TimeSpan.FromSeconds(3);
+                    if (ApiEndpointKeys.Verify is { } apiKey)
+                        client.DefaultRequestHeaders.TryAddWithoutValidation("X-SecRandom-Api-Key", apiKey);
+                });
                 services.AddHttpClient<ITimestampAuthorityClient, TimestampAuthorityClient>(client =>
                     client.Timeout = TimeSpan.FromSeconds(10));
                 services.AddSingleton<DrawProofAttestationService>();

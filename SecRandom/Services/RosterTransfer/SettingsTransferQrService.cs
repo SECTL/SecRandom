@@ -3,20 +3,24 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using QRCoder;
+using SecRandom.Services.Config;
 
 namespace SecRandom.Services.RosterTransfer;
 
 /// <summary>
 /// Local-only QR codec for settings and full-data exports. It uses its own frame prefix so the
-/// legacy roster QR protocol remains readable without ambiguity.
+/// roster QR protocol remains distinguishable.
 /// </summary>
 public sealed class SettingsTransferQrService
 {
-    private const string ManifestPrefix = "SRDQR1M";
-    private const string DataPrefix = "SRDQR1D";
+    private const string ManifestPrefix = "SRDQR2M";
+    private const string DataPrefix = "SRDQR2D";
     private const int FramePayloadLength = 128;
     private const int MaximumFrameCount = 4096;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private readonly string? _apiKey;
+
+    public SettingsTransferQrService(string? apiKey = null) => _apiKey = apiKey;
 
     public Task<SettingsTransferQrExportSession> CreateExportSessionAsync(SyncTransferPackage package,
         CancellationToken cancellationToken = default)
@@ -27,6 +31,7 @@ public sealed class SettingsTransferQrService
                 or SyncTransferContentType.TextLibrary))
             throw new InvalidDataException("Offline QR transfer content type is not supported.");
         SyncTransferLimits.EnsureOfflineQrPayloadSize(package.Content.LongLength, "source file");
+        var apiKey = GetAuthenticationKey();
 
         return Task.Run(() =>
         {
@@ -40,9 +45,12 @@ public sealed class SettingsTransferQrService
 
             var sessionId = Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
             var checksum = Convert.ToHexString(SHA256.HashData(compressed));
+            var contentType = Base64Url(Encoding.UTF8.GetBytes(RosterSyncTransferService.ContentTypeName(package.ContentType)));
+            var fileName = Base64Url(Encoding.UTF8.GetBytes(package.FileName));
+            var authenticationTag = CreateManifestAuthenticationTag(apiKey, sessionId, contentType, fileName,
+                compressed.Length, chunks.Count, checksum);
             var manifest = string.Join('|', ManifestPrefix, sessionId,
-                Base64Url(Encoding.UTF8.GetBytes(RosterSyncTransferService.ContentTypeName(package.ContentType))),
-                Base64Url(Encoding.UTF8.GetBytes(package.FileName)), compressed.Length, chunks.Count, checksum);
+                contentType, fileName, compressed.Length, chunks.Count, checksum, authenticationTag);
 
             using var generator = new QRCodeGenerator();
             var frameTexts = chunks.Select((chunk, index) => string.Join('|', DataPrefix, sessionId, index,
@@ -68,7 +76,26 @@ public sealed class SettingsTransferQrService
         }, cancellationToken);
     }
 
-    public SettingsTransferQrImportAccumulator CreateImportAccumulator() => new();
+    public SettingsTransferQrImportAccumulator CreateImportAccumulator() => new(GetAuthenticationKey());
+
+    private byte[] GetAuthenticationKey()
+    {
+        var apiKey = _apiKey ?? ApiEndpointKeys.OfflineQr;
+        if (apiKey is not { Length: >= 43 and <= 128 } || apiKey.Any(character =>
+                character is not (>= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= '0' and <= '9' or '-' or '_')))
+            throw new InvalidOperationException("SECRANDOM_OFFLINE_QR_API_KEY must be configured as a 43-128 character base64url key.");
+
+        return Encoding.ASCII.GetBytes(apiKey);
+    }
+
+    private static string CreateManifestAuthenticationTag(byte[] key, string sessionId, string contentType,
+        string fileName, int payloadLength, int totalFrames, string checksum)
+    {
+        var data = string.Join('\n', "secrandom-offline-qr/v2", sessionId, contentType, fileName,
+            payloadLength.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            totalFrames.ToString(System.Globalization.CultureInfo.InvariantCulture), checksum);
+        return Base64Url(HMACSHA256.HashData(key, Encoding.UTF8.GetBytes(data)));
+    }
 
     private static List<byte[]> Split(byte[] value)
     {
@@ -117,6 +144,7 @@ public sealed class SettingsTransferQrService
 
     public sealed class SettingsTransferQrImportAccumulator
     {
+        private readonly byte[] _authenticationKey;
         private readonly Dictionary<int, byte[]> _chunks = [];
         private string? _sessionId;
         private string? _checksum;
@@ -125,6 +153,8 @@ public sealed class SettingsTransferQrService
         private int _duplicateFrames;
         private int _rejectedFrames;
         private DateTimeOffset _startedAt;
+
+        internal SettingsTransferQrImportAccumulator(byte[] authenticationKey) => _authenticationKey = authenticationKey;
 
         public int AcceptedFrames => _chunks.Count;
         public int TotalFrames => _totalFrames;
@@ -144,6 +174,13 @@ public sealed class SettingsTransferQrService
 
             if (frame.IsManifest)
             {
+                if (frame.ContentType is null || frame.FileName is null || frame.AuthenticationTag is null ||
+                    !VerifyManifestAuthenticationTag(frame))
+                {
+                    _rejectedFrames++;
+                    return SettingsTransferQrFrameImportResult.Rejected;
+                }
+
                 if (_sessionId == frame.SessionId)
                 {
                     _duplicateFrames++;
@@ -207,11 +244,12 @@ public sealed class SettingsTransferQrService
             var parts = value?.Split('|', StringSplitOptions.None);
             if (parts is null || parts.Length < 7 || parts[1].Length != 32)
                 return false;
-            if (parts[0] == ManifestPrefix && parts.Length == 7 && int.TryParse(parts[4], out var length) &&
+            if (parts[0] == ManifestPrefix && parts.Length == 8 && int.TryParse(parts[4], out var length) &&
                 int.TryParse(parts[5], out var count) && length is > 0 and <= SyncTransferLimits.MaxOfflineQrPayloadBytes &&
-                count is > 0 and <= MaximumFrameCount && parts[6].Length == 64)
+                count is > 0 and <= MaximumFrameCount && parts[6].Length == 64 && IsBase64Url(parts[7], 43))
             {
-                frame = new Frame(true, parts[1], 0, length, count, parts[6], null);
+                frame = new Frame(true, parts[1], 0, length, count, parts[6], null,
+                    parts[2], parts[3], parts[7]);
                 return true;
             }
             if (parts[0] != DataPrefix || parts.Length != 7 || !int.TryParse(parts[2], out var index) ||
@@ -225,7 +263,7 @@ public sealed class SettingsTransferQrService
                 var chunk = Convert.FromBase64String(parts[6]);
                 if (chunk.Length != FramePayloadLength)
                     return false;
-                frame = new Frame(false, parts[1], index, payloadLength, 0, parts[5], chunk);
+                frame = new Frame(false, parts[1], index, payloadLength, 0, parts[5], chunk, null, null, null);
                 return true;
             }
             catch (FormatException)
@@ -233,10 +271,41 @@ public sealed class SettingsTransferQrService
                 return false;
             }
         }
+
+        private bool VerifyManifestAuthenticationTag(Frame frame)
+        {
+            if (!TryFromBase64Url(frame.AuthenticationTag!, out var suppliedTag))
+                return false;
+
+            var expectedTag = HMACSHA256.HashData(_authenticationKey,
+                Encoding.UTF8.GetBytes(string.Join('\n', "secrandom-offline-qr/v2", frame.SessionId,
+                    frame.ContentType, frame.FileName,
+                    frame.PayloadLength.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    frame.TotalFrames.ToString(System.Globalization.CultureInfo.InvariantCulture), frame.Checksum)));
+            return CryptographicOperations.FixedTimeEquals(expectedTag, suppliedTag);
+        }
+
+        private static bool IsBase64Url(string value, int expectedLength) => value.Length == expectedLength && value.All(character =>
+            character is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= '0' and <= '9' or '-' or '_');
+
+        private static bool TryFromBase64Url(string value, out byte[] bytes)
+        {
+            try
+            {
+                bytes = FromBase64Url(value);
+                return true;
+            }
+            catch (FormatException)
+            {
+                bytes = [];
+                return false;
+            }
+        }
     }
 
     private sealed record OfflineTransferEnvelope(int Version, string ContentType, string FileName, byte[] Content);
-    private readonly record struct Frame(bool IsManifest, string SessionId, int Index, int PayloadLength, int TotalFrames, string Checksum, byte[]? Chunk);
+    private readonly record struct Frame(bool IsManifest, string SessionId, int Index, int PayloadLength, int TotalFrames,
+        string Checksum, byte[]? Chunk, string? ContentType, string? FileName, string? AuthenticationTag);
 }
 
 public sealed record SettingsTransferQrExportSession(IReadOnlyList<byte[]> Frames);

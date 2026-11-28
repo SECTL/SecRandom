@@ -77,6 +77,10 @@ jobs:
     needs: validate_release
     if: ${{ always() && !cancelled() && (needs.validate_release.result == 'success' || needs.validate_release.result == 'skipped') }}
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-24.04' || (matrix.os == 'macos' && 'macos-15' || 'windows-2022') }}
+    env:
+      SECRANDOM_SYNC_API_KEY: ${{ secrets.SECRANDOM_SYNC_API_KEY }}
+      SECRANDOM_VERIFY_API_KEY: ${{ secrets.SECRANDOM_VERIFY_API_KEY }}
+      SECRANDOM_OFFLINE_QR_API_KEY: ${{ secrets.SECRANDOM_OFFLINE_QR_API_KEY }}
     strategy:
       fail-fast: false
       matrix:
@@ -89,6 +93,16 @@ jobs:
             arch: x86
 
     steps:
+      - name: Validate embedded API key secrets
+        if: ${{ github.repository == 'SECTL/SecRandom' }}
+        shell: pwsh
+        run: |
+          foreach ($name in @('SECRANDOM_SYNC_API_KEY', 'SECRANDOM_VERIFY_API_KEY', 'SECRANDOM_OFFLINE_QR_API_KEY')) {
+            $value = [Environment]::GetEnvironmentVariable($name)
+            if ([string]::IsNullOrWhiteSpace($value)) { throw "Missing GitHub Actions secret: $name" }
+            if ($value -notmatch '^[A-Za-z0-9_-]{43,128}$') { throw "$name must be a 43-128 character base64url key." }
+          }
+
       - name: Checkout
         uses: actions/checkout@v6
         with:
@@ -648,12 +662,24 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       arch: ${{ matrix.arch }}
+      SECRANDOM_SYNC_API_KEY: ${{ secrets.SECRANDOM_SYNC_API_KEY }}
+      SECRANDOM_VERIFY_API_KEY: ${{ secrets.SECRANDOM_VERIFY_API_KEY }}
+      SECRANDOM_OFFLINE_QR_API_KEY: ${{ secrets.SECRANDOM_OFFLINE_QR_API_KEY }}
     strategy:
       fail-fast: false
       matrix:
         arch: ['arm64', 'x64']
 
     steps:
+      - name: Validate embedded API key secrets
+        shell: pwsh
+        run: |
+          foreach ($name in @('SECRANDOM_SYNC_API_KEY', 'SECRANDOM_VERIFY_API_KEY', 'SECRANDOM_OFFLINE_QR_API_KEY')) {
+            $value = [Environment]::GetEnvironmentVariable($name)
+            if ([string]::IsNullOrWhiteSpace($value)) { throw "Missing GitHub Actions secret: $name" }
+            if ($value -notmatch '^[A-Za-z0-9_-]{43,128}$') { throw "$name must be a 43-128 character base64url key." }
+          }
+
       - name: Checkout
         uses: actions/checkout@v6
         with:
