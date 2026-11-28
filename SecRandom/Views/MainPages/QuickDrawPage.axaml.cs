@@ -270,8 +270,8 @@ public partial class QuickDrawPage : UserControl
 
     private void RootBorder_OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed
-            || TopLevel.GetTopLevel(this) is not Window window)
+        if (!e.Pointer.IsPrimary || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed
+            || TopLevel.GetTopLevel(this) is not Window)
             return;
 
         _quickDrawIsDragging = false;
@@ -283,7 +283,7 @@ public partial class QuickDrawPage : UserControl
     {
         if (_quickDrawIsDragging)
             return;
-        if (_quickDrawPressEvent is null)
+        if (_quickDrawPressEvent is null || e.Pointer != _quickDrawPressEvent.Pointer)
             return;
         if (TopLevel.GetTopLevel(this) is not Window window)
             return;
@@ -300,7 +300,9 @@ public partial class QuickDrawPage : UserControl
 
     private void RootBorder_OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
-        if (e.InitialPressMouseButton != MouseButton.Left)
+        if (e.InitialPressMouseButton != MouseButton.Left
+            || _quickDrawPressEvent is null
+            || e.Pointer != _quickDrawPressEvent.Pointer)
             return;
 
         if (!_quickDrawIsDragging)

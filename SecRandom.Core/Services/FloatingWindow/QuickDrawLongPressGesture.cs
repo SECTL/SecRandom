@@ -28,7 +28,7 @@ public static class QuickDrawLongPressGesture
     public const int DefaultCount = 1;
 
     /// <summary>按住后指针偏离超过这个距离（DIP）就不算长按，改判为拖动窗口。</summary>
-    public const double DragCancelDistance = 20;
+    public const double DragCancelDistance = 14;
 
     /// <summary>
     ///     触控/手写笔按住时的容差（DIP）。手指按住会自然漂移十几 DIP，沿用鼠标的

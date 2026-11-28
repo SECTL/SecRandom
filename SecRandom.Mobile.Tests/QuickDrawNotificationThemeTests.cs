@@ -1,7 +1,10 @@
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
+using Avalonia.Input.Raw;
 using Avalonia.Media;
 using Avalonia.Styling;
 using Avalonia.Threading;
@@ -24,6 +27,49 @@ namespace SecRandom.Mobile.Tests;
 
 public sealed class QuickDrawNotificationThemeTests
 {
+    [AvaloniaFact]
+    public void MouseDragDoesNotCountTowardThreeClicksToClose()
+    {
+        var dataRoot = Path.Combine(Path.GetTempPath(), "SecRandom.QuickDrawClicks", Guid.NewGuid().ToString("N"));
+        var previousHost = IAppHost.Host;
+        Window? window = null;
+        GetUtilsMethod("ConfigureDataRoot").Invoke(null, [dataRoot]);
+        using var audio = new DrawAudioService(null!, NullLogger<DrawAudioService>.Instance);
+        var handler = new MainConfigHandler(NullLogger<MainConfigHandler>.Instance, new TestConfigService(new MainConfigModel()));
+        using var viewModel = new QuickDrawPageViewModel(handler, null!, null!, null!, null!, audio,
+            NullLogger<QuickDrawPageViewModel>.Instance, null!, null!, null!, null!);
+        using var provider = new ServiceCollection().AddSingleton(viewModel).BuildServiceProvider();
+        try
+        {
+            IAppHost.Host = new TestHost(provider);
+            window = new Window { Content = new QuickDrawPage(), Width = 460, Height = 320 };
+            window.Show();
+            Dispatcher.UIThread.RunJobs();
+
+            window.MouseDown(new Point(100, 100), MouseButton.Left, RawInputModifiers.None);
+            window.MouseMove(new Point(120, 100), RawInputModifiers.LeftMouseButton);
+            window.MouseUp(new Point(120, 100), MouseButton.Left, RawInputModifiers.None);
+            Assert.True(window.IsVisible);
+
+            for (var i = 0; i < 3; i++)
+            {
+                window.MouseDown(new Point(100, 100), MouseButton.Left, RawInputModifiers.None);
+                window.MouseMove(new Point(102, 101), RawInputModifiers.LeftMouseButton);
+                window.MouseUp(new Point(102, 101), MouseButton.Left, RawInputModifiers.None);
+                Assert.Equal(i < 2, window.IsVisible);
+            }
+        }
+        finally
+        {
+            if (window?.IsVisible == true)
+                window.Close();
+            IAppHost.Host = previousHost;
+            GetUtilsMethod("ResetDataRootForTests").Invoke(null, null);
+            if (Directory.Exists(dataRoot))
+                Directory.Delete(dataRoot, recursive: true);
+        }
+    }
+
     [AvaloniaTheory]
     [InlineData(true)]
     [InlineData(false)]
