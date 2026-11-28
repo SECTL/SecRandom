@@ -358,6 +358,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         StatusText = Config.QuickDrawSettings.ShowDrawingStatus ? QuickDrawResources.M_Drawing : string.Empty;
         _notificationAutoCloseTime = null;
         SetDrawCommandRunning(true);
+        var textLibraryId = SecRandom.Core.Services.Notification.TextLibraryBinding.Get(_profileService.CurrentStudentList);
         IReadOnlyList<FullscreenResultItem> fullscreenPool = [];
         // 全屏渠道要显示"还剩几人/共几人"，闪抽没有像点名页那样的 TotalCount/RemainingCount 属性，
         // 所以在这里按抽前的候选快照算一次：总数=名单里可抽的人，剩余=当前这次能抽到的人。
@@ -554,7 +555,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                             fullscreenRemainingCount,
                             courseName,
                             historyGroup,
-                            SelectedStudentListName));
+                            SelectedStudentListName, textLibraryId));
             }
 
             var fullscreenVoiceActive = _notificationService?.UsesFullscreenNotificationService(NotificationSettingsType.QuickDraw) == true

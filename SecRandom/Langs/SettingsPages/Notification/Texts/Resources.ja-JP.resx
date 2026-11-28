@@ -54,7 +54,7 @@
   <data name="M_EditPlaceholderAppended"><value>{result} プレースホルダーを自動で追加しました</value></data>
   <data name="M_OperationFailed"><value>操作に失敗しました</value></data>
   <data name="M_ImportTitle"><value>テキストをインポート</value></data>
-  <data name="M_ImportHint"><value>インポートはライブラリ全体を置き換え、使用記録を消去します</value></data>
+  <data name="M_ImportHint"><value>現在のライブラリに追加するか置き換えるかを選択できます</value></data>
   <data name="M_SourceTable"><value>表ファイル</value></data>
   <data name="M_SourceJson"><value>JSON 貼り付け</value></data>
   <data name="M_TableHint"><value>xlsx・xls・csv に対応し、1 列目を読み取ります。見出し行は自動で飛ばします</value></data>
@@ -132,4 +132,19 @@
   <data name="M_QuickQrReady"><value>QR を生成しました。別の端末でスキャンしてください</value></data>
   <data name="M_SessionCodeReady"><value>セッションコードを生成しました。別の端末で入力してください</value></data>
   <data name="M_OfflineQrExporting"><value>オフライン QR を再生しています</value></data>
+  <data name="C_Libraries" xml:space="preserve"><value>文案ライブラリ</value></data>
+  <data name="C_NewLibrary" xml:space="preserve"><value>新規ライブラリ</value></data>
+  <data name="C_CopyLibrary" xml:space="preserve"><value>ライブラリを複製</value></data>
+  <data name="C_RenameLibrary" xml:space="preserve"><value>ライブラリ名を変更</value></data>
+  <data name="C_DeleteLibrary" xml:space="preserve"><value>ライブラリを削除</value></data>
+  <data name="C_DefaultLibrary" xml:space="preserve"><value>既定のライブラリを使用</value></data>
+  <data name="M_LibraryName" xml:space="preserve"><value>ライブラリ名</value></data>
+  <data name="M_DeleteLibrary" xml:space="preserve"><value>「{0}」を削除しますか？関連する名簿は、このライブラリが復元されるまで既定のライブラリを使用します。</value></data>
+  <data name="M_MissingLibrary" xml:space="preserve"><value>ライブラリが削除されたため、既定のライブラリを使用中</value></data>
+  <data name="C_AppendImport" xml:space="preserve"><value>追加してインポート</value></data>
+  <data name="M_ImportChoice" xml:space="preserve"><value>追加は既存の文案と使用回数を保持します。置換は現在のライブラリと使用回数を消去します。</value></data>
+  <data name="C_LinkRosters" xml:space="preserve"><value>関連する名簿</value></data>
+  <data name="C_StudentRoster" xml:space="preserve"><value>点呼名簿</value></data>
+  <data name="C_PrizeRoster" xml:space="preserve"><value>賞品リスト</value></data>
+  <data name="M_LibraryUnavailable" xml:space="preserve"><value>文案ライブラリを読み込めません。元のファイルは保持されています。データファイルを確認して再試行してください。</value></data>
 </root>

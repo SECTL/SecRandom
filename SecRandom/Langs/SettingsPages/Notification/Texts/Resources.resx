@@ -172,7 +172,7 @@
     <value>导入文案</value>
   </data>
   <data name="M_ImportHint" xml:space="preserve">
-    <value>导入会整库替换现有文案并清空使用记录</value>
+    <value>可选择追加到当前文案库或替换当前文案库</value>
   </data>
   <data name="M_SourceTable" xml:space="preserve">
     <value>表格文件</value>
@@ -387,4 +387,19 @@
   <data name="M_OfflineQrExporting" xml:space="preserve">
     <value>正在播放无网二维码</value>
   </data>
+  <data name="C_Libraries" xml:space="preserve"><value>文案库</value></data>
+  <data name="C_NewLibrary" xml:space="preserve"><value>新建文案库</value></data>
+  <data name="C_CopyLibrary" xml:space="preserve"><value>复制文案库</value></data>
+  <data name="C_RenameLibrary" xml:space="preserve"><value>重命名文案库</value></data>
+  <data name="C_DeleteLibrary" xml:space="preserve"><value>删除文案库</value></data>
+  <data name="C_DefaultLibrary" xml:space="preserve"><value>使用默认文案库</value></data>
+  <data name="M_LibraryName" xml:space="preserve"><value>文案库名称</value></data>
+  <data name="M_DeleteLibrary" xml:space="preserve"><value>删除“{0}”？使用该文案库的名单将改用默认文案库，恢复该库后绑定会自动恢复。</value></data>
+  <data name="M_MissingLibrary" xml:space="preserve"><value>文案库已删除，当前使用默认文案库</value></data>
+  <data name="C_AppendImport" xml:space="preserve"><value>追加导入</value></data>
+  <data name="M_ImportChoice" xml:space="preserve"><value>追加会保留现有文案及使用次数；替换会清空当前库的文案和使用记录。</value></data>
+  <data name="C_LinkRosters" xml:space="preserve"><value>关联名单</value></data>
+  <data name="C_StudentRoster" xml:space="preserve"><value>点名名单</value></data>
+  <data name="C_PrizeRoster" xml:space="preserve"><value>奖品池</value></data>
+  <data name="M_LibraryUnavailable" xml:space="preserve"><value>无法加载文案库，原文件已保留。请检查数据文件后重试。</value></data>
 </root>

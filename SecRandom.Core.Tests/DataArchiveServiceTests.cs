@@ -13,6 +13,7 @@ using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.HistoryStore;
 using SecRandom.Core.Services.Orchestration;
+using SecRandom.Core.Services.Notification;
 using SecRandom.Core.Services.Profiles;
 using SecRandom.Core.Models.Orchestration;
 using SecRandom.Shared;
@@ -34,6 +35,32 @@ public sealed class DataArchiveServiceTests : IDisposable
         ResetDataRootForTests();
         ConfigureDataRootForTests(_dataRoot);
         Directory.CreateDirectory(_exportDirectory);
+    }
+
+    [Fact]
+    public async Task ExportAllData_SnapshotsTextLibraryWithLiveWal()
+    {
+        using var provider = CreateProvider();
+        provider.GetRequiredService<MainConfigHandler>().Save();
+        var path = Path.Combine(_dataRoot, "texts", "library" + SecRandom.Shared.Utils.TextLibraryDatabaseExtension);
+        var service = new TextLibraryService(Microsoft.Extensions.Logging.Abstractions.NullLogger<TextLibraryService>.Instance, path);
+        service.ReplaceAll(["备份 {result}"]);
+        using var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={path};Pooling=False");
+        connection.Open();
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = "PRAGMA journal_mode=WAL; UPDATE entries SET use_count=7";
+            command.ExecuteNonQuery();
+        }
+        var destination = Path.Combine(_exportDirectory, "text-library.zip");
+        await provider.GetRequiredService<DataArchiveService>().ExportAllDataAsync(destination, TestContext.Current.CancellationToken);
+        using var exported = ZipFile.OpenRead(destination);
+        Assert.Null(exported.GetEntry("texts/library" + SecRandom.Shared.Utils.TextLibraryDatabaseExtension + "-wal"));
+        var entry = Assert.IsType<ZipArchiveEntry>(exported.GetEntry("texts/library" + SecRandom.Shared.Utils.TextLibraryDatabaseExtension));
+        var extracted = Path.Combine(_exportDirectory, "snapshot" + SecRandom.Shared.Utils.TextLibraryDatabaseExtension);
+        entry.ExtractToFile(extracted);
+        var snapshot = new TextLibraryService(Microsoft.Extensions.Logging.Abstractions.NullLogger<TextLibraryService>.Instance, extracted);
+        Assert.Equal(7, snapshot.Entries.Single().UseCount);
     }
 
     [Fact]

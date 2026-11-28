@@ -555,6 +555,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         // 否则中途切组会让「按 A 组权重抽出来的人写进 B 组记录」。
         var historyGroup = CurrentHistoryGroup;
         SetDrawCommandRunning(true);
+        var textLibraryId = SecRandom.Core.Services.Notification.TextLibraryBinding.Get(_profileService.CurrentStudentList);
         IReadOnlyList<FullscreenResultItem> fullscreenPool = [];
         try
         {
@@ -655,7 +656,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                             RemainingCount,
                             courseName,
                             historyGroup,
-                            SelectedStudentListName));
+                            SelectedStudentListName, textLibraryId));
             }
 
             // 全屏渠道自己会播报时，跳过全局语音，避免同一句结果被读两遍。

@@ -10,8 +10,21 @@
              x:Class="SecRandom.Views.SettingsPages.Notification.TextLibrarySettingsPage"
              x:DataType="notification:TextLibrarySettingsPage"
              x:Name="Root">
-    <Grid RowDefinitions="Auto *" RowSpacing="8" Classes="page-container animated-intro">
-        <Border Grid.Row="0"
+    <Grid RowDefinitions="Auto Auto *" RowSpacing="8" Classes="page-container animated-intro">
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto,Auto" ColumnSpacing="8" IsEnabled="{Binding !IsUnavailable}">
+            <ComboBox Grid.Column="0" MinWidth="0" ItemsSource="{Binding Libraries}" SelectedItem="{Binding SelectedLibrary, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="notification:TextLibraryOption">
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Grid.Column="1" Click="NewLibrary_OnClick" ToolTip.Tip="{Binding NewLibraryText}" AutomationProperties.Name="{Binding NewLibraryText}"><sr:FluentIcon Glyph="{sr:Fi AddFilled}" /></Button>
+            <Button Grid.Column="2" Click="CopyLibrary_OnClick" ToolTip.Tip="{Binding CopyLibraryText}" AutomationProperties.Name="{Binding CopyLibraryText}"><sr:FluentIcon Glyph="{sr:Fi CopyFilled}" /></Button>
+            <Button Grid.Column="3" Click="RenameLibrary_OnClick" ToolTip.Tip="{Binding RenameLibraryText}" AutomationProperties.Name="{Binding RenameLibraryText}"><sr:FluentIcon Glyph="{sr:Fi EditFilled}" /></Button>
+            <Button Grid.Column="4" Click="DeleteLibrary_OnClick" IsEnabled="{Binding CanDeleteLibrary}" ToolTip.Tip="{Binding DeleteLibraryText}" AutomationProperties.Name="{Binding DeleteLibraryText}"><sr:FluentIcon Glyph="{sr:Fi DeleteFilled}" /></Button>
+        </Grid>
+        <Border Grid.Row="1" IsEnabled="{Binding !IsUnavailable}"
                 Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
                 BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                 BorderThickness="1"
@@ -28,6 +41,10 @@
                                                Click="OpenExportDrawer_OnClick" />
 
                         <fa:FACommandBarSeparator />
+
+                        <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi PeopleListFilled}}"
+                                               Label="{Binding LinkRostersText}"
+                                               Click="LinkRosters_OnClick" />
 
                         <fa:FACommandBarButton IconSource="{sr:FluentIconSource {sr:Fi ArrowCounterclockwiseFilled}}"
                                                Label="{x:Static lm:Resources.C_RestoreDefaults}"
@@ -59,12 +76,12 @@
             </Grid>
         </Border>
 
-        <Border Grid.Row="1"
+        <Border Grid.Row="2"
                 BorderBrush="{DynamicResource ControlElevationBorderBrush}"
                 BorderThickness="1"
                 CornerRadius="4"
                 ClipToBounds="True"
-                IsVisible="{Binding !IsEmpty}">
+                IsVisible="{Binding HasRows}">
             <DataGrid x:Name="S_TextLibrary_Entries"
                       MinHeight="320"
                       AutoGenerateColumns="False"
@@ -139,7 +156,7 @@
             </DataGrid>
         </Border>
 
-        <TextBlock Grid.Row="1"
+        <TextBlock Grid.Row="2"
                    Text="{x:Static lm:Resources.M_NoMatch}"
                    IsVisible="{Binding HasNoMatches}"
                    HorizontalAlignment="Center"
@@ -147,7 +164,7 @@
                    Margin="0 24"
                    Opacity="0.7" />
 
-        <StackPanel Grid.Row="1"
+        <StackPanel Grid.Row="2"
                     IsVisible="{Binding IsEmpty}"
                     Spacing="12"
                     Margin="0 48"
@@ -162,6 +179,10 @@
             <Button Classes="accent" HorizontalAlignment="Center" Click="OpenImportDrawer_OnClick">
                 <sr:IconText Text="{x:Static lm:Resources.C_Import}" Glyph="{sr:Fi ArrowImportFilled}" />
             </Button>
+        </StackPanel>
+        <StackPanel Grid.Row="2" IsVisible="{Binding IsUnavailable}" Spacing="12" Margin="16,32">
+            <TextBlock Text="{Binding UnavailableText}" TextWrapping="Wrap" />
+            <Button Content="{x:Static lm:Resources.C_Refresh}" HorizontalAlignment="Left" Click="Refresh_OnClick" />
         </StackPanel>
     </Grid>
 </UserControl>

@@ -83,6 +83,14 @@ public static class TextLibraryImporter
         if (string.IsNullOrWhiteSpace(json))
             return Fail("内容为空");
 
+        json = json.Trim();
+        if (json.StartsWith("```", StringComparison.Ordinal) && json.EndsWith("```", StringComparison.Ordinal))
+        {
+            var firstLine = json.IndexOf('\n');
+            if (firstLine >= 0 && (json[..firstLine].Trim() is "```" or "```json"))
+                json = json[(firstLine + 1)..^3].Trim();
+        }
+
         // 先按字符数挡在最前面：超长文本不进入解析器，避免一次粘贴冻结 UI
         if (json.Length > MaxJsonImportChars)
             return Fail($"内容超过 {MaxJsonImportChars} 个字符上限");

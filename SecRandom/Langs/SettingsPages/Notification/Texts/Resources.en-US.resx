@@ -54,7 +54,7 @@
   <data name="M_EditPlaceholderAppended"><value>The {result} placeholder was appended automatically</value></data>
   <data name="M_OperationFailed"><value>Operation failed</value></data>
   <data name="M_ImportTitle"><value>Import templates</value></data>
-  <data name="M_ImportHint"><value>Importing replaces the whole library and clears usage records</value></data>
+  <data name="M_ImportHint"><value>Append to or replace the current library</value></data>
   <data name="M_SourceTable"><value>Spreadsheet</value></data>
   <data name="M_SourceJson"><value>Paste JSON</value></data>
   <data name="M_TableHint"><value>Supports xlsx, xls and csv; the first column is read and a header row is skipped automatically</value></data>
@@ -132,4 +132,19 @@
   <data name="M_QuickQrReady"><value>QR code ready, scan it with the other device</value></data>
   <data name="M_SessionCodeReady"><value>Session code ready, enter it on the other device</value></data>
   <data name="M_OfflineQrExporting"><value>Playing the offline QR frames</value></data>
+  <data name="C_Libraries" xml:space="preserve"><value>Text library</value></data>
+  <data name="C_NewLibrary" xml:space="preserve"><value>New library</value></data>
+  <data name="C_CopyLibrary" xml:space="preserve"><value>Duplicate library</value></data>
+  <data name="C_RenameLibrary" xml:space="preserve"><value>Rename library</value></data>
+  <data name="C_DeleteLibrary" xml:space="preserve"><value>Delete library</value></data>
+  <data name="C_DefaultLibrary" xml:space="preserve"><value>Use default library</value></data>
+  <data name="M_LibraryName" xml:space="preserve"><value>Library name</value></data>
+  <data name="M_DeleteLibrary" xml:space="preserve"><value>Delete “{0}”? Linked lists will use the default library until this library is restored.</value></data>
+  <data name="M_MissingLibrary" xml:space="preserve"><value>Library deleted; using the default library</value></data>
+  <data name="C_AppendImport" xml:space="preserve"><value>Append</value></data>
+  <data name="M_ImportChoice" xml:space="preserve"><value>Appending preserves existing texts and counts; replacing clears the current library and its counts.</value></data>
+  <data name="C_LinkRosters" xml:space="preserve"><value>Linked lists</value></data>
+  <data name="C_StudentRoster" xml:space="preserve"><value>Roll-call list</value></data>
+  <data name="C_PrizeRoster" xml:space="preserve"><value>Prize pool</value></data>
+  <data name="M_LibraryUnavailable" xml:space="preserve"><value>The text library could not be loaded. The original file has been preserved. Check the data file and retry.</value></data>
 </root>

@@ -458,10 +458,12 @@ public partial class FullscreenNotificationSettingsPage : UserControl, INotifyPr
             return;
         }
 
+        var entries = _textLibraryService.GetEntries(_textLibraryService.DefaultLibraryId);
+        var eligible = TextLibraryRotation.GetEligible(entries, TextLibraryRotation.AverageUseCount(entries)).Count;
         TextLibrarySummary = string.Format(
             Text("{0} texts, {1} rotating", "M_FullscreenTextSummary"),
-            _textLibraryService.Entries.Count,
-            _textLibraryService.EligibleCount);
+            entries.Count,
+            eligible);
     }
 
     private void RefreshThemeAccentColorBrush()

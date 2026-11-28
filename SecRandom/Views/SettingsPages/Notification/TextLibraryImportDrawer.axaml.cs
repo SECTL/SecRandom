@@ -720,22 +720,25 @@ public partial class TextLibraryImportDrawer : UserControl, INotifyPropertyChang
         if (topLevel is null)
             return;
 
-        var existing = _textLibraryService.Entries.Count;
         var result = await new FAContentDialog
         {
             Title = Text("M_ReplaceConfirmTitle"),
-            Content = string.Format(Text("M_ReplaceConfirmContent"), existing),
-            PrimaryButtonText = Text("C_ReplaceImport"),
+            Content = Text("M_ImportChoice"),
+            PrimaryButtonText = Text("C_AppendImport"),
+            SecondaryButtonText = Text("C_ReplaceImport"),
             CloseButtonText = Text("C_Cancel"),
             DefaultButton = FAContentDialogButton.Close
         }.ShowAsync(topLevel);
-        if (result != FAContentDialogResult.Primary)
+        if (result is not (FAContentDialogResult.Primary or FAContentDialogResult.Secondary))
             return;
 
         try
         {
-            _textLibraryService.ReplaceAll(_pendingTemplates);
-            this.ShowSuccessToast(string.Format(Text("M_ImportDone"), _pendingTemplates.Count));
+            var before = _textLibraryService.Entries.Count;
+            if (result == FAContentDialogResult.Primary) _textLibraryService.Append(_pendingTemplates);
+            else _textLibraryService.ReplaceAll(_pendingTemplates);
+            var imported = result == FAContentDialogResult.Primary ? _textLibraryService.Entries.Count - before : _textLibraryService.Entries.Count;
+            this.ShowSuccessToast(string.Format(Text("M_ImportDone"), imported));
             SettingsView.Current?.CloseDrawer();
         }
         catch (Exception exception)

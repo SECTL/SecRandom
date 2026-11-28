@@ -11,6 +11,7 @@ using Avalonia.Media;
 using Avalonia.Threading;
 using FluentAvalonia.UI.Controls;
 using SecRandom.Core.Abstraction;
+using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Attributes;
 using SecRandom.Core.Helpers.UI;
 using SecRandom.Core.Icons;
@@ -30,6 +31,7 @@ public partial class TextLibrarySettingsPage : UserControl, INotifyPropertyChang
     private readonly TextLibraryService? _textLibraryService;
     private string _searchText = string.Empty;
     private bool _isRebuilding;
+    private TextLibraryOption? _selectedLibrary;
 
     public TextLibrarySettingsPage()
     {
@@ -40,7 +42,15 @@ public partial class TextLibrarySettingsPage : UserControl, INotifyPropertyChang
         RebuildRows();
         DataContext = this;
         InitializeComponent();
-        Loaded += (_, _) => RebuildRows();
+        Loaded += (_, _) =>
+        {
+            if (_textLibraryService is not null)
+            {
+                _textLibraryService.Changed -= OnLibraryChanged;
+                _textLibraryService.Changed += OnLibraryChanged;
+            }
+            RebuildRows();
+        };
         Unloaded += (_, _) =>
         {
             if (_textLibraryService is not null)
@@ -49,6 +59,26 @@ public partial class TextLibrarySettingsPage : UserControl, INotifyPropertyChang
     }
 
     public ObservableCollection<TextLibraryRow> Rows { get; } = [];
+    public ObservableCollection<TextLibraryOption> Libraries { get; } = [];
+    public string NewLibraryText => Text("C_NewLibrary");
+    public string CopyLibraryText => Text("C_CopyLibrary");
+    public string RenameLibraryText => Text("C_RenameLibrary");
+    public string DeleteLibraryText => Text("C_DeleteLibrary");
+    public string LinkRostersText => Text("C_LinkRosters");
+    public bool CanDeleteLibrary => _selectedLibrary is { IsDefault: false };
+    public TextLibraryOption? SelectedLibrary
+    {
+        get => _selectedLibrary;
+        set
+        {
+            if (value is null || _selectedLibrary?.Id == value.Id) return;
+            _selectedLibrary = value;
+            _textLibraryService?.SelectLibrary(value.Id);
+            OnPropertyChanged(nameof(SelectedLibrary));
+            OnPropertyChanged(nameof(CanDeleteLibrary));
+            RebuildRows();
+        }
+    }
 
     public string SearchText
     {
@@ -76,7 +106,9 @@ public partial class TextLibrarySettingsPage : UserControl, INotifyPropertyChang
     /// <summary>One-line summary shown in the toolbar: total, enabled, used, average and rotatable counts.</summary>
     public string StatisticsText { get; private set; } = string.Empty;
 
-    public bool IsEmpty => TotalCount == 0;
+    public bool IsUnavailable => _textLibraryService?.LoadError is not null;
+    public string UnavailableText => Text("M_LibraryUnavailable");
+    public bool IsEmpty => TotalCount == 0 && !IsUnavailable;
 
     public bool HasRows => TotalCount > 0;
 
@@ -98,6 +130,16 @@ public partial class TextLibrarySettingsPage : UserControl, INotifyPropertyChang
         _isRebuilding = true;
         try
         {
+            if (_textLibraryService is not null)
+            {
+                var selected = _textLibraryService.SelectedLibraryId;
+                Libraries.Clear();
+                foreach (var library in _textLibraryService.Libraries)
+                    Libraries.Add(new TextLibraryOption(library.Id, library.IsDefault && library.Name == "Default" ? Text("C_DefaultLibrary") : library.Name, library.IsDefault));
+                _selectedLibrary = Libraries.FirstOrDefault(item => item.Id == selected);
+                OnPropertyChanged(nameof(SelectedLibrary));
+                OnPropertyChanged(nameof(CanDeleteLibrary));
+            }
             var entries = _textLibraryService?.Entries ?? [];
             TotalCount = entries.Count;
             EnabledCount = entries.Count(entry => entry.Enabled);
@@ -128,6 +170,7 @@ public partial class TextLibrarySettingsPage : UserControl, INotifyPropertyChang
             OnPropertyChanged(nameof(AverageUseCountText));
             OnPropertyChanged(nameof(StatisticsText));
             OnPropertyChanged(nameof(IsEmpty));
+            OnPropertyChanged(nameof(IsUnavailable));
             OnPropertyChanged(nameof(HasRows));
             OnPropertyChanged(nameof(HasVisibleRows));
             OnPropertyChanged(nameof(HasNoMatches));
@@ -137,6 +180,92 @@ public partial class TextLibrarySettingsPage : UserControl, INotifyPropertyChang
         {
             _isRebuilding = false;
         }
+    }
+
+    private async Task EditLibraryAsync(bool copy, bool rename)
+    {
+        if (_textLibraryService is null || TopLevel.GetTopLevel(this) is not { } top) return;
+        var input = new TextBox { Text = rename ? _textLibraryService.Libraries.FirstOrDefault(l => l.Id == _selectedLibrary?.Id)?.Name : string.Empty, MaxLength = 100, PlaceholderText = Text("M_LibraryName") };
+        var result = await new FAContentDialog
+        {
+            Title = Text(rename ? "C_RenameLibrary" : copy ? "C_CopyLibrary" : "C_NewLibrary"),
+            Content = input, PrimaryButtonText = Text("C_Save"), CloseButtonText = Text("C_Cancel")
+        }.ShowAsync(top);
+        if (result != FAContentDialogResult.Primary || string.IsNullOrWhiteSpace(input.Text)) return;
+        try
+        {
+            if (rename && _selectedLibrary is not null) _textLibraryService.RenameLibrary(_selectedLibrary.Id, input.Text);
+            else _textLibraryService.CreateLibrary(input.Text, copy);
+            RebuildRows();
+        }
+        catch (Exception exception) { this.ShowErrorToast(Text("M_OperationFailed"), exception); }
+    }
+
+    private async void NewLibrary_OnClick(object? sender, RoutedEventArgs e) => await EditLibraryAsync(false, false);
+    private async void CopyLibrary_OnClick(object? sender, RoutedEventArgs e) => await EditLibraryAsync(true, false);
+    private async void RenameLibrary_OnClick(object? sender, RoutedEventArgs e) => await EditLibraryAsync(false, true);
+    private async void LinkRosters_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_textLibraryService is null || _selectedLibrary is null || TopLevel.GetTopLevel(this) is not { } top) return;
+        var catalog = IAppHost.TryGetService<IProfileCatalogManager>();
+        if (catalog is null) return;
+        var libraryId = _selectedLibrary.Id;
+        var isDefault = _selectedLibrary.IsDefault;
+        var items = new System.Collections.Generic.List<(string Name, bool Student, CheckBox Check)>();
+        var content = new StackPanel { Spacing = 6 };
+        foreach (var (name, student) in catalog.GetStudentListNames().Select(name => (name, true)).Concat(catalog.GetPrizeListNames().Select(name => (name, false))))
+        {
+            var roster = student ? (SecRandom.Shared.Interfaces.IAttachableSettingsObject?)catalog.LoadStudentList(name) : catalog.LoadPrizeList(name);
+            if (roster is null) continue;
+            var binding = TextLibraryBinding.Get(roster);
+            var usesDefault = string.IsNullOrEmpty(binding) || binding == _textLibraryService.DefaultLibraryId;
+            var boundName = usesDefault ? Text("C_DefaultLibrary") : _textLibraryService.Libraries.FirstOrDefault(l => l.Id == binding)?.Name ?? Text("M_MissingLibrary");
+            var check = new CheckBox { Content = $"{Text(student ? "C_StudentRoster" : "C_PrizeRoster")}: {name} ({boundName})", IsChecked = isDefault ? usesDefault : binding == libraryId, IsEnabled = !isDefault || !usesDefault };
+            content.Children.Add(check);
+            items.Add((name, student, check));
+        }
+        var result = await new FAContentDialog
+        {
+            Title = LinkRostersText,
+            Content = new ScrollViewer { Content = content, MaxHeight = 360 },
+            PrimaryButtonText = Text("C_Save"), CloseButtonText = Text("C_Cancel")
+        }.ShowAsync(top);
+        if (result != FAContentDialogResult.Primary) return;
+        try
+        {
+            foreach (var (name, student, check) in items)
+            {
+                var roster = student ? (SecRandom.Shared.Interfaces.IAttachableSettingsObject?)catalog.LoadStudentList(name) : catalog.LoadPrizeList(name);
+                if (roster is null) continue;
+                var binding = TextLibraryBinding.Get(roster);
+                if (check.IsChecked == true)
+                {
+                    if (isDefault ? string.IsNullOrEmpty(binding) || binding == libraryId : binding == libraryId) continue;
+                    TextLibraryBinding.Set(roster, isDefault ? null : libraryId);
+                }
+                else if (!isDefault && binding == libraryId)
+                    TextLibraryBinding.Set(roster, null);
+                else continue;
+                var saved = student ? catalog.SaveStudentList((SecRandom.Shared.Models.Profile.StudentList)roster) : catalog.SavePrizeList((SecRandom.Shared.Models.Profile.PrizeList)roster);
+                if (!saved) throw new InvalidOperationException(name);
+            }
+        }
+        catch (Exception exception) { this.ShowErrorToast(Text("M_OperationFailed"), exception); }
+    }
+    private async void DeleteLibrary_OnClick(object? sender, RoutedEventArgs e)
+    {
+        if (_textLibraryService is null || _selectedLibrary is not { IsDefault: false } selected || TopLevel.GetTopLevel(this) is not { } top) return;
+        var affected = new System.Collections.Generic.List<string>();
+        var catalog = IAppHost.TryGetService<IProfileCatalogManager>();
+        if (catalog is not null)
+        {
+            affected.AddRange(catalog.GetStudentListNames().Where(name => TextLibraryBinding.Get(catalog.LoadStudentList(name)) == selected.Id));
+            affected.AddRange(catalog.GetPrizeListNames().Where(name => TextLibraryBinding.Get(catalog.LoadPrizeList(name)) == selected.Id));
+        }
+        var content = string.Format(Text("M_DeleteLibrary"), selected.Name);
+        if (affected.Count > 0) content += Environment.NewLine + Environment.NewLine + string.Join(Environment.NewLine, affected);
+        var result = await new FAContentDialog { Title = DeleteLibraryText, Content = content, PrimaryButtonText = Text("C_Delete"), CloseButtonText = Text("C_Cancel"), DefaultButton = FAContentDialogButton.Close }.ShowAsync(top);
+        if (result == FAContentDialogResult.Primary) { _textLibraryService.DeleteLibrary(selected.Id); RebuildRows(); }
     }
 
     private void SetEntryEnabled(string id, bool enabled)
@@ -351,6 +480,8 @@ public partial class TextLibrarySettingsPage : UserControl, INotifyPropertyChang
     private void OnPropertyChanged(string propertyName) =>
         NotifyPropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }
+
+public sealed record TextLibraryOption(string Id, string Name, bool IsDefault);
 
 /// <summary>
 /// One grid row of the text library. The enable switch writes straight through to the library so the

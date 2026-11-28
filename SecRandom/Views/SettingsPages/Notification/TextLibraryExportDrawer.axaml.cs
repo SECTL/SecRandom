@@ -409,17 +409,11 @@ public partial class TextLibraryExportDrawer : UserControl, INotifyPropertyChang
 
     /// <summary>
     ///     The device-transfer package must stay readable by <see cref="TextLibraryImporter.ParseJson" />,
-    ///     so it carries the same document shape the library file uses (snake_case via
-    ///     <see cref="ConfigServiceBase.JsonOptions" />).
+    ///     so it carries a JSON string array. Local identifiers and usage counts stay on this device.
     /// </summary>
     private SyncTransferPackage BuildPackage()
     {
-        var document = new TextLibraryDocument
-        {
-            FormatVersion = 1,
-            Texts = _textLibraryService.Entries.ToList()
-        };
-        var json = JsonSerializer.Serialize(document, ConfigServiceBase.JsonOptions);
+        var json = JsonSerializer.Serialize(_textLibraryService.Entries.Select(entry => entry.Text), ConfigServiceBase.JsonOptions);
         return new SyncTransferPackage(SyncTransferContentType.TextLibrary, PackageFileName,
             Encoding.UTF8.GetBytes(json));
     }

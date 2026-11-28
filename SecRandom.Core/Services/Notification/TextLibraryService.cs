@@ -1,544 +1,411 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
-using SecRandom.Core.Helpers;
 using SecRandom.Core.Models.Notification;
 
 namespace SecRandom.Core.Services.Notification;
 
-/// <summary>
-///     全屏通知文案库：默认 30 条产品文案 + 用户自建条目，按使用次数做平均线轮换。
-/// </summary>
-/// <remarks>
-///     <para>
-///         落盘位置是 <c>data/texts/library.json</c>，刻意不在 <c>data/config/</c> 下：
-///         备份归档会把 <c>config/</c> 里的路径折叠成 <c>config/settings.json</c>（只有 device-uuid 与
-///         orchestration 另有自己的段），放进去等于让文案库在备份/还原里被静默吞掉。
-///     </para>
-///     <para>
-///         计数是"尽力而为"的公平性辅助量，不是账本：文件损坏时整库重建默认 30 条并保存，
-///         保存失败只记日志不抛出——文案库坏掉不应该让抽取流程失败。
-///     </para>
-///     <para>
-///         文件的 <c>format_version</c> 高于本版本时只读：旧代码不知道新字段的语义，
-///         写回会把新版本的字段整段抹掉。
-///     </para>
-/// </remarks>
+public sealed record TextLibraryInfo(string Id, string Name, bool IsDefault);
+
+/// <summary>SQLite-backed fullscreen text libraries. The selected library is an editor context only.</summary>
 public sealed class TextLibraryService
 {
-    private const int CurrentFormatVersion = 1;
-
-    private static readonly JsonSerializerOptions JsonOptions = new(ConfigServiceBase.JsonOptions)
-    {
-        // 用户会手改这个文件：允许注释与尾逗号，省得为了一个逗号整库重建
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true
-    };
-
+    private const int SchemaVersion = 1;
+    private const int ApplicationId = 1397904460;
     private readonly ILogger<TextLibraryService> _logger;
     private readonly object _gate = new();
+    private string _selectedLibraryId = "";
 
-    private List<TextLibraryEntry> _entries = new();
-    private string? _lastPickedId;
-    private bool _readOnly;
-
-    /// <summary>
-    ///     生产环境用：路径固定为 <c>data/texts/library.json</c>（目录不存在时创建）。
-    /// </summary>
     public TextLibraryService(ILogger<TextLibraryService> logger)
-        // GetDirectoryPath 负责建目录并返回目录本身，文件名必须再拼一次：
-        // 直接传 GetDirectoryPath("texts", "library.json") 会把该文件当目录建出来。
-        : this(logger, Path.Combine(SecRandom.Shared.Utils.GetDirectoryPath("texts"), "library.json"))
-    {
-    }
+        : this(logger, Path.Combine(SecRandom.Shared.Utils.GetDirectoryPath("texts"), "library" + SecRandom.Shared.Utils.TextLibraryDatabaseExtension)) { }
 
-    /// <summary>
-    ///     测试/迁移用：显式指定文件路径。目录不存在时在首次保存时创建。
-    /// </summary>
     public TextLibraryService(ILogger<TextLibraryService> logger, string filePath)
     {
-        ArgumentNullException.ThrowIfNull(logger);
-        ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
-
         _logger = logger;
         FilePath = Path.GetFullPath(filePath);
         Reload();
     }
 
-    /// <summary>实际使用的库文件路径（测试可据此断言落盘）。</summary>
     public string FilePath { get; }
-
-    /// <summary>当前库内容的快照；每次取值都是一份新数组，调用方修改它不会影响服务。</summary>
-    public IReadOnlyList<TextLibraryEntry> Entries
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return _entries.ToArray();
-            }
-        }
-    }
-
-    /// <summary>所有条目（含停用条目）的使用次数总和。</summary>
-    public int TotalUseCount
-    {
-        get
-        {
-            lock (_gate)
-            {
-                var total = 0L;
-                foreach (var entry in _entries)
-                    total += entry.UseCount;
-                return total > int.MaxValue ? int.MaxValue : (int)total;
-            }
-        }
-    }
-
-    /// <summary>启用条目的平均使用次数；没有启用条目时为 0。</summary>
-    public double AverageUseCount
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return TextLibraryRotation.AverageUseCount(_entries);
-            }
-        }
-    }
-
-    /// <summary>当前处于平均线以内、本轮可被选中的条目数。</summary>
-    public int EligibleCount
-    {
-        get
-        {
-            lock (_gate)
-            {
-                return TextLibraryRotation.GetEligible(_entries, TextLibraryRotation.AverageUseCount(_entries)).Count;
-            }
-        }
-    }
-
-    /// <summary>库内容发生变化（且已尝试落盘）后触发，UI 据此刷新列表。</summary>
     public event EventHandler? Changed;
+    public string DefaultLibraryId { get; private set; } = "";
+    public string? LoadError { get; private set; }
+    public string SelectedLibraryId => _selectedLibraryId;
+    public IReadOnlyList<TextLibraryInfo> Libraries
+    {
+        get
+        {
+            lock (_gate)
+            {
+                if (LoadError is not null) return [];
+                using var connection = Open();
+                using var command = connection.CreateCommand();
+                command.CommandText = "SELECT id, name FROM libraries ORDER BY ordinal, name";
+                using var reader = command.ExecuteReader();
+                var result = new List<TextLibraryInfo>();
+                while (reader.Read())
+                    result.Add(new(reader.GetString(0), reader.GetString(1), reader.GetString(0) == DefaultLibraryId));
+                return result;
+            }
+        }
+    }
 
-    /// <summary>
-    ///     从磁盘重新加载；文件缺失按"新建默认库"处理，内容损坏按"重建默认库"处理，两者都会立即写盘。
-    /// </summary>
+    public IReadOnlyList<TextLibraryEntry> Entries => GetEntries(_selectedLibraryId);
+    public int TotalUseCount => (int)Math.Min(int.MaxValue, Entries.Sum(e => (long)e.UseCount));
+    public double AverageUseCount => TextLibraryRotation.AverageUseCount(Entries);
+    public int EligibleCount => TextLibraryRotation.GetEligible(Entries, AverageUseCount).Count;
+
     public void Reload()
     {
         lock (_gate)
         {
-            ReloadCore();
-        }
-
-        RaiseChanged();
-    }
-
-    /// <summary>
-    ///     把当前内存状态写回磁盘；只读模式下跳过并告警，写入失败只记日志。
-    /// </summary>
-    public void Save()
-    {
-        lock (_gate)
-        {
-            PersistCore();
-        }
-
-        RaiseChanged();
-    }
-
-    /// <summary>
-    ///     整库替换为给定模板：所有计数清零、<c>LastPickedId</c> 清空。
-    ///     全部模板都非法时保持原库不动——否则一次坏导入会留下一个空库。
-    /// </summary>
-    public void ReplaceAll(IEnumerable<string> templates)
-    {
-        ArgumentNullException.ThrowIfNull(templates);
-
-        var changed = false;
-        lock (_gate)
-        {
-            var entries = BuildEntries(templates, out var skipped);
-            if (entries.Count == 0)
+            try
             {
-                _logger.LogWarning("文案库替换被忽略：没有合法文案（跳过 {Skipped} 条）", skipped);
-                return;
+                Initialize();
+                using var connection = Open();
+                if (Convert.ToInt32(ScalarValue(connection, "PRAGMA application_id")) != ApplicationId)
+                    throw new InvalidDataException("Unrecognized text library database.");
+                DefaultLibraryId = Scalar(connection, "SELECT value FROM meta WHERE key='default_library_id'")
+                    ?? throw new InvalidDataException("Text library has no default library.");
+                if (!LibraryExists(connection, DefaultLibraryId))
+                    throw new InvalidDataException("Text library default is missing.");
+                _ = ReadEntries(connection, null, DefaultLibraryId);
+                if (string.IsNullOrEmpty(_selectedLibraryId) || !LibraryExists(connection, _selectedLibraryId))
+                    _selectedLibraryId = DefaultLibraryId;
+                LoadError = null;
             }
-
-            if (skipped > 0)
-                _logger.LogWarning("文案库替换跳过了 {Skipped} 条非法文案", skipped);
-
-            _entries = entries;
-            _lastPickedId = null;
-            PersistCore();
-            changed = true;
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException or SqliteException or InvalidDataException or NotSupportedException)
+            {
+                LoadError = exception.Message;
+                DefaultLibraryId = "";
+                _selectedLibraryId = "";
+                _logger.LogWarning(exception, "Text library could not be loaded: {Path}", FilePath);
+            }
         }
-
-        if (changed)
-            RaiseChanged();
+        Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>恢复 30 条默认文案，并清零全部计数。</summary>
-    public void RestoreDefaults()
+    public void Save() { }
+
+    public static void ValidateArchiveCandidate(string directory)
+    {
+        var database = Path.Combine(directory, "library" + SecRandom.Shared.Utils.TextLibraryDatabaseExtension);
+        if (File.Exists(database))
+        {
+            using var connection = OpenPath(database, SqliteOpenMode.ReadOnly);
+            var defaultId = Scalar(connection, "SELECT value FROM meta WHERE key='default_library_id'");
+            if (Convert.ToInt32(ScalarValue(connection, "PRAGMA application_id")) != ApplicationId ||
+                Convert.ToInt32(ScalarValue(connection, "PRAGMA user_version")) != SchemaVersion ||
+                !string.Equals(Scalar(connection, "PRAGMA integrity_check"), "ok", StringComparison.OrdinalIgnoreCase) ||
+                string.IsNullOrWhiteSpace(defaultId) || !LibraryExists(connection, defaultId))
+                throw new InvalidDataException("Invalid or unsupported text library database.");
+            _ = ReadEntries(connection, null, defaultId);
+            return;
+        }
+        var legacy = Path.Combine(directory, "library.json");
+        if (!File.Exists(legacy)) return;
+        _ = ReadLegacyDocument(legacy);
+    }
+
+    public bool SelectLibrary(string id)
     {
         lock (_gate)
         {
-            LoadDefaultsCore();
-            PersistCore();
+            if (LoadError is not null) return false;
+            using var connection = Open();
+            if (!LibraryExists(connection, id)) return false;
+            _selectedLibraryId = id;
         }
-
-        RaiseChanged();
+        Changed?.Invoke(this, EventArgs.Empty);
+        return true;
     }
 
-    /// <summary>只清计数与 <c>LastPickedId</c>，条目本身（含停用状态与顺序）保留。</summary>
+    public string CreateLibrary(string name, bool copyCurrent = false)
+    {
+        name = ValidateName(name);
+        var id = NewId();
+        lock (_gate)
+        {
+            using var connection = OpenWritable();
+            using var tx = connection.BeginTransaction();
+            EnsureUniqueName(connection, tx, name, null);
+            Execute(connection, tx, "INSERT INTO libraries(id,name,ordinal) VALUES($id,$name,(SELECT COALESCE(MAX(ordinal),-1)+1 FROM libraries))", ("$id", id), ("$name", name));
+            if (copyCurrent)
+            {
+                foreach (var entry in ReadEntries(connection, tx, _selectedLibraryId))
+                    InsertEntry(connection, tx, id, new TextLibraryEntry { Id = NewId(), Text = entry.Text, Enabled = entry.Enabled });
+            }
+            tx.Commit();
+            _selectedLibraryId = id;
+        }
+        Changed?.Invoke(this, EventArgs.Empty);
+        return id;
+    }
+
+    public void RenameLibrary(string id, string name)
+    {
+        name = ValidateName(name);
+        lock (_gate)
+        {
+            using var connection = OpenWritable();
+            using var tx = connection.BeginTransaction();
+            EnsureUniqueName(connection, tx, name, id);
+            Execute(connection, tx, "UPDATE libraries SET name=$name WHERE id=$id", ("$name", name), ("$id", id));
+            tx.Commit();
+        }
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    public bool DeleteLibrary(string id)
+    {
+        if (id == DefaultLibraryId) return false;
+        lock (_gate)
+        {
+            using var connection = OpenWritable();
+            using var tx = connection.BeginTransaction();
+            Execute(connection, tx, "DELETE FROM entries WHERE library_id=$id", ("$id", id));
+            var count = Execute(connection, tx, "DELETE FROM libraries WHERE id=$id", ("$id", id));
+            tx.Commit();
+            if (count == 0) return false;
+            if (_selectedLibraryId == id) _selectedLibraryId = DefaultLibraryId;
+        }
+        Changed?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
+    public IReadOnlyList<TextLibraryEntry> GetEntries(string libraryId)
+    {
+        lock (_gate)
+        {
+            if (LoadError is not null) return [];
+            using var connection = Open();
+            return ReadEntries(connection, null, libraryId);
+        }
+    }
+
+    public void ReplaceAll(IEnumerable<string> templates) => WriteTemplates(templates, true);
+    public void Append(IEnumerable<string> templates) => WriteTemplates(templates, false);
+    public void RestoreDefaults() => ReplaceAll(DefaultTextLibrary.Templates);
+
+    private void WriteTemplates(IEnumerable<string> templates, bool replace)
+    {
+        var entries = templates.Select(t => TextLibraryImporter.NormalizeTemplate(t, out _))
+            .Where(IsUsable).Distinct(StringComparer.Ordinal).ToList();
+        if (entries.Count == 0) return;
+        lock (_gate)
+        {
+            using var connection = OpenWritable();
+            using var tx = connection.BeginTransaction();
+            var existing = replace ? new HashSet<string>(StringComparer.Ordinal) :
+                ReadEntries(connection, tx, _selectedLibraryId).Select(e => e.Text).ToHashSet(StringComparer.Ordinal);
+            if (replace)
+            {
+                Execute(connection, tx, "DELETE FROM entries WHERE library_id=$id", ("$id", _selectedLibraryId));
+                Execute(connection, tx, "UPDATE libraries SET last_picked_id=NULL WHERE id=$id", ("$id", _selectedLibraryId));
+            }
+            foreach (var text in entries.Where(existing.Add))
+                InsertEntry(connection, tx, _selectedLibraryId, new TextLibraryEntry { Id = NewId(), Text = text });
+            tx.Commit();
+        }
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
     public void ResetCounts()
     {
         lock (_gate)
         {
-            foreach (var entry in _entries)
-            {
-                entry.UseCount = 0;
-                entry.LastUsedUtc = null;
-            }
-
-            _lastPickedId = null;
-            PersistCore();
+            using var connection = OpenWritable();
+            using var tx = connection.BeginTransaction();
+            Execute(connection, tx, "UPDATE entries SET use_count=0,last_used_utc=NULL WHERE library_id=$id", ("$id", _selectedLibraryId));
+            Execute(connection, tx, "UPDATE libraries SET last_picked_id=NULL WHERE id=$id", ("$id", _selectedLibraryId));
+            tx.Commit();
         }
-
-        RaiseChanged();
+        Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>
-    ///     按平均线轮换选一条文案，并立刻提交使用计数（<c>use_count + 1</c>、
-    ///     <c>last_used_utc = now</c>、<c>last_picked_id = id</c>）后落盘。
-    /// </summary>
-    /// <returns>选中的模板文本；没有可用条目（例如全部停用）时返回 <see langword="null" />。</returns>
-    public string? PickTemplate()
+    public string? PickTemplate() => PickTemplate(_selectedLibraryId);
+
+    public string? PickTemplate(string? libraryId)
     {
-        string? text = null;
+        string? result;
         lock (_gate)
         {
-            var average = TextLibraryRotation.AverageUseCount(_entries);
-            var eligible = TextLibraryRotation.GetEligible(_entries, average);
-            var picked = TextLibraryRotation.Pick(eligible, _lastPickedId, RandomNumberGenerator.GetInt32);
-            if (picked is null)
-            {
-                _logger.LogWarning("文案库没有可用文案，本次不展示文案");
-                return null;
-            }
-
-            picked.UseCount++;
-            picked.LastUsedUtc = DateTimeOffset.UtcNow;
-            _lastPickedId = picked.Id;
-            text = picked.Text;
-
-            // 选中即落盘：崩溃后计数仍然有效，不会让同一条被重复偏爱
-            PersistCore();
+            if (LoadError is not null) return null;
+            using var connection = OpenWritable();
+            using var tx = connection.BeginTransaction();
+            var id = !string.IsNullOrEmpty(libraryId) && LibraryExists(connection, libraryId, tx) ? libraryId : DefaultLibraryId;
+            var entries = ReadEntries(connection, tx, id);
+            var eligible = TextLibraryRotation.GetEligible(entries, TextLibraryRotation.AverageUseCount(entries));
+            using var command = connection.CreateCommand();
+            command.Transaction = tx;
+            command.CommandText = "SELECT last_picked_id FROM libraries WHERE id=$id";
+            command.Parameters.AddWithValue("$id", id);
+            var last = command.ExecuteScalar() as string;
+            var picked = TextLibraryRotation.Pick(eligible, last, RandomNumberGenerator.GetInt32);
+            if (picked is null) return null;
+            Execute(connection, tx, "UPDATE entries SET use_count=MIN(use_count+1,2147483647),last_used_utc=$now WHERE id=$entry AND library_id=$id", ("$now", DateTimeOffset.UtcNow.ToString("O")), ("$entry", picked.Id), ("$id", id));
+            Execute(connection, tx, "UPDATE libraries SET last_picked_id=$entry WHERE id=$id", ("$entry", picked.Id), ("$id", id));
+            tx.Commit();
+            result = picked.Text;
         }
-
-        RaiseChanged();
-        return text;
+        Changed?.Invoke(this, EventArgs.Empty);
+        return result;
     }
 
-    /// <summary>启用/停用一条；停用项不参与轮换，也不计入平均线。</summary>
-    public void SetEnabled(string id, bool enabled)
-    {
-        var changed = false;
-        lock (_gate)
-        {
-            var entry = FindCore(id);
-            if (entry is null)
-            {
-                _logger.LogWarning("文案库中不存在 id={Id}，忽略启用状态修改", id);
-                return;
-            }
-
-            if (entry.Enabled == enabled)
-                return;
-
-            entry.Enabled = enabled;
-            PersistCore();
-            changed = true;
-        }
-
-        if (changed)
-            RaiseChanged();
-    }
-
-    /// <summary>追加一条自定义文案；归一化后仍非法（空、超长、占位符个数不对、重复）时返回 null。</summary>
+    public void SetEnabled(string id, bool enabled) => MutateEntry("UPDATE entries SET enabled=$value WHERE id=$entry AND library_id=$library", id, enabled ? 1 : 0);
     public TextLibraryEntry? Add(string template)
     {
-        TextLibraryEntry? added = null;
+        var text = TextLibraryImporter.NormalizeTemplate(template, out _);
+        if (!IsUsable(text) || Entries.Any(e => e.Text == text)) return null;
+        var entry = new TextLibraryEntry { Id = NewId(), Text = text };
         lock (_gate)
         {
-            var normalized = TextLibraryImporter.NormalizeTemplate(template, out _);
-            if (!IsUsable(normalized))
-            {
-                _logger.LogWarning("新增文案被拒绝：模板不符合格式要求");
-                return null;
-            }
-
-            if (ContainsTextCore(normalized, null))
-            {
-                _logger.LogWarning("新增文案被拒绝：库中已有相同文案");
-                return null;
-            }
-
-            added = new TextLibraryEntry { Id = NewId(), Text = normalized };
-            _entries.Add(added);
-            PersistCore();
+            using var connection = OpenWritable();
+            using var tx = connection.BeginTransaction();
+            InsertEntry(connection, tx, _selectedLibraryId, entry);
+            tx.Commit();
         }
-
-        RaiseChanged();
-        return added;
+        Changed?.Invoke(this, EventArgs.Empty);
+        return entry;
     }
 
-    /// <summary>改写一条文案；id 与使用计数保持不变。文本非法或与其它条目重复时返回 false。</summary>
     public bool Update(string id, string template)
     {
-        var changed = false;
-        lock (_gate)
-        {
-            var entry = FindCore(id);
-            if (entry is null)
-            {
-                _logger.LogWarning("文案库中不存在 id={Id}，忽略修改", id);
-                return false;
-            }
-
-            var normalized = TextLibraryImporter.NormalizeTemplate(template, out _);
-            if (!IsUsable(normalized))
-            {
-                _logger.LogWarning("修改文案被拒绝：模板不符合格式要求");
-                return false;
-            }
-
-            if (ContainsTextCore(normalized, id))
-            {
-                _logger.LogWarning("修改文案被拒绝：库中已有相同文案");
-                return false;
-            }
-
-            if (string.Equals(entry.Text, normalized, StringComparison.Ordinal))
-                return false;
-
-            entry.Text = normalized;
-            PersistCore();
-            changed = true;
-        }
-
-        if (changed)
-            RaiseChanged();
-        return changed;
+        var text = TextLibraryImporter.NormalizeTemplate(template, out _);
+        if (!IsUsable(text) || Entries.Any(e => e.Id != id && e.Text == text)) return false;
+        return MutateEntry("UPDATE entries SET text=$value WHERE id=$entry AND library_id=$library AND text<>$value", id, text);
     }
 
-    /// <summary>删除一条；删除的是上次选中项时同时清空 <c>LastPickedId</c>，避免留下悬空引用。</summary>
-    public bool Remove(string id)
+    public bool Remove(string id) => MutateEntry("DELETE FROM entries WHERE id=$entry AND library_id=$library", id, "");
+
+    private bool MutateEntry(string sql, string id, object value)
     {
-        var removed = false;
+        int count;
         lock (_gate)
         {
-            var index = _entries.FindIndex(entry => string.Equals(entry.Id, id, StringComparison.Ordinal));
-            if (index < 0)
-            {
-                _logger.LogWarning("文案库中不存在 id={Id}，忽略删除", id);
-                return false;
-            }
-
-            _entries.RemoveAt(index);
-            if (string.Equals(_lastPickedId, id, StringComparison.Ordinal))
-                _lastPickedId = null;
-
-            PersistCore();
-            removed = true;
+            using var connection = OpenWritable();
+            count = Execute(connection, null, sql, ("$value", value), ("$entry", id), ("$library", _selectedLibraryId));
         }
-
-        if (removed)
-            RaiseChanged();
-        return removed;
+        if (count > 0) Changed?.Invoke(this, EventArgs.Empty);
+        return count > 0;
     }
 
-    private void ReloadCore()
+    private void Initialize()
     {
-        _readOnly = false;
-
-        var exists = File.Exists(FilePath);
+        Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
+        if (File.Exists(FilePath)) return;
+        var legacy = Path.Combine(Path.GetDirectoryName(FilePath)!, "library.json");
         TextLibraryDocument? document = null;
-        if (exists)
+        if (File.Exists(legacy))
         {
-            try
-            {
-                var json = SharedFileReader.ReadAllText(FilePath);
-                document = JsonSerializer.Deserialize<TextLibraryDocument>(json, JsonOptions);
-                if (document is null)
-                    throw new JsonException("反序列化结果为空");
-            }
-            catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException or NotSupportedException)
-            {
-                _logger.LogWarning(ex, "文案库文件无法解析，将重建默认文案：{Path}", FilePath);
-                document = null;
-            }
+            document = ReadLegacyDocument(legacy);
         }
-
-        if (document is null)
-        {
-            LoadDefaultsCore();
-            // 首启与损坏重建都立刻落盘：下次启动可直接读取，也便于用户找到文件手工编辑
-            PersistCore();
-            return;
-        }
-
-        if (document.FormatVersion > CurrentFormatVersion)
-        {
-            // 更高版本可能有本版本不认识的字段，写回会丢数据，因此只读
-            _readOnly = true;
-            _logger.LogWarning(
-                "文案库格式版本 {Version} 高于当前支持的 {Current}，本次运行只读：{Path}",
-                document.FormatVersion, CurrentFormatVersion, FilePath);
-        }
-
-        _entries = NormalizeLoadedEntries(document.Texts);
-        _lastPickedId = ResolveLastPickedId(document.LastPickedId);
-    }
-
-    /// <summary>
-    ///     整理从磁盘读到的条目：补齐/去重 id（id 是稳定键，缺了会让计数挂到错误的条目上）、
-    ///     丢弃空文本、把负数计数归零。
-    /// </summary>
-    private List<TextLibraryEntry> NormalizeLoadedEntries(IEnumerable<TextLibraryEntry>? loaded)
-    {
-        var entries = new List<TextLibraryEntry>();
-        if (loaded is null)
-            return entries;
-
-        var usedIds = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var entry in loaded)
-        {
-            if (entry is null || string.IsNullOrWhiteSpace(entry.Text))
-                continue;
-
-            var id = entry.Id;
-            if (string.IsNullOrWhiteSpace(id) || !usedIds.Add(id))
-            {
-                id = NewId();
-                usedIds.Add(id);
-            }
-
-            if (entry.UseCount < 0)
-                entry.UseCount = 0;
-            entry.Id = id;
-            entries.Add(entry);
-        }
-
-        return entries;
-    }
-
-    private string? ResolveLastPickedId(string? lastPickedId)
-    {
-        if (string.IsNullOrWhiteSpace(lastPickedId))
-            return null;
-
-        return _entries.Any(entry => string.Equals(entry.Id, lastPickedId, StringComparison.Ordinal))
-            ? lastPickedId
-            : null;
-    }
-
-    private void LoadDefaultsCore()
-    {
-        _entries = BuildEntries(DefaultTextLibrary.Templates, out _);
-        _lastPickedId = null;
-    }
-
-    private List<TextLibraryEntry> BuildEntries(IEnumerable<string?> templates, out int skipped)
-    {
-        skipped = 0;
-        var entries = new List<TextLibraryEntry>();
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var template in templates)
-        {
-            var normalized = TextLibraryImporter.NormalizeTemplate(template, out _);
-            if (!IsUsable(normalized) || !seen.Add(normalized))
-            {
-                skipped++;
-                continue;
-            }
-
-            entries.Add(new TextLibraryEntry { Id = NewId(), Text = normalized });
-        }
-
-        return entries;
-    }
-
-    private static bool IsUsable(string normalized)
-        => normalized.Length is > 0 and <= TextLibraryImporter.MaxTextLength
-           && FullscreenTextTemplate.HasSinglePlaceholder(normalized);
-
-    private bool ContainsTextCore(string text, string? exceptId)
-    {
-        foreach (var entry in _entries)
-        {
-            if (string.Equals(entry.Id, exceptId, StringComparison.Ordinal))
-                continue;
-
-            if (string.Equals(entry.Text, text, StringComparison.Ordinal))
-                return true;
-        }
-
-        return false;
-    }
-
-    private TextLibraryEntry? FindCore(string id)
-        => _entries.Find(entry => string.Equals(entry.Id, id, StringComparison.Ordinal));
-
-    private void PersistCore()
-    {
-        if (_readOnly)
-        {
-            _logger.LogWarning("文案库处于只读模式（格式版本较高），跳过写入：{Path}", FilePath);
-            return;
-        }
-
-        var temporaryPath = $"{FilePath}.{Guid.NewGuid():N}.tmp";
+        var temporary = FilePath + "." + NewId() + ".tmp";
         try
         {
-            var directory = Path.GetDirectoryName(FilePath);
-            if (!string.IsNullOrEmpty(directory))
-                Directory.CreateDirectory(directory);
-
-            var document = new TextLibraryDocument
+            using (var connection = OpenPath(temporary))
+            using (var tx = connection.BeginTransaction())
             {
-                FormatVersion = CurrentFormatVersion,
-                Texts = _entries,
-                LastPickedId = _lastPickedId
-            };
-
-            // 原子替换：先写临时文件再 Move，避免中途崩溃留下半截 JSON
-            File.WriteAllText(temporaryPath, JsonSerializer.Serialize(document, JsonOptions));
-            File.Move(temporaryPath, FilePath, overwrite: true);
+                Execute(connection, tx, "CREATE TABLE meta(key TEXT PRIMARY KEY,value TEXT NOT NULL); CREATE TABLE libraries(id TEXT PRIMARY KEY,name TEXT NOT NULL,ordinal INTEGER NOT NULL,last_picked_id TEXT); CREATE TABLE entries(id TEXT PRIMARY KEY,library_id TEXT NOT NULL,text TEXT NOT NULL,enabled INTEGER NOT NULL,ordinal INTEGER NOT NULL,use_count INTEGER NOT NULL,last_used_utc TEXT); PRAGMA application_id=1397904460; PRAGMA user_version=1;");
+                var id = NewId();
+                Execute(connection, tx, "INSERT INTO meta VALUES('default_library_id',$id); INSERT INTO libraries(id,name,ordinal,last_picked_id) VALUES($id,'Default',0,$last)", ("$id", id), ("$last", (object?)document?.LastPickedId ?? DBNull.Value));
+                var entries = document?.Texts ?? DefaultTextLibrary.Templates.Select(t => new TextLibraryEntry { Id = NewId(), Text = t }).ToList();
+                var ids = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var entry in entries.Where(e => e is not null && !string.IsNullOrWhiteSpace(e.Text)))
+                {
+                    if (string.IsNullOrEmpty(entry.Id) || !ids.Add(entry.Id)) { entry.Id = NewId(); ids.Add(entry.Id); }
+                    entry.UseCount = Math.Max(0, entry.UseCount);
+                    InsertEntry(connection, tx, id, entry);
+                }
+                tx.Commit();
+            }
+            File.Move(temporary, FilePath);
+            if (document is not null)
+            {
+                try { File.Move(legacy, legacy + ".migrated", overwrite: false); }
+                catch (IOException ex) { _logger.LogWarning(ex, "Could not move legacy text library after migration"); }
+            }
         }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or NotSupportedException)
-        {
-            _logger.LogWarning(ex, "文案库保存失败（本次改动仅在内存中生效）：{Path}", FilePath);
-            TryDeleteTemporaryFile(temporaryPath);
-        }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
     }
 
-    private void TryDeleteTemporaryFile(string path)
+    private SqliteConnection Open() => OpenPath(FilePath, SqliteOpenMode.ReadWrite);
+    private static TextLibraryDocument ReadLegacyDocument(string path)
     {
-        try
-        {
-            if (File.Exists(path))
-                File.Delete(path);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            _logger.LogDebug(ex, "清理临时文件失败：{Path}", path);
-        }
+        var json = File.ReadAllText(path);
+        using var parsed = JsonDocument.Parse(json, new JsonDocumentOptions { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true });
+        if (parsed.RootElement.ValueKind != JsonValueKind.Object ||
+            !parsed.RootElement.TryGetProperty("texts", out var texts) || texts.ValueKind != JsonValueKind.Array)
+            throw new InvalidDataException("Invalid legacy text library entries.");
+        var options = new JsonSerializerOptions(ConfigServiceBase.JsonOptions) { ReadCommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
+        var document = JsonSerializer.Deserialize<TextLibraryDocument>(json, options);
+        if (document is null || document.Texts is null || document.FormatVersion > 1)
+            throw new InvalidDataException("Invalid or unsupported legacy text library.");
+        return document;
     }
-
+    private SqliteConnection OpenWritable()
+    {
+        if (LoadError is not null) throw new InvalidDataException("Text library is unavailable: " + LoadError);
+        var connection = Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA user_version";
+        if (Convert.ToInt32(command.ExecuteScalar()) > SchemaVersion)
+        {
+            connection.Dispose();
+            throw new InvalidDataException("Text library database is newer than supported.");
+        }
+        return connection;
+    }
+    private static SqliteConnection OpenPath(string path, SqliteOpenMode mode = SqliteOpenMode.ReadWriteCreate)
+    {
+        var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = path, Mode = mode, Pooling = false }.ToString());
+        connection.Open();
+        return connection;
+    }
+    private static string? Scalar(SqliteConnection connection, string sql)
+    {
+        using var command = connection.CreateCommand(); command.CommandText = sql; return command.ExecuteScalar() as string;
+    }
+    private static object? ScalarValue(SqliteConnection connection, string sql)
+    {
+        using var command = connection.CreateCommand(); command.CommandText = sql; return command.ExecuteScalar();
+    }
+    private static bool LibraryExists(SqliteConnection connection, string id, SqliteTransaction? tx = null)
+    {
+        using var command = connection.CreateCommand(); command.Transaction = tx; command.CommandText = "SELECT 1 FROM libraries WHERE id=$id"; command.Parameters.AddWithValue("$id", id); return command.ExecuteScalar() is not null;
+    }
+    private static void EnsureUniqueName(SqliteConnection connection, SqliteTransaction tx, string name, string? exceptId)
+    {
+        using var command = connection.CreateCommand();
+        command.Transaction = tx;
+        command.CommandText = "SELECT name FROM libraries WHERE id<>$id";
+        command.Parameters.AddWithValue("$id", exceptId ?? "");
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+            if (string.Equals(reader.GetString(0), name, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException("Library name already exists.");
+    }
+    private static int Execute(SqliteConnection connection, SqliteTransaction? tx, string sql, params (string Name, object Value)[] parameters)
+    {
+        using var command = connection.CreateCommand(); command.Transaction = tx; command.CommandText = sql;
+        foreach (var (name, value) in parameters) command.Parameters.AddWithValue(name, value);
+        return command.ExecuteNonQuery();
+    }
+    private static void InsertEntry(SqliteConnection connection, SqliteTransaction tx, string library, TextLibraryEntry entry) =>
+        Execute(connection, tx, "INSERT INTO entries(id,library_id,text,enabled,ordinal,use_count,last_used_utc) VALUES($id,$library,$text,$enabled,(SELECT COALESCE(MAX(ordinal),-1)+1 FROM entries WHERE library_id=$library),$count,$last)", ("$id", entry.Id), ("$library", library), ("$text", entry.Text), ("$enabled", entry.Enabled ? 1 : 0), ("$count", entry.UseCount), ("$last", (object?)entry.LastUsedUtc?.ToString("O") ?? DBNull.Value));
+    private static List<TextLibraryEntry> ReadEntries(SqliteConnection connection, SqliteTransaction? tx, string library)
+    {
+        using var command = connection.CreateCommand(); command.Transaction = tx;
+        command.CommandText = "SELECT id,text,enabled,use_count,last_used_utc FROM entries WHERE library_id=$id ORDER BY ordinal";
+        command.Parameters.AddWithValue("$id", library);
+        using var reader = command.ExecuteReader();
+        var entries = new List<TextLibraryEntry>();
+        while (reader.Read()) entries.Add(new TextLibraryEntry { Id = reader.GetString(0), Text = reader.GetString(1), Enabled = reader.GetInt64(2) != 0, UseCount = reader.GetInt32(3), LastUsedUtc = reader.IsDBNull(4) ? null : DateTimeOffset.Parse(reader.GetString(4), System.Globalization.CultureInfo.InvariantCulture) });
+        return entries;
+    }
+    private static string ValidateName(string name) => !string.IsNullOrWhiteSpace(name) && name.Trim().Length <= 100 ? name.Trim() : throw new ArgumentException("Invalid library name.");
+    private static bool IsUsable(string text) => text.Length is > 0 and <= TextLibraryImporter.MaxTextLength && FullscreenTextTemplate.HasSinglePlaceholder(text);
     private static string NewId() => Guid.NewGuid().ToString("N");
-
-    private void RaiseChanged() => Changed?.Invoke(this, EventArgs.Empty);
 }

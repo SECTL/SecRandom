@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Logging;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
@@ -17,6 +18,7 @@ using SecRandom.Core.Models;
 using SecRandom.Core.Models.SubConfigs.General;
 using SecRandom.Core.Services.Config;
 using SecRandom.Core.Services.HistoryStore;
+using SecRandom.Core.Services.Notification;
 using SecRandom.Core.Services.Orchestration;
 using SecRandom.Core.Services.Profiles;
 using SecRandom.Shared;
@@ -371,12 +373,38 @@ public sealed class DataArchiveService(
         {
             cancellationToken.ThrowIfCancellationRequested();
             var relative = NormalizePath(Path.Combine(normalized, Path.GetRelativePath(source, file)));
+            if (relative.Equals("texts/library" + SecRandom.Shared.Utils.TextLibraryDatabaseExtension + "-wal", StringComparison.OrdinalIgnoreCase) ||
+                relative.Equals("texts/library" + SecRandom.Shared.Utils.TextLibraryDatabaseExtension + "-shm", StringComparison.OrdinalIgnoreCase))
+                continue;
             if (IsManagedPath(relative))
                 AddFileToArchive(archive, file, relative, files, ref sourceBytes, cancellationToken);
         }
     }
 
     private static void AddFileToArchive(ZipArchive archive, string source, string entryPath, List<ArchiveFileEntry> files,
+        ref long sourceBytes, CancellationToken cancellationToken)
+    {
+        if (entryPath.Equals("texts/library" + SecRandom.Shared.Utils.TextLibraryDatabaseExtension, StringComparison.OrdinalIgnoreCase))
+        {
+            var snapshot = Path.Combine(Path.GetTempPath(), $"secrandom-texts-{Guid.NewGuid():N}" + SecRandom.Shared.Utils.TextLibraryDatabaseExtension);
+            try
+            {
+                using (var input = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = source, Mode = SqliteOpenMode.ReadOnly, Pooling = false }.ToString()))
+                using (var output = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = snapshot, Pooling = false }.ToString()))
+                {
+                    input.Open();
+                    output.Open();
+                    input.BackupDatabase(output);
+                }
+                AddFileToArchiveCore(archive, snapshot, entryPath, files, ref sourceBytes, cancellationToken);
+            }
+            finally { TryDeletePath(snapshot); }
+            return;
+        }
+        AddFileToArchiveCore(archive, source, entryPath, files, ref sourceBytes, cancellationToken);
+    }
+
+    private static void AddFileToArchiveCore(ZipArchive archive, string source, string entryPath, List<ArchiveFileEntry> files,
         ref long sourceBytes, CancellationToken cancellationToken)
     {
         var fileLength = new FileInfo(source).Length;
@@ -395,6 +423,7 @@ public sealed class DataArchiveService(
         path.EndsWith(".srl", StringComparison.OrdinalIgnoreCase) ||
         path.EndsWith(".srhdb", StringComparison.OrdinalIgnoreCase) ||
         path.EndsWith(".sro", StringComparison.OrdinalIgnoreCase) ||
+        path.EndsWith(SecRandom.Shared.Utils.TextLibraryDatabaseExtension, StringComparison.OrdinalIgnoreCase) ||
         path.EndsWith("-wal", StringComparison.OrdinalIgnoreCase) ||
         path.EndsWith("-shm", StringComparison.OrdinalIgnoreCase);
 
@@ -619,6 +648,7 @@ public sealed class DataArchiveService(
 
     private void ValidateCandidate(string staging)
     {
+        TextLibraryService.ValidateArchiveCandidate(Path.Combine(staging, "texts"));
         var candidate = ReadCandidateSettings(staging);
         if (candidate is not null)
             ValidateSettingsCandidate(candidate);

@@ -27,12 +27,11 @@ public sealed class TextLibraryEntry
 }
 
 /// <summary>
-///     <c>data/texts/library.json</c> 的磁盘形态。
+///     Legacy single-library JSON and the interoperable single-library transfer format.
 /// </summary>
 /// <remarks>
-///     <see cref="FormatVersion" /> 只用于"新版写、旧版读"的保护：读到高于当前支持的版本时
-///     只读不写回，避免旧版本把新字段抹掉。属性名由 <c>JsonNamingPolicy.SnakeCaseLower</c>
-///     序列化为 <c>format_version</c> / <c>texts</c> / <c>last_picked_id</c>。
+///     Persistent multi-library storage uses SQLite. The JSON format remains readable for migration
+///     and device transfer; property names use <c>JsonNamingPolicy.SnakeCaseLower</c>.
 /// </remarks>
 public sealed class TextLibraryDocument
 {

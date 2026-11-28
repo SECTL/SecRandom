@@ -1,9 +1,11 @@
 using System.Collections.Generic;
+using System;
 using System.Threading.Tasks;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.Archive;
 using SecRandom.Core.Services.Config;
+using SecRandom.Core.Services.Notification;
 using SecRandom.Services.Config;
 using SecRandom.Services.Desktop;
 using SecRandom.Services.Linkage;
@@ -29,7 +31,15 @@ public sealed class DesktopArchivePostImportHooks(
 
     public IReadOnlyList<string> OnAllDataImported()
     {
-        return RefreshDesktopRuntime();
+        var warnings = RefreshDesktopRuntime();
+        try
+        {
+            var library = IAppHost.TryGetService<TextLibraryService>();
+            library?.Reload();
+            if (library?.LoadError is { } error) warnings.Add($"文案库加载失败：{error}");
+        }
+        catch (Exception exception) { warnings.Add($"文案库加载失败：{exception.Message}"); }
+        return warnings;
     }
 
     private List<string> RefreshDesktopRuntime()

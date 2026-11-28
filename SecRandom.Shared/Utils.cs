@@ -446,6 +446,9 @@ public static class Utils
     /// <summary>Suffix of the single SQLite store containing all orchestration profiles and cursors.</summary>
     public const string OrchestrationDatabaseExtension = ".sro";
 
+    /// <summary>Suffix of the SQLite database containing fullscreen notification text libraries.</summary>
+    public const string TextLibraryDatabaseExtension = ".srtlib";
+
     /// <summary>Suffix of an intermediate per-profile roster database after consolidation.</summary>
     public const string RosterDatabaseMigratedExtension = ".srl.migrated";
 

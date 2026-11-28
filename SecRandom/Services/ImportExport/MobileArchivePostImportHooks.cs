@@ -1,7 +1,9 @@
 using System.Collections.Generic;
+using System;
 using SecRandom.Core.Abstraction;
 using SecRandom.Core.Abstraction.Services;
 using SecRandom.Core.Services.Archive;
+using SecRandom.Core.Services.Notification;
 using SecRandom.Services.Config;
 using SecRandom.Services.Linkage;
 using SecRandom.Services.Telemetry;
@@ -18,7 +20,18 @@ public sealed class MobileArchivePostImportHooks(DeviceUuidStore deviceUuidStore
 {
     public IReadOnlyList<string> OnSettingsImported() => RefreshRuntime();
 
-    public IReadOnlyList<string> OnAllDataImported() => RefreshRuntime();
+    public IReadOnlyList<string> OnAllDataImported()
+    {
+        var warnings = new List<string>(RefreshRuntime());
+        try
+        {
+            var library = IAppHost.TryGetService<TextLibraryService>();
+            library?.Reload();
+            if (library?.LoadError is { } error) warnings.Add($"文案库加载失败：{error}");
+        }
+        catch (Exception exception) { warnings.Add($"文案库加载失败：{exception.Message}"); }
+        return warnings;
+    }
 
     private IReadOnlyList<string> RefreshRuntime()
     {

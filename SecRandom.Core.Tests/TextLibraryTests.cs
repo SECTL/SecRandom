@@ -32,7 +32,8 @@ public sealed class TextLibraryTests : IDisposable
         }
     }
 
-    private string LibraryPath => Path.Combine(_directory, "library.json");
+    private string LibraryPath => Path.Combine(_directory, "library" + SecRandom.Shared.Utils.TextLibraryDatabaseExtension);
+    private string LegacyPath => Path.Combine(_directory, "library.json");
 
     private TextLibraryService NewService(string? path = null)
         => new(NullLogger<TextLibraryService>.Instance, path ?? LibraryPath);
@@ -69,7 +70,7 @@ public sealed class TextLibraryTests : IDisposable
         Assert.Equal(0, service.TotalUseCount);
         Assert.Equal(30, service.EligibleCount);
         Assert.True(File.Exists(LibraryPath));
-        Assert.Contains("\"format_version\": 1", File.ReadAllText(LibraryPath), StringComparison.Ordinal);
+        Assert.Equal("SQLite format 3\0", System.Text.Encoding.ASCII.GetString(File.ReadAllBytes(LibraryPath)[..16]));
     }
 
     // ---- 平均线轮换算法 ----
@@ -341,31 +342,29 @@ public sealed class TextLibraryTests : IDisposable
     // ---- 服务：损坏与版本 ----
 
     [Fact]
-    public void CorruptedFile_RebuildsDefaultsAndSaves()
+    public void CorruptedDatabase_IsPreserved()
     {
-        File.WriteAllText(LibraryPath, "{ 这不是 JSON ");
-
+        File.WriteAllText(LibraryPath, "corrupted");
         var service = NewService();
-
-        Assert.Equal(30, service.Entries.Count);
-        var rewritten = File.ReadAllText(LibraryPath);
-        Assert.Contains("\"texts\"", rewritten, StringComparison.Ordinal);
-        Assert.Equal(30, NewService().Entries.Count);
+        Assert.NotNull(service.LoadError);
+        Assert.Empty(service.Entries);
+        Assert.Null(service.PickTemplate());
+        Assert.Equal("corrupted", File.ReadAllText(LibraryPath));
     }
 
     [Fact]
-    public void HigherFormatVersion_IsReadOnlyAndNeverRewritten()
+    public void LegacyJson_MigratesEntriesAndUsage()
     {
         const string json = """
                             {
-                              "format_version": 2,
+                              "format_version": 1,
                               "texts": [
                                 { "id": "legacy", "text": "旧版 {result}", "enabled": true, "use_count": 3 }
                               ],
                               "last_picked_id": "legacy"
                             }
                             """;
-        File.WriteAllText(LibraryPath, json);
+        File.WriteAllText(LegacyPath, json);
 
         var service = NewService();
 
@@ -373,26 +372,86 @@ public sealed class TextLibraryTests : IDisposable
         Assert.Equal("旧版 {result}", service.Entries[0].Text);
         Assert.Equal(3, service.TotalUseCount);
 
-        service.Save();
-        service.ResetCounts();
-        service.RestoreDefaults();
-
-        Assert.Equal(json, File.ReadAllText(LibraryPath));
+        Assert.Equal(json, File.ReadAllText(LegacyPath + ".migrated"));
         Assert.Equal("旧版 {result}", NewService().Entries.Single().Text);
     }
 
     [Fact]
-    public void UsesAtomicTemporaryFileAndSnakeCaseProperties()
+    public void InvalidLegacyJson_IsNeverOverwrittenOrReplacedWithDefaults()
+    {
+        File.WriteAllText(LegacyPath, "{\"format_version\":1}");
+        Assert.NotNull(NewService().LoadError);
+        Assert.True(File.Exists(LegacyPath));
+        Assert.False(File.Exists(LibraryPath));
+    }
+
+    [Fact]
+    public void NewerDatabaseVersion_RejectsWrites()
     {
         var service = NewService();
-        service.PickTemplate();
+        using (var connection = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={LibraryPath};Pooling=False"))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "PRAGMA user_version=2";
+            command.ExecuteNonQuery();
+        }
+        Assert.Throws<InvalidDataException>(() => service.ResetCounts());
+        Assert.Equal(30, service.Entries.Count);
+    }
 
-        var json = File.ReadAllText(LibraryPath);
-        Assert.Contains("\"use_count\"", json, StringComparison.Ordinal);
-        Assert.Contains("\"last_picked_id\"", json, StringComparison.Ordinal);
-        Assert.Contains("\"last_used_utc\"", json, StringComparison.Ordinal);
-        // 写入走"临时文件 + 原子替换"，正常结束后不应留下 .tmp
-        Assert.Empty(Directory.GetFiles(_directory, "*.tmp"));
+    [Fact]
+    public void Libraries_HaveIndependentUsageAndAppendPreservesCounts()
+    {
+        var service = NewService();
+        var original = service.DefaultLibraryId;
+        service.ReplaceAll(["甲 {result}"]);
+        service.PickTemplate(original);
+        var second = service.CreateLibrary("Second", copyCurrent: true);
+        Assert.Equal(0, service.TotalUseCount);
+        service.Append(["乙 {result}", "甲 {result}"]);
+        Assert.Equal(2, service.Entries.Count);
+        service.PickTemplate(second);
+        Assert.Equal(1, service.TotalUseCount);
+        service.SelectLibrary(original);
+        Assert.Equal(1, service.TotalUseCount);
+        Assert.Single(service.Entries);
+        Assert.False(service.DeleteLibrary(original));
+        Assert.True(service.DeleteLibrary(second));
+        Assert.Equal("甲 {result}", service.PickTemplate(second));
+    }
+
+    [Fact]
+    public void EmptyLibrary_DoesNotConsumeDefaultLibrary()
+    {
+        var service = NewService();
+        var empty = service.CreateLibrary("Empty");
+        Assert.Null(service.PickTemplate(empty));
+        Assert.Equal(0, service.GetEntries(service.DefaultLibraryId).Sum(entry => entry.UseCount));
+        Assert.NotNull(service.PickTemplate(null));
+        Assert.Equal(1, service.GetEntries(service.DefaultLibraryId).Sum(entry => entry.UseCount));
+    }
+
+    [Fact]
+    public void ArchiveValidation_RejectsCorruptDatabaseAndKeepsIt()
+    {
+        File.WriteAllText(LibraryPath, "broken");
+        Assert.ThrowsAny<Exception>(() => TextLibraryService.ValidateArchiveCandidate(_directory));
+        Assert.Equal("broken", File.ReadAllText(LibraryPath));
+    }
+
+    [Fact]
+    public void RosterBinding_RoundTripsThroughAttachedObjects()
+    {
+        var roster = new SecRandom.Shared.Models.Profile.StudentList("class");
+        TextLibraryBinding.Set(roster, "library-id");
+        var json = System.Text.Json.JsonSerializer.Serialize(roster.AttachedObjects, SecRandom.Core.Abstraction.ConfigServiceBase.JsonOptions);
+        roster.AttachedObjects = System.Text.Json.JsonSerializer.Deserialize<Dictionary<Guid, object?>>(json)!;
+        Assert.Equal("library-id", TextLibraryBinding.Get(roster));
+        roster.Name = "renamed";
+        Assert.Equal("library-id", TextLibraryBinding.Get(roster));
+        TextLibraryBinding.Set(roster, null);
+        Assert.Null(TextLibraryBinding.Get(roster));
     }
 
     [Fact]
@@ -573,10 +632,10 @@ public sealed class TextLibraryTests : IDisposable
             Assert.All(prompt, c => Assert.True(c < 128, $"{culture} 的提示词正文出现了非 ASCII 字符：{c}"));
             Assert.DoesNotContain("__OUTPUT_LANGUAGE__", prompt, StringComparison.Ordinal);
             Assert.Contains("SecRandom", prompt, StringComparison.Ordinal);
-            Assert.Contains("What kind of texts do you need?", prompt, StringComparison.Ordinal);
-            Assert.Contains("How many texts do you need? (1 to 500)", prompt, StringComparison.Ordinal);
+            Assert.Contains("purpose, style and quantity", prompt, StringComparison.Ordinal);
+            Assert.Contains("500", prompt, StringComparison.Ordinal);
             Assert.Contains("200", prompt, StringComparison.Ordinal);
-            Assert.Contains("14000", prompt, StringComparison.Ordinal);
+            Assert.Contains("14121", prompt, StringComparison.Ordinal);
             Assert.Contains("{result}", prompt, StringComparison.Ordinal);
         }
     }
@@ -591,11 +650,8 @@ public sealed class TextLibraryTests : IDisposable
         Assert.Contains("Reply to me in English.", english, StringComparison.Ordinal);
         Assert.Contains("Reply to me in Simplified Chinese.", chinese, StringComparison.Ordinal);
         Assert.Contains("Reply to me in Japanese.", japanese, StringComparison.Ordinal);
-        Assert.Contains("in English.", english, StringComparison.Ordinal);
-        Assert.Contains("in Simplified Chinese.", chinese, StringComparison.Ordinal);
-        Assert.Contains("in Japanese.", japanese, StringComparison.Ordinal);
-        Assert.Equal(english.Replace("in English.", "in Simplified Chinese."), chinese);
-        Assert.Equal(english.Replace("in English.", "in Japanese."), japanese);
+        Assert.Equal(english.Replace("English", "Simplified Chinese"), chinese);
+        Assert.Equal(english.Replace("English", "Japanese"), japanese);
     }
 
     [Fact]
@@ -610,18 +666,23 @@ public sealed class TextLibraryTests : IDisposable
     public void Build_TemplateIsPasteableJson()
     {
         string prompt = TextLibraryPrompt.Build(CultureInfo.GetCultureInfo("en-US"));
-        const string fence = "```";
-        int start = prompt.IndexOf("```json", StringComparison.Ordinal);
-        Assert.True(start >= 0, "提示词缺少 json 代码块");
-        start += "```json".Length;
-        int end = prompt.IndexOf(fence, start, StringComparison.Ordinal);
-        Assert.True(end > start, "提示词的 json 代码块没有闭合");
+        int start = prompt.IndexOf('[', StringComparison.Ordinal);
+        int end = prompt.IndexOf(']', start) + 1;
+        Assert.True(start >= 0 && end > start);
 
         var result = TextLibraryImporter.ParseJson(prompt[start..end].Trim());
 
         Assert.True(result.Success, string.Join(Environment.NewLine, result.Errors));
         Assert.Equal(2, result.Templates.Count);
         Assert.Empty(result.Warnings);
+    }
+
+    [Fact]
+    public void ParseJson_AcceptsMarkdownFence()
+    {
+        var result = TextLibraryImporter.ParseJson("```json\n[\"你好 {result}\"]\n```");
+        Assert.True(result.Success);
+        Assert.Single(result.Templates);
     }
 
     // ---- 清单 / 表格导入 ----

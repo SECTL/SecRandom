@@ -79,10 +79,12 @@ public static class FullscreenNotificationComposer
         int remainingCount,
         string? courseName,
         string? historyGroup,
-        string? scopeName)
+        string? scopeName,
+        string? textLibraryId = null)
     {
         var settings = TryGetSettings();
-        var template = PickTemplate();
+        var captionActive = settings.ShowText && settings.AnimationStyle == FullscreenAnimationStyle.Typewriter;
+        var template = captionActive ? PickTemplate(textLibraryId) : FallbackTemplate;
 
         // 显示内容（序号/名称/头像）在快照构造时定下来：窗口只吃快照，不能再回头查设置，
         // 否则一次抽取的标题和头像会跟着设置页的随手改动来回跳。
@@ -93,8 +95,6 @@ public static class FullscreenNotificationComposer
 
         // 文案（前段 + 结果 + 后段）只属于打字机样式：学号网格落定后停在自己的画面上，
         // 不会再显示任何模板文字，所以也不该在这时候突然把文案念出来。
-        var captionActive = settings.ShowText && settings.AnimationStyle == FullscreenAnimationStyle.Typewriter;
-
         return new FullscreenResultSnapshot(
             kind,
             // 必须用拼好的结果：这里曾经传了未拼装的 results，于是"显示内容"勾选在画面上
@@ -146,12 +146,12 @@ public static class FullscreenNotificationComposer
             settings.ShowResultAvatar);
     }
 
-    private static string PickTemplate()
+    private static string PickTemplate(string? libraryId)
     {
         try
         {
             var library = IAppHost.TryGetService<TextLibraryService>();
-            return library?.PickTemplate() ?? FallbackTemplate;
+            return library?.PickTemplate(libraryId) ?? FallbackTemplate;
         }
         catch (Exception)
         {

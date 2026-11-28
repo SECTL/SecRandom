@@ -541,6 +541,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
         // 记录组与候选池同一刻冻结：可分配学生按这一刻的组权重挑，记录也落进同一个组。
         var historyGroup = CurrentHistoryGroup;
         SetDrawCommandRunning(true);
+        var textLibraryId = SecRandom.Core.Services.Notification.TextLibraryBinding.Get(_profileService.CurrentPrizeList);
         IReadOnlyList<FullscreenResultItem> fullscreenPool = [];
         try
         {
@@ -662,7 +663,7 @@ public string PluginAnimationId => AnimationSettings.PluginAnimationId;
                             RemainingCount,
                             courseName,
                             historyGroup,
-                            SelectedPrizeListName));
+                            SelectedPrizeListName, textLibraryId));
             }
 
             // 全屏渠道自己会播报时，跳过全局语音，避免同一句结果被读两遍。
