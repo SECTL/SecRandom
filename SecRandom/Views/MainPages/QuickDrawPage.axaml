@@ -52,6 +52,7 @@
                 BorderThickness="1"
                 CornerRadius="8"
                 PointerPressed="RootBorder_OnPointerPressed"
+                PointerMoved="RootBorder_OnPointerMoved"
                 PointerReleased="RootBorder_OnPointerReleased">
             <Grid Margin="10 8"
                   RowDefinitions="*,Auto">

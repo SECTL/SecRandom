@@ -105,6 +105,13 @@ public class QuickDrawLongPressGestureTests
             new Point(100 + QuickDrawLongPressGesture.DragCancelDistance + 1, 100)));
     }
 
+    [Fact]
+    public void MouseDragOfEighteenDipsCancelsTheHold()
+    {
+        Assert.True(QuickDrawLongPressGesture.ShouldCancelForDrag(
+            new Point(0, 0), new Point(18, 0), isTouchOrPen: false));
+    }
+
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
